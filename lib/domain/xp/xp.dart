@@ -5,16 +5,24 @@ abstract final class XpRules {
   /// Awarded once per habit per challenge day when the habit is completed.
   static const int habitCompletion = 15;
 
+  /// Awarded once per Perfect Day (a normal day with every enabled habit
+  /// complete), on top of the per-habit awards.
+  static const int perfectDayBonus = 30;
+
   /// Idempotency key for the habit-completion award.
   ///
   /// The ledger holds at most one transaction per key per session, so the
   /// same habit-day can never be credited twice.
   static String habitCompletionKey(String habitId, LocalDate date) =>
       'habit_completed:$habitId:${date.toIsoString()}';
+
+  /// Idempotency key for the Perfect Day bonus of [date].
+  static String perfectDayKey(LocalDate date) =>
+      'perfect_day:${date.toIsoString()}';
 }
 
-/// Why XP was awarded. Persisted by [name].
-enum XpReason { habitCompleted }
+/// Why XP was awarded. Persisted by [name], so never rename values.
+enum XpReason { habitCompleted, perfectDay }
 
 /// A single XP ledger entry.
 final class XpAward {

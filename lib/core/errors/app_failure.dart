@@ -32,6 +32,9 @@ enum DomainRule {
   habitDisabled,
   actionNotSupportedForHabitType,
   staleDay,
+  invalidHabitEdit,
+  lastEnabledHabit,
+  dayAlreadyPerfect,
 }
 
 /// A domain rule rejected the requested action. Nothing was persisted.

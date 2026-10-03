@@ -3,7 +3,8 @@ import '../../core/time/local_date.dart';
 /// A habit's progress on one calendar day.
 ///
 /// [completed] is stored rather than derived so that history keeps its
-/// meaning even if a habit's target changes in a later phase.
+/// meaning: it is decided against the effective target of that day and is
+/// only ever re-evaluated while that day is still today.
 final class DailyHabitProgress {
   const DailyHabitProgress({
     required this.habitId,
@@ -24,6 +25,24 @@ final class DailyHabitProgress {
   final int currentValue;
   final bool completed;
   final DateTime? completedAt;
+
+  /// This progress with [value], completed iff it reaches [target].
+  ///
+  /// Keeps the original completion time while it stays completed.
+  DailyHabitProgress withValue(
+    int value, {
+    required int target,
+    required DateTime now,
+  }) {
+    final nowCompleted = value >= target;
+    return DailyHabitProgress(
+      habitId: habitId,
+      date: date,
+      currentValue: value,
+      completed: nowCompleted,
+      completedAt: nowCompleted ? (completedAt ?? now) : null,
+    );
+  }
 
   bool sameStateAs(DailyHabitProgress other) =>
       habitId == other.habitId &&

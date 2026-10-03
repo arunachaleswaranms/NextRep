@@ -7,6 +7,7 @@ final class HabitTemplate {
     required this.title,
     required this.type,
     required this.target,
+    required this.minimumTarget,
     required this.iconKey,
     required this.enabledByDefault,
     this.unit,
@@ -16,6 +17,9 @@ final class HabitTemplate {
   final String title;
   final HabitType type;
   final int target;
+
+  /// Target on a Minimum Day: the essential version of the habit.
+  final int minimumTarget;
   final String? unit;
   final String iconKey;
   final bool enabledByDefault;
@@ -25,6 +29,7 @@ final class HabitTemplate {
     title: title,
     type: type,
     target: target,
+    minimumTarget: minimumTarget,
     unit: unit,
     iconKey: iconKey,
     enabled: enabledByDefault,
@@ -41,6 +46,7 @@ abstract final class StarterHabits {
       title: 'Workout',
       type: HabitType.duration,
       target: 30,
+      minimumTarget: 10,
       unit: 'min',
       iconKey: 'workout',
       enabledByDefault: true,
@@ -50,6 +56,7 @@ abstract final class StarterHabits {
       title: 'Water Intake',
       type: HabitType.count,
       target: 8,
+      minimumTarget: 3,
       unit: 'glasses',
       iconKey: 'water',
       enabledByDefault: true,
@@ -59,6 +66,7 @@ abstract final class StarterHabits {
       title: 'Learning / Skills',
       type: HabitType.duration,
       target: 20,
+      minimumTarget: 5,
       unit: 'min',
       iconKey: 'learning',
       enabledByDefault: true,
@@ -68,6 +76,7 @@ abstract final class StarterHabits {
       title: 'English Practice',
       type: HabitType.duration,
       target: 10,
+      minimumTarget: 5,
       unit: 'min',
       iconKey: 'english',
       enabledByDefault: false,
@@ -77,15 +86,17 @@ abstract final class StarterHabits {
       title: 'No Junk Food',
       type: HabitType.binary,
       target: 1,
+      minimumTarget: 1,
       iconKey: 'no_junk_food',
       enabledByDefault: true,
     ),
-    // Binary in Phase 1; a time-threshold habit type can replace it later.
+    // Binary for now; a time-threshold habit type can replace it later.
     HabitTemplate(
       id: 'sleep_on_time',
       title: 'Sleep Before Target',
       type: HabitType.binary,
       target: 1,
+      minimumTarget: 1,
       iconKey: 'sleep',
       enabledByDefault: false,
     ),
@@ -94,6 +105,7 @@ abstract final class StarterHabits {
       title: 'Meditation / Journal',
       type: HabitType.duration,
       target: 10,
+      minimumTarget: 5,
       unit: 'min',
       iconKey: 'meditation',
       enabledByDefault: false,
