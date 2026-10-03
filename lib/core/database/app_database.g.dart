@@ -1,0 +1,3566 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+
+part of 'app_database.dart';
+
+// ignore_for_file: type=lint
+class $WinterArcSessionsTable extends WinterArcSessions
+    with TableInfo<$WinterArcSessionsTable, SessionRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $WinterArcSessionsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<LocalDate, String> startDate =
+      GeneratedColumn<String>(
+        'start_date',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<LocalDate>($WinterArcSessionsTable.$converterstartDate);
+  @override
+  late final GeneratedColumnWithTypeConverter<LocalDate, String> endDate =
+      GeneratedColumn<String>(
+        'end_date',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<LocalDate>($WinterArcSessionsTable.$converterendDate);
+  @override
+  late final GeneratedColumnWithTypeConverter<WinterArcStatus, String> status =
+      GeneratedColumn<String>(
+        'status',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<WinterArcStatus>(
+        $WinterArcSessionsTable.$converterstatus,
+      );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _startedAtMeta = const VerificationMeta(
+    'startedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> startedAt = GeneratedColumn<DateTime>(
+    'started_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    startDate,
+    endDate,
+    status,
+    createdAt,
+    startedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'winter_arc_sessions';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SessionRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('started_at')) {
+      context.handle(
+        _startedAtMeta,
+        startedAt.isAcceptableOrUnknown(data['started_at']!, _startedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  SessionRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SessionRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      startDate: $WinterArcSessionsTable.$converterstartDate.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}start_date'],
+        )!,
+      ),
+      endDate: $WinterArcSessionsTable.$converterendDate.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}end_date'],
+        )!,
+      ),
+      status: $WinterArcSessionsTable.$converterstatus.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}status'],
+        )!,
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      startedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}started_at'],
+      ),
+    );
+  }
+
+  @override
+  $WinterArcSessionsTable createAlias(String alias) {
+    return $WinterArcSessionsTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<LocalDate, String> $converterstartDate =
+      const LocalDateConverter();
+  static TypeConverter<LocalDate, String> $converterendDate =
+      const LocalDateConverter();
+  static JsonTypeConverter2<WinterArcStatus, String, String> $converterstatus =
+      const EnumNameConverter<WinterArcStatus>(WinterArcStatus.values);
+}
+
+class SessionRow extends DataClass implements Insertable<SessionRow> {
+  final int id;
+  final LocalDate startDate;
+  final LocalDate endDate;
+  final WinterArcStatus status;
+  final DateTime createdAt;
+  final DateTime? startedAt;
+  const SessionRow({
+    required this.id,
+    required this.startDate,
+    required this.endDate,
+    required this.status,
+    required this.createdAt,
+    this.startedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    {
+      map['start_date'] = Variable<String>(
+        $WinterArcSessionsTable.$converterstartDate.toSql(startDate),
+      );
+    }
+    {
+      map['end_date'] = Variable<String>(
+        $WinterArcSessionsTable.$converterendDate.toSql(endDate),
+      );
+    }
+    {
+      map['status'] = Variable<String>(
+        $WinterArcSessionsTable.$converterstatus.toSql(status),
+      );
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || startedAt != null) {
+      map['started_at'] = Variable<DateTime>(startedAt);
+    }
+    return map;
+  }
+
+  WinterArcSessionsCompanion toCompanion(bool nullToAbsent) {
+    return WinterArcSessionsCompanion(
+      id: Value(id),
+      startDate: Value(startDate),
+      endDate: Value(endDate),
+      status: Value(status),
+      createdAt: Value(createdAt),
+      startedAt: startedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(startedAt),
+    );
+  }
+
+  factory SessionRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SessionRow(
+      id: serializer.fromJson<int>(json['id']),
+      startDate: serializer.fromJson<LocalDate>(json['startDate']),
+      endDate: serializer.fromJson<LocalDate>(json['endDate']),
+      status: $WinterArcSessionsTable.$converterstatus.fromJson(
+        serializer.fromJson<String>(json['status']),
+      ),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      startedAt: serializer.fromJson<DateTime?>(json['startedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'startDate': serializer.toJson<LocalDate>(startDate),
+      'endDate': serializer.toJson<LocalDate>(endDate),
+      'status': serializer.toJson<String>(
+        $WinterArcSessionsTable.$converterstatus.toJson(status),
+      ),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'startedAt': serializer.toJson<DateTime?>(startedAt),
+    };
+  }
+
+  SessionRow copyWith({
+    int? id,
+    LocalDate? startDate,
+    LocalDate? endDate,
+    WinterArcStatus? status,
+    DateTime? createdAt,
+    Value<DateTime?> startedAt = const Value.absent(),
+  }) => SessionRow(
+    id: id ?? this.id,
+    startDate: startDate ?? this.startDate,
+    endDate: endDate ?? this.endDate,
+    status: status ?? this.status,
+    createdAt: createdAt ?? this.createdAt,
+    startedAt: startedAt.present ? startedAt.value : this.startedAt,
+  );
+  SessionRow copyWithCompanion(WinterArcSessionsCompanion data) {
+    return SessionRow(
+      id: data.id.present ? data.id.value : this.id,
+      startDate: data.startDate.present ? data.startDate.value : this.startDate,
+      endDate: data.endDate.present ? data.endDate.value : this.endDate,
+      status: data.status.present ? data.status.value : this.status,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      startedAt: data.startedAt.present ? data.startedAt.value : this.startedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SessionRow(')
+          ..write('id: $id, ')
+          ..write('startDate: $startDate, ')
+          ..write('endDate: $endDate, ')
+          ..write('status: $status, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('startedAt: $startedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, startDate, endDate, status, createdAt, startedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SessionRow &&
+          other.id == this.id &&
+          other.startDate == this.startDate &&
+          other.endDate == this.endDate &&
+          other.status == this.status &&
+          other.createdAt == this.createdAt &&
+          other.startedAt == this.startedAt);
+}
+
+class WinterArcSessionsCompanion extends UpdateCompanion<SessionRow> {
+  final Value<int> id;
+  final Value<LocalDate> startDate;
+  final Value<LocalDate> endDate;
+  final Value<WinterArcStatus> status;
+  final Value<DateTime> createdAt;
+  final Value<DateTime?> startedAt;
+  const WinterArcSessionsCompanion({
+    this.id = const Value.absent(),
+    this.startDate = const Value.absent(),
+    this.endDate = const Value.absent(),
+    this.status = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.startedAt = const Value.absent(),
+  });
+  WinterArcSessionsCompanion.insert({
+    this.id = const Value.absent(),
+    required LocalDate startDate,
+    required LocalDate endDate,
+    required WinterArcStatus status,
+    required DateTime createdAt,
+    this.startedAt = const Value.absent(),
+  }) : startDate = Value(startDate),
+       endDate = Value(endDate),
+       status = Value(status),
+       createdAt = Value(createdAt);
+  static Insertable<SessionRow> custom({
+    Expression<int>? id,
+    Expression<String>? startDate,
+    Expression<String>? endDate,
+    Expression<String>? status,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? startedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (startDate != null) 'start_date': startDate,
+      if (endDate != null) 'end_date': endDate,
+      if (status != null) 'status': status,
+      if (createdAt != null) 'created_at': createdAt,
+      if (startedAt != null) 'started_at': startedAt,
+    });
+  }
+
+  WinterArcSessionsCompanion copyWith({
+    Value<int>? id,
+    Value<LocalDate>? startDate,
+    Value<LocalDate>? endDate,
+    Value<WinterArcStatus>? status,
+    Value<DateTime>? createdAt,
+    Value<DateTime?>? startedAt,
+  }) {
+    return WinterArcSessionsCompanion(
+      id: id ?? this.id,
+      startDate: startDate ?? this.startDate,
+      endDate: endDate ?? this.endDate,
+      status: status ?? this.status,
+      createdAt: createdAt ?? this.createdAt,
+      startedAt: startedAt ?? this.startedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (startDate.present) {
+      map['start_date'] = Variable<String>(
+        $WinterArcSessionsTable.$converterstartDate.toSql(startDate.value),
+      );
+    }
+    if (endDate.present) {
+      map['end_date'] = Variable<String>(
+        $WinterArcSessionsTable.$converterendDate.toSql(endDate.value),
+      );
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(
+        $WinterArcSessionsTable.$converterstatus.toSql(status.value),
+      );
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (startedAt.present) {
+      map['started_at'] = Variable<DateTime>(startedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WinterArcSessionsCompanion(')
+          ..write('id: $id, ')
+          ..write('startDate: $startDate, ')
+          ..write('endDate: $endDate, ')
+          ..write('status: $status, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('startedAt: $startedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $HabitsTable extends Habits with TableInfo<$HabitsTable, HabitRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $HabitsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _sessionIdMeta = const VerificationMeta(
+    'sessionId',
+  );
+  @override
+  late final GeneratedColumn<int> sessionId = GeneratedColumn<int>(
+    'session_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES winter_arc_sessions (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  @override
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+    'title',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<HabitType, String> type =
+      GeneratedColumn<String>(
+        'type',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<HabitType>($HabitsTable.$convertertype);
+  static const VerificationMeta _targetMeta = const VerificationMeta('target');
+  @override
+  late final GeneratedColumn<int> target = GeneratedColumn<int>(
+    'target',
+    aliasedName,
+    false,
+    check: () => ComparableExpr(target).isBiggerThanValue(0),
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _unitMeta = const VerificationMeta('unit');
+  @override
+  late final GeneratedColumn<String> unit = GeneratedColumn<String>(
+    'unit',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _iconKeyMeta = const VerificationMeta(
+    'iconKey',
+  );
+  @override
+  late final GeneratedColumn<String> iconKey = GeneratedColumn<String>(
+    'icon_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _enabledMeta = const VerificationMeta(
+    'enabled',
+  );
+  @override
+  late final GeneratedColumn<bool> enabled = GeneratedColumn<bool>(
+    'enabled',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("enabled" IN (0, 1))',
+    ),
+  );
+  static const VerificationMeta _sortOrderMeta = const VerificationMeta(
+    'sortOrder',
+  );
+  @override
+  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
+    'sort_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    sessionId,
+    id,
+    title,
+    type,
+    target,
+    unit,
+    iconKey,
+    enabled,
+    sortOrder,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'habits';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<HabitRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('session_id')) {
+      context.handle(
+        _sessionIdMeta,
+        sessionId.isAcceptableOrUnknown(data['session_id']!, _sessionIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sessionIdMeta);
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('title')) {
+      context.handle(
+        _titleMeta,
+        title.isAcceptableOrUnknown(data['title']!, _titleMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_titleMeta);
+    }
+    if (data.containsKey('target')) {
+      context.handle(
+        _targetMeta,
+        target.isAcceptableOrUnknown(data['target']!, _targetMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_targetMeta);
+    }
+    if (data.containsKey('unit')) {
+      context.handle(
+        _unitMeta,
+        unit.isAcceptableOrUnknown(data['unit']!, _unitMeta),
+      );
+    }
+    if (data.containsKey('icon_key')) {
+      context.handle(
+        _iconKeyMeta,
+        iconKey.isAcceptableOrUnknown(data['icon_key']!, _iconKeyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_iconKeyMeta);
+    }
+    if (data.containsKey('enabled')) {
+      context.handle(
+        _enabledMeta,
+        enabled.isAcceptableOrUnknown(data['enabled']!, _enabledMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_enabledMeta);
+    }
+    if (data.containsKey('sort_order')) {
+      context.handle(
+        _sortOrderMeta,
+        sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sortOrderMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {sessionId, id};
+  @override
+  HabitRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return HabitRow(
+      sessionId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}session_id'],
+      )!,
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      title: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}title'],
+      )!,
+      type: $HabitsTable.$convertertype.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}type'],
+        )!,
+      ),
+      target: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}target'],
+      )!,
+      unit: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}unit'],
+      ),
+      iconKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}icon_key'],
+      )!,
+      enabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}enabled'],
+      )!,
+      sortOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sort_order'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $HabitsTable createAlias(String alias) {
+    return $HabitsTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<HabitType, String, String> $convertertype =
+      const EnumNameConverter<HabitType>(HabitType.values);
+}
+
+class HabitRow extends DataClass implements Insertable<HabitRow> {
+  final int sessionId;
+  final String id;
+  final String title;
+  final HabitType type;
+  final int target;
+  final String? unit;
+  final String iconKey;
+  final bool enabled;
+  final int sortOrder;
+  final DateTime createdAt;
+  const HabitRow({
+    required this.sessionId,
+    required this.id,
+    required this.title,
+    required this.type,
+    required this.target,
+    this.unit,
+    required this.iconKey,
+    required this.enabled,
+    required this.sortOrder,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['session_id'] = Variable<int>(sessionId);
+    map['id'] = Variable<String>(id);
+    map['title'] = Variable<String>(title);
+    {
+      map['type'] = Variable<String>($HabitsTable.$convertertype.toSql(type));
+    }
+    map['target'] = Variable<int>(target);
+    if (!nullToAbsent || unit != null) {
+      map['unit'] = Variable<String>(unit);
+    }
+    map['icon_key'] = Variable<String>(iconKey);
+    map['enabled'] = Variable<bool>(enabled);
+    map['sort_order'] = Variable<int>(sortOrder);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  HabitsCompanion toCompanion(bool nullToAbsent) {
+    return HabitsCompanion(
+      sessionId: Value(sessionId),
+      id: Value(id),
+      title: Value(title),
+      type: Value(type),
+      target: Value(target),
+      unit: unit == null && nullToAbsent ? const Value.absent() : Value(unit),
+      iconKey: Value(iconKey),
+      enabled: Value(enabled),
+      sortOrder: Value(sortOrder),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory HabitRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return HabitRow(
+      sessionId: serializer.fromJson<int>(json['sessionId']),
+      id: serializer.fromJson<String>(json['id']),
+      title: serializer.fromJson<String>(json['title']),
+      type: $HabitsTable.$convertertype.fromJson(
+        serializer.fromJson<String>(json['type']),
+      ),
+      target: serializer.fromJson<int>(json['target']),
+      unit: serializer.fromJson<String?>(json['unit']),
+      iconKey: serializer.fromJson<String>(json['iconKey']),
+      enabled: serializer.fromJson<bool>(json['enabled']),
+      sortOrder: serializer.fromJson<int>(json['sortOrder']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'sessionId': serializer.toJson<int>(sessionId),
+      'id': serializer.toJson<String>(id),
+      'title': serializer.toJson<String>(title),
+      'type': serializer.toJson<String>(
+        $HabitsTable.$convertertype.toJson(type),
+      ),
+      'target': serializer.toJson<int>(target),
+      'unit': serializer.toJson<String?>(unit),
+      'iconKey': serializer.toJson<String>(iconKey),
+      'enabled': serializer.toJson<bool>(enabled),
+      'sortOrder': serializer.toJson<int>(sortOrder),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  HabitRow copyWith({
+    int? sessionId,
+    String? id,
+    String? title,
+    HabitType? type,
+    int? target,
+    Value<String?> unit = const Value.absent(),
+    String? iconKey,
+    bool? enabled,
+    int? sortOrder,
+    DateTime? createdAt,
+  }) => HabitRow(
+    sessionId: sessionId ?? this.sessionId,
+    id: id ?? this.id,
+    title: title ?? this.title,
+    type: type ?? this.type,
+    target: target ?? this.target,
+    unit: unit.present ? unit.value : this.unit,
+    iconKey: iconKey ?? this.iconKey,
+    enabled: enabled ?? this.enabled,
+    sortOrder: sortOrder ?? this.sortOrder,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  HabitRow copyWithCompanion(HabitsCompanion data) {
+    return HabitRow(
+      sessionId: data.sessionId.present ? data.sessionId.value : this.sessionId,
+      id: data.id.present ? data.id.value : this.id,
+      title: data.title.present ? data.title.value : this.title,
+      type: data.type.present ? data.type.value : this.type,
+      target: data.target.present ? data.target.value : this.target,
+      unit: data.unit.present ? data.unit.value : this.unit,
+      iconKey: data.iconKey.present ? data.iconKey.value : this.iconKey,
+      enabled: data.enabled.present ? data.enabled.value : this.enabled,
+      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('HabitRow(')
+          ..write('sessionId: $sessionId, ')
+          ..write('id: $id, ')
+          ..write('title: $title, ')
+          ..write('type: $type, ')
+          ..write('target: $target, ')
+          ..write('unit: $unit, ')
+          ..write('iconKey: $iconKey, ')
+          ..write('enabled: $enabled, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    sessionId,
+    id,
+    title,
+    type,
+    target,
+    unit,
+    iconKey,
+    enabled,
+    sortOrder,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is HabitRow &&
+          other.sessionId == this.sessionId &&
+          other.id == this.id &&
+          other.title == this.title &&
+          other.type == this.type &&
+          other.target == this.target &&
+          other.unit == this.unit &&
+          other.iconKey == this.iconKey &&
+          other.enabled == this.enabled &&
+          other.sortOrder == this.sortOrder &&
+          other.createdAt == this.createdAt);
+}
+
+class HabitsCompanion extends UpdateCompanion<HabitRow> {
+  final Value<int> sessionId;
+  final Value<String> id;
+  final Value<String> title;
+  final Value<HabitType> type;
+  final Value<int> target;
+  final Value<String?> unit;
+  final Value<String> iconKey;
+  final Value<bool> enabled;
+  final Value<int> sortOrder;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const HabitsCompanion({
+    this.sessionId = const Value.absent(),
+    this.id = const Value.absent(),
+    this.title = const Value.absent(),
+    this.type = const Value.absent(),
+    this.target = const Value.absent(),
+    this.unit = const Value.absent(),
+    this.iconKey = const Value.absent(),
+    this.enabled = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  HabitsCompanion.insert({
+    required int sessionId,
+    required String id,
+    required String title,
+    required HabitType type,
+    required int target,
+    this.unit = const Value.absent(),
+    required String iconKey,
+    required bool enabled,
+    required int sortOrder,
+    required DateTime createdAt,
+    this.rowid = const Value.absent(),
+  }) : sessionId = Value(sessionId),
+       id = Value(id),
+       title = Value(title),
+       type = Value(type),
+       target = Value(target),
+       iconKey = Value(iconKey),
+       enabled = Value(enabled),
+       sortOrder = Value(sortOrder),
+       createdAt = Value(createdAt);
+  static Insertable<HabitRow> custom({
+    Expression<int>? sessionId,
+    Expression<String>? id,
+    Expression<String>? title,
+    Expression<String>? type,
+    Expression<int>? target,
+    Expression<String>? unit,
+    Expression<String>? iconKey,
+    Expression<bool>? enabled,
+    Expression<int>? sortOrder,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (sessionId != null) 'session_id': sessionId,
+      if (id != null) 'id': id,
+      if (title != null) 'title': title,
+      if (type != null) 'type': type,
+      if (target != null) 'target': target,
+      if (unit != null) 'unit': unit,
+      if (iconKey != null) 'icon_key': iconKey,
+      if (enabled != null) 'enabled': enabled,
+      if (sortOrder != null) 'sort_order': sortOrder,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  HabitsCompanion copyWith({
+    Value<int>? sessionId,
+    Value<String>? id,
+    Value<String>? title,
+    Value<HabitType>? type,
+    Value<int>? target,
+    Value<String?>? unit,
+    Value<String>? iconKey,
+    Value<bool>? enabled,
+    Value<int>? sortOrder,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return HabitsCompanion(
+      sessionId: sessionId ?? this.sessionId,
+      id: id ?? this.id,
+      title: title ?? this.title,
+      type: type ?? this.type,
+      target: target ?? this.target,
+      unit: unit ?? this.unit,
+      iconKey: iconKey ?? this.iconKey,
+      enabled: enabled ?? this.enabled,
+      sortOrder: sortOrder ?? this.sortOrder,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (sessionId.present) {
+      map['session_id'] = Variable<int>(sessionId.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
+    }
+    if (type.present) {
+      map['type'] = Variable<String>(
+        $HabitsTable.$convertertype.toSql(type.value),
+      );
+    }
+    if (target.present) {
+      map['target'] = Variable<int>(target.value);
+    }
+    if (unit.present) {
+      map['unit'] = Variable<String>(unit.value);
+    }
+    if (iconKey.present) {
+      map['icon_key'] = Variable<String>(iconKey.value);
+    }
+    if (enabled.present) {
+      map['enabled'] = Variable<bool>(enabled.value);
+    }
+    if (sortOrder.present) {
+      map['sort_order'] = Variable<int>(sortOrder.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('HabitsCompanion(')
+          ..write('sessionId: $sessionId, ')
+          ..write('id: $id, ')
+          ..write('title: $title, ')
+          ..write('type: $type, ')
+          ..write('target: $target, ')
+          ..write('unit: $unit, ')
+          ..write('iconKey: $iconKey, ')
+          ..write('enabled: $enabled, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $DailyHabitProgressEntriesTable extends DailyHabitProgressEntries
+    with TableInfo<$DailyHabitProgressEntriesTable, HabitProgressRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $DailyHabitProgressEntriesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _sessionIdMeta = const VerificationMeta(
+    'sessionId',
+  );
+  @override
+  late final GeneratedColumn<int> sessionId = GeneratedColumn<int>(
+    'session_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _habitIdMeta = const VerificationMeta(
+    'habitId',
+  );
+  @override
+  late final GeneratedColumn<String> habitId = GeneratedColumn<String>(
+    'habit_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<LocalDate, String> date =
+      GeneratedColumn<String>(
+        'date',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<LocalDate>(
+        $DailyHabitProgressEntriesTable.$converterdate,
+      );
+  static const VerificationMeta _currentValueMeta = const VerificationMeta(
+    'currentValue',
+  );
+  @override
+  late final GeneratedColumn<int> currentValue = GeneratedColumn<int>(
+    'current_value',
+    aliasedName,
+    false,
+    check: () => ComparableExpr(currentValue).isBiggerOrEqualValue(0),
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _completedMeta = const VerificationMeta(
+    'completed',
+  );
+  @override
+  late final GeneratedColumn<bool> completed = GeneratedColumn<bool>(
+    'completed',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("completed" IN (0, 1))',
+    ),
+  );
+  static const VerificationMeta _completedAtMeta = const VerificationMeta(
+    'completedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> completedAt = GeneratedColumn<DateTime>(
+    'completed_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    sessionId,
+    habitId,
+    date,
+    currentValue,
+    completed,
+    completedAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'daily_habit_progress_entries';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<HabitProgressRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('session_id')) {
+      context.handle(
+        _sessionIdMeta,
+        sessionId.isAcceptableOrUnknown(data['session_id']!, _sessionIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sessionIdMeta);
+    }
+    if (data.containsKey('habit_id')) {
+      context.handle(
+        _habitIdMeta,
+        habitId.isAcceptableOrUnknown(data['habit_id']!, _habitIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_habitIdMeta);
+    }
+    if (data.containsKey('current_value')) {
+      context.handle(
+        _currentValueMeta,
+        currentValue.isAcceptableOrUnknown(
+          data['current_value']!,
+          _currentValueMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_currentValueMeta);
+    }
+    if (data.containsKey('completed')) {
+      context.handle(
+        _completedMeta,
+        completed.isAcceptableOrUnknown(data['completed']!, _completedMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_completedMeta);
+    }
+    if (data.containsKey('completed_at')) {
+      context.handle(
+        _completedAtMeta,
+        completedAt.isAcceptableOrUnknown(
+          data['completed_at']!,
+          _completedAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {sessionId, habitId, date};
+  @override
+  HabitProgressRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return HabitProgressRow(
+      sessionId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}session_id'],
+      )!,
+      habitId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}habit_id'],
+      )!,
+      date: $DailyHabitProgressEntriesTable.$converterdate.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}date'],
+        )!,
+      ),
+      currentValue: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}current_value'],
+      )!,
+      completed: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}completed'],
+      )!,
+      completedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}completed_at'],
+      ),
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $DailyHabitProgressEntriesTable createAlias(String alias) {
+    return $DailyHabitProgressEntriesTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<LocalDate, String> $converterdate =
+      const LocalDateConverter();
+}
+
+class HabitProgressRow extends DataClass
+    implements Insertable<HabitProgressRow> {
+  final int sessionId;
+  final String habitId;
+  final LocalDate date;
+  final int currentValue;
+  final bool completed;
+  final DateTime? completedAt;
+  final DateTime updatedAt;
+  const HabitProgressRow({
+    required this.sessionId,
+    required this.habitId,
+    required this.date,
+    required this.currentValue,
+    required this.completed,
+    this.completedAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['session_id'] = Variable<int>(sessionId);
+    map['habit_id'] = Variable<String>(habitId);
+    {
+      map['date'] = Variable<String>(
+        $DailyHabitProgressEntriesTable.$converterdate.toSql(date),
+      );
+    }
+    map['current_value'] = Variable<int>(currentValue);
+    map['completed'] = Variable<bool>(completed);
+    if (!nullToAbsent || completedAt != null) {
+      map['completed_at'] = Variable<DateTime>(completedAt);
+    }
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  DailyHabitProgressEntriesCompanion toCompanion(bool nullToAbsent) {
+    return DailyHabitProgressEntriesCompanion(
+      sessionId: Value(sessionId),
+      habitId: Value(habitId),
+      date: Value(date),
+      currentValue: Value(currentValue),
+      completed: Value(completed),
+      completedAt: completedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(completedAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory HabitProgressRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return HabitProgressRow(
+      sessionId: serializer.fromJson<int>(json['sessionId']),
+      habitId: serializer.fromJson<String>(json['habitId']),
+      date: serializer.fromJson<LocalDate>(json['date']),
+      currentValue: serializer.fromJson<int>(json['currentValue']),
+      completed: serializer.fromJson<bool>(json['completed']),
+      completedAt: serializer.fromJson<DateTime?>(json['completedAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'sessionId': serializer.toJson<int>(sessionId),
+      'habitId': serializer.toJson<String>(habitId),
+      'date': serializer.toJson<LocalDate>(date),
+      'currentValue': serializer.toJson<int>(currentValue),
+      'completed': serializer.toJson<bool>(completed),
+      'completedAt': serializer.toJson<DateTime?>(completedAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  HabitProgressRow copyWith({
+    int? sessionId,
+    String? habitId,
+    LocalDate? date,
+    int? currentValue,
+    bool? completed,
+    Value<DateTime?> completedAt = const Value.absent(),
+    DateTime? updatedAt,
+  }) => HabitProgressRow(
+    sessionId: sessionId ?? this.sessionId,
+    habitId: habitId ?? this.habitId,
+    date: date ?? this.date,
+    currentValue: currentValue ?? this.currentValue,
+    completed: completed ?? this.completed,
+    completedAt: completedAt.present ? completedAt.value : this.completedAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  HabitProgressRow copyWithCompanion(DailyHabitProgressEntriesCompanion data) {
+    return HabitProgressRow(
+      sessionId: data.sessionId.present ? data.sessionId.value : this.sessionId,
+      habitId: data.habitId.present ? data.habitId.value : this.habitId,
+      date: data.date.present ? data.date.value : this.date,
+      currentValue: data.currentValue.present
+          ? data.currentValue.value
+          : this.currentValue,
+      completed: data.completed.present ? data.completed.value : this.completed,
+      completedAt: data.completedAt.present
+          ? data.completedAt.value
+          : this.completedAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('HabitProgressRow(')
+          ..write('sessionId: $sessionId, ')
+          ..write('habitId: $habitId, ')
+          ..write('date: $date, ')
+          ..write('currentValue: $currentValue, ')
+          ..write('completed: $completed, ')
+          ..write('completedAt: $completedAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    sessionId,
+    habitId,
+    date,
+    currentValue,
+    completed,
+    completedAt,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is HabitProgressRow &&
+          other.sessionId == this.sessionId &&
+          other.habitId == this.habitId &&
+          other.date == this.date &&
+          other.currentValue == this.currentValue &&
+          other.completed == this.completed &&
+          other.completedAt == this.completedAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class DailyHabitProgressEntriesCompanion
+    extends UpdateCompanion<HabitProgressRow> {
+  final Value<int> sessionId;
+  final Value<String> habitId;
+  final Value<LocalDate> date;
+  final Value<int> currentValue;
+  final Value<bool> completed;
+  final Value<DateTime?> completedAt;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const DailyHabitProgressEntriesCompanion({
+    this.sessionId = const Value.absent(),
+    this.habitId = const Value.absent(),
+    this.date = const Value.absent(),
+    this.currentValue = const Value.absent(),
+    this.completed = const Value.absent(),
+    this.completedAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  DailyHabitProgressEntriesCompanion.insert({
+    required int sessionId,
+    required String habitId,
+    required LocalDate date,
+    required int currentValue,
+    required bool completed,
+    this.completedAt = const Value.absent(),
+    required DateTime updatedAt,
+    this.rowid = const Value.absent(),
+  }) : sessionId = Value(sessionId),
+       habitId = Value(habitId),
+       date = Value(date),
+       currentValue = Value(currentValue),
+       completed = Value(completed),
+       updatedAt = Value(updatedAt);
+  static Insertable<HabitProgressRow> custom({
+    Expression<int>? sessionId,
+    Expression<String>? habitId,
+    Expression<String>? date,
+    Expression<int>? currentValue,
+    Expression<bool>? completed,
+    Expression<DateTime>? completedAt,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (sessionId != null) 'session_id': sessionId,
+      if (habitId != null) 'habit_id': habitId,
+      if (date != null) 'date': date,
+      if (currentValue != null) 'current_value': currentValue,
+      if (completed != null) 'completed': completed,
+      if (completedAt != null) 'completed_at': completedAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  DailyHabitProgressEntriesCompanion copyWith({
+    Value<int>? sessionId,
+    Value<String>? habitId,
+    Value<LocalDate>? date,
+    Value<int>? currentValue,
+    Value<bool>? completed,
+    Value<DateTime?>? completedAt,
+    Value<DateTime>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return DailyHabitProgressEntriesCompanion(
+      sessionId: sessionId ?? this.sessionId,
+      habitId: habitId ?? this.habitId,
+      date: date ?? this.date,
+      currentValue: currentValue ?? this.currentValue,
+      completed: completed ?? this.completed,
+      completedAt: completedAt ?? this.completedAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (sessionId.present) {
+      map['session_id'] = Variable<int>(sessionId.value);
+    }
+    if (habitId.present) {
+      map['habit_id'] = Variable<String>(habitId.value);
+    }
+    if (date.present) {
+      map['date'] = Variable<String>(
+        $DailyHabitProgressEntriesTable.$converterdate.toSql(date.value),
+      );
+    }
+    if (currentValue.present) {
+      map['current_value'] = Variable<int>(currentValue.value);
+    }
+    if (completed.present) {
+      map['completed'] = Variable<bool>(completed.value);
+    }
+    if (completedAt.present) {
+      map['completed_at'] = Variable<DateTime>(completedAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DailyHabitProgressEntriesCompanion(')
+          ..write('sessionId: $sessionId, ')
+          ..write('habitId: $habitId, ')
+          ..write('date: $date, ')
+          ..write('currentValue: $currentValue, ')
+          ..write('completed: $completed, ')
+          ..write('completedAt: $completedAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $XpTransactionsTable extends XpTransactions
+    with TableInfo<$XpTransactionsTable, XpTransactionRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $XpTransactionsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _sessionIdMeta = const VerificationMeta(
+    'sessionId',
+  );
+  @override
+  late final GeneratedColumn<int> sessionId = GeneratedColumn<int>(
+    'session_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES winter_arc_sessions (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _sourceKeyMeta = const VerificationMeta(
+    'sourceKey',
+  );
+  @override
+  late final GeneratedColumn<String> sourceKey = GeneratedColumn<String>(
+    'source_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<XpReason, String> reason =
+      GeneratedColumn<String>(
+        'reason',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<XpReason>($XpTransactionsTable.$converterreason);
+  static const VerificationMeta _amountMeta = const VerificationMeta('amount');
+  @override
+  late final GeneratedColumn<int> amount = GeneratedColumn<int>(
+    'amount',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _habitIdMeta = const VerificationMeta(
+    'habitId',
+  );
+  @override
+  late final GeneratedColumn<String> habitId = GeneratedColumn<String>(
+    'habit_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<LocalDate, String> date =
+      GeneratedColumn<String>(
+        'date',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<LocalDate>($XpTransactionsTable.$converterdate);
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    sessionId,
+    sourceKey,
+    reason,
+    amount,
+    habitId,
+    date,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'xp_transactions';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<XpTransactionRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('session_id')) {
+      context.handle(
+        _sessionIdMeta,
+        sessionId.isAcceptableOrUnknown(data['session_id']!, _sessionIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sessionIdMeta);
+    }
+    if (data.containsKey('source_key')) {
+      context.handle(
+        _sourceKeyMeta,
+        sourceKey.isAcceptableOrUnknown(data['source_key']!, _sourceKeyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceKeyMeta);
+    }
+    if (data.containsKey('amount')) {
+      context.handle(
+        _amountMeta,
+        amount.isAcceptableOrUnknown(data['amount']!, _amountMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_amountMeta);
+    }
+    if (data.containsKey('habit_id')) {
+      context.handle(
+        _habitIdMeta,
+        habitId.isAcceptableOrUnknown(data['habit_id']!, _habitIdMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {sessionId, sourceKey},
+  ];
+  @override
+  XpTransactionRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return XpTransactionRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      sessionId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}session_id'],
+      )!,
+      sourceKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_key'],
+      )!,
+      reason: $XpTransactionsTable.$converterreason.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}reason'],
+        )!,
+      ),
+      amount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}amount'],
+      )!,
+      habitId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}habit_id'],
+      ),
+      date: $XpTransactionsTable.$converterdate.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}date'],
+        )!,
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $XpTransactionsTable createAlias(String alias) {
+    return $XpTransactionsTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<XpReason, String, String> $converterreason =
+      const EnumNameConverter<XpReason>(XpReason.values);
+  static TypeConverter<LocalDate, String> $converterdate =
+      const LocalDateConverter();
+}
+
+class XpTransactionRow extends DataClass
+    implements Insertable<XpTransactionRow> {
+  final int id;
+  final int sessionId;
+
+  /// Idempotency key, see `XpRules.habitCompletionKey`.
+  final String sourceKey;
+  final XpReason reason;
+  final int amount;
+  final String? habitId;
+  final LocalDate date;
+  final DateTime createdAt;
+  const XpTransactionRow({
+    required this.id,
+    required this.sessionId,
+    required this.sourceKey,
+    required this.reason,
+    required this.amount,
+    this.habitId,
+    required this.date,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['session_id'] = Variable<int>(sessionId);
+    map['source_key'] = Variable<String>(sourceKey);
+    {
+      map['reason'] = Variable<String>(
+        $XpTransactionsTable.$converterreason.toSql(reason),
+      );
+    }
+    map['amount'] = Variable<int>(amount);
+    if (!nullToAbsent || habitId != null) {
+      map['habit_id'] = Variable<String>(habitId);
+    }
+    {
+      map['date'] = Variable<String>(
+        $XpTransactionsTable.$converterdate.toSql(date),
+      );
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  XpTransactionsCompanion toCompanion(bool nullToAbsent) {
+    return XpTransactionsCompanion(
+      id: Value(id),
+      sessionId: Value(sessionId),
+      sourceKey: Value(sourceKey),
+      reason: Value(reason),
+      amount: Value(amount),
+      habitId: habitId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(habitId),
+      date: Value(date),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory XpTransactionRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return XpTransactionRow(
+      id: serializer.fromJson<int>(json['id']),
+      sessionId: serializer.fromJson<int>(json['sessionId']),
+      sourceKey: serializer.fromJson<String>(json['sourceKey']),
+      reason: $XpTransactionsTable.$converterreason.fromJson(
+        serializer.fromJson<String>(json['reason']),
+      ),
+      amount: serializer.fromJson<int>(json['amount']),
+      habitId: serializer.fromJson<String?>(json['habitId']),
+      date: serializer.fromJson<LocalDate>(json['date']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'sessionId': serializer.toJson<int>(sessionId),
+      'sourceKey': serializer.toJson<String>(sourceKey),
+      'reason': serializer.toJson<String>(
+        $XpTransactionsTable.$converterreason.toJson(reason),
+      ),
+      'amount': serializer.toJson<int>(amount),
+      'habitId': serializer.toJson<String?>(habitId),
+      'date': serializer.toJson<LocalDate>(date),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  XpTransactionRow copyWith({
+    int? id,
+    int? sessionId,
+    String? sourceKey,
+    XpReason? reason,
+    int? amount,
+    Value<String?> habitId = const Value.absent(),
+    LocalDate? date,
+    DateTime? createdAt,
+  }) => XpTransactionRow(
+    id: id ?? this.id,
+    sessionId: sessionId ?? this.sessionId,
+    sourceKey: sourceKey ?? this.sourceKey,
+    reason: reason ?? this.reason,
+    amount: amount ?? this.amount,
+    habitId: habitId.present ? habitId.value : this.habitId,
+    date: date ?? this.date,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  XpTransactionRow copyWithCompanion(XpTransactionsCompanion data) {
+    return XpTransactionRow(
+      id: data.id.present ? data.id.value : this.id,
+      sessionId: data.sessionId.present ? data.sessionId.value : this.sessionId,
+      sourceKey: data.sourceKey.present ? data.sourceKey.value : this.sourceKey,
+      reason: data.reason.present ? data.reason.value : this.reason,
+      amount: data.amount.present ? data.amount.value : this.amount,
+      habitId: data.habitId.present ? data.habitId.value : this.habitId,
+      date: data.date.present ? data.date.value : this.date,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('XpTransactionRow(')
+          ..write('id: $id, ')
+          ..write('sessionId: $sessionId, ')
+          ..write('sourceKey: $sourceKey, ')
+          ..write('reason: $reason, ')
+          ..write('amount: $amount, ')
+          ..write('habitId: $habitId, ')
+          ..write('date: $date, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    sessionId,
+    sourceKey,
+    reason,
+    amount,
+    habitId,
+    date,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is XpTransactionRow &&
+          other.id == this.id &&
+          other.sessionId == this.sessionId &&
+          other.sourceKey == this.sourceKey &&
+          other.reason == this.reason &&
+          other.amount == this.amount &&
+          other.habitId == this.habitId &&
+          other.date == this.date &&
+          other.createdAt == this.createdAt);
+}
+
+class XpTransactionsCompanion extends UpdateCompanion<XpTransactionRow> {
+  final Value<int> id;
+  final Value<int> sessionId;
+  final Value<String> sourceKey;
+  final Value<XpReason> reason;
+  final Value<int> amount;
+  final Value<String?> habitId;
+  final Value<LocalDate> date;
+  final Value<DateTime> createdAt;
+  const XpTransactionsCompanion({
+    this.id = const Value.absent(),
+    this.sessionId = const Value.absent(),
+    this.sourceKey = const Value.absent(),
+    this.reason = const Value.absent(),
+    this.amount = const Value.absent(),
+    this.habitId = const Value.absent(),
+    this.date = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  XpTransactionsCompanion.insert({
+    this.id = const Value.absent(),
+    required int sessionId,
+    required String sourceKey,
+    required XpReason reason,
+    required int amount,
+    this.habitId = const Value.absent(),
+    required LocalDate date,
+    required DateTime createdAt,
+  }) : sessionId = Value(sessionId),
+       sourceKey = Value(sourceKey),
+       reason = Value(reason),
+       amount = Value(amount),
+       date = Value(date),
+       createdAt = Value(createdAt);
+  static Insertable<XpTransactionRow> custom({
+    Expression<int>? id,
+    Expression<int>? sessionId,
+    Expression<String>? sourceKey,
+    Expression<String>? reason,
+    Expression<int>? amount,
+    Expression<String>? habitId,
+    Expression<String>? date,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (sessionId != null) 'session_id': sessionId,
+      if (sourceKey != null) 'source_key': sourceKey,
+      if (reason != null) 'reason': reason,
+      if (amount != null) 'amount': amount,
+      if (habitId != null) 'habit_id': habitId,
+      if (date != null) 'date': date,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  XpTransactionsCompanion copyWith({
+    Value<int>? id,
+    Value<int>? sessionId,
+    Value<String>? sourceKey,
+    Value<XpReason>? reason,
+    Value<int>? amount,
+    Value<String?>? habitId,
+    Value<LocalDate>? date,
+    Value<DateTime>? createdAt,
+  }) {
+    return XpTransactionsCompanion(
+      id: id ?? this.id,
+      sessionId: sessionId ?? this.sessionId,
+      sourceKey: sourceKey ?? this.sourceKey,
+      reason: reason ?? this.reason,
+      amount: amount ?? this.amount,
+      habitId: habitId ?? this.habitId,
+      date: date ?? this.date,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (sessionId.present) {
+      map['session_id'] = Variable<int>(sessionId.value);
+    }
+    if (sourceKey.present) {
+      map['source_key'] = Variable<String>(sourceKey.value);
+    }
+    if (reason.present) {
+      map['reason'] = Variable<String>(
+        $XpTransactionsTable.$converterreason.toSql(reason.value),
+      );
+    }
+    if (amount.present) {
+      map['amount'] = Variable<int>(amount.value);
+    }
+    if (habitId.present) {
+      map['habit_id'] = Variable<String>(habitId.value);
+    }
+    if (date.present) {
+      map['date'] = Variable<String>(
+        $XpTransactionsTable.$converterdate.toSql(date.value),
+      );
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('XpTransactionsCompanion(')
+          ..write('id: $id, ')
+          ..write('sessionId: $sessionId, ')
+          ..write('sourceKey: $sourceKey, ')
+          ..write('reason: $reason, ')
+          ..write('amount: $amount, ')
+          ..write('habitId: $habitId, ')
+          ..write('date: $date, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+abstract class _$AppDatabase extends GeneratedDatabase {
+  _$AppDatabase(QueryExecutor e) : super(e);
+  $AppDatabaseManager get managers => $AppDatabaseManager(this);
+  late final $WinterArcSessionsTable winterArcSessions =
+      $WinterArcSessionsTable(this);
+  late final $HabitsTable habits = $HabitsTable(this);
+  late final $DailyHabitProgressEntriesTable dailyHabitProgressEntries =
+      $DailyHabitProgressEntriesTable(this);
+  late final $XpTransactionsTable xpTransactions = $XpTransactionsTable(this);
+  @override
+  Iterable<TableInfo<Table, Object?>> get allTables =>
+      allSchemaEntities.whereType<TableInfo<Table, Object?>>();
+  @override
+  List<DatabaseSchemaEntity> get allSchemaEntities => [
+    winterArcSessions,
+    habits,
+    dailyHabitProgressEntries,
+    xpTransactions,
+  ];
+  @override
+  StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'winter_arc_sessions',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('habits', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'winter_arc_sessions',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('xp_transactions', kind: UpdateKind.delete)],
+    ),
+  ]);
+}
+
+typedef $$WinterArcSessionsTableCreateCompanionBuilder =
+    WinterArcSessionsCompanion Function({
+      Value<int> id,
+      required LocalDate startDate,
+      required LocalDate endDate,
+      required WinterArcStatus status,
+      required DateTime createdAt,
+      Value<DateTime?> startedAt,
+    });
+typedef $$WinterArcSessionsTableUpdateCompanionBuilder =
+    WinterArcSessionsCompanion Function({
+      Value<int> id,
+      Value<LocalDate> startDate,
+      Value<LocalDate> endDate,
+      Value<WinterArcStatus> status,
+      Value<DateTime> createdAt,
+      Value<DateTime?> startedAt,
+    });
+
+final class $$WinterArcSessionsTableReferences
+    extends BaseReferences<_$AppDatabase, $WinterArcSessionsTable, SessionRow> {
+  $$WinterArcSessionsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static MultiTypedResultKey<$HabitsTable, List<HabitRow>> _habitsRefsTable(
+    _$AppDatabase db,
+  ) => MultiTypedResultKey.fromTable(
+    db.habits,
+    aliasName: 'winter_arc_sessions__id__habits__session_id',
+  );
+
+  $$HabitsTableProcessedTableManager get habitsRefs {
+    final manager = $$HabitsTableTableManager(
+      $_db,
+      $_db.habits,
+    ).filter((f) => f.sessionId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_habitsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$XpTransactionsTable, List<XpTransactionRow>>
+  _xpTransactionsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.xpTransactions,
+    aliasName: 'winter_arc_sessions__id__xp_transactions__session_id',
+  );
+
+  $$XpTransactionsTableProcessedTableManager get xpTransactionsRefs {
+    final manager = $$XpTransactionsTableTableManager(
+      $_db,
+      $_db.xpTransactions,
+    ).filter((f) => f.sessionId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_xpTransactionsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$WinterArcSessionsTableFilterComposer
+    extends Composer<_$AppDatabase, $WinterArcSessionsTable> {
+  $$WinterArcSessionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<LocalDate, LocalDate, String> get startDate =>
+      $composableBuilder(
+        column: $table.startDate,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnWithTypeConverterFilters<LocalDate, LocalDate, String> get endDate =>
+      $composableBuilder(
+        column: $table.endDate,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnWithTypeConverterFilters<WinterArcStatus, WinterArcStatus, String>
+  get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get startedAt => $composableBuilder(
+    column: $table.startedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  Expression<bool> habitsRefs(
+    Expression<bool> Function($$HabitsTableFilterComposer f) f,
+  ) {
+    final $$HabitsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.habits,
+      getReferencedColumn: (t) => t.sessionId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$HabitsTableFilterComposer(
+            $db: $db,
+            $table: $db.habits,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> xpTransactionsRefs(
+    Expression<bool> Function($$XpTransactionsTableFilterComposer f) f,
+  ) {
+    final $$XpTransactionsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.xpTransactions,
+      getReferencedColumn: (t) => t.sessionId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$XpTransactionsTableFilterComposer(
+            $db: $db,
+            $table: $db.xpTransactions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$WinterArcSessionsTableOrderingComposer
+    extends Composer<_$AppDatabase, $WinterArcSessionsTable> {
+  $$WinterArcSessionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get startDate => $composableBuilder(
+    column: $table.startDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get endDate => $composableBuilder(
+    column: $table.endDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get startedAt => $composableBuilder(
+    column: $table.startedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$WinterArcSessionsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $WinterArcSessionsTable> {
+  $$WinterArcSessionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<LocalDate, String> get startDate =>
+      $composableBuilder(column: $table.startDate, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<LocalDate, String> get endDate =>
+      $composableBuilder(column: $table.endDate, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<WinterArcStatus, String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get startedAt =>
+      $composableBuilder(column: $table.startedAt, builder: (column) => column);
+
+  Expression<T> habitsRefs<T extends Object>(
+    Expression<T> Function($$HabitsTableAnnotationComposer a) f,
+  ) {
+    final $$HabitsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.habits,
+      getReferencedColumn: (t) => t.sessionId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$HabitsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.habits,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<T> xpTransactionsRefs<T extends Object>(
+    Expression<T> Function($$XpTransactionsTableAnnotationComposer a) f,
+  ) {
+    final $$XpTransactionsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.xpTransactions,
+      getReferencedColumn: (t) => t.sessionId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$XpTransactionsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.xpTransactions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$WinterArcSessionsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $WinterArcSessionsTable,
+          SessionRow,
+          $$WinterArcSessionsTableFilterComposer,
+          $$WinterArcSessionsTableOrderingComposer,
+          $$WinterArcSessionsTableAnnotationComposer,
+          $$WinterArcSessionsTableCreateCompanionBuilder,
+          $$WinterArcSessionsTableUpdateCompanionBuilder,
+          (SessionRow, $$WinterArcSessionsTableReferences),
+          SessionRow,
+          PrefetchHooks Function({bool habitsRefs, bool xpTransactionsRefs})
+        > {
+  $$WinterArcSessionsTableTableManager(
+    _$AppDatabase db,
+    $WinterArcSessionsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$WinterArcSessionsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$WinterArcSessionsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$WinterArcSessionsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<LocalDate> startDate = const Value.absent(),
+                Value<LocalDate> endDate = const Value.absent(),
+                Value<WinterArcStatus> status = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime?> startedAt = const Value.absent(),
+              }) => WinterArcSessionsCompanion(
+                id: id,
+                startDate: startDate,
+                endDate: endDate,
+                status: status,
+                createdAt: createdAt,
+                startedAt: startedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required LocalDate startDate,
+                required LocalDate endDate,
+                required WinterArcStatus status,
+                required DateTime createdAt,
+                Value<DateTime?> startedAt = const Value.absent(),
+              }) => WinterArcSessionsCompanion.insert(
+                id: id,
+                startDate: startDate,
+                endDate: endDate,
+                status: status,
+                createdAt: createdAt,
+                startedAt: startedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$WinterArcSessionsTable, SessionRow>(table),
+                  $$WinterArcSessionsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback:
+              ({habitsRefs = false, xpTransactionsRefs = false}) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (habitsRefs) db.habits,
+                    if (xpTransactionsRefs) db.xpTransactions,
+                  ],
+                  addJoins: null,
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (habitsRefs)
+                        await $_getPrefetchedData<
+                          SessionRow,
+                          $WinterArcSessionsTable,
+                          HabitRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $$WinterArcSessionsTableReferences
+                              ._habitsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$WinterArcSessionsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).habitsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.sessionId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (xpTransactionsRefs)
+                        await $_getPrefetchedData<
+                          SessionRow,
+                          $WinterArcSessionsTable,
+                          XpTransactionRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $$WinterArcSessionsTableReferences
+                              ._xpTransactionsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$WinterArcSessionsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).xpTransactionsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.sessionId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
+              },
+        ),
+      );
+}
+
+typedef $$WinterArcSessionsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $WinterArcSessionsTable,
+      SessionRow,
+      $$WinterArcSessionsTableFilterComposer,
+      $$WinterArcSessionsTableOrderingComposer,
+      $$WinterArcSessionsTableAnnotationComposer,
+      $$WinterArcSessionsTableCreateCompanionBuilder,
+      $$WinterArcSessionsTableUpdateCompanionBuilder,
+      (SessionRow, $$WinterArcSessionsTableReferences),
+      SessionRow,
+      PrefetchHooks Function({bool habitsRefs, bool xpTransactionsRefs})
+    >;
+typedef $$HabitsTableCreateCompanionBuilder = HabitsCompanion Function({
+  required int sessionId,
+  required String id,
+  required String title,
+  required HabitType type,
+  required int target,
+  Value<String?> unit,
+  required String iconKey,
+  required bool enabled,
+  required int sortOrder,
+  required DateTime createdAt,
+  Value<int> rowid,
+});
+typedef $$HabitsTableUpdateCompanionBuilder = HabitsCompanion Function({
+  Value<int> sessionId,
+  Value<String> id,
+  Value<String> title,
+  Value<HabitType> type,
+  Value<int> target,
+  Value<String?> unit,
+  Value<String> iconKey,
+  Value<bool> enabled,
+  Value<int> sortOrder,
+  Value<DateTime> createdAt,
+  Value<int> rowid,
+});
+
+final class $$HabitsTableReferences
+    extends BaseReferences<_$AppDatabase, $HabitsTable, HabitRow> {
+  $$HabitsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $WinterArcSessionsTable _sessionIdTable(_$AppDatabase db) => db
+      .winterArcSessions
+      .createAlias('habits__session_id__winter_arc_sessions__id');
+
+  $$WinterArcSessionsTableProcessedTableManager get sessionId {
+    final $_column = $_itemColumn<int>('session_id')!;
+
+    final manager = $$WinterArcSessionsTableTableManager(
+      $_db,
+      $_db.winterArcSessions,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_sessionIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$HabitsTableFilterComposer
+    extends Composer<_$AppDatabase, $HabitsTable> {
+  $$HabitsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<HabitType, HabitType, String> get type =>
+      $composableBuilder(
+        column: $table.type,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<int> get target => $composableBuilder(
+    column: $table.target,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get unit => $composableBuilder(
+    column: $table.unit,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get iconKey => $composableBuilder(
+    column: $table.iconKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get enabled => $composableBuilder(
+    column: $table.enabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$WinterArcSessionsTableFilterComposer get sessionId {
+    final $$WinterArcSessionsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sessionId,
+      referencedTable: $db.winterArcSessions,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$WinterArcSessionsTableFilterComposer(
+            $db: $db,
+            $table: $db.winterArcSessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$HabitsTableOrderingComposer
+    extends Composer<_$AppDatabase, $HabitsTable> {
+  $$HabitsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get target => $composableBuilder(
+    column: $table.target,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get unit => $composableBuilder(
+    column: $table.unit,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get iconKey => $composableBuilder(
+    column: $table.iconKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get enabled => $composableBuilder(
+    column: $table.enabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$WinterArcSessionsTableOrderingComposer get sessionId {
+    final $$WinterArcSessionsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sessionId,
+      referencedTable: $db.winterArcSessions,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$WinterArcSessionsTableOrderingComposer(
+            $db: $db,
+            $table: $db.winterArcSessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$HabitsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $HabitsTable> {
+  $$HabitsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<HabitType, String> get type =>
+      $composableBuilder(column: $table.type, builder: (column) => column);
+
+  GeneratedColumn<int> get target =>
+      $composableBuilder(column: $table.target, builder: (column) => column);
+
+  GeneratedColumn<String> get unit =>
+      $composableBuilder(column: $table.unit, builder: (column) => column);
+
+  GeneratedColumn<String> get iconKey =>
+      $composableBuilder(column: $table.iconKey, builder: (column) => column);
+
+  GeneratedColumn<bool> get enabled =>
+      $composableBuilder(column: $table.enabled, builder: (column) => column);
+
+  GeneratedColumn<int> get sortOrder =>
+      $composableBuilder(column: $table.sortOrder, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  $$WinterArcSessionsTableAnnotationComposer get sessionId {
+    final $$WinterArcSessionsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.sessionId,
+          referencedTable: $db.winterArcSessions,
+          getReferencedColumn: (t) => t.id,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$WinterArcSessionsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.winterArcSessions,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return composer;
+  }
+}
+
+class $$HabitsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $HabitsTable,
+          HabitRow,
+          $$HabitsTableFilterComposer,
+          $$HabitsTableOrderingComposer,
+          $$HabitsTableAnnotationComposer,
+          $$HabitsTableCreateCompanionBuilder,
+          $$HabitsTableUpdateCompanionBuilder,
+          (HabitRow, $$HabitsTableReferences),
+          HabitRow,
+          PrefetchHooks Function({bool sessionId})
+        > {
+  $$HabitsTableTableManager(_$AppDatabase db, $HabitsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$HabitsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$HabitsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$HabitsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> sessionId = const Value.absent(),
+                Value<String> id = const Value.absent(),
+                Value<String> title = const Value.absent(),
+                Value<HabitType> type = const Value.absent(),
+                Value<int> target = const Value.absent(),
+                Value<String?> unit = const Value.absent(),
+                Value<String> iconKey = const Value.absent(),
+                Value<bool> enabled = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => HabitsCompanion(
+                sessionId: sessionId,
+                id: id,
+                title: title,
+                type: type,
+                target: target,
+                unit: unit,
+                iconKey: iconKey,
+                enabled: enabled,
+                sortOrder: sortOrder,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required int sessionId,
+                required String id,
+                required String title,
+                required HabitType type,
+                required int target,
+                Value<String?> unit = const Value.absent(),
+                required String iconKey,
+                required bool enabled,
+                required int sortOrder,
+                required DateTime createdAt,
+                Value<int> rowid = const Value.absent(),
+              }) => HabitsCompanion.insert(
+                sessionId: sessionId,
+                id: id,
+                title: title,
+                type: type,
+                target: target,
+                unit: unit,
+                iconKey: iconKey,
+                enabled: enabled,
+                sortOrder: sortOrder,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$HabitsTable, HabitRow>(table),
+                  $$HabitsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({sessionId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (sessionId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.sessionId,
+                        referencedTable: $$HabitsTableReferences
+                            ._sessionIdTable(db),
+                        referencedColumn: $$HabitsTableReferences
+                            ._sessionIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$HabitsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $HabitsTable,
+      HabitRow,
+      $$HabitsTableFilterComposer,
+      $$HabitsTableOrderingComposer,
+      $$HabitsTableAnnotationComposer,
+      $$HabitsTableCreateCompanionBuilder,
+      $$HabitsTableUpdateCompanionBuilder,
+      (HabitRow, $$HabitsTableReferences),
+      HabitRow,
+      PrefetchHooks Function({bool sessionId})
+    >;
+typedef $$DailyHabitProgressEntriesTableCreateCompanionBuilder =
+    DailyHabitProgressEntriesCompanion Function({
+      required int sessionId,
+      required String habitId,
+      required LocalDate date,
+      required int currentValue,
+      required bool completed,
+      Value<DateTime?> completedAt,
+      required DateTime updatedAt,
+      Value<int> rowid,
+    });
+typedef $$DailyHabitProgressEntriesTableUpdateCompanionBuilder =
+    DailyHabitProgressEntriesCompanion Function({
+      Value<int> sessionId,
+      Value<String> habitId,
+      Value<LocalDate> date,
+      Value<int> currentValue,
+      Value<bool> completed,
+      Value<DateTime?> completedAt,
+      Value<DateTime> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$DailyHabitProgressEntriesTableFilterComposer
+    extends Composer<_$AppDatabase, $DailyHabitProgressEntriesTable> {
+  $$DailyHabitProgressEntriesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get sessionId => $composableBuilder(
+    column: $table.sessionId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get habitId => $composableBuilder(
+    column: $table.habitId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<LocalDate, LocalDate, String> get date =>
+      $composableBuilder(
+        column: $table.date,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<int> get currentValue => $composableBuilder(
+    column: $table.currentValue,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get completed => $composableBuilder(
+    column: $table.completed,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get completedAt => $composableBuilder(
+    column: $table.completedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$DailyHabitProgressEntriesTableOrderingComposer
+    extends Composer<_$AppDatabase, $DailyHabitProgressEntriesTable> {
+  $$DailyHabitProgressEntriesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get sessionId => $composableBuilder(
+    column: $table.sessionId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get habitId => $composableBuilder(
+    column: $table.habitId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get date => $composableBuilder(
+    column: $table.date,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get currentValue => $composableBuilder(
+    column: $table.currentValue,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get completed => $composableBuilder(
+    column: $table.completed,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get completedAt => $composableBuilder(
+    column: $table.completedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$DailyHabitProgressEntriesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $DailyHabitProgressEntriesTable> {
+  $$DailyHabitProgressEntriesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get sessionId =>
+      $composableBuilder(column: $table.sessionId, builder: (column) => column);
+
+  GeneratedColumn<String> get habitId =>
+      $composableBuilder(column: $table.habitId, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<LocalDate, String> get date =>
+      $composableBuilder(column: $table.date, builder: (column) => column);
+
+  GeneratedColumn<int> get currentValue => $composableBuilder(
+    column: $table.currentValue,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get completed =>
+      $composableBuilder(column: $table.completed, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get completedAt => $composableBuilder(
+    column: $table.completedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$DailyHabitProgressEntriesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $DailyHabitProgressEntriesTable,
+          HabitProgressRow,
+          $$DailyHabitProgressEntriesTableFilterComposer,
+          $$DailyHabitProgressEntriesTableOrderingComposer,
+          $$DailyHabitProgressEntriesTableAnnotationComposer,
+          $$DailyHabitProgressEntriesTableCreateCompanionBuilder,
+          $$DailyHabitProgressEntriesTableUpdateCompanionBuilder,
+          (
+            HabitProgressRow,
+            BaseReferences<
+              _$AppDatabase,
+              $DailyHabitProgressEntriesTable,
+              HabitProgressRow
+            >,
+          ),
+          HabitProgressRow,
+          PrefetchHooks Function()
+        > {
+  $$DailyHabitProgressEntriesTableTableManager(
+    _$AppDatabase db,
+    $DailyHabitProgressEntriesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$DailyHabitProgressEntriesTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$DailyHabitProgressEntriesTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$DailyHabitProgressEntriesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> sessionId = const Value.absent(),
+                Value<String> habitId = const Value.absent(),
+                Value<LocalDate> date = const Value.absent(),
+                Value<int> currentValue = const Value.absent(),
+                Value<bool> completed = const Value.absent(),
+                Value<DateTime?> completedAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => DailyHabitProgressEntriesCompanion(
+                sessionId: sessionId,
+                habitId: habitId,
+                date: date,
+                currentValue: currentValue,
+                completed: completed,
+                completedAt: completedAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required int sessionId,
+                required String habitId,
+                required LocalDate date,
+                required int currentValue,
+                required bool completed,
+                Value<DateTime?> completedAt = const Value.absent(),
+                required DateTime updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => DailyHabitProgressEntriesCompanion.insert(
+                sessionId: sessionId,
+                habitId: habitId,
+                date: date,
+                currentValue: currentValue,
+                completed: completed,
+                completedAt: completedAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<
+                    $DailyHabitProgressEntriesTable,
+                    HabitProgressRow
+                  >(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $DailyHabitProgressEntriesTable,
+                    HabitProgressRow
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$DailyHabitProgressEntriesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $DailyHabitProgressEntriesTable,
+      HabitProgressRow,
+      $$DailyHabitProgressEntriesTableFilterComposer,
+      $$DailyHabitProgressEntriesTableOrderingComposer,
+      $$DailyHabitProgressEntriesTableAnnotationComposer,
+      $$DailyHabitProgressEntriesTableCreateCompanionBuilder,
+      $$DailyHabitProgressEntriesTableUpdateCompanionBuilder,
+      (
+        HabitProgressRow,
+        BaseReferences<
+          _$AppDatabase,
+          $DailyHabitProgressEntriesTable,
+          HabitProgressRow
+        >,
+      ),
+      HabitProgressRow,
+      PrefetchHooks Function()
+    >;
+typedef $$XpTransactionsTableCreateCompanionBuilder =
+    XpTransactionsCompanion Function({
+      Value<int> id,
+      required int sessionId,
+      required String sourceKey,
+      required XpReason reason,
+      required int amount,
+      Value<String?> habitId,
+      required LocalDate date,
+      required DateTime createdAt,
+    });
+typedef $$XpTransactionsTableUpdateCompanionBuilder =
+    XpTransactionsCompanion Function({
+      Value<int> id,
+      Value<int> sessionId,
+      Value<String> sourceKey,
+      Value<XpReason> reason,
+      Value<int> amount,
+      Value<String?> habitId,
+      Value<LocalDate> date,
+      Value<DateTime> createdAt,
+    });
+
+final class $$XpTransactionsTableReferences
+    extends
+        BaseReferences<_$AppDatabase, $XpTransactionsTable, XpTransactionRow> {
+  $$XpTransactionsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $WinterArcSessionsTable _sessionIdTable(_$AppDatabase db) => db
+      .winterArcSessions
+      .createAlias('xp_transactions__session_id__winter_arc_sessions__id');
+
+  $$WinterArcSessionsTableProcessedTableManager get sessionId {
+    final $_column = $_itemColumn<int>('session_id')!;
+
+    final manager = $$WinterArcSessionsTableTableManager(
+      $_db,
+      $_db.winterArcSessions,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_sessionIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$XpTransactionsTableFilterComposer
+    extends Composer<_$AppDatabase, $XpTransactionsTable> {
+  $$XpTransactionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sourceKey => $composableBuilder(
+    column: $table.sourceKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<XpReason, XpReason, String> get reason =>
+      $composableBuilder(
+        column: $table.reason,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<int> get amount => $composableBuilder(
+    column: $table.amount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get habitId => $composableBuilder(
+    column: $table.habitId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<LocalDate, LocalDate, String> get date =>
+      $composableBuilder(
+        column: $table.date,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$WinterArcSessionsTableFilterComposer get sessionId {
+    final $$WinterArcSessionsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sessionId,
+      referencedTable: $db.winterArcSessions,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$WinterArcSessionsTableFilterComposer(
+            $db: $db,
+            $table: $db.winterArcSessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$XpTransactionsTableOrderingComposer
+    extends Composer<_$AppDatabase, $XpTransactionsTable> {
+  $$XpTransactionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sourceKey => $composableBuilder(
+    column: $table.sourceKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get reason => $composableBuilder(
+    column: $table.reason,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get amount => $composableBuilder(
+    column: $table.amount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get habitId => $composableBuilder(
+    column: $table.habitId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get date => $composableBuilder(
+    column: $table.date,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$WinterArcSessionsTableOrderingComposer get sessionId {
+    final $$WinterArcSessionsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sessionId,
+      referencedTable: $db.winterArcSessions,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$WinterArcSessionsTableOrderingComposer(
+            $db: $db,
+            $table: $db.winterArcSessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$XpTransactionsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $XpTransactionsTable> {
+  $$XpTransactionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get sourceKey =>
+      $composableBuilder(column: $table.sourceKey, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<XpReason, String> get reason =>
+      $composableBuilder(column: $table.reason, builder: (column) => column);
+
+  GeneratedColumn<int> get amount =>
+      $composableBuilder(column: $table.amount, builder: (column) => column);
+
+  GeneratedColumn<String> get habitId =>
+      $composableBuilder(column: $table.habitId, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<LocalDate, String> get date =>
+      $composableBuilder(column: $table.date, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  $$WinterArcSessionsTableAnnotationComposer get sessionId {
+    final $$WinterArcSessionsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.sessionId,
+          referencedTable: $db.winterArcSessions,
+          getReferencedColumn: (t) => t.id,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$WinterArcSessionsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.winterArcSessions,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return composer;
+  }
+}
+
+class $$XpTransactionsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $XpTransactionsTable,
+          XpTransactionRow,
+          $$XpTransactionsTableFilterComposer,
+          $$XpTransactionsTableOrderingComposer,
+          $$XpTransactionsTableAnnotationComposer,
+          $$XpTransactionsTableCreateCompanionBuilder,
+          $$XpTransactionsTableUpdateCompanionBuilder,
+          (XpTransactionRow, $$XpTransactionsTableReferences),
+          XpTransactionRow,
+          PrefetchHooks Function({bool sessionId})
+        > {
+  $$XpTransactionsTableTableManager(
+    _$AppDatabase db,
+    $XpTransactionsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$XpTransactionsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$XpTransactionsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$XpTransactionsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> sessionId = const Value.absent(),
+                Value<String> sourceKey = const Value.absent(),
+                Value<XpReason> reason = const Value.absent(),
+                Value<int> amount = const Value.absent(),
+                Value<String?> habitId = const Value.absent(),
+                Value<LocalDate> date = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => XpTransactionsCompanion(
+                id: id,
+                sessionId: sessionId,
+                sourceKey: sourceKey,
+                reason: reason,
+                amount: amount,
+                habitId: habitId,
+                date: date,
+                createdAt: createdAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int sessionId,
+                required String sourceKey,
+                required XpReason reason,
+                required int amount,
+                Value<String?> habitId = const Value.absent(),
+                required LocalDate date,
+                required DateTime createdAt,
+              }) => XpTransactionsCompanion.insert(
+                id: id,
+                sessionId: sessionId,
+                sourceKey: sourceKey,
+                reason: reason,
+                amount: amount,
+                habitId: habitId,
+                date: date,
+                createdAt: createdAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$XpTransactionsTable, XpTransactionRow>(table),
+                  $$XpTransactionsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({sessionId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (sessionId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.sessionId,
+                        referencedTable: $$XpTransactionsTableReferences
+                            ._sessionIdTable(db),
+                        referencedColumn: $$XpTransactionsTableReferences
+                            ._sessionIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$XpTransactionsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $XpTransactionsTable,
+      XpTransactionRow,
+      $$XpTransactionsTableFilterComposer,
+      $$XpTransactionsTableOrderingComposer,
+      $$XpTransactionsTableAnnotationComposer,
+      $$XpTransactionsTableCreateCompanionBuilder,
+      $$XpTransactionsTableUpdateCompanionBuilder,
+      (XpTransactionRow, $$XpTransactionsTableReferences),
+      XpTransactionRow,
+      PrefetchHooks Function({bool sessionId})
+    >;
+
+class $AppDatabaseManager {
+  final _$AppDatabase _db;
+  $AppDatabaseManager(this._db);
+  $$WinterArcSessionsTableTableManager get winterArcSessions =>
+      $$WinterArcSessionsTableTableManager(_db, _db.winterArcSessions);
+  $$HabitsTableTableManager get habits =>
+      $$HabitsTableTableManager(_db, _db.habits);
+  $$DailyHabitProgressEntriesTableTableManager get dailyHabitProgressEntries =>
+      $$DailyHabitProgressEntriesTableTableManager(
+        _db,
+        _db.dailyHabitProgressEntries,
+      );
+  $$XpTransactionsTableTableManager get xpTransactions =>
+      $$XpTransactionsTableTableManager(_db, _db.xpTransactions);
+}
