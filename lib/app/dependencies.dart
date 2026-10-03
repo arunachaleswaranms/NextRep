@@ -47,7 +47,6 @@ final winterArcServiceProvider = Provider<WinterArcService>(
 final habitTrackingServiceProvider = Provider<HabitTrackingService>(
   (ref) => HabitTrackingService(
     sessions: ref.watch(winterArcRepositoryProvider),
-    habits: ref.watch(habitRepositoryProvider),
     progress: ref.watch(progressRepositoryProvider),
     clock: ref.watch(clockProvider),
   ),
