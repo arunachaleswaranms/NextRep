@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:nextrep/core/errors/app_failure.dart';
 import 'package:nextrep/core/time/local_date.dart';
 import 'package:nextrep/domain/progress/habit_progress_rules.dart';
+import 'package:nextrep/domain/progress/progress_repository.dart';
 import 'package:nextrep/domain/winter_arc/winter_arc_session.dart';
 import 'package:nextrep/domain/xp/xp.dart';
 
@@ -14,7 +15,7 @@ void main() {
   late TestApp app;
   final day1 = LocalDate(2026, 10, 1);
 
-  Future<ProgressTransition> act(
+  Future<DayCommit<ProgressTransition>> act(
     String habitId,
     HabitAction action, {
     LocalDate? date,
@@ -50,7 +51,7 @@ void main() {
 
   test('completing a habit persists progress, XP and percentage', () async {
     final t = await act('no_junk_food', HabitAction.complete);
-    expect(t.becameCompleted, isTrue);
+    expect(t.value.becameCompleted, isTrue);
 
     final today = await app.tracking.today();
     final entry = today.entries.firstWhere((e) => e.habit.id == 'no_junk_food');
