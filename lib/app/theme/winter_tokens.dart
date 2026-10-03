@@ -19,6 +19,8 @@ class WinterColors extends ThemeExtension<WinterColors> {
     required this.success,
     required this.warning,
     required this.danger,
+    required this.recovery,
+    required this.celebration,
   });
 
   static const night = WinterColors(
@@ -34,6 +36,8 @@ class WinterColors extends ThemeExtension<WinterColors> {
     success: Color(0xFF3DDC97),
     warning: Color(0xFFFFB547),
     danger: Color(0xFFFF5C8A),
+    recovery: Color(0xFFFF9F5A),
+    celebration: Color(0xFFFFD166),
   );
 
   /// App background (deep navy / near-black).
@@ -60,6 +64,12 @@ class WinterColors extends ThemeExtension<WinterColors> {
   final Color warning;
   final Color danger;
 
+  /// Warm accent for Minimum Day (recovery, not failure).
+  final Color recovery;
+
+  /// Perfect Day and level-up highlights.
+  final Color celebration;
+
   @override
   WinterColors copyWith({
     Color? background,
@@ -74,6 +84,8 @@ class WinterColors extends ThemeExtension<WinterColors> {
     Color? success,
     Color? warning,
     Color? danger,
+    Color? recovery,
+    Color? celebration,
   }) => WinterColors(
     background: background ?? this.background,
     backgroundTop: backgroundTop ?? this.backgroundTop,
@@ -87,6 +99,8 @@ class WinterColors extends ThemeExtension<WinterColors> {
     success: success ?? this.success,
     warning: warning ?? this.warning,
     danger: danger ?? this.danger,
+    recovery: recovery ?? this.recovery,
+    celebration: celebration ?? this.celebration,
   );
 
   @override
@@ -105,6 +119,8 @@ class WinterColors extends ThemeExtension<WinterColors> {
       success: Color.lerp(success, other.success, t)!,
       warning: Color.lerp(warning, other.warning, t)!,
       danger: Color.lerp(danger, other.danger, t)!,
+      recovery: Color.lerp(recovery, other.recovery, t)!,
+      celebration: Color.lerp(celebration, other.celebration, t)!,
     );
   }
 }
@@ -126,6 +142,33 @@ abstract final class WinterRadii {
   static const double pill = 999;
 }
 
+/// Animation durations. Read them through [WinterMotion.of] so they collapse
+/// to zero when the platform asks for reduced motion.
+abstract final class WinterDurations {
+  static const Duration quick = Duration(milliseconds: 180);
+  static const Duration standard = Duration(milliseconds: 320);
+  static const Duration emphasis = Duration(milliseconds: 600);
+
+  /// How long a celebration banner stays up.
+  static const Duration celebration = Duration(milliseconds: 3200);
+}
+
+/// Motion settings for the current context.
+final class WinterMotion {
+  const WinterMotion._(this.reduced);
+
+  factory WinterMotion.of(BuildContext context) =>
+      WinterMotion._(MediaQuery.maybeDisableAnimationsOf(context) ?? false);
+
+  /// The user asked the platform to remove or reduce animations.
+  final bool reduced;
+
+  Duration get quick => reduced ? Duration.zero : WinterDurations.quick;
+  Duration get standard => reduced ? Duration.zero : WinterDurations.standard;
+  Duration get emphasis => reduced ? Duration.zero : WinterDurations.emphasis;
+}
+
 extension WinterThemeContext on BuildContext {
   WinterColors get winter => Theme.of(this).extension<WinterColors>()!;
+  WinterMotion get motion => WinterMotion.of(this);
 }
