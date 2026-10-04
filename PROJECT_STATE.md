@@ -10,8 +10,11 @@ merged._
   are Phases 1–5.
 - Working branch: `phase/6-seasonal-arc-and-habit-evolution`, from
   `7a0ac04`.
-- PR: to be opened from this branch against `main`.
-- CI: pending (runs on the PR).
+- PR: #6 (https://github.com/arunachaleswaranms/NextRep/pull/6), open for
+  review, not merged.
+- CI: Flutter CI run 37225305174 on the PR (`b449ab0`), both jobs green
+  (format, analyze, migrations v1 → v5, backup format tests, all tests;
+  Android debug build).
 - Author and committer for all commits:
   `Arunachaleswaran M S <arunachaleswaranms@gmail.com>` (set repo-locally).
   No AI or co-author trailers.
