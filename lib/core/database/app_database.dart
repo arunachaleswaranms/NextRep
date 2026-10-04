@@ -24,6 +24,7 @@ part 'app_database.g.dart';
     XpTransactions,
     HabitRevisions,
     DayModes,
+    AchievementUnlocks,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -33,14 +34,14 @@ class AppDatabase extends _$AppDatabase {
   factory AppDatabase.open() => AppDatabase(driftDatabase(name: 'nextrep'));
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) => m.createAll(),
     // Each step runs against the frozen shape of its target version (see
     // schema_versions.dart), so old steps keep working as the schema grows.
-    onUpgrade: stepByStep(from1To2: _from1To2),
+    onUpgrade: stepByStep(from1To2: _from1To2, from2To3: _from2To3),
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
     },
@@ -88,5 +89,14 @@ class AppDatabase extends _$AppDatabase {
         SELECT COUNT(*) FROM habits e
         WHERE e.session_id = p.session_id AND e.enabled = 1)
     ''');
+  }
+
+  /// v2 → v3: achievement unlocks.
+  ///
+  /// Additive only: one new, empty table. Nothing is backfilled here; the
+  /// app's achievement reconciliation derives what the existing history has
+  /// earned and stores it on the next launch.
+  static Future<void> _from2To3(Migrator m, Schema3 schema) async {
+    await m.createTable(schema.achievementUnlocks);
   }
 }

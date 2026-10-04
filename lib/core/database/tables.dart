@@ -100,8 +100,9 @@ class XpTransactions extends Table {
 }
 
 /// A habit configuration change effective from [effectiveFrom] until the
-/// next revision of the same habit (schema v2). Only ever written for the
-/// current day, so past days keep their configuration.
+/// next revision of the same habit (schema v2). Never written for a past
+/// date (Phase 3 writes them for the next challenge day), so past days keep
+/// their configuration.
 @DataClassName('HabitRevisionRow')
 class HabitRevisions extends Table {
   IntColumn get sessionId => integer()();
@@ -140,4 +141,28 @@ class DayModes extends Table {
 
   @override
   Set<Column> get primaryKey => {sessionId, date};
+}
+
+/// An achievement unlocked in a session (schema v3). Written once per
+/// session and key, never updated. The catalog itself lives in code
+/// (`AchievementCatalog`); only the unlock is stored.
+@DataClassName('AchievementUnlockRow')
+class AchievementUnlocks extends Table {
+  IntColumn get sessionId => integer().references(
+    WinterArcSessions,
+    #id,
+    onDelete: KeyAction.cascade,
+  )();
+
+  /// Stable `AchievementKey.id`, e.g. `first_rep`.
+  TextColumn get achievementKey => text()();
+
+  /// The challenge date on which it was earned.
+  TextColumn get unlockedOn => text().map(const LocalDateConverter())();
+
+  /// When the unlock was first persisted.
+  DateTimeColumn get unlockedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {sessionId, achievementKey};
 }
