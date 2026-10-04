@@ -42,4 +42,16 @@ abstract interface class WinterArcRepository {
 
   /// Persists [session]'s status, dates and start timestamp.
   Future<void> updateSession(WinterArcSession session);
+
+  /// Permanently deletes session [id] and everything it owns (habits,
+  /// revisions, progress, day modes, XP, achievement unlocks, reflections),
+  /// in one transaction, provided its status is [expected]. App-level data
+  /// (reminder preferences) is never touched.
+  ///
+  /// The status is checked inside the transaction. Throws, deleting
+  /// nothing, `DomainRule.sessionNotFound` if there is no such session,
+  /// `DomainRule.arcNotDeletable` if a completed arc was expected and
+  /// `DomainRule.sessionNotInSetup` if a setup arc was expected but the
+  /// status differs.
+  Future<void> deleteSession(int id, {required WinterArcStatus expected});
 }
