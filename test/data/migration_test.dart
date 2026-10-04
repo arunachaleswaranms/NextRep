@@ -121,7 +121,18 @@ void main() {
 
   // The app always migrates to the current schema, so Phase 1 databases run
   // the v1 → v2 step and then v2 → v3 (see migration_v3_test.dart for v2).
-  group('v1 → v2 → v3 with Phase 1 data', () {
+  test(
+    'an empty v1 database upgrades through v2 and v3 to exactly v4',
+    () async {
+      final db = AppDatabase(await verifier.startAt(1));
+      addTearDown(db.close);
+      await verifier.migrateAndValidate(db, 4);
+      expect(await db.select(db.dailyReflections).get(), isEmpty);
+      expect(await db.select(db.reminderPrefs).get(), isEmpty);
+    },
+  );
+
+  group('v1 → v2 → v3 → v4 with Phase 1 data', () {
     late AppDatabase db;
     late TestApp app;
     final day1 = LocalDate(2026, 10, 1);
@@ -133,7 +144,7 @@ void main() {
       db = AppDatabase(schema.newConnection());
       // Runs the real migration chain, then checks the result against the
       // committed v3 snapshot.
-      await verifier.migrateAndValidate(db, 3);
+      await verifier.migrateAndValidate(db, 4);
       app = TestApp(db, FakeClock(DateTime(2026, 10, 3, 20)));
     });
     tearDown(() => db.close());
@@ -312,7 +323,7 @@ void main() {
     }
     final db = AppDatabase(schema.newConnection());
     addTearDown(db.close);
-    await verifier.migrateAndValidate(db, 3);
+    await verifier.migrateAndValidate(db, 4);
 
     final app = TestApp(db, FakeClock(DateTime(2026, 10, 2, 9)));
     expect(

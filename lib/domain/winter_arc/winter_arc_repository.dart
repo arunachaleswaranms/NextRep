@@ -4,13 +4,35 @@ import 'winter_arc_session.dart';
 
 /// Persistence boundary for Winter Arc sessions.
 ///
+/// A user can have any number of completed sessions but at most one
+/// unfinished one (setup or active). Implementations enforce that when
+/// creating a session.
+///
 /// Implementations throw `PersistenceFailure` on storage errors.
 abstract interface class WinterArcRepository {
-  /// The most recently created session, or null if none exists.
+  /// The most recently created session of any status, or null if none
+  /// exists. Prefer the more specific lookups below: since Phase 4 the
+  /// newest session isn't necessarily the one a screen should show.
   Future<WinterArcSession?> latestSession();
+
+  /// The unfinished session (setup or active), or null. There is never more
+  /// than one.
+  Future<WinterArcSession?> currentSession();
+
+  /// The most recently created completed session, or null.
+  Future<WinterArcSession?> latestCompletedSession();
+
+  /// The session with [id], or null.
+  Future<WinterArcSession?> sessionById(int id);
+
+  /// Every session, newest first.
+  Future<List<WinterArcSession>> listSessions();
 
   /// Atomically creates a session in [WinterArcStatus.setup] together with
   /// its initial habit configuration.
+  ///
+  /// Throws a `DomainFailure` with `DomainRule.arcInProgress`, writing
+  /// nothing, if an unfinished session already exists.
   Future<WinterArcSession> createSetupSession({
     required LocalDate startDate,
     required LocalDate endDate,

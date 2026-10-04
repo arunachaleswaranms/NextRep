@@ -62,7 +62,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Start Winter Arc'));
     await tester.pumpAndSettle();
-    expect(find.text('0/10'), findsOneWidget);
+    expect(find.text('0/15'), findsOneWidget);
 
     // First Rep.
     await tapTimes(tester, find.byTooltip('Complete No Junk Food'), 1);
@@ -78,7 +78,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Clean Sweep'), findsOneWidget);
     await clearCelebrations(tester);
-    expect(find.text('2/10'), findsOneWidget);
+    expect(find.text('2/15'), findsOneWidget);
     expect(find.text('90 XP'), findsOneWidget);
 
     // Journey v2: today is perfect, every day is on the path.
@@ -100,7 +100,7 @@ void main() {
     // Achievements screen.
     await tester.tap(find.byType(TrophyButton));
     await tester.pumpAndSettle();
-    expect(find.text('2 of 10 unlocked'), findsOneWidget);
+    expect(find.text('2 of 15 unlocked'), findsOneWidget);
     await tester.pageBack();
     await tester.pumpAndSettle();
 
@@ -113,7 +113,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Day 1 of 92'), findsOneWidget);
     expect(find.text('90 XP'), findsOneWidget);
-    expect(find.text('2/10'), findsOneWidget);
+    expect(find.text('2/15'), findsOneWidget);
     expect(find.byType(CelebrationCard), findsNothing);
     expect(await db.select(db.achievementUnlocks).get(), hasLength(2));
 

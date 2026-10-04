@@ -56,7 +56,7 @@ void main() {
 
     expect(await app.achievements.reconcile(), isEmpty);
     final board = (await app.achievements.board())!;
-    expect(board.total, 10);
+    expect(board.total, 15);
     expect(board.unlockedCount, 0);
   });
 
@@ -128,6 +128,7 @@ void main() {
       sessions: app.sessions,
       progress: app.progress,
       achievements: _FailingAchievements(),
+      reflections: app.reflectionStore,
       clock: app.clock,
     );
     await act('no_junk_food', HabitAction.complete);

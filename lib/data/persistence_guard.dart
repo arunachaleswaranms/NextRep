@@ -19,3 +19,26 @@ Future<T> guardPersistence<T>(
     );
   }
 }
+
+/// Like [guardPersistence], for operations on private text (reflections).
+///
+/// Database errors can quote the failing statement together with its bound
+/// values (`SqliteException.toString` does), which would put the user's
+/// words into error reports. So the original error is not kept as the
+/// cause: only its type is, and the stack trace.
+Future<T> guardPrivatePersistence<T>(
+  String operation,
+  Future<T> Function() body,
+) async {
+  try {
+    return await body();
+  } on AppFailure {
+    rethrow;
+  } catch (error, stackTrace) {
+    throw PersistenceFailure(
+      'Storage operation failed: $operation',
+      cause: '${error.runtimeType} (details withheld: private data)',
+      stackTrace: stackTrace,
+    );
+  }
+}

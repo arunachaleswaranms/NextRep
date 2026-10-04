@@ -25,6 +25,8 @@ part 'app_database.g.dart';
     HabitRevisions,
     DayModes,
     AchievementUnlocks,
+    DailyReflections,
+    ReminderPrefs,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -34,14 +36,18 @@ class AppDatabase extends _$AppDatabase {
   factory AppDatabase.open() => AppDatabase(driftDatabase(name: 'nextrep'));
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) => m.createAll(),
     // Each step runs against the frozen shape of its target version (see
     // schema_versions.dart), so old steps keep working as the schema grows.
-    onUpgrade: stepByStep(from1To2: _from1To2, from2To3: _from2To3),
+    onUpgrade: stepByStep(
+      from1To2: _from1To2,
+      from2To3: _from2To3,
+      from3To4: _from3To4,
+    ),
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
     },
@@ -98,5 +104,18 @@ class AppDatabase extends _$AppDatabase {
   /// earned and stores it on the next launch.
   static Future<void> _from2To3(Migrator m, Schema3 schema) async {
     await m.createTable(schema.achievementUnlocks);
+  }
+
+  /// v3 → v4: reflections, reminder preferences, one unfinished arc.
+  ///
+  /// Additive only: two new, empty tables and an index. No row is
+  /// rewritten. Reminder preferences have no row until the user changes
+  /// one, which reads as "both reminders off". Phase 1–3 only ever created a
+  /// single session, so the unique index on unfinished sessions can't
+  /// conflict with existing data.
+  static Future<void> _from3To4(Migrator m, Schema4 schema) async {
+    await m.createTable(schema.dailyReflections);
+    await m.createTable(schema.reminderPreferences);
+    await m.createIndex(schema.singleOpenSession);
   }
 }

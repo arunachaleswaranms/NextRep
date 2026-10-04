@@ -18,16 +18,27 @@ extension AchievementVisuals on AchievementKey {
     AchievementKey.level3 => Icons.bolt_rounded,
     AchievementKey.halfway => Icons.nights_stay_rounded,
     AchievementKey.summit => Icons.landscape_rounded,
+    AchievementKey.firstReflection => Icons.edit_note_rounded,
+    AchievementKey.reflections7 => Icons.menu_book_rounded,
+    AchievementKey.minimum3 => Icons.spa_rounded,
+    AchievementKey.perfect10 => Icons.workspace_premium_rounded,
+    AchievementKey.level5 => Icons.rocket_launch_rounded,
   };
 
   Color accent(WinterColors colors) => switch (this) {
     AchievementKey.firstRep => colors.accentSecondary,
     AchievementKey.firstPerfect ||
-    AchievementKey.perfect3 => colors.celebration,
+    AchievementKey.perfect3 ||
+    AchievementKey.perfect10 => colors.celebration,
     AchievementKey.streak3 || AchievementKey.level2 => colors.accent,
-    AchievementKey.streak7 => colors.auroraViolet,
-    AchievementKey.minimumComplete => colors.recovery,
-    AchievementKey.level3 || AchievementKey.summit => colors.warmLight,
+    AchievementKey.streak7 ||
+    AchievementKey.firstReflection ||
+    AchievementKey.reflections7 => colors.auroraViolet,
+    AchievementKey.minimumComplete ||
+    AchievementKey.minimum3 => colors.recovery,
+    AchievementKey.level3 ||
+    AchievementKey.level5 ||
+    AchievementKey.summit => colors.warmLight,
     AchievementKey.halfway => colors.auroraGreen,
   };
 }

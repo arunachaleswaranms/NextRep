@@ -41,6 +41,28 @@ enum DomainRule {
 
   /// A configuration change would only apply after the arc's last day.
   noNextChallengeDay,
+
+  /// A new arc can't start while another one is in setup or running.
+  arcInProgress,
+
+  /// "Reuse last setup" needs a completed arc to copy from.
+  noCompletedArc,
+
+  /// No session has the requested id.
+  sessionNotFound,
+
+  /// A reflection needs a mood or some text.
+  reflectionEmpty,
+
+  /// A reflection field is longer than its limit.
+  reflectionTooLong,
+
+  /// Only today's reflection can be written; earlier ones are read-only.
+  reflectionReadOnly,
+
+  /// The date has no reflection yet to write: it's in the future or
+  /// outside the arc.
+  reflectionNotAvailable,
 }
 
 /// A domain rule rejected the requested action. Nothing was persisted.

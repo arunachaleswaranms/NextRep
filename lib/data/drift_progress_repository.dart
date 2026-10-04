@@ -208,32 +208,8 @@ final class DriftProgressRepository implements ProgressRepository {
     }
   }
 
-  Future<HabitHistory> _habitHistory(int sessionId) async {
-    final habits =
-        await (_db.select(_db.habits)
-              ..where((h) => h.sessionId.equals(sessionId))
-              ..orderBy([(h) => OrderingTerm.asc(h.sortOrder)]))
-            .get();
-    final revisions = await (_db.select(
-      _db.habitRevisions,
-    )..where((r) => r.sessionId.equals(sessionId))).get();
-    return HabitHistory(
-      habits: habits.map(habitFromRow).toList(),
-      revisions: [
-        for (final row in revisions)
-          HabitRevision(
-            habitId: row.habitId,
-            effectiveFrom: row.effectiveFrom,
-            config: HabitConfig(
-              target: row.target,
-              minimumTarget: row.minimumTarget,
-              enabled: row.enabled,
-            ),
-            createdAt: row.createdAt,
-          ),
-      ],
-    );
-  }
+  Future<HabitHistory> _habitHistory(int sessionId) =>
+      loadHabitHistory(_db, sessionId);
 
   Future<List<HabitProgressRow>> _progressRows(int sessionId, LocalDate date) =>
       (_db.select(_db.dailyHabitProgressEntries)..where(

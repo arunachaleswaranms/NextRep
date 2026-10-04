@@ -8,6 +8,8 @@ import 'package:nextrep/domain/achievement/achievement.dart';
 import 'package:nextrep/domain/journey/journey_day.dart';
 import 'package:nextrep/domain/progress/day_mode.dart';
 import 'package:nextrep/domain/progress/habit_progress_rules.dart';
+import 'package:nextrep/domain/reflection/daily_reflection.dart';
+import 'package:nextrep/domain/reminder/reminder_preferences.dart';
 import 'package:nextrep/domain/winter_arc/winter_arc_session.dart';
 import 'package:nextrep/domain/xp/xp.dart';
 
@@ -148,7 +150,7 @@ void main() {
     expect(await db.select(db.achievementUnlocks).get(), isEmpty);
   });
 
-  group('v2 → v3 with Phase 2 data', () {
+  group('v2 → v3 → v4 with Phase 2 data', () {
     late AppDatabase db;
     late TestApp app;
     LocalDate day(int n) => LocalDate(2026, 10, n);
@@ -157,7 +159,7 @@ void main() {
       final schema = await verifier.schemaAt(2);
       _seedV2(schema.rawDatabase);
       db = AppDatabase(schema.newConnection());
-      await verifier.migrateAndValidate(db, 3);
+      await verifier.migrateAndValidate(db, 4);
       app = TestApp(db, FakeClock(DateTime(2026, 10, 6, 20)));
     });
     tearDown(() => db.close());
@@ -265,6 +267,17 @@ void main() {
         expect(await app.progress.totalXp(1), _expectedXp);
       },
     );
+
+    test('Phase 4 reflections work after the migration', () async {
+      final saved = await app.reflections.save(
+        sessionId: 1,
+        date: day(6),
+        draft: const ReflectionDraft(mood: Mood.good, win: 'Kept going'),
+      );
+      expect(saved.created, isTrue);
+      expect((await app.reflections.journal()).todayEntry?.win, 'Kept going');
+      expect((await app.reminders.preferences()), ReminderPreferences.defaults);
+    });
 
     test('Phase 3 writes work after the migration', () async {
       await app.tracking.perform(

@@ -58,6 +58,9 @@ final class WinterArcSession {
   /// [endDate].
   bool isOverOn(LocalDate date) => date.isAfter(endDate);
 
+  /// 1-based challenge day of [date] (can be outside `1..lengthInDays`).
+  int dayNumberOf(LocalDate date) => startDate.daysUntil(date) + 1;
+
   /// Where [date] falls relative to this arc's window.
   ArcDayPosition positionOn(LocalDate date) {
     final offset = startDate.daysUntil(date);
