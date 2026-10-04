@@ -9,7 +9,10 @@ merged._
 - `main` baseline: `83680ab` (squash merge of PR #3, Phase 3). PR #1 is
   Phase 1, PR #2 Phase 2.
 - Working branch: `phase/4-retention-and-arc-history`, from `83680ab`.
-- PR: _pending_. CI: _pending_.
+- PR: #4 (https://github.com/arunachaleswaranms/NextRep/pull/4), open for
+  review, not merged.
+- CI: Flutter CI run 37190738692 on the PR, both jobs green (format,
+  analyze, migration tests, tests; Android debug build).
 - Author and committer for all commits:
   `Arunachaleswaran M S <arunachaleswaranms@gmail.com>` (set repo-locally).
   No AI or co-author trailers.
