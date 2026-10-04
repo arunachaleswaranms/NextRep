@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../app/theme/winter_tokens.dart';
 import '../../../domain/habit/habit.dart';
-import '../../../domain/progress/day_summary.dart';
+import '../../../domain/progress/day_record.dart';
 import '../../../domain/progress/habit_progress_rules.dart';
 import '../../../shared/formatting/habit_labels.dart';
 import '../../../shared/widgets/habit_icon.dart';
@@ -17,11 +17,19 @@ class HabitProgressTile extends StatelessWidget {
     super.key,
     required this.entry,
     required this.onAction,
+    this.streak = 0,
+    this.minimum = false,
     this.enabled = true,
   });
 
   final HabitDayEntry entry;
   final ValueChanged<HabitAction> onAction;
+
+  /// Current streak in days; shown when positive.
+  final int streak;
+
+  /// Today is a Minimum Day, so [HabitDayEntry.target] is the minimum.
+  final bool minimum;
 
   /// False when the arc is not running today; the row is read-only.
   final bool enabled;
@@ -59,12 +67,30 @@ class HabitProgressTile extends StatelessWidget {
                       progressLabel(
                         _habit,
                         progress.currentValue,
+                        target: entry.target,
                         completed: completed,
                       ),
                       style: text.bodyMedium?.copyWith(
                         color: completed ? colors.success : null,
                       ),
                     ),
+                    if (minimum || streak > 0) ...[
+                      const SizedBox(height: WinterSpacing.xs),
+                      Wrap(
+                        spacing: WinterSpacing.sm,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          if (minimum) const _MinimumChip(),
+                          if (streak > 0)
+                            Text(
+                              streakLabel(streak),
+                              style: text.bodySmall?.copyWith(
+                                color: colors.textSecondary,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -78,11 +104,22 @@ class HabitProgressTile extends StatelessWidget {
             const SizedBox(height: WinterSpacing.sm + 2),
             ClipRRect(
               borderRadius: BorderRadius.circular(WinterRadii.pill),
-              child: LinearProgressIndicator(
-                value: progress.currentValue / _habit.target,
-                semanticsLabel: '${_habit.title} progress',
-                minHeight: 6,
-                color: completed ? colors.success : colors.accentSecondary,
+              child: TweenAnimationBuilder<double>(
+                tween: Tween(
+                  end: (progress.currentValue / entry.target).clamp(0.0, 1.0),
+                ),
+                duration: context.motion.standard,
+                curve: Curves.easeOutCubic,
+                builder: (context, value, _) => LinearProgressIndicator(
+                  value: value,
+                  semanticsLabel: '${_habit.title} progress',
+                  minHeight: 6,
+                  color: completed
+                      ? colors.success
+                      : minimum
+                      ? colors.recovery
+                      : colors.accentSecondary,
+                ),
               ),
             ),
           ],
@@ -102,9 +139,15 @@ class HabitProgressTile extends StatelessWidget {
             )
           : null,
       iconSize: 32,
-      icon: Icon(
-        completed ? Icons.check_circle_rounded : Icons.radio_button_unchecked,
-        color: completed ? colors.success : colors.textSecondary,
+      icon: AnimatedSwitcher(
+        duration: context.motion.quick,
+        transitionBuilder: (child, animation) =>
+            ScaleTransition(scale: animation, child: child),
+        child: Icon(
+          completed ? Icons.check_circle_rounded : Icons.radio_button_unchecked,
+          key: ValueKey(completed),
+          color: completed ? colors.success : colors.textSecondary,
+        ),
       ),
     );
   }
@@ -122,11 +165,28 @@ class HabitProgressTile extends StatelessWidget {
       const SizedBox(width: WinterSpacing.xs),
       IconButton.filled(
         tooltip: 'Add to ${_habit.title}',
-        onPressed: enabled && value < _habit.target
+        onPressed: enabled && value < entry.target
             ? () => onAction(HabitAction.increment)
             : null,
         icon: const Icon(Icons.add_rounded),
       ),
     ];
+  }
+}
+
+class _MinimumChip extends StatelessWidget {
+  const _MinimumChip();
+
+  @override
+  Widget build(BuildContext context) {
+    final color = context.winter.recovery;
+    return Text(
+      'MINIMUM',
+      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+        color: color,
+        fontWeight: FontWeight.w800,
+        letterSpacing: 1.2,
+      ),
+    );
   }
 }

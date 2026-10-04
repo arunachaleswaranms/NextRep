@@ -9,12 +9,16 @@ class ProgressRing extends StatelessWidget {
     required this.ratio,
     required this.label,
     this.size = 84,
+    this.color,
   });
 
   /// `0.0..1.0`.
   final double ratio;
   final String label;
   final double size;
+
+  /// Arc colour while incomplete. Defaults to the progress accent.
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
@@ -24,11 +28,18 @@ class ProgressRing extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          CircularProgressIndicator(
-            value: ratio,
-            strokeWidth: 8,
-            strokeCap: StrokeCap.round,
-            color: ratio >= 1 ? colors.success : colors.accentSecondary,
+          TweenAnimationBuilder<double>(
+            tween: Tween(end: ratio),
+            duration: context.motion.standard,
+            curve: Curves.easeOutCubic,
+            builder: (context, value, _) => CircularProgressIndicator(
+              value: value,
+              strokeWidth: 8,
+              strokeCap: StrokeCap.round,
+              color: ratio >= 1
+                  ? colors.success
+                  : color ?? colors.accentSecondary,
+            ),
           ),
           Center(
             child: Text(

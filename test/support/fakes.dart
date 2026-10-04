@@ -43,7 +43,6 @@ final class TestApp {
     );
     tracking = HabitTrackingService(
       sessions: sessions,
-      habits: habits,
       progress: progress,
       clock: clock,
     );

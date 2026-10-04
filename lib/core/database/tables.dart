@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 
 import '../../domain/habit/habit.dart';
+import '../../domain/progress/day_mode.dart';
 import '../../domain/winter_arc/winter_arc_session.dart';
 import '../../domain/xp/xp.dart';
 import 'converters.dart';
@@ -18,6 +19,9 @@ class WinterArcSessions extends Table {
   DateTimeColumn get startedAt => dateTime().nullable()();
 }
 
+/// A session's habits. [target], [minimumTarget] and [enabled] hold the
+/// baseline configuration chosen in setup (effective from Day 1). Changes
+/// after the arc starts go to [HabitRevisions] and never rewrite these.
 @DataClassName('HabitRow')
 class Habits extends Table {
   IntColumn get sessionId => integer().references(
@@ -36,6 +40,15 @@ class Habits extends Table {
   BoolColumn get enabled => boolean()();
   IntColumn get sortOrder => integer()();
   DateTimeColumn get createdAt => dateTime()();
+
+  /// Baseline Minimum Day target. Added in schema v2 (so it is the last
+  /// column, as `ALTER TABLE ADD COLUMN` appends). The default only exists so
+  /// the column can be added to existing rows; the v1 → v2 migration
+  /// backfills real values.
+  IntColumn get minimumTarget => integer()
+      .withDefault(const Constant(1))
+      // ignore: recursive_getters
+      .check(minimumTarget.isBetween(const Constant(1), target))();
 
   @override
   Set<Column> get primaryKey => {sessionId, id};
@@ -84,4 +97,47 @@ class XpTransactions extends Table {
   List<Set<Column>> get uniqueKeys => [
     {sessionId, sourceKey},
   ];
+}
+
+/// A habit configuration change effective from [effectiveFrom] until the
+/// next revision of the same habit (schema v2). Only ever written for the
+/// current day, so past days keep their configuration.
+@DataClassName('HabitRevisionRow')
+class HabitRevisions extends Table {
+  IntColumn get sessionId => integer()();
+  TextColumn get habitId => text()();
+  TextColumn get effectiveFrom => text().map(const LocalDateConverter())();
+  // ignore: recursive_getters
+  IntColumn get target => integer().check(target.isBiggerThanValue(0))();
+  IntColumn get minimumTarget =>
+      // ignore: recursive_getters
+      integer().check(minimumTarget.isBetween(const Constant(1), target))();
+  BoolColumn get enabled => boolean()();
+  DateTimeColumn get createdAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {sessionId, habitId, effectiveFrom};
+
+  @override
+  List<String> get customConstraints => [
+    'FOREIGN KEY (session_id, habit_id) REFERENCES habits (session_id, id) '
+        'ON DELETE CASCADE',
+  ];
+}
+
+/// The mode of a challenge date (schema v2). Dates without a row are
+/// [DayMode.normal].
+@DataClassName('DayModeRow')
+class DayModes extends Table {
+  IntColumn get sessionId => integer().references(
+    WinterArcSessions,
+    #id,
+    onDelete: KeyAction.cascade,
+  )();
+  TextColumn get date => text().map(const LocalDateConverter())();
+  TextColumn get mode => textEnum<DayMode>()();
+  DateTimeColumn get changedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {sessionId, date};
 }

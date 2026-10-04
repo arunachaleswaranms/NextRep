@@ -32,7 +32,7 @@ class HabitToggleTile extends StatelessWidget {
               children: [
                 Text(habit.title, style: text.titleMedium),
                 const SizedBox(height: 2),
-                Text(targetLabel(habit), style: text.bodyMedium),
+                Text(targetLabel(habit, habit.target), style: text.bodyMedium),
               ],
             ),
           ),

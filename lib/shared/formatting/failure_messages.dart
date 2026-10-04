@@ -10,6 +10,10 @@ String userMessageFor(AppFailure failure) => switch (failure) {
     DomainRule.staleDay => "It's a new day — Today has been refreshed.",
     DomainRule.arcNotRunningToday => 'Your Winter Arc is not running today.',
     DomainRule.habitDisabled => 'That habit is turned off.',
+    DomainRule.invalidHabitEdit => 'Check the habit name and goals.',
+    DomainRule.lastEnabledHabit => 'Keep at least one habit turned on.',
+    DomainRule.dayAlreadyPerfect =>
+      'Today is already a Perfect Day — no need to scale it down.',
     DomainRule.noSession ||
     DomainRule.sessionNotInSetup ||
     DomainRule.noActiveSession ||

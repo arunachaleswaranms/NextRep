@@ -10,12 +10,13 @@ import 'package:nextrep/core/database/app_database.dart';
 import 'package:nextrep/core/errors/app_failure.dart';
 import 'package:nextrep/core/time/local_date.dart';
 import 'package:nextrep/data/drift_progress_repository.dart';
+import 'package:nextrep/domain/progress/arc_history.dart';
 import 'package:nextrep/domain/progress/daily_habit_progress.dart';
-import 'package:nextrep/domain/progress/habit_progress_rules.dart';
 import 'package:nextrep/domain/progress/progress_repository.dart';
 import 'package:nextrep/features/habit_setup/widgets/habit_toggle_tile.dart';
 
 import '../support/fakes.dart';
+import '../support/ui.dart';
 
 Widget _app(AppDatabase db, FakeClock clock, {List overrides = const []}) =>
     ProviderScope(
@@ -96,6 +97,7 @@ void main() {
     // Complete a binary habit; double tap must not double count.
     // Both taps hit the same widget before any rebuild.
     final complete = find.byTooltip('Complete No Junk Food');
+    await reveal(tester, complete);
     await tester.tap(complete);
     await tester.tap(complete);
     await tester.pumpAndSettle();
@@ -123,6 +125,7 @@ void main() {
     expect(find.text("Let's Begin"), findsNothing);
     expect(find.text('Day 1 of 92'), findsOneWidget);
     expect(find.text('25%'), findsOneWidget);
+    await reveal(tester, find.byTooltip('Undo No Junk Food'));
     expect(find.text('Done'), findsOneWidget);
     expect(find.text('3 / 8 glasses'), findsOneWidget);
     expect(find.text('15 XP'), findsOneWidget);
@@ -140,6 +143,7 @@ void main() {
     await tester.pumpAndSettle();
     await _onboardAndStart(tester);
 
+    await reveal(tester, find.byTooltip('Complete No Junk Food'));
     await tester.tap(find.byTooltip('Complete No Junk Food'));
     await tester.pumpAndSettle();
     expect(find.text('15 XP'), findsOneWidget);
@@ -170,6 +174,7 @@ void main() {
     await tester.pumpAndSettle();
     await _onboardAndStart(tester);
 
+    await reveal(tester, find.byTooltip('Complete No Junk Food'));
     await tester.tap(find.byTooltip('Complete No Junk Food'));
     await tester.pumpAndSettle();
 
@@ -197,10 +202,12 @@ final class _FailingWrites implements ProgressRepository {
   Future<int> totalXp(int sessionId) => _inner.totalXp(sessionId);
 
   @override
-  Future<ProgressTransition> applyTransition({
+  Future<ArcRecords> loadArc(int sessionId) => _inner.loadArc(sessionId);
+
+  @override
+  Future<DayCommit<T>> commitDay<T>({
     required int sessionId,
-    required String habitId,
     required LocalDate date,
-    required ProgressTransitionBuilder build,
+    required DayCommitBuilder<T> build,
   }) async => throw const PersistenceFailure('disk I/O error (simulated)');
 }

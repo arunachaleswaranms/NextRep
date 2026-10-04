@@ -523,6 +523,20 @@ class $HabitsTable extends Habits with TableInfo<$HabitsTable, HabitRow> {
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _minimumTargetMeta = const VerificationMeta(
+    'minimumTarget',
+  );
+  @override
+  late final GeneratedColumn<int> minimumTarget = GeneratedColumn<int>(
+    'minimum_target',
+    aliasedName,
+    false,
+    check: () =>
+        ComparableExpr(minimumTarget).isBetween(const Constant(1), target),
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     sessionId,
@@ -535,6 +549,7 @@ class $HabitsTable extends Habits with TableInfo<$HabitsTable, HabitRow> {
     enabled,
     sortOrder,
     createdAt,
+    minimumTarget,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -615,6 +630,15 @@ class $HabitsTable extends Habits with TableInfo<$HabitsTable, HabitRow> {
     } else if (isInserting) {
       context.missing(_createdAtMeta);
     }
+    if (data.containsKey('minimum_target')) {
+      context.handle(
+        _minimumTargetMeta,
+        minimumTarget.isAcceptableOrUnknown(
+          data['minimum_target']!,
+          _minimumTargetMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -666,6 +690,10 @@ class $HabitsTable extends Habits with TableInfo<$HabitsTable, HabitRow> {
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
       )!,
+      minimumTarget: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}minimum_target'],
+      )!,
     );
   }
 
@@ -689,6 +717,12 @@ class HabitRow extends DataClass implements Insertable<HabitRow> {
   final bool enabled;
   final int sortOrder;
   final DateTime createdAt;
+
+  /// Baseline Minimum Day target. Added in schema v2 (so it is the last
+  /// column, as `ALTER TABLE ADD COLUMN` appends). The default only exists so
+  /// the column can be added to existing rows; the v1 → v2 migration
+  /// backfills real values.
+  final int minimumTarget;
   const HabitRow({
     required this.sessionId,
     required this.id,
@@ -700,6 +734,7 @@ class HabitRow extends DataClass implements Insertable<HabitRow> {
     required this.enabled,
     required this.sortOrder,
     required this.createdAt,
+    required this.minimumTarget,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -718,6 +753,7 @@ class HabitRow extends DataClass implements Insertable<HabitRow> {
     map['enabled'] = Variable<bool>(enabled);
     map['sort_order'] = Variable<int>(sortOrder);
     map['created_at'] = Variable<DateTime>(createdAt);
+    map['minimum_target'] = Variable<int>(minimumTarget);
     return map;
   }
 
@@ -733,6 +769,7 @@ class HabitRow extends DataClass implements Insertable<HabitRow> {
       enabled: Value(enabled),
       sortOrder: Value(sortOrder),
       createdAt: Value(createdAt),
+      minimumTarget: Value(minimumTarget),
     );
   }
 
@@ -754,6 +791,7 @@ class HabitRow extends DataClass implements Insertable<HabitRow> {
       enabled: serializer.fromJson<bool>(json['enabled']),
       sortOrder: serializer.fromJson<int>(json['sortOrder']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      minimumTarget: serializer.fromJson<int>(json['minimumTarget']),
     );
   }
   @override
@@ -772,6 +810,7 @@ class HabitRow extends DataClass implements Insertable<HabitRow> {
       'enabled': serializer.toJson<bool>(enabled),
       'sortOrder': serializer.toJson<int>(sortOrder),
       'createdAt': serializer.toJson<DateTime>(createdAt),
+      'minimumTarget': serializer.toJson<int>(minimumTarget),
     };
   }
 
@@ -786,6 +825,7 @@ class HabitRow extends DataClass implements Insertable<HabitRow> {
     bool? enabled,
     int? sortOrder,
     DateTime? createdAt,
+    int? minimumTarget,
   }) => HabitRow(
     sessionId: sessionId ?? this.sessionId,
     id: id ?? this.id,
@@ -797,6 +837,7 @@ class HabitRow extends DataClass implements Insertable<HabitRow> {
     enabled: enabled ?? this.enabled,
     sortOrder: sortOrder ?? this.sortOrder,
     createdAt: createdAt ?? this.createdAt,
+    minimumTarget: minimumTarget ?? this.minimumTarget,
   );
   HabitRow copyWithCompanion(HabitsCompanion data) {
     return HabitRow(
@@ -810,6 +851,9 @@ class HabitRow extends DataClass implements Insertable<HabitRow> {
       enabled: data.enabled.present ? data.enabled.value : this.enabled,
       sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      minimumTarget: data.minimumTarget.present
+          ? data.minimumTarget.value
+          : this.minimumTarget,
     );
   }
 
@@ -825,7 +869,8 @@ class HabitRow extends DataClass implements Insertable<HabitRow> {
           ..write('iconKey: $iconKey, ')
           ..write('enabled: $enabled, ')
           ..write('sortOrder: $sortOrder, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('minimumTarget: $minimumTarget')
           ..write(')'))
         .toString();
   }
@@ -842,6 +887,7 @@ class HabitRow extends DataClass implements Insertable<HabitRow> {
     enabled,
     sortOrder,
     createdAt,
+    minimumTarget,
   );
   @override
   bool operator ==(Object other) =>
@@ -856,7 +902,8 @@ class HabitRow extends DataClass implements Insertable<HabitRow> {
           other.iconKey == this.iconKey &&
           other.enabled == this.enabled &&
           other.sortOrder == this.sortOrder &&
-          other.createdAt == this.createdAt);
+          other.createdAt == this.createdAt &&
+          other.minimumTarget == this.minimumTarget);
 }
 
 class HabitsCompanion extends UpdateCompanion<HabitRow> {
@@ -870,6 +917,7 @@ class HabitsCompanion extends UpdateCompanion<HabitRow> {
   final Value<bool> enabled;
   final Value<int> sortOrder;
   final Value<DateTime> createdAt;
+  final Value<int> minimumTarget;
   final Value<int> rowid;
   const HabitsCompanion({
     this.sessionId = const Value.absent(),
@@ -882,6 +930,7 @@ class HabitsCompanion extends UpdateCompanion<HabitRow> {
     this.enabled = const Value.absent(),
     this.sortOrder = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.minimumTarget = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   HabitsCompanion.insert({
@@ -895,6 +944,7 @@ class HabitsCompanion extends UpdateCompanion<HabitRow> {
     required bool enabled,
     required int sortOrder,
     required DateTime createdAt,
+    this.minimumTarget = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : sessionId = Value(sessionId),
        id = Value(id),
@@ -916,6 +966,7 @@ class HabitsCompanion extends UpdateCompanion<HabitRow> {
     Expression<bool>? enabled,
     Expression<int>? sortOrder,
     Expression<DateTime>? createdAt,
+    Expression<int>? minimumTarget,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -929,6 +980,7 @@ class HabitsCompanion extends UpdateCompanion<HabitRow> {
       if (enabled != null) 'enabled': enabled,
       if (sortOrder != null) 'sort_order': sortOrder,
       if (createdAt != null) 'created_at': createdAt,
+      if (minimumTarget != null) 'minimum_target': minimumTarget,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -944,6 +996,7 @@ class HabitsCompanion extends UpdateCompanion<HabitRow> {
     Value<bool>? enabled,
     Value<int>? sortOrder,
     Value<DateTime>? createdAt,
+    Value<int>? minimumTarget,
     Value<int>? rowid,
   }) {
     return HabitsCompanion(
@@ -957,6 +1010,7 @@ class HabitsCompanion extends UpdateCompanion<HabitRow> {
       enabled: enabled ?? this.enabled,
       sortOrder: sortOrder ?? this.sortOrder,
       createdAt: createdAt ?? this.createdAt,
+      minimumTarget: minimumTarget ?? this.minimumTarget,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -996,6 +1050,9 @@ class HabitsCompanion extends UpdateCompanion<HabitRow> {
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
+    if (minimumTarget.present) {
+      map['minimum_target'] = Variable<int>(minimumTarget.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1015,6 +1072,7 @@ class HabitsCompanion extends UpdateCompanion<HabitRow> {
           ..write('enabled: $enabled, ')
           ..write('sortOrder: $sortOrder, ')
           ..write('createdAt: $createdAt, ')
+          ..write('minimumTarget: $minimumTarget, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -2026,6 +2084,807 @@ class XpTransactionsCompanion extends UpdateCompanion<XpTransactionRow> {
   }
 }
 
+class $HabitRevisionsTable extends HabitRevisions
+    with TableInfo<$HabitRevisionsTable, HabitRevisionRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $HabitRevisionsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _sessionIdMeta = const VerificationMeta(
+    'sessionId',
+  );
+  @override
+  late final GeneratedColumn<int> sessionId = GeneratedColumn<int>(
+    'session_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _habitIdMeta = const VerificationMeta(
+    'habitId',
+  );
+  @override
+  late final GeneratedColumn<String> habitId = GeneratedColumn<String>(
+    'habit_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<LocalDate, String> effectiveFrom =
+      GeneratedColumn<String>(
+        'effective_from',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<LocalDate>($HabitRevisionsTable.$convertereffectiveFrom);
+  static const VerificationMeta _targetMeta = const VerificationMeta('target');
+  @override
+  late final GeneratedColumn<int> target = GeneratedColumn<int>(
+    'target',
+    aliasedName,
+    false,
+    check: () => ComparableExpr(target).isBiggerThanValue(0),
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _minimumTargetMeta = const VerificationMeta(
+    'minimumTarget',
+  );
+  @override
+  late final GeneratedColumn<int> minimumTarget = GeneratedColumn<int>(
+    'minimum_target',
+    aliasedName,
+    false,
+    check: () =>
+        ComparableExpr(minimumTarget).isBetween(const Constant(1), target),
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _enabledMeta = const VerificationMeta(
+    'enabled',
+  );
+  @override
+  late final GeneratedColumn<bool> enabled = GeneratedColumn<bool>(
+    'enabled',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("enabled" IN (0, 1))',
+    ),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    sessionId,
+    habitId,
+    effectiveFrom,
+    target,
+    minimumTarget,
+    enabled,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'habit_revisions';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<HabitRevisionRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('session_id')) {
+      context.handle(
+        _sessionIdMeta,
+        sessionId.isAcceptableOrUnknown(data['session_id']!, _sessionIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sessionIdMeta);
+    }
+    if (data.containsKey('habit_id')) {
+      context.handle(
+        _habitIdMeta,
+        habitId.isAcceptableOrUnknown(data['habit_id']!, _habitIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_habitIdMeta);
+    }
+    if (data.containsKey('target')) {
+      context.handle(
+        _targetMeta,
+        target.isAcceptableOrUnknown(data['target']!, _targetMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_targetMeta);
+    }
+    if (data.containsKey('minimum_target')) {
+      context.handle(
+        _minimumTargetMeta,
+        minimumTarget.isAcceptableOrUnknown(
+          data['minimum_target']!,
+          _minimumTargetMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_minimumTargetMeta);
+    }
+    if (data.containsKey('enabled')) {
+      context.handle(
+        _enabledMeta,
+        enabled.isAcceptableOrUnknown(data['enabled']!, _enabledMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_enabledMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {sessionId, habitId, effectiveFrom};
+  @override
+  HabitRevisionRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return HabitRevisionRow(
+      sessionId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}session_id'],
+      )!,
+      habitId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}habit_id'],
+      )!,
+      effectiveFrom: $HabitRevisionsTable.$convertereffectiveFrom.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}effective_from'],
+        )!,
+      ),
+      target: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}target'],
+      )!,
+      minimumTarget: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}minimum_target'],
+      )!,
+      enabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}enabled'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $HabitRevisionsTable createAlias(String alias) {
+    return $HabitRevisionsTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<LocalDate, String> $convertereffectiveFrom =
+      const LocalDateConverter();
+}
+
+class HabitRevisionRow extends DataClass
+    implements Insertable<HabitRevisionRow> {
+  final int sessionId;
+  final String habitId;
+  final LocalDate effectiveFrom;
+  final int target;
+  final int minimumTarget;
+  final bool enabled;
+  final DateTime createdAt;
+  const HabitRevisionRow({
+    required this.sessionId,
+    required this.habitId,
+    required this.effectiveFrom,
+    required this.target,
+    required this.minimumTarget,
+    required this.enabled,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['session_id'] = Variable<int>(sessionId);
+    map['habit_id'] = Variable<String>(habitId);
+    {
+      map['effective_from'] = Variable<String>(
+        $HabitRevisionsTable.$convertereffectiveFrom.toSql(effectiveFrom),
+      );
+    }
+    map['target'] = Variable<int>(target);
+    map['minimum_target'] = Variable<int>(minimumTarget);
+    map['enabled'] = Variable<bool>(enabled);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  HabitRevisionsCompanion toCompanion(bool nullToAbsent) {
+    return HabitRevisionsCompanion(
+      sessionId: Value(sessionId),
+      habitId: Value(habitId),
+      effectiveFrom: Value(effectiveFrom),
+      target: Value(target),
+      minimumTarget: Value(minimumTarget),
+      enabled: Value(enabled),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory HabitRevisionRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return HabitRevisionRow(
+      sessionId: serializer.fromJson<int>(json['sessionId']),
+      habitId: serializer.fromJson<String>(json['habitId']),
+      effectiveFrom: serializer.fromJson<LocalDate>(json['effectiveFrom']),
+      target: serializer.fromJson<int>(json['target']),
+      minimumTarget: serializer.fromJson<int>(json['minimumTarget']),
+      enabled: serializer.fromJson<bool>(json['enabled']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'sessionId': serializer.toJson<int>(sessionId),
+      'habitId': serializer.toJson<String>(habitId),
+      'effectiveFrom': serializer.toJson<LocalDate>(effectiveFrom),
+      'target': serializer.toJson<int>(target),
+      'minimumTarget': serializer.toJson<int>(minimumTarget),
+      'enabled': serializer.toJson<bool>(enabled),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  HabitRevisionRow copyWith({
+    int? sessionId,
+    String? habitId,
+    LocalDate? effectiveFrom,
+    int? target,
+    int? minimumTarget,
+    bool? enabled,
+    DateTime? createdAt,
+  }) => HabitRevisionRow(
+    sessionId: sessionId ?? this.sessionId,
+    habitId: habitId ?? this.habitId,
+    effectiveFrom: effectiveFrom ?? this.effectiveFrom,
+    target: target ?? this.target,
+    minimumTarget: minimumTarget ?? this.minimumTarget,
+    enabled: enabled ?? this.enabled,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  HabitRevisionRow copyWithCompanion(HabitRevisionsCompanion data) {
+    return HabitRevisionRow(
+      sessionId: data.sessionId.present ? data.sessionId.value : this.sessionId,
+      habitId: data.habitId.present ? data.habitId.value : this.habitId,
+      effectiveFrom: data.effectiveFrom.present
+          ? data.effectiveFrom.value
+          : this.effectiveFrom,
+      target: data.target.present ? data.target.value : this.target,
+      minimumTarget: data.minimumTarget.present
+          ? data.minimumTarget.value
+          : this.minimumTarget,
+      enabled: data.enabled.present ? data.enabled.value : this.enabled,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('HabitRevisionRow(')
+          ..write('sessionId: $sessionId, ')
+          ..write('habitId: $habitId, ')
+          ..write('effectiveFrom: $effectiveFrom, ')
+          ..write('target: $target, ')
+          ..write('minimumTarget: $minimumTarget, ')
+          ..write('enabled: $enabled, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    sessionId,
+    habitId,
+    effectiveFrom,
+    target,
+    minimumTarget,
+    enabled,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is HabitRevisionRow &&
+          other.sessionId == this.sessionId &&
+          other.habitId == this.habitId &&
+          other.effectiveFrom == this.effectiveFrom &&
+          other.target == this.target &&
+          other.minimumTarget == this.minimumTarget &&
+          other.enabled == this.enabled &&
+          other.createdAt == this.createdAt);
+}
+
+class HabitRevisionsCompanion extends UpdateCompanion<HabitRevisionRow> {
+  final Value<int> sessionId;
+  final Value<String> habitId;
+  final Value<LocalDate> effectiveFrom;
+  final Value<int> target;
+  final Value<int> minimumTarget;
+  final Value<bool> enabled;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const HabitRevisionsCompanion({
+    this.sessionId = const Value.absent(),
+    this.habitId = const Value.absent(),
+    this.effectiveFrom = const Value.absent(),
+    this.target = const Value.absent(),
+    this.minimumTarget = const Value.absent(),
+    this.enabled = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  HabitRevisionsCompanion.insert({
+    required int sessionId,
+    required String habitId,
+    required LocalDate effectiveFrom,
+    required int target,
+    required int minimumTarget,
+    required bool enabled,
+    required DateTime createdAt,
+    this.rowid = const Value.absent(),
+  }) : sessionId = Value(sessionId),
+       habitId = Value(habitId),
+       effectiveFrom = Value(effectiveFrom),
+       target = Value(target),
+       minimumTarget = Value(minimumTarget),
+       enabled = Value(enabled),
+       createdAt = Value(createdAt);
+  static Insertable<HabitRevisionRow> custom({
+    Expression<int>? sessionId,
+    Expression<String>? habitId,
+    Expression<String>? effectiveFrom,
+    Expression<int>? target,
+    Expression<int>? minimumTarget,
+    Expression<bool>? enabled,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (sessionId != null) 'session_id': sessionId,
+      if (habitId != null) 'habit_id': habitId,
+      if (effectiveFrom != null) 'effective_from': effectiveFrom,
+      if (target != null) 'target': target,
+      if (minimumTarget != null) 'minimum_target': minimumTarget,
+      if (enabled != null) 'enabled': enabled,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  HabitRevisionsCompanion copyWith({
+    Value<int>? sessionId,
+    Value<String>? habitId,
+    Value<LocalDate>? effectiveFrom,
+    Value<int>? target,
+    Value<int>? minimumTarget,
+    Value<bool>? enabled,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return HabitRevisionsCompanion(
+      sessionId: sessionId ?? this.sessionId,
+      habitId: habitId ?? this.habitId,
+      effectiveFrom: effectiveFrom ?? this.effectiveFrom,
+      target: target ?? this.target,
+      minimumTarget: minimumTarget ?? this.minimumTarget,
+      enabled: enabled ?? this.enabled,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (sessionId.present) {
+      map['session_id'] = Variable<int>(sessionId.value);
+    }
+    if (habitId.present) {
+      map['habit_id'] = Variable<String>(habitId.value);
+    }
+    if (effectiveFrom.present) {
+      map['effective_from'] = Variable<String>(
+        $HabitRevisionsTable.$convertereffectiveFrom.toSql(effectiveFrom.value),
+      );
+    }
+    if (target.present) {
+      map['target'] = Variable<int>(target.value);
+    }
+    if (minimumTarget.present) {
+      map['minimum_target'] = Variable<int>(minimumTarget.value);
+    }
+    if (enabled.present) {
+      map['enabled'] = Variable<bool>(enabled.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('HabitRevisionsCompanion(')
+          ..write('sessionId: $sessionId, ')
+          ..write('habitId: $habitId, ')
+          ..write('effectiveFrom: $effectiveFrom, ')
+          ..write('target: $target, ')
+          ..write('minimumTarget: $minimumTarget, ')
+          ..write('enabled: $enabled, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $DayModesTable extends DayModes
+    with TableInfo<$DayModesTable, DayModeRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $DayModesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _sessionIdMeta = const VerificationMeta(
+    'sessionId',
+  );
+  @override
+  late final GeneratedColumn<int> sessionId = GeneratedColumn<int>(
+    'session_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES winter_arc_sessions (id) ON DELETE CASCADE',
+    ),
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<LocalDate, String> date =
+      GeneratedColumn<String>(
+        'date',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<LocalDate>($DayModesTable.$converterdate);
+  @override
+  late final GeneratedColumnWithTypeConverter<DayMode, String> mode =
+      GeneratedColumn<String>(
+        'mode',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<DayMode>($DayModesTable.$convertermode);
+  static const VerificationMeta _changedAtMeta = const VerificationMeta(
+    'changedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> changedAt = GeneratedColumn<DateTime>(
+    'changed_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [sessionId, date, mode, changedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'day_modes';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<DayModeRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('session_id')) {
+      context.handle(
+        _sessionIdMeta,
+        sessionId.isAcceptableOrUnknown(data['session_id']!, _sessionIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sessionIdMeta);
+    }
+    if (data.containsKey('changed_at')) {
+      context.handle(
+        _changedAtMeta,
+        changedAt.isAcceptableOrUnknown(data['changed_at']!, _changedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_changedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {sessionId, date};
+  @override
+  DayModeRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return DayModeRow(
+      sessionId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}session_id'],
+      )!,
+      date: $DayModesTable.$converterdate.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}date'],
+        )!,
+      ),
+      mode: $DayModesTable.$convertermode.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}mode'],
+        )!,
+      ),
+      changedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}changed_at'],
+      )!,
+    );
+  }
+
+  @override
+  $DayModesTable createAlias(String alias) {
+    return $DayModesTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<LocalDate, String> $converterdate =
+      const LocalDateConverter();
+  static JsonTypeConverter2<DayMode, String, String> $convertermode =
+      const EnumNameConverter<DayMode>(DayMode.values);
+}
+
+class DayModeRow extends DataClass implements Insertable<DayModeRow> {
+  final int sessionId;
+  final LocalDate date;
+  final DayMode mode;
+  final DateTime changedAt;
+  const DayModeRow({
+    required this.sessionId,
+    required this.date,
+    required this.mode,
+    required this.changedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['session_id'] = Variable<int>(sessionId);
+    {
+      map['date'] = Variable<String>($DayModesTable.$converterdate.toSql(date));
+    }
+    {
+      map['mode'] = Variable<String>($DayModesTable.$convertermode.toSql(mode));
+    }
+    map['changed_at'] = Variable<DateTime>(changedAt);
+    return map;
+  }
+
+  DayModesCompanion toCompanion(bool nullToAbsent) {
+    return DayModesCompanion(
+      sessionId: Value(sessionId),
+      date: Value(date),
+      mode: Value(mode),
+      changedAt: Value(changedAt),
+    );
+  }
+
+  factory DayModeRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return DayModeRow(
+      sessionId: serializer.fromJson<int>(json['sessionId']),
+      date: serializer.fromJson<LocalDate>(json['date']),
+      mode: $DayModesTable.$convertermode.fromJson(
+        serializer.fromJson<String>(json['mode']),
+      ),
+      changedAt: serializer.fromJson<DateTime>(json['changedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'sessionId': serializer.toJson<int>(sessionId),
+      'date': serializer.toJson<LocalDate>(date),
+      'mode': serializer.toJson<String>(
+        $DayModesTable.$convertermode.toJson(mode),
+      ),
+      'changedAt': serializer.toJson<DateTime>(changedAt),
+    };
+  }
+
+  DayModeRow copyWith({
+    int? sessionId,
+    LocalDate? date,
+    DayMode? mode,
+    DateTime? changedAt,
+  }) => DayModeRow(
+    sessionId: sessionId ?? this.sessionId,
+    date: date ?? this.date,
+    mode: mode ?? this.mode,
+    changedAt: changedAt ?? this.changedAt,
+  );
+  DayModeRow copyWithCompanion(DayModesCompanion data) {
+    return DayModeRow(
+      sessionId: data.sessionId.present ? data.sessionId.value : this.sessionId,
+      date: data.date.present ? data.date.value : this.date,
+      mode: data.mode.present ? data.mode.value : this.mode,
+      changedAt: data.changedAt.present ? data.changedAt.value : this.changedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DayModeRow(')
+          ..write('sessionId: $sessionId, ')
+          ..write('date: $date, ')
+          ..write('mode: $mode, ')
+          ..write('changedAt: $changedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(sessionId, date, mode, changedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is DayModeRow &&
+          other.sessionId == this.sessionId &&
+          other.date == this.date &&
+          other.mode == this.mode &&
+          other.changedAt == this.changedAt);
+}
+
+class DayModesCompanion extends UpdateCompanion<DayModeRow> {
+  final Value<int> sessionId;
+  final Value<LocalDate> date;
+  final Value<DayMode> mode;
+  final Value<DateTime> changedAt;
+  final Value<int> rowid;
+  const DayModesCompanion({
+    this.sessionId = const Value.absent(),
+    this.date = const Value.absent(),
+    this.mode = const Value.absent(),
+    this.changedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  DayModesCompanion.insert({
+    required int sessionId,
+    required LocalDate date,
+    required DayMode mode,
+    required DateTime changedAt,
+    this.rowid = const Value.absent(),
+  }) : sessionId = Value(sessionId),
+       date = Value(date),
+       mode = Value(mode),
+       changedAt = Value(changedAt);
+  static Insertable<DayModeRow> custom({
+    Expression<int>? sessionId,
+    Expression<String>? date,
+    Expression<String>? mode,
+    Expression<DateTime>? changedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (sessionId != null) 'session_id': sessionId,
+      if (date != null) 'date': date,
+      if (mode != null) 'mode': mode,
+      if (changedAt != null) 'changed_at': changedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  DayModesCompanion copyWith({
+    Value<int>? sessionId,
+    Value<LocalDate>? date,
+    Value<DayMode>? mode,
+    Value<DateTime>? changedAt,
+    Value<int>? rowid,
+  }) {
+    return DayModesCompanion(
+      sessionId: sessionId ?? this.sessionId,
+      date: date ?? this.date,
+      mode: mode ?? this.mode,
+      changedAt: changedAt ?? this.changedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (sessionId.present) {
+      map['session_id'] = Variable<int>(sessionId.value);
+    }
+    if (date.present) {
+      map['date'] = Variable<String>(
+        $DayModesTable.$converterdate.toSql(date.value),
+      );
+    }
+    if (mode.present) {
+      map['mode'] = Variable<String>(
+        $DayModesTable.$convertermode.toSql(mode.value),
+      );
+    }
+    if (changedAt.present) {
+      map['changed_at'] = Variable<DateTime>(changedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DayModesCompanion(')
+          ..write('sessionId: $sessionId, ')
+          ..write('date: $date, ')
+          ..write('mode: $mode, ')
+          ..write('changedAt: $changedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -2035,6 +2894,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $DailyHabitProgressEntriesTable dailyHabitProgressEntries =
       $DailyHabitProgressEntriesTable(this);
   late final $XpTransactionsTable xpTransactions = $XpTransactionsTable(this);
+  late final $HabitRevisionsTable habitRevisions = $HabitRevisionsTable(this);
+  late final $DayModesTable dayModes = $DayModesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2044,6 +2905,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     habits,
     dailyHabitProgressEntries,
     xpTransactions,
+    habitRevisions,
+    dayModes,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -2060,6 +2923,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('xp_transactions', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'winter_arc_sessions',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('day_modes', kind: UpdateKind.delete)],
     ),
   ]);
 }
@@ -2123,6 +2993,24 @@ final class $$WinterArcSessionsTableReferences
     ).filter((f) => f.sessionId.id.sqlEquals($_itemColumn<int>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_xpTransactionsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$DayModesTable, List<DayModeRow>>
+  _dayModesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.dayModes,
+    aliasName: 'winter_arc_sessions__id__day_modes__session_id',
+  );
+
+  $$DayModesTableProcessedTableManager get dayModesRefs {
+    final manager = $$DayModesTableTableManager(
+      $_db,
+      $_db.dayModes,
+    ).filter((f) => f.sessionId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_dayModesRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -2212,6 +3100,31 @@ class $$WinterArcSessionsTableFilterComposer
           }) => $$XpTransactionsTableFilterComposer(
             $db: $db,
             $table: $db.xpTransactions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> dayModesRefs(
+    Expression<bool> Function($$DayModesTableFilterComposer f) f,
+  ) {
+    final $$DayModesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.dayModes,
+      getReferencedColumn: (t) => t.sessionId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$DayModesTableFilterComposer(
+            $db: $db,
+            $table: $db.dayModes,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -2338,6 +3251,31 @@ class $$WinterArcSessionsTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> dayModesRefs<T extends Object>(
+    Expression<T> Function($$DayModesTableAnnotationComposer a) f,
+  ) {
+    final $$DayModesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.dayModes,
+      getReferencedColumn: (t) => t.sessionId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$DayModesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.dayModes,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$WinterArcSessionsTableTableManager
@@ -2353,7 +3291,11 @@ class $$WinterArcSessionsTableTableManager
           $$WinterArcSessionsTableUpdateCompanionBuilder,
           (SessionRow, $$WinterArcSessionsTableReferences),
           SessionRow,
-          PrefetchHooks Function({bool habitsRefs, bool xpTransactionsRefs})
+          PrefetchHooks Function({
+            bool habitsRefs,
+            bool xpTransactionsRefs,
+            bool dayModesRefs,
+          })
         > {
   $$WinterArcSessionsTableTableManager(
     _$AppDatabase db,
@@ -2412,12 +3354,17 @@ class $$WinterArcSessionsTableTableManager
               )
               .toList(),
           prefetchHooksCallback:
-              ({habitsRefs = false, xpTransactionsRefs = false}) {
+              ({
+                habitsRefs = false,
+                xpTransactionsRefs = false,
+                dayModesRefs = false,
+              }) {
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [
                     if (habitsRefs) db.habits,
                     if (xpTransactionsRefs) db.xpTransactions,
+                    if (dayModesRefs) db.dayModes,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -2464,6 +3411,27 @@ class $$WinterArcSessionsTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (dayModesRefs)
+                        await $_getPrefetchedData<
+                          SessionRow,
+                          $WinterArcSessionsTable,
+                          DayModeRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $$WinterArcSessionsTableReferences
+                              ._dayModesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$WinterArcSessionsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).dayModesRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.sessionId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -2484,7 +3452,11 @@ typedef $$WinterArcSessionsTableProcessedTableManager =
       $$WinterArcSessionsTableUpdateCompanionBuilder,
       (SessionRow, $$WinterArcSessionsTableReferences),
       SessionRow,
-      PrefetchHooks Function({bool habitsRefs, bool xpTransactionsRefs})
+      PrefetchHooks Function({
+        bool habitsRefs,
+        bool xpTransactionsRefs,
+        bool dayModesRefs,
+      })
     >;
 typedef $$HabitsTableCreateCompanionBuilder = HabitsCompanion Function({
   required int sessionId,
@@ -2497,6 +3469,7 @@ typedef $$HabitsTableCreateCompanionBuilder = HabitsCompanion Function({
   required bool enabled,
   required int sortOrder,
   required DateTime createdAt,
+  Value<int> minimumTarget,
   Value<int> rowid,
 });
 typedef $$HabitsTableUpdateCompanionBuilder = HabitsCompanion Function({
@@ -2510,6 +3483,7 @@ typedef $$HabitsTableUpdateCompanionBuilder = HabitsCompanion Function({
   Value<bool> enabled,
   Value<int> sortOrder,
   Value<DateTime> createdAt,
+  Value<int> minimumTarget,
   Value<int> rowid,
 });
 
@@ -2591,6 +3565,11 @@ class $$HabitsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<int> get minimumTarget => $composableBuilder(
+    column: $table.minimumTarget,
+    builder: (column) => ColumnFilters(column),
+  );
+
   $$WinterArcSessionsTableFilterComposer get sessionId {
     final $$WinterArcSessionsTableFilterComposer composer = $composerBuilder(
       composer: this,
@@ -2669,6 +3648,11 @@ class $$HabitsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get minimumTarget => $composableBuilder(
+    column: $table.minimumTarget,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$WinterArcSessionsTableOrderingComposer get sessionId {
     final $$WinterArcSessionsTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -2728,6 +3712,11 @@ class $$HabitsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<int> get minimumTarget => $composableBuilder(
+    column: $table.minimumTarget,
+    builder: (column) => column,
+  );
 
   $$WinterArcSessionsTableAnnotationComposer get sessionId {
     final $$WinterArcSessionsTableAnnotationComposer composer =
@@ -2792,6 +3781,7 @@ class $$HabitsTableTableManager
                 Value<bool> enabled = const Value.absent(),
                 Value<int> sortOrder = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<int> minimumTarget = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => HabitsCompanion(
                 sessionId: sessionId,
@@ -2804,6 +3794,7 @@ class $$HabitsTableTableManager
                 enabled: enabled,
                 sortOrder: sortOrder,
                 createdAt: createdAt,
+                minimumTarget: minimumTarget,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -2818,6 +3809,7 @@ class $$HabitsTableTableManager
                 required bool enabled,
                 required int sortOrder,
                 required DateTime createdAt,
+                Value<int> minimumTarget = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => HabitsCompanion.insert(
                 sessionId: sessionId,
@@ -2830,6 +3822,7 @@ class $$HabitsTableTableManager
                 enabled: enabled,
                 sortOrder: sortOrder,
                 createdAt: createdAt,
+                minimumTarget: minimumTarget,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -3548,6 +4541,563 @@ typedef $$XpTransactionsTableProcessedTableManager =
       XpTransactionRow,
       PrefetchHooks Function({bool sessionId})
     >;
+typedef $$HabitRevisionsTableCreateCompanionBuilder =
+    HabitRevisionsCompanion Function({
+      required int sessionId,
+      required String habitId,
+      required LocalDate effectiveFrom,
+      required int target,
+      required int minimumTarget,
+      required bool enabled,
+      required DateTime createdAt,
+      Value<int> rowid,
+    });
+typedef $$HabitRevisionsTableUpdateCompanionBuilder =
+    HabitRevisionsCompanion Function({
+      Value<int> sessionId,
+      Value<String> habitId,
+      Value<LocalDate> effectiveFrom,
+      Value<int> target,
+      Value<int> minimumTarget,
+      Value<bool> enabled,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+
+class $$HabitRevisionsTableFilterComposer
+    extends Composer<_$AppDatabase, $HabitRevisionsTable> {
+  $$HabitRevisionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get sessionId => $composableBuilder(
+    column: $table.sessionId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get habitId => $composableBuilder(
+    column: $table.habitId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<LocalDate, LocalDate, String>
+  get effectiveFrom => $composableBuilder(
+    column: $table.effectiveFrom,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<int> get target => $composableBuilder(
+    column: $table.target,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get minimumTarget => $composableBuilder(
+    column: $table.minimumTarget,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get enabled => $composableBuilder(
+    column: $table.enabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$HabitRevisionsTableOrderingComposer
+    extends Composer<_$AppDatabase, $HabitRevisionsTable> {
+  $$HabitRevisionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get sessionId => $composableBuilder(
+    column: $table.sessionId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get habitId => $composableBuilder(
+    column: $table.habitId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get effectiveFrom => $composableBuilder(
+    column: $table.effectiveFrom,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get target => $composableBuilder(
+    column: $table.target,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get minimumTarget => $composableBuilder(
+    column: $table.minimumTarget,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get enabled => $composableBuilder(
+    column: $table.enabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$HabitRevisionsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $HabitRevisionsTable> {
+  $$HabitRevisionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get sessionId =>
+      $composableBuilder(column: $table.sessionId, builder: (column) => column);
+
+  GeneratedColumn<String> get habitId =>
+      $composableBuilder(column: $table.habitId, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<LocalDate, String> get effectiveFrom =>
+      $composableBuilder(
+        column: $table.effectiveFrom,
+        builder: (column) => column,
+      );
+
+  GeneratedColumn<int> get target =>
+      $composableBuilder(column: $table.target, builder: (column) => column);
+
+  GeneratedColumn<int> get minimumTarget => $composableBuilder(
+    column: $table.minimumTarget,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get enabled =>
+      $composableBuilder(column: $table.enabled, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$HabitRevisionsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $HabitRevisionsTable,
+          HabitRevisionRow,
+          $$HabitRevisionsTableFilterComposer,
+          $$HabitRevisionsTableOrderingComposer,
+          $$HabitRevisionsTableAnnotationComposer,
+          $$HabitRevisionsTableCreateCompanionBuilder,
+          $$HabitRevisionsTableUpdateCompanionBuilder,
+          (
+            HabitRevisionRow,
+            BaseReferences<
+              _$AppDatabase,
+              $HabitRevisionsTable,
+              HabitRevisionRow
+            >,
+          ),
+          HabitRevisionRow,
+          PrefetchHooks Function()
+        > {
+  $$HabitRevisionsTableTableManager(
+    _$AppDatabase db,
+    $HabitRevisionsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$HabitRevisionsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$HabitRevisionsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$HabitRevisionsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> sessionId = const Value.absent(),
+                Value<String> habitId = const Value.absent(),
+                Value<LocalDate> effectiveFrom = const Value.absent(),
+                Value<int> target = const Value.absent(),
+                Value<int> minimumTarget = const Value.absent(),
+                Value<bool> enabled = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => HabitRevisionsCompanion(
+                sessionId: sessionId,
+                habitId: habitId,
+                effectiveFrom: effectiveFrom,
+                target: target,
+                minimumTarget: minimumTarget,
+                enabled: enabled,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required int sessionId,
+                required String habitId,
+                required LocalDate effectiveFrom,
+                required int target,
+                required int minimumTarget,
+                required bool enabled,
+                required DateTime createdAt,
+                Value<int> rowid = const Value.absent(),
+              }) => HabitRevisionsCompanion.insert(
+                sessionId: sessionId,
+                habitId: habitId,
+                effectiveFrom: effectiveFrom,
+                target: target,
+                minimumTarget: minimumTarget,
+                enabled: enabled,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$HabitRevisionsTable, HabitRevisionRow>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $HabitRevisionsTable,
+                    HabitRevisionRow
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$HabitRevisionsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $HabitRevisionsTable,
+      HabitRevisionRow,
+      $$HabitRevisionsTableFilterComposer,
+      $$HabitRevisionsTableOrderingComposer,
+      $$HabitRevisionsTableAnnotationComposer,
+      $$HabitRevisionsTableCreateCompanionBuilder,
+      $$HabitRevisionsTableUpdateCompanionBuilder,
+      (
+        HabitRevisionRow,
+        BaseReferences<_$AppDatabase, $HabitRevisionsTable, HabitRevisionRow>,
+      ),
+      HabitRevisionRow,
+      PrefetchHooks Function()
+    >;
+typedef $$DayModesTableCreateCompanionBuilder = DayModesCompanion Function({
+  required int sessionId,
+  required LocalDate date,
+  required DayMode mode,
+  required DateTime changedAt,
+  Value<int> rowid,
+});
+typedef $$DayModesTableUpdateCompanionBuilder = DayModesCompanion Function({
+  Value<int> sessionId,
+  Value<LocalDate> date,
+  Value<DayMode> mode,
+  Value<DateTime> changedAt,
+  Value<int> rowid,
+});
+
+final class $$DayModesTableReferences
+    extends BaseReferences<_$AppDatabase, $DayModesTable, DayModeRow> {
+  $$DayModesTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $WinterArcSessionsTable _sessionIdTable(_$AppDatabase db) => db
+      .winterArcSessions
+      .createAlias('day_modes__session_id__winter_arc_sessions__id');
+
+  $$WinterArcSessionsTableProcessedTableManager get sessionId {
+    final $_column = $_itemColumn<int>('session_id')!;
+
+    final manager = $$WinterArcSessionsTableTableManager(
+      $_db,
+      $_db.winterArcSessions,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_sessionIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$DayModesTableFilterComposer
+    extends Composer<_$AppDatabase, $DayModesTable> {
+  $$DayModesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnWithTypeConverterFilters<LocalDate, LocalDate, String> get date =>
+      $composableBuilder(
+        column: $table.date,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnWithTypeConverterFilters<DayMode, DayMode, String> get mode =>
+      $composableBuilder(
+        column: $table.mode,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<DateTime> get changedAt => $composableBuilder(
+    column: $table.changedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$WinterArcSessionsTableFilterComposer get sessionId {
+    final $$WinterArcSessionsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sessionId,
+      referencedTable: $db.winterArcSessions,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$WinterArcSessionsTableFilterComposer(
+            $db: $db,
+            $table: $db.winterArcSessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$DayModesTableOrderingComposer
+    extends Composer<_$AppDatabase, $DayModesTable> {
+  $$DayModesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get date => $composableBuilder(
+    column: $table.date,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get mode => $composableBuilder(
+    column: $table.mode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get changedAt => $composableBuilder(
+    column: $table.changedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$WinterArcSessionsTableOrderingComposer get sessionId {
+    final $$WinterArcSessionsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sessionId,
+      referencedTable: $db.winterArcSessions,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$WinterArcSessionsTableOrderingComposer(
+            $db: $db,
+            $table: $db.winterArcSessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$DayModesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $DayModesTable> {
+  $$DayModesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumnWithTypeConverter<LocalDate, String> get date =>
+      $composableBuilder(column: $table.date, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<DayMode, String> get mode =>
+      $composableBuilder(column: $table.mode, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get changedAt =>
+      $composableBuilder(column: $table.changedAt, builder: (column) => column);
+
+  $$WinterArcSessionsTableAnnotationComposer get sessionId {
+    final $$WinterArcSessionsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.sessionId,
+          referencedTable: $db.winterArcSessions,
+          getReferencedColumn: (t) => t.id,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$WinterArcSessionsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.winterArcSessions,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return composer;
+  }
+}
+
+class $$DayModesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $DayModesTable,
+          DayModeRow,
+          $$DayModesTableFilterComposer,
+          $$DayModesTableOrderingComposer,
+          $$DayModesTableAnnotationComposer,
+          $$DayModesTableCreateCompanionBuilder,
+          $$DayModesTableUpdateCompanionBuilder,
+          (DayModeRow, $$DayModesTableReferences),
+          DayModeRow,
+          PrefetchHooks Function({bool sessionId})
+        > {
+  $$DayModesTableTableManager(_$AppDatabase db, $DayModesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$DayModesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$DayModesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$DayModesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> sessionId = const Value.absent(),
+                Value<LocalDate> date = const Value.absent(),
+                Value<DayMode> mode = const Value.absent(),
+                Value<DateTime> changedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => DayModesCompanion(
+                sessionId: sessionId,
+                date: date,
+                mode: mode,
+                changedAt: changedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required int sessionId,
+                required LocalDate date,
+                required DayMode mode,
+                required DateTime changedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => DayModesCompanion.insert(
+                sessionId: sessionId,
+                date: date,
+                mode: mode,
+                changedAt: changedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$DayModesTable, DayModeRow>(table),
+                  $$DayModesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({sessionId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (sessionId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.sessionId,
+                        referencedTable: $$DayModesTableReferences
+                            ._sessionIdTable(db),
+                        referencedColumn: $$DayModesTableReferences
+                            ._sessionIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$DayModesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $DayModesTable,
+      DayModeRow,
+      $$DayModesTableFilterComposer,
+      $$DayModesTableOrderingComposer,
+      $$DayModesTableAnnotationComposer,
+      $$DayModesTableCreateCompanionBuilder,
+      $$DayModesTableUpdateCompanionBuilder,
+      (DayModeRow, $$DayModesTableReferences),
+      DayModeRow,
+      PrefetchHooks Function({bool sessionId})
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -3563,4 +5113,8 @@ class $AppDatabaseManager {
       );
   $$XpTransactionsTableTableManager get xpTransactions =>
       $$XpTransactionsTableTableManager(_db, _db.xpTransactions);
+  $$HabitRevisionsTableTableManager get habitRevisions =>
+      $$HabitRevisionsTableTableManager(_db, _db.habitRevisions);
+  $$DayModesTableTableManager get dayModes =>
+      $$DayModesTableTableManager(_db, _db.dayModes);
 }

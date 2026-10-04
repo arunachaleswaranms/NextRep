@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:nextrep/core/time/local_date.dart';
 import 'package:nextrep/domain/habit/starter_habits.dart';
 import 'package:nextrep/domain/progress/daily_habit_progress.dart';
-import 'package:nextrep/domain/progress/day_summary.dart';
+import 'package:nextrep/domain/progress/day_record.dart';
 
 void main() {
   final date = LocalDate(2026, 10, 1);
@@ -12,6 +12,8 @@ void main() {
     for (final (i, habit) in habits.indexed)
       HabitDayEntry(
         habit: habit,
+        config: habit.baseline,
+        target: habit.target,
         progress: DailyHabitProgress(
           habitId: habit.id,
           date: date,
@@ -29,14 +31,16 @@ void main() {
   });
 
   test('100% only when every habit is done', () {
-    expect(DayCompletion.of(entries(completed: 2)).isPerfect, isFalse);
-    expect(DayCompletion.of(entries(completed: 3)).isPerfect, isTrue);
+    expect(DayCompletion.of(entries(completed: 2)).isFull, isFalse);
+    expect(DayCompletion.of(entries(completed: 3)).isFull, isTrue);
   });
 
   test('partial numeric progress does not count as completion', () {
     final partial = [
       HabitDayEntry(
         habit: habits.first,
+        config: habits.first.baseline,
+        target: habits.first.target,
         progress: DailyHabitProgress(
           habitId: habits.first.id,
           date: date,
@@ -52,12 +56,18 @@ void main() {
     final none = DayCompletion.of(const []);
     expect(none.percent, 0);
     expect(none.ratio, 0);
-    expect(none.isPerfect, isFalse);
+    expect(none.isFull, isFalse);
   });
 
   test('starter catalogue has unique ids and valid targets', () {
     final ids = StarterHabits.all.map((t) => t.id).toList();
     expect(ids.toSet(), hasLength(ids.length));
     expect(StarterHabits.all.every((t) => t.target > 0), isTrue);
+    expect(
+      StarterHabits.all.every(
+        (t) => t.minimumTarget > 0 && t.minimumTarget <= t.target,
+      ),
+      isTrue,
+    );
   });
 }
