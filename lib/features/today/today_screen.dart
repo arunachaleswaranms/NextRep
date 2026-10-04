@@ -18,11 +18,12 @@ import '../../shared/feedback/haptics.dart';
 import '../../shared/formatting/failure_messages.dart';
 import '../../shared/widgets/failure_view.dart';
 import '../../shared/widgets/winter_background.dart';
+import '../achievements/widgets/trophy_button.dart';
+import '../celebration/celebration_queue.dart';
 import 'today_controller.dart';
-import 'widgets/celebration_banner.dart';
-import 'widgets/day_header.dart';
 import 'widgets/habit_progress_tile.dart';
 import 'widgets/minimum_day.dart';
+import 'widgets/today_hero.dart';
 
 class TodayScreen extends ConsumerStatefulWidget {
   const TodayScreen({super.key});
@@ -33,22 +34,20 @@ class TodayScreen extends ConsumerStatefulWidget {
 
 class _TodayScreenState extends ConsumerState<TodayScreen> {
   late final AppLifecycleListener _lifecycle;
-  Celebration? _celebration;
-  Timer? _celebrationTimer;
 
   TodayController get _controller => ref.read(todayControllerProvider.notifier);
 
   @override
   void initState() {
     super.initState();
-    // Re-read on resume so a day rollover while backgrounded is picked up.
+    // Re-read on resume so a day rollover (or the end of the arc) while
+    // backgrounded is picked up.
     _lifecycle = AppLifecycleListener(onResume: () => _controller.refresh());
   }
 
   @override
   void dispose() {
     _lifecycle.dispose();
-    _celebrationTimer?.cancel();
     super.dispose();
   }
 
@@ -81,36 +80,26 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     }
   }
 
+  /// Queues the Perfect Day / level-up celebration of a commit. Its haptic
+  /// plays when the card appears.
   void _celebrate(DayCommit<Object?> commit) {
-    final perfect = commit.settlement.ledger.perfectDayGranted;
     final level = LevelRules.levelUp(
       beforeXp: commit.xpBefore,
       afterXp: commit.xpAfter,
     );
-    if (!perfect && level == null) return;
-
+    final perfect = commit.settlement.ledger.perfectDayGranted;
     final summary = ref.read(todayControllerProvider).value;
-    if (perfect) {
-      unawaited(Haptics.perfectDay());
-    } else {
-      unawaited(Haptics.levelUp());
-    }
-    _celebrationTimer?.cancel();
-    setState(() {
-      _celebration = Celebration(
-        perfectStreak: perfect
-            ? summary?.perfectDays.streak.current ?? 1
-            : null,
-        level: level,
-        levelXp: level == null ? null : LevelRules.xpAtStartOf(level),
-      );
-    });
-    _celebrationTimer = Timer(WinterDurations.celebration, _dismissCelebration);
-  }
-
-  void _dismissCelebration() {
-    _celebrationTimer?.cancel();
-    if (mounted) setState(() => _celebration = null);
+    ref
+        .read(celebrationQueueProvider.notifier)
+        .add(
+          DayCelebration(
+            perfectStreak: perfect
+                ? summary?.perfectDays.streak.current ?? 1
+                : null,
+            level: level,
+            levelXp: level == null ? null : LevelRules.xpAtStartOf(level),
+          ),
+        );
   }
 
   Future<void> _openMinimumDay(DaySummary summary) async {
@@ -122,7 +111,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
       case ActionSuccess(:final value) when value.value:
         unawaited(Haptics.minimumDay());
         _celebrate(value);
-        _showSnack('Minimum Day on. Keep the chain alive.');
+        _showSnack('Minimum Day on. Keep moving.');
       case ActionSuccess():
         break; // already a Minimum Day; nothing changed
       case ActionFailure(:final failure):
@@ -157,33 +146,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
       body: WinterBackground(
         child: SafeArea(
           child: switch (today) {
-            AsyncData(:final value) => Stack(
-              children: [
-                _content(context, value),
-                Positioned(
-                  left: WinterSpacing.lg,
-                  right: WinterSpacing.lg,
-                  top: WinterSpacing.lg,
-                  child: AnimatedSwitcher(
-                    duration: context.motion.standard,
-                    transitionBuilder: (child, animation) => FadeTransition(
-                      opacity: animation,
-                      child: ScaleTransition(
-                        scale: Tween(begin: 0.92, end: 1.0).animate(animation),
-                        child: child,
-                      ),
-                    ),
-                    child: _celebration == null
-                        ? const SizedBox.shrink()
-                        : CelebrationBanner(
-                            key: ObjectKey(_celebration),
-                            celebration: _celebration!,
-                            onDismiss: _dismissCelebration,
-                          ),
-                  ),
-                ),
-              ],
-            ),
+            AsyncData(:final value) => _content(context, value),
             AsyncError(:final error, :final stackTrace) => FailureView(
               failure: toAppFailure(error, stackTrace),
               onRetry: () => ref.invalidate(todayControllerProvider),
@@ -199,23 +162,35 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     final colors = context.winter;
     final text = Theme.of(context).textTheme;
     final completion = summary.completion;
-    final perfect = summary.perfectDays;
     // At most a handful of habits, so build everything (no lazy list): tiles
     // keep their animation state while scrolled away.
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(WinterSpacing.lg),
+      padding: const EdgeInsets.fromLTRB(
+        WinterSpacing.md,
+        WinterSpacing.sm,
+        WinterSpacing.md,
+        WinterSpacing.lg,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          DayHeader(summary: summary),
-          if (perfect.total > 0) ...[
-            const SizedBox(height: WinterSpacing.sm),
-            Text(
-              '🔥 Perfect streak ${perfect.streak.current} · '
-              'best ${perfect.streak.best} · ${perfect.total} total',
-              style: text.bodySmall?.copyWith(color: colors.textSecondary),
-            ),
-          ],
+          Row(
+            children: [
+              const SizedBox(width: WinterSpacing.xs),
+              Expanded(
+                child: Text(
+                  'WINTER ARC',
+                  style: text.labelLarge?.copyWith(
+                    color: colors.accentSecondary,
+                    letterSpacing: 3,
+                  ),
+                ),
+              ),
+              const TrophyButton(),
+            ],
+          ),
+          const SizedBox(height: WinterSpacing.xs),
+          TodayHero(summary: summary),
           AnimatedSize(
             duration: context.motion.standard,
             child: summary.mode.isMinimum

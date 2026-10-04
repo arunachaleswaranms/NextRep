@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/theme/winter_tokens.dart';
 import '../../core/errors/action_result.dart';
 import '../../core/errors/app_failure.dart';
+import '../../domain/habit/habit.dart';
+import '../../domain/habit/habit_config.dart';
 import '../../domain/habit/habit_edit.dart';
 import '../../domain/progress/habit_tracking_service.dart';
 import '../../shared/formatting/failure_messages.dart';
@@ -15,7 +17,8 @@ import '../../shared/widgets/winter_card.dart';
 import 'habits_controller.dart';
 import 'widgets/habit_edit_sheet.dart';
 
-/// Edit habits after the arc has started. Changes apply from today onwards.
+/// Edit habits after the arc has started. Renames apply now; goals and
+/// on/off apply from tomorrow, so today keeps the setup it started with.
 class HabitsScreen extends ConsumerWidget {
   const HabitsScreen({super.key});
 
@@ -30,7 +33,10 @@ class HabitsScreen extends ConsumerWidget {
         .edit(habitId, edit);
     if (!context.mounted) return;
     final message = switch (result) {
-      ActionSuccess() => 'Saved. Applies from today.',
+      ActionSuccess(:final value) when value.configFrom != null =>
+        'Saved. Applies from tomorrow.',
+      ActionSuccess(:final value) when value.renamed => 'Renamed.',
+      ActionSuccess() => 'No changes.',
       ActionFailure(:final failure) => userMessageFor(failure),
     };
     ScaffoldMessenger.of(context)
@@ -42,8 +48,13 @@ class HabitsScreen extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     HabitSetting setting,
+    bool configEditable,
   ) async {
-    final edit = await HabitEditSheet.show(context, setting);
+    final edit = await HabitEditSheet.show(
+      context,
+      setting,
+      configEditable: configEditable,
+    );
     if (edit != null && context.mounted) {
       await _apply(context, ref, setting.habit.id, edit);
     }
@@ -77,8 +88,13 @@ class HabitsScreen extends ConsumerWidget {
       padding: const EdgeInsets.all(WinterSpacing.lg),
       children: [
         Text(
-          'Changes apply from today. Past days keep the goals and habits '
-          'they had.',
+          value.configEditable
+              ? 'Goal and on/off changes start tomorrow, so today stays as it '
+                    'began. Renames apply now. Past days keep the goals they had.'
+              : value.editable
+              ? 'Today is the last day of your Winter Arc, so goals can no '
+                    'longer change. You can still rename habits.'
+              : 'Habits can no longer be edited.',
           style: text.bodyMedium,
         ),
         const SizedBox(height: WinterSpacing.md),
@@ -86,8 +102,9 @@ class HabitsScreen extends ConsumerWidget {
           WinterCard(
             key: ValueKey(setting.habit.id),
             highlighted: setting.config.enabled,
+            accent: WinterHabitAccents.of(setting.habit.iconKey),
             onTap: value.editable
-                ? () => _openEditor(context, ref, setting)
+                ? () => _openEditor(context, ref, setting, value.configEditable)
                 : null,
             child: Row(
               children: [
@@ -100,26 +117,34 @@ class HabitsScreen extends ConsumerWidget {
                       Text(setting.habit.title, style: text.titleMedium),
                       const SizedBox(height: 2),
                       Text(
-                        setting.habit.type.isNumeric
-                            ? '${targetLabel(setting.habit, setting.config.target)}'
-                                  ' · Minimum '
-                                  '${targetLabel(setting.habit, setting.config.minimumTarget)}'
-                            : 'Daily goal',
+                        setting.config.enabled
+                            ? _goals(setting.habit, setting.config)
+                            : 'Off today',
                         style: text.bodyMedium,
                       ),
+                      if (setting.hasPendingChange)
+                        Text(
+                          _pending(setting.habit, setting.upcoming!),
+                          style: text.bodySmall?.copyWith(
+                            color: colors.accentSecondary,
+                          ),
+                        ),
                     ],
                   ),
                 ),
-                Switch(
-                  value: setting.config.enabled,
-                  onChanged: value.editable
-                      ? (enabled) => _apply(
-                          context,
-                          ref,
-                          setting.habit.id,
-                          HabitEdit(enabled: enabled),
-                        )
-                      : null,
+                Semantics(
+                  label: '${setting.habit.title} from tomorrow',
+                  child: Switch(
+                    value: setting.editable.enabled,
+                    onChanged: value.configEditable
+                        ? (enabled) => _apply(
+                            context,
+                            ref,
+                            setting.habit.id,
+                            HabitEdit(enabled: enabled),
+                          )
+                        : null,
+                  ),
                 ),
                 Icon(
                   Icons.edit_outlined,
@@ -134,4 +159,13 @@ class HabitsScreen extends ConsumerWidget {
       ],
     );
   }
+
+  static String _goals(Habit habit, HabitConfig config) => habit.type.isNumeric
+      ? '${targetLabel(habit, config.target)} · Minimum '
+            '${targetLabel(habit, config.minimumTarget)}'
+      : 'Daily goal';
+
+  static String _pending(Habit habit, HabitConfig upcoming) => !upcoming.enabled
+      ? 'Off from tomorrow'
+      : 'From tomorrow: ${_goals(habit, upcoming)}';
 }

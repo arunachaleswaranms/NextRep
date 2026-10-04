@@ -14,8 +14,9 @@ final habitsControllerProvider =
       HabitsController.new,
     );
 
-/// Habit configuration after the arc has started. Edits apply from today and
-/// are re-read from storage after each save.
+/// Habit configuration after the arc has started. Renames apply now; goal
+/// and on/off edits apply from the next challenge day. Re-read from storage
+/// after each save.
 class HabitsController extends AsyncNotifier<HabitSettings> {
   final _queue = SerialQueue();
 
@@ -23,25 +24,25 @@ class HabitsController extends AsyncNotifier<HabitSettings> {
   Future<HabitSettings> build() =>
       ref.watch(habitTrackingServiceProvider).habitSettings();
 
-  Future<ActionResult<void>> edit(String habitId, HabitEdit edit) {
+  Future<ActionResult<HabitEditOutcome>> edit(String habitId, HabitEdit edit) {
     final shownDate = state.value?.date;
     // Read dependencies up front: the screen may be closed (and this
     // controller disposed) while the commit is still running.
     final service = ref.read(habitTrackingServiceProvider);
     final arcRefresh = ref.read(arcRefreshProvider.notifier);
     return _queue.run(() async {
-      final ActionResult<void> result = shownDate == null
-          ? const ActionFailure<void>(
+      final ActionResult<HabitEditOutcome> result = shownDate == null
+          ? const ActionFailure<HabitEditOutcome>(
               DomainFailure(DomainRule.noActiveSession, 'Habits not loaded'),
             )
-          : await runAction(
-              'habits',
-              () => service.editHabit(
+          : await runAction('habits', () async {
+              final commit = await service.editHabit(
                 habitId: habitId,
                 edit: edit,
                 date: shownDate,
-              ),
-            );
+              );
+              return commit.value;
+            });
       // Other screens re-read persisted changes even if this one is gone.
       if (result is ActionSuccess) arcRefresh.changed();
 
