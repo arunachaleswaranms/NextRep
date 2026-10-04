@@ -18,4 +18,11 @@ abstract final class Haptics {
 
   /// Minimum Day was confirmed.
   static Future<void> minimumDay() => HapticFeedback.selectionClick();
+
+  /// A newly persisted achievement is being revealed.
+  static Future<void> achievementUnlocked() async {
+    await HapticFeedback.lightImpact();
+    await Future<void>.delayed(const Duration(milliseconds: 90));
+    await HapticFeedback.mediumImpact();
+  }
 }
