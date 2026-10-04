@@ -1,18 +1,16 @@
 # PROJECT_STATE
 
-_Last updated: 2026-10-04. Phase 4 complete on its branch, PR open, not
-merged._
+_Last updated: 2026-10-04. Phase 5 complete on its branch; PR pending
+review, not merged._
 
 ## Repo
 
 - Remote: https://github.com/arunachaleswaranms/NextRep (public)
-- `main` baseline: `83680ab` (squash merge of PR #3, Phase 3). PR #1 is
-  Phase 1, PR #2 Phase 2.
-- Working branch: `phase/4-retention-and-arc-history`, from `83680ab`.
-- PR: #4 (https://github.com/arunachaleswaranms/NextRep/pull/4), open for
-  review, not merged.
-- CI: Flutter CI run 37190738692 on the PR, both jobs green (format,
-  analyze, migration tests, tests; Android debug build).
+- `main` baseline: `970d27b` (squash merge of PR #4, Phase 4). PRs #1–#4
+  are Phases 1–4.
+- Working branch: `phase/5-data-safety-and-insight`, from `970d27b`.
+- PR: pending (see below).
+- CI: pending (see below).
 - Author and committer for all commits:
   `Arunachaleswaran M S <arunachaleswaranms@gmail.com>` (set repo-locally).
   No AI or co-author trailers.
@@ -23,84 +21,104 @@ merged._
   use `export PATH="$HOME/development/flutter/bin:$PATH"`)
 - Android builds: `JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home`
 - Emulator: AVD `RideLink_API36` (API 36, arm64) → `emulator-5554`
-- iOS: Xcode 27 beta; CocoaPods **not** installed, and not needed
-  (Swift Package Manager). Simulator iPhone 17 (iOS 27).
-- Drift 2.35.1. Snapshots v1–v4 in `drift_schemas/`, frozen steps in
-  `lib/core/database/schema_versions.dart`, test schemas in
-  `test/generated_migrations/`
-- CI: `.github/workflows/flutter-ci.yml` (Flutter 3.47.5, JDK 21)
+- Physical Android: CPH2707 (Android 16) over wireless ADB
+- iOS: Xcode 27 beta, Swift Package Manager (CocoaPods not installed, not
+  needed). Simulator iPhone 17 (iOS 27).
+- Integration tests: always pass `--no-uninstall`. The default uninstalls
+  the app afterwards, which wipes its data on the device.
+- Drift 2.35.1. Snapshots v1–v4 in `drift_schemas/` (unchanged in Phase 5)
 
 ## Architecture (current)
 
 - Pure-Dart `domain/` owns truth. Drift `data/`, Riverpod controllers in
   `features/`, `app/` composition root, go_router.
-- Sessions: any number completed, at most one unfinished (setup/active).
-  This is enforced by the service, the create transaction and the
-  `single_open_session` index.
-- `CurrentArcService` resolves arcs explicitly. Writes go only to the
-  active arc, with the shown session id checked. History views take
-  `/arc/:sessionId` and are read-only.
-- One write path for the current day: `ProgressRepository.commitDay` +
-  `DayRules.settle`, the only XP authority.
-- Journal: `daily_reflections`, one per session and date; only today of
-  the active arc is writable.
-- Reminders: `ReminderService.reconcile` → pure `ReminderPlanner` →
-  `ReminderScheduler` (`flutter_local_notifications`). Inexact one-shots
-  for 14 days, only while an arc is active.
-- Achievements: 15 keys; `AchievementRules.evaluate(AchievementContext)`
-  is pure; idempotent reconcile of the home arc; no XP.
-- Derived, never stored: streaks, levels, Perfect Days, Journey states,
-  summaries, history cards.
-- Schema v4.
+- Sessions: any number completed, at most one unfinished (service, create
+  transaction, `single_open_session` index).
+- Backup: `domain/backup/` holds the format and service.
+  - `BackupCodec`: canonical JSON + SHA-256.
+  - `BackupValidator` → `ValidatedBackup`, the only input restore takes.
+  - `BackupService`: export, inspect, restore.
+  - `DriftBackupStore`: one-transaction replace, verified before commit.
+  - Restored arc ids are shifted past every id the database has used.
+  - Reminders restore off.
+- After a restore: `AppEpoch.restart()` re-runs the boot location and
+  rebuilds the router. Every repository provider watches the epoch, so all
+  services and controllers reload.
+- Deletion: `WinterArcService.deleteCompletedArc` (completed only) and
+  `cancelSetup` (setup only); the status is re-checked in the delete
+  transaction; FK cascades; no orphan rows left.
+- Insights: `InsightService` reads facts (moods without text); pure
+  `InsightRules`; never persisted.
+- Derived, never stored: streaks, levels, Perfect Days, Journey,
+  summaries, history cards, insights.
 
-## Package additions (Phase 4)
+## Versions
 
-`flutter_local_notifications ^22.3.1`, `timezone ^0.11.1`, `characters
-^1.4.0` (was transitive). Android: core library desugaring
-(`desugar_jdk_libs 2.1.4`).
+- Database schema: **v4** (no Phase 5 migration needed)
+- Backup `formatVersion`: **1** (independent of the schema)
+- App version: 1.0.0 (`lib/app/app_info.dart`, test-checked against
+  pubspec)
+
+## Package additions (Phase 5)
+
+`file_picker ^13.1.0` (SAF / UIDocumentPicker, no storage permission, SPM),
+`crypto ^3.0.7` (SHA-256).
 
 ## Commands that passed (2026-10-04)
 
-- `dart format .` (clean), `flutter analyze` (no issues)
-- `dart run build_runner build --delete-conflicting-outputs`, schema dump /
-  steps / generate (v4)
-- `flutter test`: 348/348. `flutter test --coverage`: 93.0% handwritten lib
-- Migration tests (`migration_test`, `migration_v3_test`,
-  `migration_v4_test`): 28/28
-- `flutter test integration_test`: emulator-5554 4/4; iOS simulator 4/4
-- `flutter build apk --debug` and `--release`; `flutter build ios
+- `dart format --set-exit-if-changed .`, `flutter analyze`: clean
+- `flutter test`: **440/440**. `flutter test --coverage`: **93.7%** of
+  handwritten lib
+- Migration tests (v1/v2/v3 → v4): 28/28
+- Phase 5 suites (backup format, restore, deletion, insights, flows,
+  routes): 92/92
+- `flutter test integration_test --no-uninstall`:
+  - emulator-5554: 5/5
+  - CPH2707: 5/5
+  - iPhone 17 simulator: 5/5
+- `flutter build apk --debug` / `--release`, `flutter build ios
   --simulator`: pass
-- `aapt2 dump permissions` on release:
-  - `POST_NOTIFICATIONS`, `VIBRATE`, `RECEIVE_BOOT_COMPLETED` (plus the
-    existing AndroidX dynamic-receiver permission)
-  - no INTERNET, no SCHEDULE_EXACT_ALARM / USE_EXACT_ALARM
+- `aapt2 dump permissions` (release): `RECEIVE_BOOT_COMPLETED`, `VIBRATE`,
+  `POST_NOTIFICATIONS`, the app-private receiver permission.
+  - Absent: INTERNET, SCHEDULE_EXACT_ALARM, USE_EXACT_ALARM,
+    MANAGE/READ/WRITE_EXTERNAL_STORAGE.
 
 ## Device status
 
-- Emulator (API 36): PASS.
-  - Phase 3 → 4 upgrade with data intact.
-  - Notification permission prompt, delivery (background and killed
-    process), tap → Today / Journal including cold launch.
-  - Disable → 0 alarms; denial path; release-build delivery; Journal
-    keyboard.
-- Physical Android: **MANUAL REQUIRED** (none connected).
-- iOS: simulator build and integration tests PASS; iOS notification
-  delivery not checked.
+- Emulator (API 36, release): PASS. Covered:
+  - restore through DocumentsUI on a fresh install
+  - export through the Save dialog (re-export identical)
+  - replace with the second confirmation
+  - corrupt file refused
+  - relaunch persistence, delete arc, cancel setup
+  - logcat privacy
+- Physical Android CPH2707: PASS. Covered:
+  - integration tests 5/5
+  - picker restore and export
+  - reminders on/off (inexact, all cancelled)
+  - delete arc, background/resume
+  - The app was left installed with test data and reminders off; the
+    test files were removed.
+- iOS: simulator build and integration 5/5. The iOS document picker is
+  **MANUAL REQUIRED**. No iPhone connected.
 
 ## Known debt
 
+- Backups aren't encrypted (by design, documented); no merge-import.
+- Export refuses data dated after "now" (a clock moved backwards).
+- Backup decoding runs on the UI isolate (fine for real KB-sized backups).
 - Reminders pause after 14 days without opening the app; delivery is
   inexact.
-- No export/backup; no deleting arcs; a setup arc can't be cancelled.
-- Unlocks are permanent. Minimum Day is one-way. No habit
-  creation/deletion or past-day editing.
-- Close-out still waits for an entry point (launch / resume / refresh).
-- Error reporting is local `dart:developer` logging only.
+- Minimum Day one-way; no habit creation; no past-day editing; close-out
+  waits for an entry point.
 
 ## Next recommended phase
 
-**Phase 5: data safety and insight.** Physical-device pass (Android and
-iOS notifications), local export/backup of arcs and the Journal, then
-cancel-setup / delete-arc on top of it, an optional seasonal (1 Oct →
-31 Dec) preset, on-device cross-arc and mood insights, and Journey scene
-v2 (parallax). Details in `docs/PHASE_4.md#phase-5-handoff`.
+**Phase 6:**
+- Seasonal Winter Arc preset (needs a product design first)
+- iOS device pass (document picker, notifications) and TalkBack
+- optional encrypted backup (format 2)
+- custom habits during setup and a time-based sleep habit
+- restrained Journey parallax
+
+Details in `docs/PHASE_5.md#phase-6-handoff`.
