@@ -17,6 +17,8 @@ abstract interface class BackupStore {
   /// unfinished arc, no dangling references) before committing. Any
   /// failure rolls back, leaving the existing data exactly as it was.
   ///
+  /// Arc ids are shifted past every id this database has used, so no
+  /// restored arc reuses one (a fresh install keeps the backup's ids).
   /// Reminder times are restored with both reminders off.
   Future<void> replaceAll(ValidatedBackup backup);
 }

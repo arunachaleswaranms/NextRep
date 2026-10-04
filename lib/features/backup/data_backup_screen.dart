@@ -213,6 +213,11 @@ class DataBackupScreen extends ConsumerWidget {
 
   static String _exportMessage(AppFailure failure) => switch (failure) {
     PersistenceFailure() => "Couldn't read your data for the backup.",
+    // The export checks itself before it is saved.
+    BackupFailure() =>
+      "Some of your data couldn't be checked for a backup, so nothing was "
+          'saved. If the device date was changed recently, set it to the '
+          'correct date and try again.',
     _ => "Couldn't save the backup. Nothing was changed.",
   };
 

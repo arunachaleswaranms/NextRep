@@ -82,6 +82,11 @@ abstract final class BackupCodec {
         BackupProblem.unreadable,
         'Backup is not UTF-8 JSON',
       );
+    } on StackOverflowError {
+      throw const BackupFailure(
+        BackupProblem.unreadable,
+        'Backup is nested too deeply',
+      );
     }
     if (json is! Map<String, Object?>) {
       throw const BackupFailure(
@@ -189,6 +194,11 @@ abstract final class BackupCodec {
       throw const BackupFailure(
         BackupProblem.checksumMismatch,
         'Backup contains values outside the format',
+      );
+    } on StackOverflowError {
+      throw const BackupFailure(
+        BackupProblem.unreadable,
+        'Backup is nested too deeply',
       );
     }
     if (checksum['value'] != expected) {
@@ -443,10 +453,15 @@ abstract final class BackupCodec {
               sessionId: id,
               date: r.date('date'),
               mood: r.optChoice('mood', Mood.values, (v) => v.key),
-              // Length and emptiness are checked by the validator, with
-              // the Journal's own rules.
-              win: r.optString('win', maxLength: 4000),
-              improvement: r.optString('improvement', maxLength: 4000),
+              // Length (in characters) and emptiness are checked by the
+              // validator, with the Journal's own rules. This bound only
+              // keeps absurd values out: one character can take dozens of
+              // UTF-16 units (e.g. a family emoji with skin tones).
+              win: r.optString('win', maxLength: _maxReflectionUnits),
+              improvement: r.optString(
+                'improvement',
+                maxLength: _maxReflectionUnits,
+              ),
               createdAt: r.timestamp('createdAt'),
               updatedAt: r.timestamp('updatedAt'),
             );
@@ -521,6 +536,7 @@ abstract final class BackupCodec {
   }
 
   static const _maxIdLength = 64;
+  static const _maxReflectionUnits = ReflectionRules.maxTextLength * 64;
   static const _maxValue = 100000;
 }
 
@@ -543,7 +559,10 @@ final class _Obj {
   /// Rejects any field not in [keys], and any missing one.
   void only(Set<String> keys) {
     for (final key in _map.keys) {
-      if (!keys.contains(key)) _fail(key, 'unknown field');
+      // The name comes from the file, so it isn't repeated in the message.
+      if (!keys.contains(key)) {
+        throw BackupFailure(BackupProblem.invalidData, '$path: unknown field');
+      }
     }
     for (final key in keys) {
       if (!_map.containsKey(key)) _fail(key, 'missing field');

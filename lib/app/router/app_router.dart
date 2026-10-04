@@ -147,10 +147,11 @@ abstract final class AppRoutes {
 /// that ended while the app was away. A reminder that cold-started the app
 /// leads to its own (arc-checked) destination.
 final bootLocationProvider = FutureProvider<String>((ref) async {
-  // A restart (after a restore) resolves the boot location again.
-  ref.watch(appEpochProvider);
+  // A restart (after a restore) resolves the boot location again, but the
+  // reminder that cold-started the app only counts for the first launch.
+  final firstLaunch = ref.watch(appEpochProvider) == 0;
   final resolution = await ref.read(arcResolutionProvider.notifier).reconcile();
-  final payload = ref.read(reminderLaunchPayloadProvider);
+  final payload = firstLaunch ? ref.read(reminderLaunchPayloadProvider) : null;
   return payload == null
       ? AppRoutes.home(resolution)
       : AppRoutes.forReminder(payload, resolution);

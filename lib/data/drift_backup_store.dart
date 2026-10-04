@@ -190,6 +190,7 @@ final class DriftBackupStore implements BackupStore {
     'restore backup',
     () => _db.transaction(() async {
       final data = backup.data;
+      final offset = await _idOffset();
 
       // Children first, so the order is safe even without cascades.
       await _db.delete(_db.dailyReflections).go();
@@ -205,7 +206,7 @@ final class DriftBackupStore implements BackupStore {
       await _db.batch((batch) {
         for (final arc in data.arcs) {
           final s = arc.session;
-          final id = s.id;
+          final id = s.id + offset;
           batch
             ..insert(
               _db.winterArcSessions,
@@ -310,6 +311,31 @@ final class DriftBackupStore implements BackupStore {
       await _verify(data);
     }),
   );
+
+  /// How far restored arc ids are shifted: past every id this database has
+  /// ever used (0 for a database that never had an arc, so a restore into
+  /// a fresh install keeps the backup's ids).
+  ///
+  /// A backup's arc ids only link its own records. Never reusing an id
+  /// means nothing still holding an old id (a screen, a reconcile in
+  /// flight, a stale route) can read or write a restored arc by mistake: it
+  /// finds no arc instead. The order of arcs (newest = highest id) is kept.
+  Future<int> _idOffset() async {
+    final seq = await _db
+        .customSelect(
+          'SELECT COALESCE(MAX(seq), 0) AS s FROM sqlite_sequence '
+          "WHERE name = 'winter_arc_sessions'",
+        )
+        .getSingle();
+    final max = await _db
+        .customSelect(
+          'SELECT COALESCE(MAX(id), 0) AS m FROM winter_arc_sessions',
+        )
+        .getSingle();
+    final used = seq.read<int>('s');
+    final highest = max.read<int>('m');
+    return used > highest ? used : highest;
+  }
 
   /// Checks the restored state inside the transaction; throwing rolls the
   /// whole restore back.

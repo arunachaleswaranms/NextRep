@@ -8,6 +8,7 @@ import '../../app/router/app_router.dart';
 import '../../core/errors/action_result.dart';
 import '../../core/errors/app_failure.dart';
 import '../../core/errors/error_reporter.dart';
+import '../celebration/celebration_queue.dart';
 
 final arcRemovalProvider = Provider<ArcRemoval>(ArcRemoval.new);
 
@@ -47,6 +48,8 @@ final class ArcRemoval {
 
   Future<String> _next({required bool toHistory}) async {
     _ref.read(arcsChangedProvider.notifier).changed();
+    // Anything still queued may celebrate the arc that is gone.
+    _ref.read(celebrationQueueProvider.notifier).clear();
     try {
       final resolution = await _ref
           .read(arcResolutionProvider.notifier)

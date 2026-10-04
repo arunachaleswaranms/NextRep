@@ -28,6 +28,7 @@ import '../domain/winter_arc/arc_lifecycle_service.dart';
 import '../domain/winter_arc/winter_arc_repository.dart';
 import '../domain/winter_arc/winter_arc_service.dart';
 import 'app_info.dart';
+import 'app_restart.dart';
 
 // Composition root. Infrastructure is overridden in main() and in tests;
 // features depend on the service providers only.
@@ -39,24 +40,31 @@ final appDatabaseProvider = Provider<AppDatabase>(
 
 final clockProvider = Provider<Clock>((ref) => const SystemClock());
 
+/// The database, for repository providers. Watching the app epoch here
+/// means a restart (after a restore replaced all data) rebuilds every
+/// repository, every service and every controller that watches one, so no
+/// state read before the restore survives it, even in a screen's
+/// controller that wasn't disposed yet.
+AppDatabase _database(Ref ref) {
+  ref.watch(appEpochProvider);
+  return ref.watch(appDatabaseProvider);
+}
+
 /// Whether looping ambient scene motion (snow, aurora) may run at all. The
 /// platform reduced-motion setting turns it off independently. Widget tests
 /// override it with false so `pumpAndSettle` can settle.
 final ambientMotionProvider = Provider<bool>((ref) => true);
 
 final winterArcRepositoryProvider = Provider<WinterArcRepository>(
-  (ref) => DriftWinterArcRepository(ref.watch(appDatabaseProvider)),
+  (ref) => DriftWinterArcRepository(_database(ref)),
 );
 
 final habitRepositoryProvider = Provider<HabitRepository>(
-  (ref) => DriftHabitRepository(ref.watch(appDatabaseProvider)),
+  (ref) => DriftHabitRepository(_database(ref)),
 );
 
 final progressRepositoryProvider = Provider<ProgressRepository>(
-  (ref) => DriftProgressRepository(
-    ref.watch(appDatabaseProvider),
-    ref.watch(clockProvider),
-  ),
+  (ref) => DriftProgressRepository(_database(ref), ref.watch(clockProvider)),
 );
 
 final winterArcServiceProvider = Provider<WinterArcService>(
@@ -76,11 +84,11 @@ final habitTrackingServiceProvider = Provider<HabitTrackingService>(
 );
 
 final achievementRepositoryProvider = Provider<AchievementRepository>(
-  (ref) => DriftAchievementRepository(ref.watch(appDatabaseProvider)),
+  (ref) => DriftAchievementRepository(_database(ref)),
 );
 
 final reflectionRepositoryProvider = Provider<ReflectionRepository>(
-  (ref) => DriftReflectionRepository(ref.watch(appDatabaseProvider)),
+  (ref) => DriftReflectionRepository(_database(ref)),
 );
 
 final achievementServiceProvider = Provider<AchievementService>(
@@ -129,8 +137,7 @@ final reminderTapsProvider = Provider<Stream<String?>>(
 
 final reminderPreferencesRepositoryProvider =
     Provider<ReminderPreferencesRepository>(
-      (ref) =>
-          DriftReminderPreferencesRepository(ref.watch(appDatabaseProvider)),
+      (ref) => DriftReminderPreferencesRepository(_database(ref)),
     );
 
 final reminderServiceProvider = Provider<ReminderService>(
@@ -159,7 +166,7 @@ final insightServiceProvider = Provider<InsightService>(
 );
 
 final backupStoreProvider = Provider<BackupStore>(
-  (ref) => DriftBackupStore(ref.watch(appDatabaseProvider)),
+  (ref) => DriftBackupStore(_database(ref)),
 );
 
 final backupServiceProvider = Provider<BackupService>(

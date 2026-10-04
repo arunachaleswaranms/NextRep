@@ -24,7 +24,12 @@ final arcHistoryProvider = FutureProvider.autoDispose<List<WinterArcSession>>((
 /// is on screen. The active arc's card re-reads when it changes.
 final arcHistoryCardProvider = FutureProvider.autoDispose
     .family<ArcHistoryCard, int>((ref, sessionId) {
-      if (ref.watch(arcResolutionProvider)?.active?.id == sessionId) {
+      // Only whether this card is the active arc matters; other changes
+      // (e.g. deleting another arc) must not re-read it.
+      final isActive = ref.watch(
+        arcResolutionProvider.select((r) => r?.active?.id == sessionId),
+      );
+      if (isActive) {
         ref.watch(arcRefreshProvider);
         ref.watch(reflectionsChangedProvider);
         // Unlocks are stored by a follow-up reconcile, after the action's
