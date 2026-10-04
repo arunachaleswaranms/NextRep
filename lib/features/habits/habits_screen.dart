@@ -160,10 +160,13 @@ class HabitsScreen extends ConsumerWidget {
     );
   }
 
-  static String _goals(Habit habit, HabitConfig config) => habit.type.isNumeric
-      ? '${targetLabel(habit, config.target)} · Minimum '
-            '${targetLabel(habit, config.minimumTarget)}'
-      : 'Daily goal';
+  static String _goals(Habit habit, HabitConfig config) => switch (habit.type) {
+    HabitType.count || HabitType.duration =>
+      '${targetLabel(habit, config.target)} · Minimum '
+          '${targetLabel(habit, config.minimumTarget)}',
+    HabitType.timeBefore => '${targetLabel(habit, config.target)} · every day',
+    HabitType.binary => 'Daily goal',
+  };
 
   static String _pending(Habit habit, HabitConfig upcoming) => !upcoming.enabled
       ? 'Off from tomorrow'

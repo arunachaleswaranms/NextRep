@@ -155,18 +155,27 @@ class _Header extends StatelessWidget {
               ),
               IconButton(
                 tooltip: 'Legend',
-                onPressed: () => _Legend.show(context),
+                onPressed: () => _Legend.show(
+                  context,
+                  showNotJoined: journey.session.joinedLate,
+                ),
                 icon: const Icon(Icons.info_outline_rounded),
               ),
               TrophyButton(sessionId: historical ? journey.session.id : null),
             ],
           ),
-          if (historical)
+          if (historical || journey.session.isSeasonal)
             Text(
-              'Winter Arc · ${arcDateRange(journey.session)}',
+              arcHeading(journey.session),
               style: text.bodyMedium?.copyWith(color: colors.textSecondary),
             ),
           Text(dayTitle(journey.position), style: text.headlineSmall),
+          if (journey.session.joinedLate)
+            Text(
+              'Joined on Day ${journey.session.joinDayNumber}. Earlier days '
+              "don't count against you.",
+              style: text.bodySmall?.copyWith(color: colors.textSecondary),
+            ),
           Text(
             '${chapterTitle(JourneyChapter.forDay(day))} · '
             '${milestoneTitle(ArcMilestone.forDay(day))}',
@@ -231,14 +240,20 @@ class _Stat extends StatelessWidget {
 
 /// What each marker means; shapes and icons, not only colours.
 class _Legend extends StatelessWidget {
-  const _Legend();
+  const _Legend({required this.showNotJoined});
 
-  static Future<void> show(BuildContext context) => showModalBottomSheet<void>(
+  /// Include the "before you joined" marker of a seasonal arc joined late.
+  final bool showNotJoined;
+
+  static Future<void> show(
+    BuildContext context, {
+    required bool showNotJoined,
+  }) => showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
     isScrollControlled: true,
     backgroundColor: context.winter.surface,
-    builder: (_) => const _Legend(),
+    builder: (_) => _Legend(showNotJoined: showNotJoined),
   );
 
   @override
@@ -259,23 +274,24 @@ class _Legend extends StatelessWidget {
             Text('Legend', style: text.headlineSmall),
             const SizedBox(height: WinterSpacing.sm),
             for (final state in JourneyDayState.values)
-              Row(
-                children: [
-                  ExcludeSemantics(
-                    child: JourneyMarker(
-                      day: JourneyDay(
-                        dayNumber: 7,
-                        date: sample,
-                        state: state,
-                        isToday: state == JourneyDayState.today,
-                        xpEarned: 0,
+              if (showNotJoined || state != JourneyDayState.notJoined)
+                Row(
+                  children: [
+                    ExcludeSemantics(
+                      child: JourneyMarker(
+                        day: JourneyDay(
+                          dayNumber: 7,
+                          date: sample,
+                          state: state,
+                          isToday: state == JourneyDayState.today,
+                          xpEarned: 0,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: WinterSpacing.sm),
-                  Expanded(child: Text(state.label, style: text.bodyLarge)),
-                ],
-              ),
+                    const SizedBox(width: WinterSpacing.sm),
+                    Expanded(child: Text(state.label, style: text.bodyLarge)),
+                  ],
+                ),
             const SizedBox(height: WinterSpacing.sm),
             Text(
               'Tap any day up to today for its details. Flags mark '

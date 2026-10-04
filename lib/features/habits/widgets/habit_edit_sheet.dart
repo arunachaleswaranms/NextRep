@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/theme/winter_tokens.dart';
+import '../../../domain/habit/habit.dart';
 import '../../../domain/habit/habit_edit.dart';
 import '../../../domain/progress/habit_tracking_service.dart';
+import '../../../shared/formatting/habit_labels.dart';
 
 /// Edits a habit's name and goals. Pops the [HabitEdit] to save, or null.
 ///
@@ -59,13 +61,37 @@ class _HabitEditSheetState extends State<HabitEditSheet> {
   void _setMinimum(int value) =>
       setState(() => _minimum = value.clamp(_step, _target));
 
+  Future<void> _pickGoalTime() async {
+    final current = NightTime.fromValue(_target);
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(hour: current.hour, minute: current.minute),
+      helpText: 'Goal: before',
+    );
+    if (picked == null || !mounted) return;
+    final time = NightTime.tryClock(picked.hour, picked.minute);
+    if (time == null) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(content: Text('Pick a time between 18:00 and 05:59.')),
+        );
+      return;
+    }
+    setState(() => _target = _minimum = time.value);
+  }
+
   void _save() {
     final habit = widget.setting.habit;
+    final goals = habit.type != HabitType.binary && _goalsEditable;
     Navigator.of(context).pop(
       HabitEdit(
         title: _title.text,
-        target: habit.type.isNumeric && _goalsEditable ? _target : null,
-        minimumTarget: habit.type.isNumeric && _goalsEditable ? _minimum : null,
+        target: goals ? _target : null,
+        // A clock-time habit keeps one target on Minimum Days too.
+        minimumTarget: goals
+            ? (habit.type.isClockTime ? _target : _minimum)
+            : null,
       ),
     );
   }
@@ -97,7 +123,27 @@ class _HabitEditSheetState extends State<HabitEditSheet> {
                 textCapitalization: TextCapitalization.sentences,
                 decoration: const InputDecoration(labelText: 'Name'),
               ),
-              if (habit.type.isNumeric) ...[
+              if (habit.type.isClockTime) ...[
+                const SizedBox(height: WinterSpacing.sm),
+                Semantics(
+                  button: _goalsEditable,
+                  label: 'Goal time, before ${clockLabel(_target)}',
+                  excludeSemantics: true,
+                  child: ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Goal: before'),
+                    trailing: Text(
+                      clockLabel(_target),
+                      style: text.titleMedium,
+                    ),
+                    onTap: _goalsEditable ? _pickGoalTime : null,
+                  ),
+                ),
+                Text(
+                  'Clock-time habits keep the same target on a Minimum Day.',
+                  style: text.bodySmall,
+                ),
+              ] else if (habit.type.isNumeric) ...[
                 const SizedBox(height: WinterSpacing.sm),
                 _Stepper(
                   label: 'Daily goal',

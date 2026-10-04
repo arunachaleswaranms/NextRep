@@ -183,6 +183,7 @@ class _JourneyPathState extends State<JourneyPath> {
               DayItem(:final day) => _DayRow(
                 key: ValueKey(day.dayNumber),
                 day: day,
+                joinDay: journey.session.joinDayNumber,
                 width: width,
                 center: layout.centerOf(index),
                 slice: slice,
@@ -363,12 +364,16 @@ class _DayRow extends StatelessWidget {
   const _DayRow({
     super.key,
     required this.day,
+    required this.joinDay,
     required this.width,
     required this.center,
     required this.slice,
   });
 
   final JourneyDay day;
+
+  /// The day the user joined the arc, for the "before you joined" note.
+  final int? joinDay;
   final double width;
   final double center;
   final _PathSlice slice;
@@ -470,7 +475,7 @@ class _DayRow extends StatelessWidget {
             day: day,
             onTap: day.isFuture
                 ? null
-                : () => DayDetailSheet.show(context, day),
+                : () => DayDetailSheet.show(context, day, joinDay: joinDay),
           ),
         ),
         Positioned(

@@ -25,9 +25,13 @@ class ArcHistoryTile extends ConsumerWidget {
     final range = arcDateRange(session);
     final status = active ? 'ACTIVE' : 'COMPLETED';
     final stats = card.value;
+    final kind = arcKindTitle(session);
+    final joined = session.joinedLate
+        ? 'Joined Day ${session.joinDayNumber}'
+        : null;
     return Semantics(
       button: true,
-      label: _label(range, status, stats),
+      label: _label(kind, range, status, joined, stats),
       excludeSemantics: true,
       child: WinterCard(
         highlighted: active,
@@ -39,7 +43,7 @@ class ArcHistoryTile extends ConsumerWidget {
               children: [
                 Expanded(
                   child: Text(
-                    'WINTER ARC',
+                    kind.toUpperCase(),
                     style: text.labelLarge?.copyWith(
                       color: colors.accentSecondary,
                       letterSpacing: 3,
@@ -51,6 +55,11 @@ class ArcHistoryTile extends ConsumerWidget {
             ),
             const SizedBox(height: WinterSpacing.xs),
             Text(range, style: text.titleLarge),
+            if (joined != null)
+              Text(
+                joined,
+                style: text.bodyMedium?.copyWith(color: colors.textSecondary),
+              ),
             const SizedBox(height: WinterSpacing.sm),
             switch (card) {
               AsyncValue(:final value?) => _Stats(card: value),
@@ -69,8 +78,14 @@ class ArcHistoryTile extends ConsumerWidget {
     );
   }
 
-  static String _label(String range, String status, ArcHistoryCard? card) {
-    final parts = ['Winter Arc, $range, ${status.toLowerCase()}'];
+  static String _label(
+    String kind,
+    String range,
+    String status,
+    String? joined,
+    ArcHistoryCard? card,
+  ) {
+    final parts = ['$kind, $range, ${status.toLowerCase()}', ?joined];
     if (card != null) {
       final s = card.summary;
       parts.addAll([

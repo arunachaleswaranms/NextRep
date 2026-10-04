@@ -259,6 +259,13 @@ abstract final class WinterHabitAccents {
     'no_junk_food': Color(0xFF86E3A6),
     'sleep': Color(0xFF8FA2FF),
     'meditation': Color(0xFFF59AC0),
+    'journal': Color(0xFFFFC37A),
+    'walk': Color(0xFF7FD4A0),
+    'music': Color(0xFFE59BFF),
+    'code': Color(0xFF7FB8FF),
+    'nature': Color(0xFF9BD67F),
+    'heart': Color(0xFFFF8FA3),
+    'star': Color(0xFFFFD66B),
   };
 
   /// The accent of [iconKey], or the primary accent for unknown keys.

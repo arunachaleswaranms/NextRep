@@ -158,6 +158,20 @@ class TodayHero extends StatelessWidget {
                                   ),
                                 ),
                               ),
+                              // A season joined late keeps its own day
+                              // numbers; say so rather than look like Day 1.
+                              if (summary.session.isSeasonal)
+                                Text(
+                                  summary.session.joinedLate
+                                      ? 'Seasonal Winter Arc · joined Day '
+                                            '${summary.session.joinDayNumber}'
+                                      : 'Seasonal Winter Arc',
+                                  style: text.bodySmall?.copyWith(
+                                    color: colors.textPrimary.withValues(
+                                      alpha: 0.8,
+                                    ),
+                                  ),
+                                ),
                             ],
                           ),
                         ),

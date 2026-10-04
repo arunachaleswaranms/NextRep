@@ -206,7 +206,9 @@ class SummaryScreen extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'WINTER ARC COMPLETE',
+                          view.session.isSeasonal
+                              ? 'SEASONAL WINTER ARC COMPLETE'
+                              : 'WINTER ARC COMPLETE',
                           style: text.labelLarge?.copyWith(
                             color: colors.warmLight,
                             letterSpacing: 3,
@@ -214,10 +216,22 @@ class SummaryScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: WinterSpacing.xs),
                         Text(
-                          '${summary.totalDays} days',
+                          view.session.isSeasonal
+                              ? '${summary.totalDays}-day season'
+                              : '${summary.totalDays} days',
                           style: text.displaySmall,
                         ),
                         Text(dates, style: text.bodyMedium),
+                        // Season length and participation are different
+                        // things; consistency counts participated days.
+                        if (joinedLabel(view.session) case final joined?)
+                          Text(
+                            joined,
+                            style: text.bodyMedium?.copyWith(
+                              color: colors.textPrimary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                       ],
                     ),
                   ),

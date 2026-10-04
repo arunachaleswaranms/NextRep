@@ -14,6 +14,12 @@ final reusableHabitsProvider = FutureProvider.autoDispose<List<Habit>?>(
   (ref) => ref.watch(winterArcServiceProvider).reusableHabits(),
 );
 
+/// The Seasonal Winter Arc of today's local year: closed, preseason or in
+/// season.
+final seasonAvailabilityProvider = Provider.autoDispose<SeasonAvailability>(
+  (ref) => ref.watch(winterArcServiceProvider).seasonAvailability(),
+);
+
 final newArcControllerProvider =
     NotifierProvider.autoDispose<NewArcController, NewArcBaseline?>(
       NewArcController.new,
@@ -26,7 +32,12 @@ class NewArcController extends Notifier<NewArcBaseline?> {
   @override
   NewArcBaseline? build() => null;
 
-  Future<ActionResult<WinterArcSession>> start(NewArcBaseline baseline) async {
+  /// Creates a setup of [kind] from [baseline]. The arc kind and the habit
+  /// baseline are independent choices.
+  Future<ActionResult<WinterArcSession>> start(
+    NewArcBaseline baseline, {
+    required ArcKind kind,
+  }) async {
     if (state != null) {
       return const ActionFailure(
         DomainFailure(DomainRule.arcInProgress, 'A new arc is being created'),
@@ -37,7 +48,7 @@ class NewArcController extends Notifier<NewArcBaseline?> {
     final result = await runAction('new_arc', () async {
       final session = await ref
           .read(winterArcServiceProvider)
-          .startNewArc(baseline);
+          .startNewArc(baseline, kind: kind);
       // Publish the new setup arc so the router moves on to Habit Setup.
       await status.reconcile();
       return session;

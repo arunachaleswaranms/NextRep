@@ -51,3 +51,25 @@ String arcDateRange(WinterArcSession session) {
   return '${DateFormat(startFormat).format(start)} – '
       '${DateFormat('d MMM y').format(end)}';
 }
+
+/// "Rolling Winter Arc" or "Seasonal Winter Arc · 2026".
+String arcKindTitle(WinterArcSession session) => switch (session.kind) {
+  ArcKind.rolling92 => 'Rolling Winter Arc',
+  ArcKind.seasonalWinter => 'Seasonal Winter Arc · ${session.startDate.year}',
+};
+
+/// "Winter Arc · 1 Jul – 30 Sep 2026" for a rolling arc, "Seasonal Winter
+/// Arc · 1 Oct – 31 Dec 2026" for a seasonal one: an arc's heading on its
+/// history pages.
+String arcHeading(WinterArcSession session) =>
+    '${session.isSeasonal ? 'Seasonal Winter Arc' : 'Winter Arc'} · '
+    '${arcDateRange(session)}';
+
+/// "Joined Day 15 · 78 days participated", or null for an arc joined on
+/// Day 1 (every rolling arc) or not started.
+String? joinedLabel(WinterArcSession session) {
+  if (!session.joinedLate) return null;
+  final days = session.participationLengthInDays;
+  return 'Joined Day ${session.joinDayNumber} · $days '
+      '${days == 1 ? 'day' : 'days'} participated';
+}

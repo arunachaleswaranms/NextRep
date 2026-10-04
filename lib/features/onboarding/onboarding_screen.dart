@@ -1,36 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/router/app_router.dart';
 import '../../app/theme/winter_tokens.dart';
-import '../../core/errors/action_result.dart';
 import '../../domain/winter_arc/winter_arc_session.dart';
-import '../../shared/formatting/failure_messages.dart';
 import '../../shared/widgets/primary_button.dart';
 import '../../shared/widgets/winter_background.dart';
-import 'onboarding_controller.dart';
 
-class OnboardingScreen extends ConsumerWidget {
+/// First launch: what Winter Arc is. "Let's Begin" leads to choosing an
+/// Arc (Rolling or Seasonal); nothing is stored until one is chosen.
+class OnboardingScreen extends StatelessWidget {
   const OnboardingScreen({super.key});
 
-  Future<void> _begin(BuildContext context, WidgetRef ref) async {
-    final result = await ref
-        .read(onboardingControllerProvider.notifier)
-        .begin();
-    if (!context.mounted) return;
-    switch (result) {
-      case ActionSuccess():
-        context.go(AppRoutes.habitSetup);
-      case ActionFailure(:final failure):
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(userMessageFor(failure))));
-    }
-  }
-
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final busy = ref.watch(onboardingControllerProvider);
+  Widget build(BuildContext context) {
     final colors = context.winter;
     final text = Theme.of(context).textTheme;
 
@@ -80,16 +63,13 @@ class OnboardingScreen extends ConsumerWidget {
                 const Spacer(flex: 3),
                 PrimaryButton(
                   label: "Let's Begin",
-                  busy: busy,
-                  onPressed: () => _begin(context, ref),
+                  onPressed: () => context.push(AppRoutes.newArc),
                 ),
                 const SizedBox(height: WinterSpacing.sm),
                 // A returning user on a new device starts from a backup.
                 Center(
                   child: TextButton.icon(
-                    onPressed: busy
-                        ? null
-                        : () => context.push(AppRoutes.dataBackup),
+                    onPressed: () => context.push(AppRoutes.dataBackup),
                     style: TextButton.styleFrom(
                       minimumSize: const Size(48, 48),
                     ),

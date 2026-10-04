@@ -23,6 +23,7 @@ import '../celebration/celebration_queue.dart';
 import 'today_controller.dart';
 import 'widgets/habit_progress_tile.dart';
 import 'widgets/minimum_day.dart';
+import 'widgets/time_before_tile.dart';
 import 'widgets/today_hero.dart';
 
 class TodayScreen extends ConsumerStatefulWidget {
@@ -51,8 +52,12 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     super.dispose();
   }
 
-  Future<void> _perform(Habit habit, HabitAction action) async {
-    final result = await _controller.perform(habit.id, action);
+  Future<void> _perform(
+    Habit habit,
+    HabitAction action, {
+    NightTime? time,
+  }) async {
+    final result = await _controller.perform(habit.id, action, time: time);
     if (!mounted) return;
 
     // Feedback runs only after the result is persisted, and is derived from
@@ -65,19 +70,43 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
           if (!ledger.perfectDayGranted) unawaited(Haptics.habitCompleted());
           _showSnack(
             '${habit.title} complete · +${award.amount} XP',
-            undo: () =>
-                _perform(habit, HabitProgressRules.undoActionFor(habit)),
+            undo: () => _undo(habit, value.value),
           );
         } else if (value.value.becameIncomplete) {
           _showSnack(
             ledger.perfectDayRevoked
                 ? '${habit.title} marked not done · Perfect Day bonus removed'
                 : '${habit.title} marked not done',
+            undo: habit.type.isClockTime
+                ? () => _undo(habit, value.value)
+                : null,
+          );
+        } else if (habit.type.isClockTime && value.value.changed) {
+          final after = value.value.after;
+          _showSnack(
+            after.currentValue == 0
+                ? '${habit.title} time cleared'
+                : after.completed
+                ? '${habit.title} time updated'
+                : '${habit.title} logged · after the goal',
+            undo: () => _undo(habit, value.value),
           );
         }
       case ActionFailure(:final failure):
         _showSnack(userMessageFor(failure));
     }
+  }
+
+  /// Reverts [transition]: the step that completed a binary or numeric
+  /// habit, or a clock-time habit's previous record (a time, or none).
+  Future<void> _undo(Habit habit, ProgressTransition transition) {
+    if (!habit.type.isClockTime) {
+      return _perform(habit, HabitProgressRules.undoActionFor(habit));
+    }
+    final previous = NightTime.tryValue(transition.before.currentValue);
+    return previous == null
+        ? _perform(habit, HabitAction.clearTime)
+        : _perform(habit, HabitAction.setTime, time: previous);
   }
 
   /// Queues the Perfect Day / level-up celebration of a commit. Its haptic
@@ -217,14 +246,25 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
           ),
           const SizedBox(height: WinterSpacing.sm),
           for (final entry in summary.entries) ...[
-            HabitProgressTile(
-              key: ValueKey(entry.habit.id),
-              entry: entry,
-              enabled: summary.isTrackable,
-              minimum: summary.mode.isMinimum,
-              streak: summary.streakFor(entry.habit.id).current,
-              onAction: (action) => _perform(entry.habit, action),
-            ),
+            if (entry.habit.type.isClockTime)
+              TimeBeforeHabitTile(
+                key: ValueKey(entry.habit.id),
+                entry: entry,
+                enabled: summary.isTrackable,
+                streak: summary.streakFor(entry.habit.id).current,
+                onSetTime: (time) =>
+                    _perform(entry.habit, HabitAction.setTime, time: time),
+                onClear: () => _perform(entry.habit, HabitAction.clearTime),
+              )
+            else
+              HabitProgressTile(
+                key: ValueKey(entry.habit.id),
+                entry: entry,
+                enabled: summary.isTrackable,
+                minimum: summary.mode.isMinimum,
+                streak: summary.streakFor(entry.habit.id).current,
+                onAction: (action) => _perform(entry.habit, action),
+              ),
             const SizedBox(height: WinterSpacing.sm),
           ],
           if (summary.canSwitchToMinimum) ...[
