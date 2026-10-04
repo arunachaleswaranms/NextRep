@@ -27,6 +27,7 @@ class CelebrationCard extends StatelessWidget {
       ),
     };
     return Semantics(
+      container: true,
       liveRegion: true,
       hint: 'Tap to dismiss',
       child: Material(
