@@ -58,6 +58,15 @@ final class DailyReflection {
   final DateTime updatedAt;
 }
 
+/// That a reflection exists for [date], and the mood it recorded (null when
+/// only text was saved). Carries no text: what insights are computed from.
+final class MoodMark {
+  const MoodMark({required this.date, this.mood});
+
+  final LocalDate date;
+  final Mood? mood;
+}
+
 /// What the user entered, before validation.
 final class ReflectionDraft {
   const ReflectionDraft({this.mood, this.win = '', this.improvement = ''});

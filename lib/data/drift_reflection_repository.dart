@@ -35,6 +35,26 @@ final class DriftReflectionRepository implements ReflectionRepository {
       });
 
   @override
+  Future<List<MoodMark>> moodsFor(int sessionId) =>
+      guardPrivatePersistence('load moods', () async {
+        final date = _db.dailyReflections.date;
+        final mood = _db.dailyReflections.mood;
+        final rows =
+            await (_db.selectOnly(_db.dailyReflections)
+                  ..addColumns([date, mood])
+                  ..where(_db.dailyReflections.sessionId.equals(sessionId))
+                  ..orderBy([OrderingTerm.asc(date)]))
+                .get();
+        return [
+          for (final row in rows)
+            MoodMark(
+              date: LocalDate.parse(row.read(date)!),
+              mood: Mood.fromKey(row.read(mood)),
+            ),
+        ];
+      });
+
+  @override
   Future<int> countFor(int sessionId) =>
       guardPrivatePersistence('count reflections', () async {
         final count = _db.dailyReflections.date.count();
