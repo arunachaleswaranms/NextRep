@@ -1,7 +1,7 @@
 # PROJECT_STATE
 
-_Last updated: 2026-10-04. Phase 5 complete on its branch; PR pending
-review, not merged._
+_Last updated: 2026-10-04. Phase 5 complete on its branch, PR open, not
+merged._
 
 ## Repo
 
@@ -9,8 +9,10 @@ review, not merged._
 - `main` baseline: `970d27b` (squash merge of PR #4, Phase 4). PRs #1–#4
   are Phases 1–4.
 - Working branch: `phase/5-data-safety-and-insight`, from `970d27b`.
-- PR: pending (see below).
-- CI: pending (see below).
+- PR: #5 (https://github.com/arunachaleswaranms/NextRep/pull/5), open for
+  review, not merged.
+- CI: Flutter CI run 37215263611 on the PR (`df3d514`), both jobs green
+  (format, analyze, migration tests, tests; Android debug build).
 - Author and committer for all commits:
   `Arunachaleswaran M S <arunachaleswaranms@gmail.com>` (set repo-locally).
   No AI or co-author trailers.
