@@ -306,6 +306,9 @@ void main() {
           _failsWith(DomainRule.reflectionNotAvailable),
         );
         expect((await app.reflections.journal()).canWriteToday, isFalse);
+        final today = await app.tracking.today();
+        expect(today.isTrackable, isFalse);
+        expect(today.canSwitchToMinimum, isFalse);
         expect(await app.progress.totalXp(arc.id), 0);
       },
     );
@@ -518,6 +521,40 @@ void main() {
       expect(byId(other).applicableDays, 2);
       expect(byId(other).completedDays, 1);
       expect(byId(other).title, 'Reading');
+    });
+
+    test('arcs are ordered by when the user took part, so the latest name '
+        'wins', () {
+      Habit named(String title) => b.habit('water').copyWith(title: title);
+      // A rolling arc from 10 Sep, then the season joined on 10 Dec: the
+      // season starts (1 Oct) before the rolling arc but was joined after.
+      final rolling = ArcHistory(
+        session: WinterArcSession(
+          id: 1,
+          kind: ArcKind.rolling92,
+          startDate: LocalDate(2026, 9, 10),
+          endDate: WinterArcRules.endDateFor(LocalDate(2026, 9, 10)),
+          status: WinterArcStatus.completed,
+          createdAt: DateTime(2026, 9, 10),
+          participationStartDate: LocalDate(2026, 9, 10),
+        ),
+        today: LocalDate(2026, 12, 15),
+        records: ArcRecords(
+          habits: HabitHistory(habits: [named('Old name')]),
+          progress: const [],
+          modes: const {},
+          xpByDate: const {},
+          totalXp: 0,
+        ),
+      );
+      final season = _history(
+        joinDay: 71, // 10 Dec
+        today: 76,
+        habits: [named('New name')],
+      );
+      final s = InsightRules.compute([arc(season), arc(rolling)]);
+      expect(s.habits.single.title, 'New name');
+      expect(s.overall.activeDay, 76);
     });
 
     test('setup sessions are still excluded', () async {

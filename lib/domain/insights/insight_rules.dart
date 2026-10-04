@@ -167,8 +167,12 @@ abstract final class InsightRules {
     );
   }
 
+  /// By when the user took part (a season joined late sorts by its join
+  /// date, not 1 October), then by id.
   static int _chronological(InsightArc a, InsightArc b) {
-    final byStart = a.session.startDate.compareTo(b.session.startDate);
+    final byStart = a.session.participationStart.compareTo(
+      b.session.participationStart,
+    );
     return byStart != 0 ? byStart : a.session.id.compareTo(b.session.id);
   }
 

@@ -185,6 +185,23 @@ void main() {
     },
   );
 
+  test(
+    'a setup emptied of habits can still be exported and restored',
+    () async {
+      final source = _empty(DateTime(2026, 10, 4, 9));
+      await source.winterArc.beginSetup();
+      for (final habit in await source.winterArc.setupHabits()) {
+        await source.winterArc.deleteSetupHabit(habit.id);
+      }
+      final bytes = (await source.backup.export()).bytes;
+      final target = _empty(DateTime(2026, 10, 4, 10));
+      await _restoreInto(target, bytes);
+      final setup = await target.winterArc.setup();
+      expect(setup.habits, isEmpty);
+      expect(setup.canStart, isFalse);
+    },
+  );
+
   test('restored ids never reuse an id this device used', () async {
     final source = await seasonalSource();
     addTearDown(source.db.close);

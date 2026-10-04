@@ -50,14 +50,28 @@ class HabitSetupController extends AsyncNotifier<ArcSetup> {
     return result;
   }
 
+  /// Re-reads the setup, e.g. on resume: whether it can start depends on
+  /// today's date (1 October opens a season, 1 January ends it).
+  Future<void> refresh() async {
+    final reloaded = await AsyncValue.guard(
+      ref.read(winterArcServiceProvider).setup,
+    );
+    if (ref.mounted && reloaded is AsyncData<ArcSetup>) state = reloaded;
+  }
+
   Future<ActionResult<WinterArcSession>> start() async {
     final status = ref.read(arcResolutionProvider.notifier);
     final result = await runAction(
       'habit_setup',
       () => ref.read(winterArcServiceProvider).startWinterArc(),
     );
-    // Publish the started arc so the router leaves setup for Today.
-    if (result is ActionSuccess) await _republish(status);
+    // Publish the started arc so the router leaves setup for Today; after a
+    // refusal (e.g. the season ended meanwhile) show the current state.
+    if (result is ActionSuccess) {
+      await _republish(status);
+    } else {
+      await refresh();
+    }
     return result;
   }
 

@@ -5,11 +5,13 @@ import 'package:go_router/go_router.dart';
 import '../../app/router/app_router.dart';
 import '../../app/theme/winter_tokens.dart';
 import '../../core/errors/action_result.dart';
+import '../../core/errors/app_failure.dart';
 import '../../domain/habit/habit.dart';
 import '../../domain/winter_arc/winter_arc_service.dart';
 import '../../domain/winter_arc/winter_arc_session.dart';
 import '../../shared/formatting/failure_messages.dart';
 import '../../shared/formatting/habit_labels.dart';
+import '../../shared/widgets/failure_view.dart';
 import '../../shared/widgets/winter_background.dart';
 import '../../shared/widgets/winter_card.dart';
 import 'new_arc_controller.dart';
@@ -83,7 +85,14 @@ class _NewArcScreenState extends ConsumerState<NewArcScreen> {
               AsyncLoading() when !reusable.hasValue => const Center(
                 child: CircularProgressIndicator(),
               ),
+              // Without knowing whether there's an arc to reuse, a returning
+              // user could be sent down the first-time path.
+              AsyncError(:final error, :final stackTrace) => FailureView(
+                failure: toAppFailure(error, stackTrace),
+                onRetry: () => ref.invalidate(reusableHabitsProvider),
+              ),
               _ when kind == null => _KindStep(
+                returning: returning,
                 season: season,
                 busy: busy != null,
                 onChoose: (kind) => _chooseKind(kind, returning: returning),
@@ -106,11 +115,13 @@ class _NewArcScreenState extends ConsumerState<NewArcScreen> {
 /// Step 1: Rolling or Seasonal.
 class _KindStep extends StatelessWidget {
   const _KindStep({
+    required this.returning,
     required this.season,
     required this.busy,
     required this.onChoose,
   });
 
+  final bool returning;
   final SeasonAvailability season;
   final bool busy;
   final ValueChanged<ArcKind> onChoose;
@@ -123,11 +134,17 @@ class _KindStep extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(WinterSpacing.lg),
       children: [
-        Text('Your next climb', style: text.headlineMedium),
+        Text(
+          returning ? 'Your next climb' : 'Your first climb',
+          style: text.headlineMedium,
+        ),
         const SizedBox(height: WinterSpacing.sm),
         Text(
-          'Pick how your Winter Arc runs. Your finished arcs stay in Arc '
-          'History.',
+          returning
+              ? 'Pick how your Winter Arc runs. Your finished arcs stay in '
+                    'Arc History.'
+              : 'Pick how your Winter Arc runs. You can change your habits '
+                    'before you start.',
           style: text.bodyLarge?.copyWith(color: colors.textSecondary),
         ),
         const SizedBox(height: WinterSpacing.lg),

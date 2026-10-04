@@ -39,6 +39,21 @@ class HabitSetupScreen extends ConsumerStatefulWidget {
 
 class _HabitSetupScreenState extends ConsumerState<HabitSetupScreen> {
   bool _starting = false;
+  late final AppLifecycleListener _lifecycle;
+
+  @override
+  void initState() {
+    super.initState();
+    // A setup left open overnight may have become startable (1 October)
+    // or expired (1 January).
+    _lifecycle = AppLifecycleListener(onResume: () => _controller.refresh());
+  }
+
+  @override
+  void dispose() {
+    _lifecycle.dispose();
+    super.dispose();
+  }
 
   HabitSetupController get _controller =>
       ref.read(habitSetupControllerProvider.notifier);

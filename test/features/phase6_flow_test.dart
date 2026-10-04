@@ -4,13 +4,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:nextrep/app/app.dart';
 import 'package:nextrep/app/dependencies.dart';
 import 'package:nextrep/core/database/app_database.dart';
+import 'package:nextrep/core/errors/app_failure.dart';
 import 'package:nextrep/domain/habit/habit.dart';
 import 'package:nextrep/domain/habit/setup_habit_rules.dart';
 import 'package:nextrep/domain/progress/habit_progress_rules.dart';
+import 'package:nextrep/domain/winter_arc/winter_arc_service.dart';
+import 'package:nextrep/domain/winter_arc/winter_arc_session.dart';
 import 'package:nextrep/features/habit_setup/habit_setup_screen.dart';
 import 'package:nextrep/features/habit_setup/widgets/habit_form_sheet.dart';
 import 'package:nextrep/features/habit_setup/widgets/habit_toggle_tile.dart';
 import 'package:nextrep/features/journey/journey_screen.dart';
+import 'package:nextrep/features/new_arc/new_arc_controller.dart';
 import 'package:nextrep/features/new_arc/new_arc_screen.dart';
 import 'package:nextrep/features/summary/summary_screen.dart';
 import 'package:nextrep/features/today/today_screen.dart';
@@ -210,6 +214,68 @@ void main() {
       expect(find.text('Strength'), findsOneWidget, reason: 'reused habits');
       await _shutDown(tester);
     });
+  });
+
+  testWidgets('a preseason setup left open becomes joinable on resume '
+      'on 1 Oct', (tester) async {
+    await _setPhoneSize(tester);
+    final db = memoryDatabase();
+    addTearDown(db.close);
+    final clock = FakeClock(DateTime(2026, 9, 30, 22));
+    await TestApp(
+      db,
+      clock,
+    ).winterArc.startNewArc(NewArcBaseline.fresh, kind: ArcKind.seasonalWinter);
+    await tester.pumpWidget(_app(db, clock));
+    await tester.pumpAndSettle();
+    expect(_startButton(tester, 'Join Seasonal Winter Arc').onPressed, isNull);
+
+    clock.current = DateTime(2026, 10, 1, 7);
+    for (final state in [
+      AppLifecycleState.inactive,
+      AppLifecycleState.hidden,
+      AppLifecycleState.paused,
+      AppLifecycleState.hidden,
+      AppLifecycleState.inactive,
+      AppLifecycleState.resumed,
+    ]) {
+      tester.binding.handleAppLifecycleStateChanged(state);
+    }
+    await tester.pumpAndSettle();
+    expect(
+      _startButton(tester, 'Join Seasonal Winter Arc').onPressed,
+      isNotNull,
+    );
+    expect(find.textContaining('The season starts today'), findsOneWidget);
+    await _shutDown(tester);
+  });
+
+  testWidgets('if the reusable habits cannot load, New Arc says so instead '
+      'of treating the user as new', (tester) async {
+    await _setPhoneSize(tester);
+    final db = memoryDatabase();
+    addTearDown(db.close);
+    final clock = FakeClock(DateTime(2026, 10, 4, 9));
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          appDatabaseProvider.overrideWithValue(db),
+          clockProvider.overrideWithValue(clock),
+          ambientMotionProvider.overrideWithValue(false),
+          reusableHabitsProvider.overrideWith(
+            (ref) => throw const PersistenceFailure('read failed'),
+          ),
+        ],
+        retry: (_, _) => null,
+        child: const NextRepApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _tap(tester, find.text("Let's Begin"));
+    expect(find.byType(NewArcScreen), findsOneWidget);
+    expect(find.text('Rolling 92-Day Arc'), findsNothing);
+    expect(find.text('Try again'), findsOneWidget);
+    await _shutDown(tester);
   });
 
   group('Habit Setup v2', () {

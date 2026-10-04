@@ -112,7 +112,11 @@ abstract final class BackupValidator {
     }
 
     // Habits.
-    if (arc.habits.isEmpty) _fail('$at.habits', 'an arc has habits');
+    // A setup may be empty for a moment (habits removed before adding
+    // others); a started arc always has habits.
+    if (arc.habits.isEmpty && session.status != WinterArcStatus.setup) {
+      _fail('$at.habits', 'an arc has habits');
+    }
     if (arc.habits.length > SetupHabitRules.maxHabits) {
       _fail('$at.habits', 'too many habits');
     }
