@@ -41,6 +41,8 @@ Future<void> _shutDown(WidgetTester tester) async {
 Future<void> _onboardAndStart(WidgetTester tester) async {
   await tester.tap(find.text("Let's Begin"));
   await tester.pumpAndSettle();
+  await tester.tap(find.text('Rolling 92-Day Arc'));
+  await tester.pumpAndSettle();
   await tester.tap(find.text('Start Winter Arc'));
   await tester.pumpAndSettle();
 }

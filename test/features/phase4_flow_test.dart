@@ -110,6 +110,8 @@ void main() {
 
     await _tapVisible(tester, find.text('Start New Arc'));
     expect(find.byType(NewArcScreen), findsOneWidget);
+    await tester.tap(find.text('Rolling 92-Day Arc'));
+    await tester.pumpAndSettle();
     // The reuse choice previews the final habits of Arc 1.
     expect(find.textContaining('Strength · 30 min'), findsOneWidget);
     expect(find.textContaining('Water Intake · 10 glasses'), findsOneWidget);
@@ -119,7 +121,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(HabitSetupScreen), findsOneWidget);
     expect(find.text('Strength'), findsOneWidget);
-    expect(find.text('10 glasses'), findsOneWidget);
+    expect(find.text('10 glasses · Minimum 4 glasses'), findsOneWidget);
     expect(find.text('3 habits selected'), findsOneWidget);
     expect(find.textContaining('days to a better you'), findsNothing);
 
@@ -148,6 +150,8 @@ void main() {
     await tester.pumpWidget(_app(seeded.db, seeded.clock));
     await tester.pumpAndSettle();
     await _tapVisible(tester, find.text('Start New Arc'));
+    await tester.tap(find.text('Rolling 92-Day Arc'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Start fresh'));
     await tester.pumpAndSettle();
     expect(find.byType(HabitSetupScreen), findsOneWidget);
@@ -287,7 +291,7 @@ void main() {
     expect(find.text('2%'), findsOneWidget); // consistency
     expect(
       find.bySemanticsLabel(
-        RegExp(r'^Winter Arc, 1 Jul – 30 Sep 2026, completed'),
+        RegExp(r'^Rolling Winter Arc, 1 Jul – 30 Sep 2026, completed'),
       ),
       findsOneWidget,
     );
@@ -374,6 +378,8 @@ void main() {
     await tester.pumpAndSettle();
     await _tapVisible(tester, find.text('Start New Arc'));
     expect(find.byType(NewArcScreen), findsOneWidget);
+    await tester.tap(find.text('Rolling 92-Day Arc'));
+    await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
     await _shutDown(tester);
   });

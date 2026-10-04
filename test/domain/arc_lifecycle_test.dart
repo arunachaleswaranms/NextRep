@@ -198,11 +198,13 @@ final class _CountingSessions implements WinterArcRepository {
 
   @override
   Future<WinterArcSession> createSetupSession({
+    required ArcKind kind,
     required LocalDate startDate,
     required LocalDate endDate,
     required DateTime createdAt,
     required List<Habit> habits,
   }) => _inner.createSetupSession(
+    kind: kind,
     startDate: startDate,
     endDate: endDate,
     createdAt: createdAt,

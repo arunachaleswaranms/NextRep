@@ -3,6 +3,7 @@ import 'package:nextrep/core/database/app_database.dart';
 import 'package:nextrep/domain/habit/habit_edit.dart';
 import 'package:nextrep/domain/progress/habit_progress_rules.dart';
 import 'package:nextrep/domain/reflection/daily_reflection.dart';
+import 'package:nextrep/domain/winter_arc/winter_arc_service.dart';
 import 'package:nextrep/domain/winter_arc/winter_arc_session.dart';
 
 import 'fakes.dart';
@@ -151,4 +152,16 @@ Future<Map<String, List<String>>> dumpOf(
       sessionKey: null,
     ),
   };
+}
+
+/// Sets up and joins this year's Seasonal Winter Arc on [joinOn] (09:00),
+/// through the real services, with the starter habits. Leaves the clock on
+/// [joinOn] and returns the active arc.
+Future<WinterArcSession> joinSeason(TestApp app, DateTime joinOn) async {
+  app.clock.current = DateTime(joinOn.year, joinOn.month, joinOn.day, 9);
+  await app.winterArc.startNewArc(
+    NewArcBaseline.fresh,
+    kind: ArcKind.seasonalWinter,
+  );
+  return app.winterArc.startWinterArc();
 }

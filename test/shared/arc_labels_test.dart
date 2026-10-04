@@ -5,6 +5,8 @@ import 'package:nextrep/shared/formatting/arc_labels.dart';
 
 WinterArcSession _arc(LocalDate start) => WinterArcSession(
   id: 1,
+  kind: ArcKind.rolling92,
+  participationStartDate: start,
   startDate: start,
   endDate: WinterArcRules.endDateFor(start),
   status: WinterArcStatus.completed,

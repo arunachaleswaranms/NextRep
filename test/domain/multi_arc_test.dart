@@ -73,6 +73,7 @@ void main() {
       await app.winterArc.beginSetup();
       await expectLater(
         app.sessions.createSetupSession(
+          kind: ArcKind.rolling92,
           startDate: app.clock.today(),
           endDate: WinterArcRules.endDateFor(app.clock.today()),
           createdAt: app.clock.now(),

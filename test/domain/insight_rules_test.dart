@@ -46,6 +46,8 @@ InsightArc _arc({
     history: ArcHistory(
       session: WinterArcSession(
         id: id,
+        kind: ArcKind.rolling92,
+        participationStartDate: status == WinterArcStatus.setup ? null : start,
         startDate: start,
         endDate: WinterArcRules.endDateFor(start),
         status: status,

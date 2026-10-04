@@ -14,6 +14,10 @@ import '../support/fakes.dart';
 
 WinterArcSession _arc(int id, WinterArcStatus status) => WinterArcSession(
   id: id,
+  kind: ArcKind.rolling92,
+  participationStartDate: status == WinterArcStatus.setup
+      ? null
+      : LocalDate(2026, 10, 1),
   startDate: LocalDate(2026, 10, 1),
   endDate: LocalDate(2026, 12, 31),
   status: status,

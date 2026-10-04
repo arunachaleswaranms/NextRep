@@ -169,7 +169,7 @@ void main() {
     await verifier.migrateAndValidate(db, 4);
   });
 
-  group('v3 → v4 with a completed Phase 3 arc', () {
+  group('v3 → v4 → v5 with a completed Phase 3 arc', () {
     late AppDatabase db;
     late TestApp app;
 
@@ -177,7 +177,7 @@ void main() {
       final schema = await verifier.schemaAt(3);
       _seedV3(schema.rawDatabase);
       db = AppDatabase(schema.newConnection());
-      await verifier.migrateAndValidate(db, 4);
+      await verifier.migrateAndValidate(db, 5);
       app = TestApp(db, FakeClock(DateTime(2026, 10, 4, 9)));
     });
     tearDown(() => db.close());
