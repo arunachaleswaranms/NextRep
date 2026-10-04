@@ -74,6 +74,28 @@ class $WinterArcSessionsTable extends WinterArcSessions
     requiredDuringInsert: false,
   );
   @override
+  late final GeneratedColumnWithTypeConverter<ArcKind, String> arcKind =
+      GeneratedColumn<String>(
+        'arc_kind',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: Constant(ArcKind.rolling92.name),
+      ).withConverter<ArcKind>($WinterArcSessionsTable.$converterarcKind);
+  @override
+  late final GeneratedColumnWithTypeConverter<LocalDate?, String>
+  participationStartDate =
+      GeneratedColumn<String>(
+        'participation_start_date',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<LocalDate?>(
+        $WinterArcSessionsTable.$converterparticipationStartDaten,
+      );
+  @override
   List<GeneratedColumn> get $columns => [
     id,
     startDate,
@@ -81,6 +103,8 @@ class $WinterArcSessionsTable extends WinterArcSessions
     status,
     createdAt,
     startedAt,
+    arcKind,
+    participationStartDate,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -150,6 +174,20 @@ class $WinterArcSessionsTable extends WinterArcSessions
         DriftSqlType.dateTime,
         data['${effectivePrefix}started_at'],
       ),
+      arcKind: $WinterArcSessionsTable.$converterarcKind.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}arc_kind'],
+        )!,
+      ),
+      participationStartDate: $WinterArcSessionsTable
+          .$converterparticipationStartDaten
+          .fromSql(
+            attachedDatabase.typeMapping.read(
+              DriftSqlType.string,
+              data['${effectivePrefix}participation_start_date'],
+            ),
+          ),
     );
   }
 
@@ -164,6 +202,12 @@ class $WinterArcSessionsTable extends WinterArcSessions
       const LocalDateConverter();
   static JsonTypeConverter2<WinterArcStatus, String, String> $converterstatus =
       const EnumNameConverter<WinterArcStatus>(WinterArcStatus.values);
+  static JsonTypeConverter2<ArcKind, String, String> $converterarcKind =
+      const EnumNameConverter<ArcKind>(ArcKind.values);
+  static TypeConverter<LocalDate, String> $converterparticipationStartDate =
+      const LocalDateConverter();
+  static TypeConverter<LocalDate?, String?> $converterparticipationStartDaten =
+      NullAwareTypeConverter.wrap($converterparticipationStartDate);
 }
 
 class SessionRow extends DataClass implements Insertable<SessionRow> {
@@ -173,6 +217,16 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
   final WinterArcStatus status;
   final DateTime createdAt;
   final DateTime? startedAt;
+
+  /// Rolling or seasonal (schema v5). The default only exists so the
+  /// column can be added to existing rows: every session before v5 was a
+  /// rolling 92-day arc.
+  final ArcKind arcKind;
+
+  /// The first participating calendar date (schema v5): the start date of
+  /// a rolling arc, the join date of a seasonal one. Null while in setup.
+  /// A calendar fact, deliberately not derived from [startedAt].
+  final LocalDate? participationStartDate;
   const SessionRow({
     required this.id,
     required this.startDate,
@@ -180,6 +234,8 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
     required this.status,
     required this.createdAt,
     this.startedAt,
+    required this.arcKind,
+    this.participationStartDate,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -204,6 +260,18 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
     if (!nullToAbsent || startedAt != null) {
       map['started_at'] = Variable<DateTime>(startedAt);
     }
+    {
+      map['arc_kind'] = Variable<String>(
+        $WinterArcSessionsTable.$converterarcKind.toSql(arcKind),
+      );
+    }
+    if (!nullToAbsent || participationStartDate != null) {
+      map['participation_start_date'] = Variable<String>(
+        $WinterArcSessionsTable.$converterparticipationStartDaten.toSql(
+          participationStartDate,
+        ),
+      );
+    }
     return map;
   }
 
@@ -217,6 +285,10 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
       startedAt: startedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(startedAt),
+      arcKind: Value(arcKind),
+      participationStartDate: participationStartDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(participationStartDate),
     );
   }
 
@@ -234,6 +306,12 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
       ),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       startedAt: serializer.fromJson<DateTime?>(json['startedAt']),
+      arcKind: $WinterArcSessionsTable.$converterarcKind.fromJson(
+        serializer.fromJson<String>(json['arcKind']),
+      ),
+      participationStartDate: serializer.fromJson<LocalDate?>(
+        json['participationStartDate'],
+      ),
     );
   }
   @override
@@ -248,6 +326,12 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
       ),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'startedAt': serializer.toJson<DateTime?>(startedAt),
+      'arcKind': serializer.toJson<String>(
+        $WinterArcSessionsTable.$converterarcKind.toJson(arcKind),
+      ),
+      'participationStartDate': serializer.toJson<LocalDate?>(
+        participationStartDate,
+      ),
     };
   }
 
@@ -258,6 +342,8 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
     WinterArcStatus? status,
     DateTime? createdAt,
     Value<DateTime?> startedAt = const Value.absent(),
+    ArcKind? arcKind,
+    Value<LocalDate?> participationStartDate = const Value.absent(),
   }) => SessionRow(
     id: id ?? this.id,
     startDate: startDate ?? this.startDate,
@@ -265,6 +351,10 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
     status: status ?? this.status,
     createdAt: createdAt ?? this.createdAt,
     startedAt: startedAt.present ? startedAt.value : this.startedAt,
+    arcKind: arcKind ?? this.arcKind,
+    participationStartDate: participationStartDate.present
+        ? participationStartDate.value
+        : this.participationStartDate,
   );
   SessionRow copyWithCompanion(WinterArcSessionsCompanion data) {
     return SessionRow(
@@ -274,6 +364,10 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
       status: data.status.present ? data.status.value : this.status,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       startedAt: data.startedAt.present ? data.startedAt.value : this.startedAt,
+      arcKind: data.arcKind.present ? data.arcKind.value : this.arcKind,
+      participationStartDate: data.participationStartDate.present
+          ? data.participationStartDate.value
+          : this.participationStartDate,
     );
   }
 
@@ -285,14 +379,24 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
           ..write('endDate: $endDate, ')
           ..write('status: $status, ')
           ..write('createdAt: $createdAt, ')
-          ..write('startedAt: $startedAt')
+          ..write('startedAt: $startedAt, ')
+          ..write('arcKind: $arcKind, ')
+          ..write('participationStartDate: $participationStartDate')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, startDate, endDate, status, createdAt, startedAt);
+  int get hashCode => Object.hash(
+    id,
+    startDate,
+    endDate,
+    status,
+    createdAt,
+    startedAt,
+    arcKind,
+    participationStartDate,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -302,7 +406,9 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
           other.endDate == this.endDate &&
           other.status == this.status &&
           other.createdAt == this.createdAt &&
-          other.startedAt == this.startedAt);
+          other.startedAt == this.startedAt &&
+          other.arcKind == this.arcKind &&
+          other.participationStartDate == this.participationStartDate);
 }
 
 class WinterArcSessionsCompanion extends UpdateCompanion<SessionRow> {
@@ -312,6 +418,8 @@ class WinterArcSessionsCompanion extends UpdateCompanion<SessionRow> {
   final Value<WinterArcStatus> status;
   final Value<DateTime> createdAt;
   final Value<DateTime?> startedAt;
+  final Value<ArcKind> arcKind;
+  final Value<LocalDate?> participationStartDate;
   const WinterArcSessionsCompanion({
     this.id = const Value.absent(),
     this.startDate = const Value.absent(),
@@ -319,6 +427,8 @@ class WinterArcSessionsCompanion extends UpdateCompanion<SessionRow> {
     this.status = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.startedAt = const Value.absent(),
+    this.arcKind = const Value.absent(),
+    this.participationStartDate = const Value.absent(),
   });
   WinterArcSessionsCompanion.insert({
     this.id = const Value.absent(),
@@ -327,6 +437,8 @@ class WinterArcSessionsCompanion extends UpdateCompanion<SessionRow> {
     required WinterArcStatus status,
     required DateTime createdAt,
     this.startedAt = const Value.absent(),
+    this.arcKind = const Value.absent(),
+    this.participationStartDate = const Value.absent(),
   }) : startDate = Value(startDate),
        endDate = Value(endDate),
        status = Value(status),
@@ -338,6 +450,8 @@ class WinterArcSessionsCompanion extends UpdateCompanion<SessionRow> {
     Expression<String>? status,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? startedAt,
+    Expression<String>? arcKind,
+    Expression<String>? participationStartDate,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -346,6 +460,9 @@ class WinterArcSessionsCompanion extends UpdateCompanion<SessionRow> {
       if (status != null) 'status': status,
       if (createdAt != null) 'created_at': createdAt,
       if (startedAt != null) 'started_at': startedAt,
+      if (arcKind != null) 'arc_kind': arcKind,
+      if (participationStartDate != null)
+        'participation_start_date': participationStartDate,
     });
   }
 
@@ -356,6 +473,8 @@ class WinterArcSessionsCompanion extends UpdateCompanion<SessionRow> {
     Value<WinterArcStatus>? status,
     Value<DateTime>? createdAt,
     Value<DateTime?>? startedAt,
+    Value<ArcKind>? arcKind,
+    Value<LocalDate?>? participationStartDate,
   }) {
     return WinterArcSessionsCompanion(
       id: id ?? this.id,
@@ -364,6 +483,9 @@ class WinterArcSessionsCompanion extends UpdateCompanion<SessionRow> {
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
       startedAt: startedAt ?? this.startedAt,
+      arcKind: arcKind ?? this.arcKind,
+      participationStartDate:
+          participationStartDate ?? this.participationStartDate,
     );
   }
 
@@ -394,6 +516,18 @@ class WinterArcSessionsCompanion extends UpdateCompanion<SessionRow> {
     if (startedAt.present) {
       map['started_at'] = Variable<DateTime>(startedAt.value);
     }
+    if (arcKind.present) {
+      map['arc_kind'] = Variable<String>(
+        $WinterArcSessionsTable.$converterarcKind.toSql(arcKind.value),
+      );
+    }
+    if (participationStartDate.present) {
+      map['participation_start_date'] = Variable<String>(
+        $WinterArcSessionsTable.$converterparticipationStartDaten.toSql(
+          participationStartDate.value,
+        ),
+      );
+    }
     return map;
   }
 
@@ -405,7 +539,9 @@ class WinterArcSessionsCompanion extends UpdateCompanion<SessionRow> {
           ..write('endDate: $endDate, ')
           ..write('status: $status, ')
           ..write('createdAt: $createdAt, ')
-          ..write('startedAt: $startedAt')
+          ..write('startedAt: $startedAt, ')
+          ..write('arcKind: $arcKind, ')
+          ..write('participationStartDate: $participationStartDate')
           ..write(')'))
         .toString();
   }
@@ -4322,6 +4458,8 @@ typedef $$WinterArcSessionsTableCreateCompanionBuilder =
       required WinterArcStatus status,
       required DateTime createdAt,
       Value<DateTime?> startedAt,
+      Value<ArcKind> arcKind,
+      Value<LocalDate?> participationStartDate,
     });
 typedef $$WinterArcSessionsTableUpdateCompanionBuilder =
     WinterArcSessionsCompanion Function({
@@ -4331,6 +4469,8 @@ typedef $$WinterArcSessionsTableUpdateCompanionBuilder =
       Value<WinterArcStatus> status,
       Value<DateTime> createdAt,
       Value<DateTime?> startedAt,
+      Value<ArcKind> arcKind,
+      Value<LocalDate?> participationStartDate,
     });
 
 final class $$WinterArcSessionsTableReferences
@@ -4481,6 +4621,18 @@ class $$WinterArcSessionsTableFilterComposer
   ColumnFilters<DateTime> get startedAt => $composableBuilder(
     column: $table.startedAt,
     builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<ArcKind, ArcKind, String> get arcKind =>
+      $composableBuilder(
+        column: $table.arcKind,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnWithTypeConverterFilters<LocalDate?, LocalDate, String>
+  get participationStartDate => $composableBuilder(
+    column: $table.participationStartDate,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
   );
 
   Expression<bool> habitsRefs(
@@ -4647,6 +4799,16 @@ class $$WinterArcSessionsTableOrderingComposer
     column: $table.startedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get arcKind => $composableBuilder(
+    column: $table.arcKind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get participationStartDate => $composableBuilder(
+    column: $table.participationStartDate,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$WinterArcSessionsTableAnnotationComposer
@@ -4675,6 +4837,15 @@ class $$WinterArcSessionsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get startedAt =>
       $composableBuilder(column: $table.startedAt, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<ArcKind, String> get arcKind =>
+      $composableBuilder(column: $table.arcKind, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<LocalDate?, String>
+  get participationStartDate => $composableBuilder(
+    column: $table.participationStartDate,
+    builder: (column) => column,
+  );
 
   Expression<T> habitsRefs<T extends Object>(
     Expression<T> Function($$HabitsTableAnnotationComposer a) f,
@@ -4848,6 +5019,8 @@ class $$WinterArcSessionsTableTableManager
                 Value<WinterArcStatus> status = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime?> startedAt = const Value.absent(),
+                Value<ArcKind> arcKind = const Value.absent(),
+                Value<LocalDate?> participationStartDate = const Value.absent(),
               }) => WinterArcSessionsCompanion(
                 id: id,
                 startDate: startDate,
@@ -4855,6 +5028,8 @@ class $$WinterArcSessionsTableTableManager
                 status: status,
                 createdAt: createdAt,
                 startedAt: startedAt,
+                arcKind: arcKind,
+                participationStartDate: participationStartDate,
               ),
           createCompanionCallback:
               ({
@@ -4864,6 +5039,8 @@ class $$WinterArcSessionsTableTableManager
                 required WinterArcStatus status,
                 required DateTime createdAt,
                 Value<DateTime?> startedAt = const Value.absent(),
+                Value<ArcKind> arcKind = const Value.absent(),
+                Value<LocalDate?> participationStartDate = const Value.absent(),
               }) => WinterArcSessionsCompanion.insert(
                 id: id,
                 startDate: startDate,
@@ -4871,6 +5048,8 @@ class $$WinterArcSessionsTableTableManager
                 status: status,
                 createdAt: createdAt,
                 startedAt: startedAt,
+                arcKind: arcKind,
+                participationStartDate: participationStartDate,
               ),
           withReferenceMapper: (p0) => p0
               .map(

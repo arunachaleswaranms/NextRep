@@ -92,7 +92,7 @@ final class ReflectionService {
         'Only today can be reflected on',
       );
     }
-    if (date.isAfter(today) || session.positionOn(date) is! ArcInProgress) {
+    if (date.isAfter(today) || !session.isParticipatingOn(date)) {
       throw const DomainFailure(
         DomainRule.reflectionNotAvailable,
         'That date is not open for a reflection',
@@ -112,7 +112,7 @@ final class ReflectionService {
     final today = _clock.today();
     final canWrite =
         session.status == WinterArcStatus.active &&
-        session.positionOn(today) is ArcInProgress;
+        session.isParticipatingOn(today);
     final all = await _reflections.reflectionsFor(session.id);
     final todayEntry = canWrite
         ? all.where((r) => r.date == today).firstOrNull

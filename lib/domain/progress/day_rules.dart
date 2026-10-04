@@ -1,4 +1,5 @@
 import '../../core/time/local_date.dart';
+import '../habit/habit.dart';
 import '../habit/habit_config.dart';
 import '../xp/xp.dart';
 import 'daily_habit_progress.dart';
@@ -143,8 +144,10 @@ final class DaySettlement {
 /// Pure rules that turn a requested change to the current day into the exact
 /// writes needed, keeping three invariants for the date:
 ///
-/// 1. A habit's `completed` flag is `currentValue >= effective target`, for
-///    every habit enabled that day.
+/// 1. A habit's `completed` flag is whether `currentValue` meets the
+///    effective target ([HabitType.isCompletedBy]: reaching it, or for a
+///    clock-time habit a logged time at or before it), for every habit
+///    enabled that day.
 /// 2. Habit XP: one `habit_completed:<habit>:<date>` award per enabled habit
 ///    that is completed, and none otherwise.
 /// 3. Perfect Day XP: one `perfect_day:<date>` award iff the day is a normal
@@ -208,6 +211,7 @@ abstract final class DayRules {
       if (current == null) continue; // no progress: cannot be complete
       final reconciled = current.withValue(
         current.currentValue,
+        type: planned.habit.type,
         target: planned.target,
         now: now,
       );

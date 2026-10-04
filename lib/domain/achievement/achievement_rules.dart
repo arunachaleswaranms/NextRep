@@ -37,8 +37,10 @@ final class AchievementContext {
 /// and on which challenge date each was first earned.
 ///
 /// Everything is derived from the [AchievementContext]: the [ArcHistory]
-/// (day records, streak marks, the XP ledger by date, the arc's dates) and
-/// the dates that have a reflection. Nothing here reads UI state or
+/// (day records, streak marks, the XP ledger by date, the arc's
+/// participating dates) and the dates that have a reflection. Days before
+/// the user joined a seasonal arc are not part of the history, so nothing
+/// can be earned on them. Nothing here reads UI state or
 /// storage, and past challenge days are immutable, so the result for a past
 /// date never changes; only today can add (or, before it is persisted,
 /// drop) an achievement.
@@ -50,7 +52,8 @@ abstract final class AchievementRules {
   static const int minimumDaysForAdaptable = 3;
   static const int reflectionsForCheckIns = 7;
 
-  /// The challenge day that marks the middle of the arc.
+  /// The challenge day that marks the middle of the arc (16 November in a
+  /// season).
   static const int midwinterDay = 46;
 
   /// Every achievement currently earned, in catalog order.
@@ -97,10 +100,18 @@ abstract final class AchievementRules {
       AchievementKey.reflections7,
       _nth(reflections, reflectionsForCheckIns),
     );
+    // Midwinter is earned on Day 46 itself, and only if the user took part
+    // that day: joining a season later never awards it retroactively.
+    final midwinter = history.session.startDate.addDays(midwinterDay - 1);
     earn(
       AchievementKey.halfway,
-      dates.length >= midwinterDay ? dates[midwinterDay - 1] : null,
+      history.session.isParticipatingOn(midwinter) &&
+              !midwinter.isAfter(history.today)
+          ? midwinter
+          : null,
     );
+    // Summit: the arc ran to its close. A seasonal arc joined late earns it
+    // too: it was completed through 31 December.
     earn(
       AchievementKey.summit,
       history.isOver ? history.session.endDate : null,

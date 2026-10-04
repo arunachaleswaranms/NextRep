@@ -16,7 +16,58 @@ import '../winter_arc/winter_arc_session.dart';
 import '../xp/xp.dart';
 import 'backup_document.dart';
 
-/// Reads and writes the NextRep backup file format, version 1.
+/// The parts of the layout that differ between formats.
+final class _Layout {
+  const _Layout._({
+    required this.version,
+    required this.arcFields,
+    required this.habitTypes,
+  });
+
+  static const _sharedArcFields = {
+    'id',
+    'status',
+    'startDate',
+    'endDate',
+    'createdAt',
+    'startedAt',
+    'habits',
+    'habitRevisions',
+    'dayModes',
+    'progress',
+    'xp',
+    'achievements',
+    'reflections',
+  };
+
+  /// Phase 5. Frozen: never change it.
+  static const v1 = _Layout._(
+    version: 1,
+    arcFields: _sharedArcFields,
+    habitTypes: [HabitType.binary, HabitType.count, HabitType.duration],
+  );
+
+  /// Phase 6.
+  static const v2 = _Layout._(
+    version: 2,
+    arcFields: {..._sharedArcFields, 'kind', 'participationStartDate'},
+    habitTypes: HabitType.values,
+  );
+
+  static _Layout? of(int version) => switch (version) {
+    1 => v1,
+    2 => v2,
+    _ => null,
+  };
+
+  final int version;
+  final Set<String> arcFields;
+  final List<HabitType> habitTypes;
+
+  bool get hasArcKinds => version >= 2;
+}
+
+/// Reads the NextRep backup file formats 1 and 2, and writes format 2.
 ///
 /// A backup is a UTF-8 JSON object:
 ///
@@ -26,10 +77,23 @@ import 'backup_document.dart';
 ///   "checksum": {"algorithm": "sha256", "value": "<64 hex digits>"},
 ///   "data": {"arcs": [...], "reminders": {...} | null},
 ///   "exportedAt": "2026-10-04T09:00:00.000Z",
-///   "formatVersion": 1,
+///   "formatVersion": 2,
 ///   "product": "NextRep"
 /// }
 /// ```
+///
+/// Format 2 adds two fields to every arc: `kind` (`rolling92` or
+/// `seasonalWinter`) and `participationStartDate` (a date, or null while
+/// the arc is in setup), and allows the `timeBefore` habit type. Format 1
+/// has neither field and only the binary, count and duration types.
+///
+/// **Version dispatch.** [decode] reads `formatVersion` first and refuses
+/// any version it doesn't know (a future format is never partially read).
+/// A format-1 file is then checked exactly as Phase 5 checked it: same
+/// checksum over the file as written, same fields, nothing more allowed.
+/// Only after that is it turned into the current model, every arc as a
+/// rolling 92-day arc whose participation began on its start date (null
+/// while in setup). Both formats decode to the same [BackupDocument].
 ///
 /// Field names describe the domain (`habits`, `progress`, `xp`, ...), not
 /// database tables or columns, so the file doesn't change when the schema
@@ -107,13 +171,16 @@ abstract final class BackupCodec {
         'formatVersion is missing or not an integer',
       );
     }
-    if (version != BackupFormat.formatVersion) {
+    final layout = _Layout.of(version);
+    if (layout == null || !BackupFormat.readableVersions.contains(version)) {
       // A future format is never partially interpreted.
       throw BackupFailure(
         BackupProblem.unsupportedVersion,
         'Unsupported backup formatVersion $version',
       );
     }
+    // The checksum covers the file exactly as it was written, in its own
+    // format, before anything is read or converted.
     _verifyChecksum(json);
 
     final root = _Obj(json, r'$');
@@ -128,7 +195,7 @@ abstract final class BackupCodec {
     return BackupDocument(
       exportedAt: root.timestamp('exportedAt'),
       appVersion: root.string('appVersion', maxLength: 64),
-      data: _dataFromJson(root.object('data')),
+      data: _dataFromJson(root.object('data'), layout),
     );
   }
 
@@ -233,6 +300,8 @@ abstract final class BackupCodec {
     final s = arc.session;
     return {
       'id': s.id,
+      'kind': s.kind.name,
+      'participationStartDate': s.participationStartDate?.toIsoString(),
       'status': s.status.name,
       'startDate': s.startDate.toIsoString(),
       'endDate': s.endDate.toIsoString(),
@@ -325,10 +394,10 @@ abstract final class BackupCodec {
   // ---------------------------------------------------------------------
   // Reading
 
-  static BackupData _dataFromJson(_Obj data) {
+  static BackupData _dataFromJson(_Obj data, _Layout layout) {
     data.only(const {'arcs', 'reminders'});
     return BackupData(
-      arcs: [for (final arc in data.objects('arcs')) _arcFromJson(arc)],
+      arcs: [for (final arc in data.objects('arcs')) _arcFromJson(arc, layout)],
       reminders: switch (data.optObject('reminders')) {
         null => null,
         final r => () {
@@ -342,33 +411,33 @@ abstract final class BackupCodec {
     );
   }
 
-  static BackupArc _arcFromJson(_Obj o) {
-    o.only(const {
-      'id',
-      'status',
-      'startDate',
-      'endDate',
-      'createdAt',
-      'startedAt',
-      'habits',
-      'habitRevisions',
-      'dayModes',
-      'progress',
-      'xp',
-      'achievements',
-      'reflections',
-    });
+  static BackupArc _arcFromJson(_Obj o, _Layout layout) {
+    o.only(layout.arcFields);
     final id = o.integer('id', min: 1);
+    final status = o.choice('status', WinterArcStatus.values, (v) => v.name);
+    final startDate = o.date('startDate');
+    final ArcKind kind;
+    final LocalDate? joined;
+    if (layout.hasArcKinds) {
+      kind = o.choice('kind', ArcKind.values, (v) => v.name);
+      joined = o.optDate('participationStartDate');
+    } else {
+      // Format 1 only knew rolling arcs, joined on their start date.
+      kind = ArcKind.rolling92;
+      joined = status == WinterArcStatus.setup ? null : startDate;
+    }
     return BackupArc(
       session: WinterArcSession(
         id: id,
-        startDate: o.date('startDate'),
+        kind: kind,
+        startDate: startDate,
         endDate: o.date('endDate'),
-        status: o.choice('status', WinterArcStatus.values, (v) => v.name),
+        status: status,
         createdAt: o.timestamp('createdAt'),
         startedAt: o.optTimestamp('startedAt'),
+        participationStartDate: joined,
       ),
-      habits: [for (final h in o.objects('habits')) _habitFromJson(h)],
+      habits: [for (final h in o.objects('habits')) _habitFromJson(h, layout)],
       revisions: [
         for (final r in o.objects('habitRevisions')) _revisionFromJson(r),
       ],
@@ -470,7 +539,7 @@ abstract final class BackupCodec {
     );
   }
 
-  static Habit _habitFromJson(_Obj h) {
+  static Habit _habitFromJson(_Obj h, _Layout layout) {
     h.only(const {
       'id',
       'title',
@@ -483,7 +552,7 @@ abstract final class BackupCodec {
       'sortOrder',
       'createdAt',
     });
-    final type = h.choice('type', HabitType.values, (v) => v.name);
+    final type = h.choice('type', layout.habitTypes, (v) => v.name);
     final config = _config(h, type);
     return Habit(
       id: h.string('id', maxLength: _maxIdLength),
@@ -526,6 +595,13 @@ abstract final class BackupCodec {
       throw BackupFailure(
         BackupProblem.invalidData,
         '${o.path}.target: a done / not done habit has target 1',
+      );
+    }
+    if (type == HabitType.timeBefore &&
+        (!NightTime.isValidValue(target) || minimum != target)) {
+      throw BackupFailure(
+        BackupProblem.invalidData,
+        '${o.path}.target: not a valid clock-time target',
       );
     }
     return HabitConfig(
@@ -600,8 +676,12 @@ final class _Obj {
     return v;
   }
 
-  LocalDate date(String key) {
+  LocalDate date(String key) =>
+      optDate(key) ?? _fail(key, 'expected a YYYY-MM-DD date');
+
+  LocalDate? optDate(String key) {
     final v = _value(key);
+    if (v == null) return null;
     if (v is! String || !_datePattern.hasMatch(v)) {
       _fail(key, 'expected a YYYY-MM-DD date');
     }

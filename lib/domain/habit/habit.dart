@@ -1,6 +1,10 @@
 import 'habit_config.dart';
+import 'night_time.dart';
 
-/// How a habit's daily progress is measured. Persisted by [name].
+export 'night_time.dart';
+
+/// How a habit's daily progress is measured. Persisted by [name], so never
+/// rename values.
 enum HabitType {
   /// Done / not done. Target is always 1.
   binary,
@@ -9,16 +13,41 @@ enum HabitType {
   count,
 
   /// Minutes spent.
-  duration;
+  duration,
 
-  /// Amount added or removed by one increment / decrement.
+  /// A clock time recorded once a day, done when it is at or before the
+  /// target time (e.g. Sleep Before Target). Target and value are
+  /// normalized [NightTime] values; 0 means not logged. The Minimum Day
+  /// target is always the normal target.
+  timeBefore;
+
+  /// Amount added or removed by one increment / decrement of a numeric
+  /// habit. A [timeBefore] habit has no steps; its pickers move in
+  /// [NightTime] minutes.
   int get step => switch (this) {
     HabitType.binary => 1,
     HabitType.count => 1,
     HabitType.duration => 5,
+    HabitType.timeBefore => 1,
   };
 
-  bool get isNumeric => this != HabitType.binary;
+  /// Counted up and down towards a target (count, duration).
+  bool get isNumeric => this == HabitType.count || this == HabitType.duration;
+
+  /// Recorded as a clock time ([timeBefore]).
+  bool get isClockTime => this == HabitType.timeBefore;
+
+  /// Whether a day with progress [value] against effective [target] is
+  /// complete. The single authority on completion for every type:
+  ///
+  /// * binary, count, duration: the value reached the target
+  /// * timeBefore: a time was logged and it is at or before the target
+  bool isCompletedBy(int value, int target) => switch (this) {
+    HabitType.binary ||
+    HabitType.count ||
+    HabitType.duration => value >= target,
+    HabitType.timeBefore => NightTime.isValidValue(value) && value <= target,
+  };
 }
 
 /// A habit the user tracks during a Winter Arc session.
@@ -45,9 +74,18 @@ final class Habit {
          minimumTarget > 0 && minimumTarget <= target,
          'minimum target must be within 1..target',
        ),
-       assert(type != HabitType.binary || target == 1, 'binary target is 1');
+       assert(type != HabitType.binary || target == 1, 'binary target is 1'),
+       assert(
+         type != HabitType.timeBefore ||
+             (minimumTarget == target &&
+                 target >= NightTime.minValue &&
+                 target <= NightTime.maxValue),
+         'a clock-time habit has a night-time target, also on Minimum Days',
+       );
 
-  /// Stable key, unique within a session (e.g. `water`).
+  /// Stable key, unique within a session (e.g. `water`, or
+  /// `custom_<32 hex digits>` for a habit the user created). Never derived
+  /// from the title.
   final String id;
 
   /// Display name. Renaming applies everywhere, including past days.
@@ -77,16 +115,23 @@ final class Habit {
     enabled: enabled,
   );
 
-  Habit copyWith({bool? enabled, String? title}) => Habit(
+  Habit copyWith({
+    bool? enabled,
+    String? title,
+    int? target,
+    int? minimumTarget,
+    String? iconKey,
+    int? sortOrder,
+  }) => Habit(
     id: id,
     title: title ?? this.title,
     type: type,
-    target: target,
-    minimumTarget: minimumTarget,
+    target: target ?? this.target,
+    minimumTarget: minimumTarget ?? this.minimumTarget,
     unit: unit,
-    iconKey: iconKey,
+    iconKey: iconKey ?? this.iconKey,
     enabled: enabled ?? this.enabled,
-    sortOrder: sortOrder,
+    sortOrder: sortOrder ?? this.sortOrder,
     createdAt: createdAt,
   );
 }

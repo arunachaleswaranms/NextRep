@@ -10,6 +10,7 @@ enum MarkerFill { none, half, full }
 /// shape, fill, icon and size, and has a label for screen readers.
 extension JourneyDayStyle on JourneyDayState {
   String get label => switch (this) {
+    JourneyDayState.notJoined => 'Before you joined',
     JourneyDayState.future => 'Upcoming',
     JourneyDayState.today => 'Today',
     JourneyDayState.perfect => 'Perfect',
@@ -20,6 +21,7 @@ extension JourneyDayStyle on JourneyDayState {
   };
 
   Color color(WinterColors colors) => switch (this) {
+    JourneyDayState.notJoined => colors.outline,
     JourneyDayState.future => colors.outline,
     JourneyDayState.today => colors.snow,
     JourneyDayState.perfect => colors.accentSecondary,
@@ -39,10 +41,14 @@ extension JourneyDayStyle on JourneyDayState {
     JourneyDayState.minimumComplete => MarkerFill.full,
     JourneyDayState.partial ||
     JourneyDayState.minimumPartial => MarkerFill.half,
+    JourneyDayState.notJoined ||
     JourneyDayState.future ||
     JourneyDayState.today ||
     JourneyDayState.missed => MarkerFill.none,
   };
+
+  /// Drawn with a dashed outline: neutral, outside the user's arc.
+  bool get dashed => this == JourneyDayState.notJoined;
 
   /// Shown instead of the day number.
   IconData? get icon => switch (this) {
@@ -58,10 +64,12 @@ extension JourneyDayStyle on JourneyDayState {
     JourneyDayState.perfect || JourneyDayState.minimumComplete => 40,
     JourneyDayState.partial || JourneyDayState.minimumPartial => 36,
     JourneyDayState.future || JourneyDayState.missed => 30,
+    JourneyDayState.notJoined => 26,
   };
 
   /// Dimmed states.
   double get opacity => switch (this) {
+    JourneyDayState.notJoined => 0.45,
     JourneyDayState.future => 0.55,
     JourneyDayState.missed => 0.7,
     _ => 1,

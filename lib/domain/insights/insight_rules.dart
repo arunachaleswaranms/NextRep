@@ -5,13 +5,17 @@ import 'insight_snapshot.dart';
 
 /// Pure rules turning the stored history of every arc into insights.
 ///
-/// Scope: completed arcs in full and the active arc up to and including
-/// today ([ArcHistory.elapsedDates]). Arcs in setup have no history and are
-/// skipped; future dates are never evaluated. Nothing is read from storage
-/// and nothing is persisted.
+/// Scope: the participating days of every started arc
+/// ([ArcHistory.elapsedDates]): completed arcs in full and the active arc
+/// up to and including today. Days before the user joined a seasonal arc
+/// aren't participating days, so they never count as elapsed, as a habit's
+/// applicable day or towards reflections. Arcs in setup have no history and
+/// are skipped; future dates are never evaluated. Nothing is read from
+/// storage and nothing is persisted.
 ///
 /// * **Consistency** is weighted by days: the sum of full days (Perfect
-///   Days plus completed Minimum Days) over the sum of elapsed days. Arc
+///   Days plus completed Minimum Days) over the sum of elapsed
+///   participating days (never a season's full span). Arc
 ///   percentages are never averaged, so a short arc can't outweigh a
 ///   whole 92-day one. It is the same definition as an arc's summary, so
 ///   one arc's insight matches its summary.
@@ -57,7 +61,11 @@ abstract final class InsightRules {
         completed++;
       } else {
         active = session;
-        activeDay = history.elapsedDates.length;
+        // The arc's own day number (a season day for a seasonal arc), not
+        // the count of days taken part in.
+        activeDay = history.elapsedDates.isEmpty
+            ? null
+            : session.dayNumberOf(history.elapsedDates.last);
       }
       final dates = history.elapsedDates;
       elapsed += dates.length;

@@ -24,6 +24,18 @@ class WinterArcSessions extends Table {
   TextColumn get status => textEnum<WinterArcStatus>()();
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get startedAt => dateTime().nullable()();
+
+  /// Rolling or seasonal (schema v5). The default only exists so the
+  /// column can be added to existing rows: every session before v5 was a
+  /// rolling 92-day arc.
+  TextColumn get arcKind =>
+      textEnum<ArcKind>().withDefault(Constant(ArcKind.rolling92.name))();
+
+  /// The first participating calendar date (schema v5): the start date of
+  /// a rolling arc, the join date of a seasonal one. Null while in setup.
+  /// A calendar fact, deliberately not derived from [startedAt].
+  TextColumn get participationStartDate =>
+      text().map(const LocalDateConverter()).nullable()();
 }
 
 /// A session's habits. [target], [minimumTarget] and [enabled] hold the

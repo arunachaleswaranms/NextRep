@@ -127,11 +127,17 @@ final class HabitTrackingService {
   /// silently applied to a different day. [sessionId], when given, is the
   /// arc the user is looking at: if it is no longer the active arc the
   /// action is rejected (see [CurrentArcService.requireWritable]).
+  ///
+  /// [time] is the time to record with [HabitAction.setTime] on a
+  /// clock-time habit (only today's record can change). Any action that
+  /// doesn't suit the habit's type is rejected with
+  /// [DomainRule.actionNotSupportedForHabitType].
   Future<DayCommit<ProgressTransition>> perform({
     required String habitId,
     required HabitAction action,
     required LocalDate date,
     int? sessionId,
+    NightTime? time,
   }) async {
     final session = await _trackableSession(date, sessionId: sessionId);
     final now = _clock.now();
@@ -149,12 +155,19 @@ final class HabitTrackingService {
             '"$habitId" is disabled',
           );
         }
+        if ((action == HabitAction.setTime) != (time != null)) {
+          throw DomainFailure(
+            DomainRule.actionNotSupportedForHabitType,
+            'A time goes with setTime only, not ${action.name}',
+          );
+        }
         final transition = HabitProgressRules.apply(
           habit: entry.habit,
           target: entry.target,
           current: entry.progress,
           action: action,
           now: now,
+          time: time,
         );
         final change = DayChange(
           progress: [if (transition.changed) transition.after],
@@ -204,7 +217,7 @@ final class HabitTrackingService {
     final records = await _progress.loadArc(session.id);
     final editable =
         session.status == WinterArcStatus.active &&
-        session.positionOn(today) is ArcInProgress;
+        session.isParticipatingOn(today);
     return HabitSettings(
       sessionId: session.id,
       date: today,
@@ -303,7 +316,8 @@ final class HabitTrackingService {
     return session.positionOn(next) is ArcInProgress ? next : null;
   }
 
-  /// The active session, provided [date] is today and inside the arc.
+  /// The active session, provided [date] is today and one of its
+  /// participating days.
   Future<WinterArcSession> _trackableSession(
     LocalDate date, {
     int? sessionId,
@@ -315,7 +329,7 @@ final class HabitTrackingService {
         'The day changed; refresh before tracking',
       );
     }
-    if (session.positionOn(date) is! ArcInProgress) {
+    if (!session.isParticipatingOn(date)) {
       throw const DomainFailure(
         DomainRule.arcNotRunningToday,
         'Winter Arc is not running today',

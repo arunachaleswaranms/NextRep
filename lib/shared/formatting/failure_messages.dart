@@ -44,11 +44,22 @@ String userMessageFor(AppFailure failure) => switch (failure) {
       'Past reflections are kept as they were. Only today can be edited.',
     DomainRule.reflectionNotAvailable => 'Reflections open on the day itself.',
     DomainRule.arcNotDeletable => 'Only a completed Winter Arc can be deleted.',
+    DomainRule.seasonNotOpen =>
+      'The Seasonal Winter Arc opens for setup on September 1.',
+    DomainRule.seasonNotStarted =>
+      'The season starts October 1. Your setup is saved until then.',
+    DomainRule.seasonEnded =>
+      'This season has ended. Cancel this setup to choose a new Arc.',
+    DomainRule.habitLimitReached =>
+      'An Arc can have up to 12 habits. Remove one to add another.',
+    DomainRule.duplicateHabit =>
+      'That habit, or one with the same name, is already in your Arc.',
     DomainRule.sessionNotFound ||
     DomainRule.noSession ||
     DomainRule.sessionNotInSetup ||
     DomainRule.noActiveSession ||
     DomainRule.habitNotFound ||
+    DomainRule.invalidArc ||
     DomainRule.actionNotSupportedForHabitType =>
       "That action isn't available right now.",
   },

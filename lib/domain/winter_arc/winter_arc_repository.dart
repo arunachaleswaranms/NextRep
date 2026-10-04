@@ -28,19 +28,22 @@ abstract interface class WinterArcRepository {
   /// Every session, newest first.
   Future<List<WinterArcSession>> listSessions();
 
-  /// Atomically creates a session in [WinterArcStatus.setup] together with
-  /// its initial habit configuration.
+  /// Atomically creates a session of [kind] in [WinterArcStatus.setup]
+  /// together with its initial habit configuration. It has no
+  /// participation date until it starts.
   ///
   /// Throws a `DomainFailure` with `DomainRule.arcInProgress`, writing
   /// nothing, if an unfinished session already exists.
   Future<WinterArcSession> createSetupSession({
+    required ArcKind kind,
     required LocalDate startDate,
     required LocalDate endDate,
     required DateTime createdAt,
     required List<Habit> habits,
   });
 
-  /// Persists [session]'s status, dates and start timestamp.
+  /// Persists [session]'s status, dates, participation start and start
+  /// timestamp. The kind never changes.
   Future<void> updateSession(WinterArcSession session);
 
   /// Permanently deletes session [id] and everything it owns (habits,
