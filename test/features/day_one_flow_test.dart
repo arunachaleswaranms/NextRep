@@ -23,6 +23,7 @@ Widget _app(AppDatabase db, FakeClock clock, {List overrides = const []}) =>
       overrides: [
         appDatabaseProvider.overrideWithValue(db),
         clockProvider.overrideWithValue(clock),
+        ambientMotionProvider.overrideWithValue(false),
         ...overrides,
       ],
       retry: (_, _) => null,
@@ -108,6 +109,7 @@ void main() {
 
     // Rapid increments on a count habit are each applied once.
     final addWater = find.byTooltip('Add to Water Intake');
+    await reveal(tester, addWater); // after the First Rep card times out
     await tester.tap(addWater);
     await tester.tap(addWater);
     await tester.tap(addWater);

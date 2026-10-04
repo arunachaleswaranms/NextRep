@@ -113,13 +113,15 @@ void main() {
 
   setUpAll(() => verifier = SchemaVerifier(GeneratedHelper()));
 
-  test('an empty v1 database upgrades to exactly the v2 schema', () async {
+  test('an empty v1 database upgrades through v2 to exactly v3', () async {
     final db = AppDatabase(await verifier.startAt(1));
     addTearDown(db.close);
-    await verifier.migrateAndValidate(db, 2);
+    await verifier.migrateAndValidate(db, 3);
   });
 
-  group('v1 → v2 with Phase 1 data', () {
+  // The app always migrates to the current schema, so Phase 1 databases run
+  // the v1 → v2 step and then v2 → v3 (see migration_v3_test.dart for v2).
+  group('v1 → v2 → v3 with Phase 1 data', () {
     late AppDatabase db;
     late TestApp app;
     final day1 = LocalDate(2026, 10, 1);
@@ -129,9 +131,9 @@ void main() {
       final schema = await verifier.schemaAt(1);
       _seedV1(schema.rawDatabase);
       db = AppDatabase(schema.newConnection());
-      // Runs the real migration, then checks the result against the
-      // committed v2 snapshot.
-      await verifier.migrateAndValidate(db, 2);
+      // Runs the real migration chain, then checks the result against the
+      // committed v3 snapshot.
+      await verifier.migrateAndValidate(db, 3);
       app = TestApp(db, FakeClock(DateTime(2026, 10, 3, 20)));
     });
     tearDown(() => db.close());
@@ -212,9 +214,21 @@ void main() {
       expect(await app.progress.totalXp(1), 8 * 15 + 30);
     });
 
-    test('new v2 tables start empty: every day normal, no revisions', () async {
+    test('new tables start empty: every day normal, no revisions', () async {
       expect(await db.select(db.dayModes).get(), isEmpty);
       expect(await db.select(db.habitRevisions).get(), isEmpty);
+      expect(await db.select(db.achievementUnlocks).get(), isEmpty);
+    });
+
+    test('achievements are derived from the migrated history once', () async {
+      final unlocked = await app.achievements.reconcile();
+      expect(unlocked.map((u) => u.key.id), [
+        'first_rep',
+        'first_perfect',
+        'streak_3',
+      ]);
+      expect(await app.achievements.reconcile(), isEmpty);
+      expect(await db.select(db.achievementUnlocks).get(), hasLength(3));
     });
 
     test('Today and Journey read the migrated history', () async {
@@ -243,7 +257,8 @@ void main() {
       expect(journey.days[3].state, JourneyDayState.future);
     });
 
-    test('Phase 2 writes work after migration', () async {
+    test('Phase 2 and 3 writes work after migration', () async {
+      // Applies from Day 4 (Phase 3 edit timing); today keeps water at 8.
       await app.tracking.editHabit(
         habitId: 'water',
         edit: const HabitEdit(target: 10),
@@ -297,7 +312,7 @@ void main() {
     }
     final db = AppDatabase(schema.newConnection());
     addTearDown(db.close);
-    await verifier.migrateAndValidate(db, 2);
+    await verifier.migrateAndValidate(db, 3);
 
     final app = TestApp(db, FakeClock(DateTime(2026, 10, 2, 9)));
     expect(

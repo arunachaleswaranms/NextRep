@@ -7,7 +7,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:nextrep/app/app.dart';
 import 'package:nextrep/app/dependencies.dart';
 import 'package:nextrep/core/database/app_database.dart';
-import 'package:nextrep/features/journey/widgets/journey_tile.dart';
+import 'package:nextrep/core/time/local_date.dart';
+import 'package:nextrep/features/journey/widgets/journey_marker.dart';
 
 import '../support/fakes.dart';
 import '../support/ui.dart';
@@ -16,6 +17,7 @@ Widget _app(AppDatabase db, FakeClock clock) => ProviderScope(
   overrides: [
     appDatabaseProvider.overrideWithValue(db),
     clockProvider.overrideWithValue(clock),
+    ambientMotionProvider.overrideWithValue(false),
   ],
   retry: (_, _) => null,
   child: const NextRepApp(),
@@ -100,12 +102,13 @@ void main() {
     await _openTab(tester, 'Journey');
     expect(find.text('JOURNEY'), findsOneWidget);
     expect(find.text('Day 1 of 92'), findsOneWidget);
-    expect(find.byType(JourneyTile), findsWidgets);
+    expect(find.byType(JourneyMarker), findsWidgets);
     expect(find.bySemanticsLabel('Day 1, Today, today'), findsOneWidget);
 
-    // Journey keeps its scroll position across tab switches.
+    // Journey keeps its scroll position across tab switches. The path
+    // climbs upwards: dragging down moves towards the summit.
     final journeyScroll = find.byType(Scrollable).last;
-    await tester.drag(journeyScroll, const Offset(0, -300));
+    await tester.drag(journeyScroll, const Offset(0, 300));
     await tester.pumpAndSettle();
     final offset = tester.state<ScrollableState>(journeyScroll).position.pixels;
     expect(offset, greaterThan(0));
@@ -125,7 +128,7 @@ void main() {
       offset,
     );
     // Journey re-read the persisted change made on Today.
-    await tester.drag(find.byType(Scrollable).last, const Offset(0, 600));
+    await tester.drag(find.byType(Scrollable).last, const Offset(0, -600));
     await tester.pumpAndSettle();
     await tester.tap(find.bySemanticsLabel('Day 1, Today, today'));
     await tester.pumpAndSettle();
@@ -148,12 +151,16 @@ void main() {
     await _onboardAndStart(tester);
 
     await _completeAll(tester);
-    expect(find.text('PERFECT DAY'), findsWidgets); // banner + badge
+    expect(find.text('PERFECT DAY'), findsWidgets); // card + badge
     expect(find.text('+30 XP bonus'), findsOneWidget);
     expect(find.text('🔥 Perfect streak: 1'), findsOneWidget);
-    await tester.pump(const Duration(seconds: 4)); // banner auto-dismisses
+    await tester.pump(const Duration(seconds: 4)); // card auto-dismisses
     await tester.pumpAndSettle();
     expect(find.text('+30 XP bonus'), findsNothing);
+    // Then the achievement earned by the same commit (First Rep was
+    // celebrated earlier, when Workout was completed).
+    expect(find.text('ACHIEVEMENT UNLOCKED'), findsOneWidget);
+    expect(find.text('Clean Sweep'), findsOneWidget);
     await tester.drag(find.byType(Scrollable).first, const Offset(0, 1000));
     await tester.pumpAndSettle();
     expect(find.text('90 XP'), findsOneWidget);
@@ -214,6 +221,7 @@ void main() {
     await tester.tap(find.text('Switch to Minimum Day'));
     await tester.pumpAndSettle();
     expect(find.text('Minimum Day'), findsOneWidget); // banner
+    expect(find.text('Keep moving, even if today is smaller.'), findsOneWidget);
     expect(find.text('2 / 3 glasses'), findsOneWidget); // progress kept
     expect(find.text('0 / 10 min'), findsOneWidget);
     expect(find.text('MINIMUM'), findsWidgets);
@@ -233,7 +241,7 @@ void main() {
     await _shutDown(tester);
   });
 
-  testWidgets('habits can be edited from Today and apply from today', (
+  testWidgets('habit goal edits are saved now and apply from tomorrow', (
     tester,
   ) async {
     await _setPhoneSize(tester);
@@ -257,13 +265,18 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
-    expect(find.text('10 glasses · Minimum 3 glasses'), findsOneWidget);
-    expect(find.text('Saved. Applies from today.'), findsOneWidget);
+    // Today keeps its goal; the new one is shown as pending.
+    expect(find.text('8 glasses · Minimum 3 glasses'), findsOneWidget);
+    expect(
+      find.text('From tomorrow: 10 glasses · Minimum 3 glasses'),
+      findsOneWidget,
+    );
+    expect(find.text('Saved. Applies from tomorrow.'), findsOneWidget);
 
     await tester.pageBack();
     await tester.pumpAndSettle();
     expect(_navBar, findsOneWidget);
-    expect(find.text('0 / 10 glasses'), findsOneWidget);
+    expect(find.text('0 / 8 glasses'), findsOneWidget);
     await _shutDown(tester);
   });
 
@@ -294,9 +307,13 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(_navBar, findsOneWidget);
-    // Today picked up the edit even though the editor was already gone.
-    expect(find.text('Water Intake'), findsNothing);
-    expect(find.text('0 of 3 done'), findsOneWidget);
+    // The edit was stored even though the editor was already gone. It turns
+    // Water off from tomorrow, so today still tracks it.
+    final revision = (await db.select(db.habitRevisions).get()).single;
+    expect(revision.habitId, 'water');
+    expect(revision.enabled, isFalse);
+    expect(revision.effectiveFrom, LocalDate(2026, 10, 2));
+    expect(find.text('0 of 4 done'), findsOneWidget);
     await _shutDown(tester);
   });
 }

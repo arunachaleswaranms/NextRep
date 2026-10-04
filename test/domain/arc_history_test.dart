@@ -1,55 +1,15 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nextrep/core/time/local_date.dart';
-import 'package:nextrep/domain/habit/habit_config.dart';
 import 'package:nextrep/domain/journey/journey_day.dart';
-import 'package:nextrep/domain/progress/arc_history.dart';
-import 'package:nextrep/domain/progress/daily_habit_progress.dart';
 import 'package:nextrep/domain/progress/day_mode.dart';
 import 'package:nextrep/domain/progress/streak_rules.dart';
 
 import '../support/builders.dart';
 
-LocalDate _d(int dayNumber) => day1.addDays(dayNumber - 1);
+LocalDate _d(int dayNumber) => dayN(dayNumber);
 
-/// An arc with [habits] where [done] lists, per day number, the habit ids
-/// completed that day (at their target).
-ArcHistory _arc({
-  required int today,
-  List<String> habits = const ['water', 'junk'],
-  Map<int, List<String>> done = const {},
-  Map<int, Map<String, int>> partial = const {},
-  Map<int, DayMode> modes = const {},
-  List<HabitRevision> revisions = const [],
-  Map<int, int> xp = const {},
-}) {
-  final list = [
-    for (final (i, id) in habits.indexed)
-      habit(id, target: 8, minimum: 3, sortOrder: i),
-  ];
-  return ArcHistory(
-    session: activeSession(),
-    today: _d(today),
-    records: ArcRecords(
-      habits: HabitHistory(habits: list, revisions: revisions),
-      progress: <DailyHabitProgress>[
-        for (final MapEntry(key: day, value: ids) in done.entries)
-          for (final id in ids) progress(id, _d(day), 8),
-        for (final MapEntry(key: day, value: values) in partial.entries)
-          for (final MapEntry(key: id, value: v) in values.entries)
-            progress(id, _d(day), v, completed: false),
-      ],
-      modes: {
-        for (final MapEntry(key: day, value: mode) in modes.entries)
-          _d(day): mode,
-      },
-      xpByDate: {
-        for (final MapEntry(key: day, value: amount) in xp.entries)
-          _d(day): amount,
-      },
-      totalXp: xp.values.fold(0, (a, b) => a + b),
-    ),
-  );
-}
+/// See [arcOf].
+const _arc = arcOf;
 
 void main() {
   group('habit streaks', () {
