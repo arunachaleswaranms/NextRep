@@ -21,7 +21,9 @@ enum WinterArcStatus {
   /// [WinterArcSession.endDate].
   active,
 
-  /// Reserved for when an arc is explicitly closed out (Phase 2+).
+  /// The arc is over: the local date moved past [WinterArcSession.endDate].
+  /// Set by `ArcLifecycleService`. History stays readable; tracking is
+  /// read-only.
   completed,
 }
 
@@ -50,6 +52,11 @@ final class WinterArcSession {
   final DateTime? startedAt;
 
   int get lengthInDays => startDate.daysUntil(endDate) + 1;
+
+  /// Whether every challenge day is over on [date]. The arc stays open for
+  /// the whole of its last day, so this is only true from the day after
+  /// [endDate].
+  bool isOverOn(LocalDate date) => date.isAfter(endDate);
 
   /// Where [date] falls relative to this arc's window.
   ArcDayPosition positionOn(LocalDate date) {

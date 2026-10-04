@@ -51,7 +51,7 @@ class LevelBar extends StatelessWidget {
             borderRadius: BorderRadius.circular(WinterRadii.pill),
             child: TweenAnimationBuilder<double>(
               tween: Tween(end: level.ratio),
-              duration: context.motion.emphasis,
+              duration: context.motion.celebration,
               curve: Curves.easeOutCubic,
               builder: (context, value, _) => LinearProgressIndicator(
                 value: value,

@@ -1,15 +1,17 @@
 # NextRep — Winter Arc
 
 NextRep is a mobile-first, offline-first habit app. Its first product,
-**Winter Arc**, is a gamified 92-day self-improvement challenge (Oct 1 → Dec 31
-when started on Oct 1): pick a few daily habits, show up every day, earn XP,
-and watch your progress build.
+**Winter Arc**, is a gamified 92-day self-improvement challenge: pick a few
+daily habits, show up every day, earn XP, and climb from a frozen trail to a
+warm summit. Day 1 is the day you press Start (Oct 1 → Dec 31 when started on
+Oct 1).
 
-> **Status: Phase 2 — habit loop depth.** Streaks, Perfect Days (+30 XP),
-> levels, Minimum Day, history-safe habit editing, a Today / Journey tab
-> shell and schema v2 with a tested migration. See
-> [docs/PHASE_2.md](docs/PHASE_2.md) (and [docs/PHASE_1.md](docs/PHASE_1.md)
-> for the foundation).
+> **Status: Phase 3 — Winter Arc feel.** A cinematic winter scene, the Today
+> hero, Journey v2 (a mountain path), achievements with persisted unlocks,
+> next-day habit edits, Day 92 close-out with an End-of-Arc summary, schema
+> v3 and GitHub Actions CI. See [docs/PHASE_3.md](docs/PHASE_3.md), and
+> [docs/PHASE_2.md](docs/PHASE_2.md) and [docs/PHASE_1.md](docs/PHASE_1.md)
+> for the earlier phases.
 
 ## Architecture
 
@@ -18,7 +20,8 @@ lib/
   main.dart                 entry point: opens the DB, ProviderScope
   app/                      composition root, router, theme tokens
     dependencies.dart       Riverpod providers wiring infra → services
-    router/                 go_router routes + boot location
+    arc_status.dart         lifecycle status → router redirect
+    router/                 go_router routes, boot location, redirects
     theme/                  WinterColors tokens, spacing, radii, ThemeData
   core/                     framework-agnostic building blocks
     database/               Drift schema, migrations, converters, generated code
@@ -26,16 +29,18 @@ lib/
     time/                   LocalDate, Clock abstraction
     utils/                  SerialQueue
   domain/                   pure Dart business logic (owns truth)
-    winter_arc/             session model, day calculation, setup/start
+    winter_arc/             session model, setup/start, arc close-out
     habit/                  Habit, dated config (HabitHistory), edit rules
     progress/               progress + day rules, streaks, arc history,
-                            Minimum Day, tracking service
-    journey/                Journey day states and overview
+                            Minimum Day, tracking service, arc summary
+    journey/                Journey day states, milestones, chapters
+    achievement/            catalog, rules, reconciliation service
     xp/                     XP rules, LevelRules
   data/                     Drift implementations of domain repositories
   features/                 UI per feature: controller + screen + widgets
     onboarding/  habit_setup/  shell/  today/  habits/  journey/
-  shared/                   reusable widgets + formatting
+    achievements/  celebration/  summary/
+  shared/                   reusable widgets, formatting, winter_scene/
 ```
 
 Every change to the current day (habit action, Minimum Day, habit edit)
@@ -51,8 +56,10 @@ action → controller (serial queue) → HabitTrackingService (validates)
 ```
 
 Streaks, levels, Perfect Days and Journey states are derived from stored
-history, never stored. Animations and haptics only react to persisted
-results. They never decide completion or XP.
+history, never stored. Achievement unlocks are derived too, then persisted
+by an idempotent reconciliation outside the habit transaction. Animations
+and haptics only react to persisted results. They never decide completion,
+XP or achievements.
 
 **Stack:** Flutter 3.47 / Dart 3.13 · Riverpod 3 (state + DI) · Drift 2
 (SQLite) · go_router · intl.
@@ -80,7 +87,7 @@ flutter run -d <device-id>
 dart format .
 flutter analyze
 flutter test                     # unit + data + migration + widget tests
-flutter test test/data/migration_test.dart   # schema v1 → v2
+flutter test test/data/migration_test.dart test/data/migration_v3_test.dart   # v1 → v2 → v3
 flutter test --coverage
 flutter test integration_test -d <android-device-id>   # on-device flow
 flutter build apk --debug
@@ -103,19 +110,39 @@ survives restarts.
   revoked on undo). Levels every 250 XP, derived from the ledger.
 - Minimum Day: a deliberate, one-way switch of today to each habit's minimum
   target. Keeps streaks, never a Perfect Day.
-- Habit editing after the start (name, targets, enable). Applies from today,
-  and past days keep their configuration.
+- Habit editing after the start (name, targets, enable). Past days keep
+  their configuration. Phase 3 moved goal edits to the next day.
 - Today / Journey bottom-nav shell. Journey v1 is a 92-day grid of
   deterministic day states with a read-only day detail.
 - Schema v2 with a tested v1 → v2 migration.
 - First motion/haptics layer. Respects the reduced-motion setting.
 
+**Phase 3:**
+- Winter scene (sky, aurora, mountains, camp and shelter light, trail,
+  snow). It's programmatic, offline, reduced-motion aware and stops in the
+  background.
+- Today hero and new habit cards. Journey v2: 92 days on a mountain path
+  in six chapters, with milestone flags.
+- 10 achievements with persisted unlocks, an Achievements screen and
+  queued celebration cards. Achievements never grant XP.
+- Goal and on/off edits apply from the next day; renames apply now. On
+  Day 92 only renames are possible.
+- The arc closes after Day 92. A completed arc is read-only and opens on
+  the End-of-Arc summary.
+- Schema v3 (`achievement_unlocks`) with tested v2 → v3 and v1 → v2 → v3
+  migrations. GitHub Actions CI.
+
 ## Explicitly deferred
 
-Cinematic Journey artwork, snow/fire/aurora animation, parallax,
-achievements, analytics dashboard, journal, notifications, cloud sync,
-accounts, social, health integrations, AI, backend, payments. See
-[docs/PHASE_2.md](docs/PHASE_2.md#phase-3-handoff).
+New arc after completion, journal, notifications, analytics dashboard, cloud
+sync, accounts, social, health integrations, AI, backend, payments. See
+[docs/PHASE_3.md](docs/PHASE_3.md#phase-4-handoff).
+
+## CI
+
+[`.github/workflows/flutter-ci.yml`](.github/workflows/flutter-ci.yml) runs on
+every pull request and push to `main`: format check, analyze, migration
+tests, all tests, and an Android debug build.
 
 ## Privacy
 

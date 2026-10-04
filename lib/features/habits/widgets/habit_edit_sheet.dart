@@ -5,19 +5,32 @@ import '../../../domain/habit/habit_edit.dart';
 import '../../../domain/progress/habit_tracking_service.dart';
 
 /// Edits a habit's name and goals. Pops the [HabitEdit] to save, or null.
+///
+/// Goals start from the configuration that applies next (including an edit
+/// already made today). Without [configEditable] (the arc's last day) only
+/// the name can change.
 class HabitEditSheet extends StatefulWidget {
-  const HabitEditSheet({super.key, required this.setting});
+  const HabitEditSheet({
+    super.key,
+    required this.setting,
+    this.configEditable = true,
+  });
 
   final HabitSetting setting;
+  final bool configEditable;
 
-  static Future<HabitEdit?> show(BuildContext context, HabitSetting setting) =>
-      showModalBottomSheet<HabitEdit>(
-        context: context,
-        isScrollControlled: true,
-        showDragHandle: true,
-        backgroundColor: context.winter.surface,
-        builder: (_) => HabitEditSheet(setting: setting),
-      );
+  static Future<HabitEdit?> show(
+    BuildContext context,
+    HabitSetting setting, {
+    bool configEditable = true,
+  }) => showModalBottomSheet<HabitEdit>(
+    context: context,
+    isScrollControlled: true,
+    showDragHandle: true,
+    backgroundColor: context.winter.surface,
+    builder: (_) =>
+        HabitEditSheet(setting: setting, configEditable: configEditable),
+  );
 
   @override
   State<HabitEditSheet> createState() => _HabitEditSheetState();
@@ -25,8 +38,9 @@ class HabitEditSheet extends StatefulWidget {
 
 class _HabitEditSheetState extends State<HabitEditSheet> {
   late final _title = TextEditingController(text: widget.setting.habit.title);
-  late int _target = widget.setting.config.target;
-  late int _minimum = widget.setting.config.minimumTarget;
+  late int _target = widget.setting.editable.target;
+  late int _minimum = widget.setting.editable.minimumTarget;
+  bool get _goalsEditable => widget.configEditable;
 
   int get _step => widget.setting.habit.type.step;
   int get _max => HabitEditRules.maxTargetFor(widget.setting.habit.type);
@@ -50,8 +64,8 @@ class _HabitEditSheetState extends State<HabitEditSheet> {
     Navigator.of(context).pop(
       HabitEdit(
         title: _title.text,
-        target: habit.type.isNumeric ? _target : null,
-        minimumTarget: habit.type.isNumeric ? _minimum : null,
+        target: habit.type.isNumeric && _goalsEditable ? _target : null,
+        minimumTarget: habit.type.isNumeric && _goalsEditable ? _minimum : null,
       ),
     );
   }
@@ -88,10 +102,10 @@ class _HabitEditSheetState extends State<HabitEditSheet> {
                 _Stepper(
                   label: 'Daily goal',
                   value: '$_target $unit'.trimRight(),
-                  onMinus: _target > _step
+                  onMinus: _goalsEditable && _target > _step
                       ? () => _setTarget(_target - _step)
                       : null,
-                  onPlus: _target < _max
+                  onPlus: _goalsEditable && _target < _max
                       ? () => _setTarget(_target + _step)
                       : null,
                 ),
@@ -100,10 +114,10 @@ class _HabitEditSheetState extends State<HabitEditSheet> {
                   label: 'Minimum Day goal',
                   value: '$_minimum $unit'.trimRight(),
                   accent: colors.recovery,
-                  onMinus: _minimum > _step
+                  onMinus: _goalsEditable && _minimum > _step
                       ? () => _setMinimum(_minimum - _step)
                       : null,
-                  onPlus: _minimum < _target
+                  onPlus: _goalsEditable && _minimum < _target
                       ? () => _setMinimum(_minimum + _step)
                       : null,
                 ),
@@ -114,7 +128,11 @@ class _HabitEditSheetState extends State<HabitEditSheet> {
                 ),
               const SizedBox(height: WinterSpacing.md),
               Text(
-                'Changes apply from today. Past days keep the goals they had.',
+                _goalsEditable
+                    ? 'A new name applies now. Goal changes start tomorrow; '
+                          'today and past days keep the goals they had.'
+                    : 'Today is the last day, so goals can no longer change. '
+                          'You can still rename this habit.',
                 style: text.bodySmall?.copyWith(color: colors.textSecondary),
               ),
               const SizedBox(height: WinterSpacing.lg),

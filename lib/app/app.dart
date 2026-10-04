@@ -4,8 +4,11 @@ import 'package:go_router/go_router.dart';
 
 import '../core/errors/app_failure.dart';
 import '../core/errors/error_reporter.dart';
+import '../domain/winter_arc/winter_arc_session.dart';
+import '../features/celebration/celebration_overlay.dart';
 import '../shared/widgets/failure_view.dart';
 import '../shared/widgets/winter_background.dart';
+import 'arc_status.dart';
 import 'router/app_router.dart';
 import 'theme/winter_theme.dart';
 
@@ -26,24 +29,36 @@ class NextRepApp extends ConsumerWidget {
 }
 
 /// Owns the router for the app's lifetime. The boot location is only used
-/// as the initial location; later navigation is driven by the features.
-class _RoutedApp extends StatefulWidget {
+/// as the initial location; later navigation is driven by the features and
+/// by the arc's lifecycle status (a close-out redirects to the summary).
+class _RoutedApp extends ConsumerStatefulWidget {
   const _RoutedApp({required this.initialLocation});
 
   final String initialLocation;
 
   @override
-  State<_RoutedApp> createState() => _RoutedAppState();
+  ConsumerState<_RoutedApp> createState() => _RoutedAppState();
 }
 
-class _RoutedAppState extends State<_RoutedApp> {
+class _RoutedAppState extends ConsumerState<_RoutedApp> {
+  late final _status = ValueNotifier<WinterArcStatus?>(
+    ref.read(arcStatusProvider),
+  );
   late final GoRouter _router = buildAppRouter(
     initialLocation: widget.initialLocation,
+    status: _status,
   );
+
+  @override
+  void initState() {
+    super.initState();
+    ref.listenManual(arcStatusProvider, (_, next) => _status.value = next);
+  }
 
   @override
   void dispose() {
     _router.dispose();
+    _status.dispose();
     super.dispose();
   }
 
@@ -53,6 +68,9 @@ class _RoutedAppState extends State<_RoutedApp> {
     debugShowCheckedModeBanner: false,
     theme: buildWinterTheme(),
     routerConfig: _router,
+    // Perfect Day, level-up and achievement cards, one at a time, above
+    // every route.
+    builder: (context, child) => CelebrationOverlay(child: child!),
   );
 }
 

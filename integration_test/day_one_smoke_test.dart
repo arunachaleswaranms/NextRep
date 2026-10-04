@@ -17,7 +17,11 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   Widget app(AppDatabase db) => ProviderScope(
-    overrides: [appDatabaseProvider.overrideWithValue(db)],
+    overrides: [
+      appDatabaseProvider.overrideWithValue(db),
+      // Looping snow / aurora would keep pumpAndSettle from settling.
+      ambientMotionProvider.overrideWithValue(false),
+    ],
     retry: (_, _) => null,
     child: const NextRepApp(),
   );

@@ -284,6 +284,9 @@ void main() {
     });
   });
 
+  // Phase 3: goal and on/off edits take effect from the next challenge day;
+  // renames apply immediately. See habit_edit_timing_test.dart for the
+  // effective-date rules themselves.
   group('habit editing', () {
     Future<void> edit(String habitId, HabitEdit edit) => app.tracking.editHabit(
       habitId: habitId,
@@ -303,11 +306,12 @@ void main() {
       expect(water1.progress.completed, isTrue);
       expect(journey.days.first.xpEarned, 15);
 
+      app.clock.current = DateTime(2026, 10, 11, 7);
       final today = await app.tracking.today();
       expect(today.entries.firstWhere((e) => e.habit.id == 'water').target, 10);
     });
 
-    test('disabling today does not create past Perfect Days', () async {
+    test('disabling a habit does not create past Perfect Days', () async {
       // Day 1: everything but no_junk_food.
       await completeAll(except: 'no_junk_food');
       app.clock.current = DateTime(2026, 10, 2, 7);
@@ -316,6 +320,8 @@ void main() {
       final journey = await app.tracking.journey();
       expect(journey.days.first.state, JourneyDayState.partial);
       expect(journey.perfectDays.total, 0);
+
+      app.clock.current = DateTime(2026, 10, 3, 7);
       final today = await app.tracking.today();
       expect(
         today.entries.map((e) => e.habit.id),
@@ -323,35 +329,35 @@ void main() {
       );
     });
 
-    test('same-day target edit reconciles completion and XP', () async {
+    test('a target edit cannot change today\'s completion or XP', () async {
       await completeAll();
       expect(await totalXp(), 90);
 
-      // Raise water above today's progress: water and the bonus are revoked.
+      // Raising water above today's progress no longer revokes anything.
       await edit('water', const HabitEdit(target: 10));
       var today = await app.tracking.today();
-      var water = today.entries.firstWhere((e) => e.habit.id == 'water');
-      expect(water.progress.currentValue, 8);
-      expect(water.progress.completed, isFalse);
-      expect(today.isPerfect, isFalse);
-      expect(today.totalXp, 45);
-
-      // Lower it back below progress: restored exactly once.
-      await edit('water', const HabitEdit(target: 6));
-      today = await app.tracking.today();
-      water = today.entries.firstWhere((e) => e.habit.id == 'water');
+      final water = today.entries.firstWhere((e) => e.habit.id == 'water');
+      expect(water.target, 8);
       expect(water.progress.completed, isTrue);
       expect(today.isPerfect, isTrue);
       expect(today.totalXp, 90);
-      expect(await app.db.select(app.db.habitRevisions).get(), hasLength(1));
+
+      // A second edit the same day replaces the pending revision.
+      await edit('water', const HabitEdit(target: 6));
+      today = await app.tracking.today();
+      expect(today.totalXp, 90);
+      final revisions = await app.db.select(app.db.habitRevisions).get();
+      expect(revisions, hasLength(1));
+      expect(revisions.single.target, 6);
+      expect(revisions.single.effectiveFrom, LocalDate(2026, 10, 2));
     });
 
-    test('disabling an unfinished habit today reconciles the day', () async {
+    test('disabling an unfinished habit cannot make today Perfect', () async {
       await completeAll(except: 'learning');
       await edit('learning', const HabitEdit(enabled: false));
       final today = await app.tracking.today();
-      expect(today.isPerfect, isTrue);
-      expect(today.totalXp, 3 * 15 + 30);
+      expect(today.isPerfect, isFalse);
+      expect(today.totalXp, 3 * 15);
     });
 
     test('rename applies everywhere, edits are validated', () async {
@@ -401,19 +407,15 @@ void main() {
       );
     });
 
-    test('a re-enabled habit continues from its stored progress', () async {
+    test('disabling and re-enabling on the same day changes nothing', () async {
       await act('water', HabitAction.increment, times: 8);
       await edit('water', const HabitEdit(enabled: false));
-      expect(await totalXp(), 0);
+      expect(await totalXp(), 15);
       await edit('water', const HabitEdit(enabled: true));
+
+      app.clock.current = DateTime(2026, 10, 2, 7);
       final today = await app.tracking.today();
-      expect(
-        today.entries
-            .firstWhere((e) => e.habit.id == 'water')
-            .progress
-            .completed,
-        isTrue,
-      );
+      expect(today.entries.map((e) => e.habit.id), contains('water'));
       expect(today.totalXp, 15);
     });
   });
@@ -451,9 +453,9 @@ void main() {
       final today = await run.tracking.today();
       expect(today.mode, DayMode.minimum);
       final water = today.entries.firstWhere((e) => e.habit.id == 'water');
-      expect(water.habit.title, 'Hydrate');
-      expect(water.config.target, 6);
-      expect(water.target, 2);
+      expect(water.habit.title, 'Hydrate'); // renames apply immediately
+      expect(water.config.target, 8); // goal edits wait for tomorrow
+      expect(water.target, 3);
       expect(water.progress.currentValue, 1);
 
       // Still one-way and idempotent after restart.
@@ -464,7 +466,15 @@ void main() {
         action: HabitAction.increment,
         date: day1,
       );
-      expect((await run.tracking.today()).totalXp, 15);
+      expect((await run.tracking.today()).totalXp, 0);
+
+      // The edit made on Day 1 is in effect on Day 2, after the restart.
+      run.clock.current = DateTime(2026, 10, 2, 7);
+      final day2 = await run.tracking.today();
+      final water2 = day2.entries.firstWhere((e) => e.habit.id == 'water');
+      expect(day2.mode, DayMode.normal);
+      expect(water2.config.target, 6);
+      expect(water2.config.minimumTarget, 2);
     });
   });
 }

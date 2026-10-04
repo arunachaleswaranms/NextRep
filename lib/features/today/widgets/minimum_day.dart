@@ -53,7 +53,14 @@ class MinimumDayBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(WinterSpacing.md),
       decoration: BoxDecoration(
-        color: colors.recovery.withValues(alpha: 0.12),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            colors.recovery.withValues(alpha: 0.2),
+            colors.warmLight.withValues(alpha: 0.06),
+          ],
+        ),
         borderRadius: BorderRadius.circular(WinterRadii.card),
         border: Border.all(color: colors.recovery.withValues(alpha: 0.5)),
       ),
@@ -72,10 +79,11 @@ class MinimumDayBanner extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Today can be smaller. Do the essential version of each '
-                  'habit to keep the chain alive.',
-                  style: text.bodyMedium,
+                  'Keep moving, even if today is smaller.',
+                  style: text.bodyMedium?.copyWith(color: colors.textPrimary),
                 ),
+                const SizedBox(height: 2),
+                Text('Consistency beats intensity.', style: text.bodyMedium),
               ],
             ),
           ),

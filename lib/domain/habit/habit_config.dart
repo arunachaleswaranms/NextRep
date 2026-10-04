@@ -83,7 +83,8 @@ final class PlannedHabit {
 /// This is the history-safe view of habit configuration: the configuration
 /// on a date is the latest revision effective on or before that date, or the
 /// habit's baseline if there is none. Revisions are only ever written for
-/// the current day, so the result for a past date never changes.
+/// a date that has not started yet (the next challenge day; Phase 2 wrote
+/// them for the current day), so the result for a past date never changes.
 final class HabitHistory {
   HabitHistory({
     required List<Habit> habits,

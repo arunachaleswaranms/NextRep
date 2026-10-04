@@ -8,7 +8,8 @@ import '../../../shared/formatting/habit_labels.dart';
 import '../../../shared/widgets/habit_icon.dart';
 import '../../../shared/widgets/winter_card.dart';
 
-/// One habit on the Today screen.
+/// One habit on the Today screen: icon, name, progress against today's
+/// effective target, completion, Minimum Day marker and streak.
 ///
 /// Binary habits: tap the row (or the check) to complete; tap again to undo.
 /// Numeric habits: use the − / + buttons; reaching the target completes it.
@@ -42,9 +43,13 @@ class HabitProgressTile extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     final progress = entry.progress;
     final completed = progress.completed;
+    final accent = minimum
+        ? colors.recovery
+        : WinterHabitAccents.of(_habit.iconKey);
 
     return WinterCard(
       highlighted: completed,
+      accent: accent,
       onTap: enabled && !_habit.type.isNumeric
           ? () => onAction(
               completed ? HabitAction.undoCompletion : HabitAction.complete,
@@ -55,7 +60,11 @@ class HabitProgressTile extends StatelessWidget {
         children: [
           Row(
             children: [
-              HabitIcon(iconKey: _habit.iconKey, active: completed),
+              HabitIcon(
+                iconKey: _habit.iconKey,
+                active: completed,
+                accent: accent,
+              ),
               const SizedBox(width: WinterSpacing.md),
               Expanded(
                 child: Column(
@@ -63,41 +72,41 @@ class HabitProgressTile extends StatelessWidget {
                   children: [
                     Text(_habit.title, style: text.titleMedium),
                     const SizedBox(height: 2),
-                    Text(
-                      progressLabel(
-                        _habit,
-                        progress.currentValue,
-                        target: entry.target,
-                        completed: completed,
-                      ),
-                      style: text.bodyMedium?.copyWith(
-                        color: completed ? colors.success : null,
-                      ),
+                    Wrap(
+                      spacing: WinterSpacing.sm,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Text(
+                          progressLabel(
+                            _habit,
+                            progress.currentValue,
+                            target: entry.target,
+                            completed: completed,
+                          ),
+                          style: text.bodyMedium?.copyWith(
+                            color: completed ? colors.textPrimary : null,
+                            fontWeight: completed ? FontWeight.w600 : null,
+                          ),
+                        ),
+                        if (minimum) const _MinimumChip(),
+                      ],
                     ),
-                    if (minimum || streak > 0) ...[
+                    if (streak > 0) ...[
                       const SizedBox(height: WinterSpacing.xs),
-                      Wrap(
-                        spacing: WinterSpacing.sm,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          if (minimum) const _MinimumChip(),
-                          if (streak > 0)
-                            Text(
-                              streakLabel(streak),
-                              style: text.bodySmall?.copyWith(
-                                color: colors.textSecondary,
-                              ),
-                            ),
-                        ],
+                      Text(
+                        streakLabel(streak),
+                        style: text.bodySmall?.copyWith(
+                          color: colors.textSecondary,
+                        ),
                       ),
                     ],
                   ],
                 ),
               ),
               if (_habit.type.isNumeric)
-                ..._stepper(context)
+                ..._stepper(context, accent)
               else
-                _check(context),
+                _check(context, accent),
             ],
           ),
           if (_habit.type.isNumeric) ...[
@@ -114,11 +123,10 @@ class HabitProgressTile extends StatelessWidget {
                   value: value,
                   semanticsLabel: '${_habit.title} progress',
                   minHeight: 6,
-                  color: completed
-                      ? colors.success
-                      : minimum
-                      ? colors.recovery
-                      : colors.accentSecondary,
+                  color: accent,
+                  backgroundColor: colors.surfaceElevated.withValues(
+                    alpha: 0.7,
+                  ),
                 ),
               ),
             ),
@@ -128,7 +136,7 @@ class HabitProgressTile extends StatelessWidget {
     );
   }
 
-  Widget _check(BuildContext context) {
+  Widget _check(BuildContext context, Color accent) {
     final colors = context.winter;
     final completed = entry.progress.completed;
     return IconButton(
@@ -140,23 +148,32 @@ class HabitProgressTile extends StatelessWidget {
           : null,
       iconSize: 32,
       icon: AnimatedSwitcher(
-        duration: context.motion.quick,
-        transitionBuilder: (child, animation) =>
-            ScaleTransition(scale: animation, child: child),
+        duration: context.motion.micro,
+        transitionBuilder: (child, animation) => ScaleTransition(
+          scale: Tween(begin: 0.6, end: 1.0).animate(
+            CurvedAnimation(parent: animation, curve: Curves.easeOutBack),
+          ),
+          child: FadeTransition(opacity: animation, child: child),
+        ),
         child: Icon(
           completed ? Icons.check_circle_rounded : Icons.radio_button_unchecked,
           key: ValueKey(completed),
-          color: completed ? colors.success : colors.textSecondary,
+          color: completed ? accent : colors.textSecondary,
         ),
       ),
     );
   }
 
-  List<Widget> _stepper(BuildContext context) {
+  List<Widget> _stepper(BuildContext context, Color accent) {
+    final colors = context.winter;
     final value = entry.progress.currentValue;
     return [
       IconButton.filledTonal(
         tooltip: 'Remove from ${_habit.title}',
+        style: IconButton.styleFrom(
+          backgroundColor: colors.surfaceElevated,
+          foregroundColor: colors.textPrimary,
+        ),
         onPressed: enabled && value > 0
             ? () => onAction(HabitAction.decrement)
             : null,
@@ -165,10 +182,19 @@ class HabitProgressTile extends StatelessWidget {
       const SizedBox(width: WinterSpacing.xs),
       IconButton.filled(
         tooltip: 'Add to ${_habit.title}',
+        style: IconButton.styleFrom(
+          backgroundColor: accent.withValues(alpha: 0.85),
+          foregroundColor: colors.background,
+          // At the target the button rests as a "done" mark.
+          disabledBackgroundColor: accent.withValues(alpha: 0.18),
+          disabledForegroundColor: accent,
+        ),
         onPressed: enabled && value < entry.target
             ? () => onAction(HabitAction.increment)
             : null,
-        icon: const Icon(Icons.add_rounded),
+        icon: entry.progress.completed
+            ? const Icon(Icons.check_rounded)
+            : const Icon(Icons.add_rounded),
       ),
     ];
   }

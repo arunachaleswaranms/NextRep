@@ -89,12 +89,16 @@ final class ArcHistory {
     ),
   );
 
-  /// Current and best streak of consecutive completed days for [habitId].
+  /// Whether every challenge day is over (today is after the last day).
+  bool get isOver => session.isOverOn(today);
+
+  /// How each elapsed date (aligned with [elapsedDates]) affects the streak
+  /// of [habitId].
   ///
   /// Days on which the habit was disabled are skipped (they neither count
   /// nor break the streak). Completing the minimum target on a Minimum Day
   /// counts. Today only counts once completed and never breaks the streak.
-  Streak habitStreak(String habitId) => StreakRules.compute([
+  List<StreakMark> habitMarks(String habitId) => [
     for (final date in elapsedDates)
       switch (recordOn(date).entryFor(habitId)) {
         null => StreakMark.skip,
@@ -102,27 +106,30 @@ final class ArcHistory {
         _ when date == today => StreakMark.pending,
         _ => StreakMark.miss,
       },
-  ]);
+  ];
+
+  /// Current and best streak of consecutive completed days for [habitId].
+  Streak habitStreak(String habitId) =>
+      StreakRules.compute(habitMarks(habitId));
+
+  /// How each elapsed date (aligned with [elapsedDates]) affects the Perfect
+  /// Day streak. A Minimum Day breaks it, including today once switched to
+  /// Minimum.
+  late final List<StreakMark> perfectMarks = [
+    for (final date in elapsedDates)
+      if (recordOn(date).isPerfect)
+        StreakMark.hit
+      else if (date == today && recordOn(date).mode == DayMode.normal)
+        StreakMark.pending
+      else
+        StreakMark.miss,
+  ];
 
   /// Streak of consecutive Perfect Days, and how many there were.
-  ///
-  /// A Minimum Day breaks it, including today once switched to Minimum.
-  late final PerfectDayStats perfectDays = () {
-    var total = 0;
-    final marks = <StreakMark>[];
-    for (final date in elapsedDates) {
-      final record = recordOn(date);
-      if (record.isPerfect) {
-        total++;
-        marks.add(StreakMark.hit);
-      } else if (date == today && record.mode == DayMode.normal) {
-        marks.add(StreakMark.pending);
-      } else {
-        marks.add(StreakMark.miss);
-      }
-    }
-    return PerfectDayStats(streak: StreakRules.compute(marks), total: total);
-  }();
+  late final PerfectDayStats perfectDays = PerfectDayStats(
+    streak: StreakRules.compute(perfectMarks),
+    total: perfectMarks.where((m) => m == StreakMark.hit).length,
+  );
 
   /// All days of the arc, Day 1 first.
   List<JourneyDay> journey() => [
