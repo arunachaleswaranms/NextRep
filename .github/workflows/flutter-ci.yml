@@ -39,8 +39,12 @@ jobs:
       - name: Analyze
         run: flutter analyze
 
-      - name: Migration tests (schema v1 -> v2 -> v3)
-        run: flutter test test/data/migration_test.dart test/data/migration_v3_test.dart
+      - name: Migration tests (schema v1 -> v2 -> v3 -> v4)
+        run: >-
+          flutter test
+          test/data/migration_test.dart
+          test/data/migration_v3_test.dart
+          test/data/migration_v4_test.dart
 
       - name: All tests
         run: flutter test
