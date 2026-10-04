@@ -5,6 +5,21 @@ String userMessageFor(AppFailure failure) => switch (failure) {
   PersistenceFailure() =>
     "Couldn't save or load your progress. Please try again.",
   UnexpectedFailure() => 'Something went wrong. Please try again.',
+  BackupFailure(:final problem) => switch (problem) {
+    BackupProblem.tooLarge =>
+      "That file is too large to be a NextRep backup. Nothing was changed.",
+    BackupProblem.unreadable || BackupProblem.notNextRep =>
+      "That file isn't a NextRep backup. Nothing was changed.",
+    BackupProblem.unsupportedVersion =>
+      'That backup was made by a newer version of NextRep. Update the app '
+          'to restore it. Nothing was changed.',
+    BackupProblem.checksumMismatch =>
+      'That backup is damaged or was edited after it was exported, so it '
+          "can't be restored safely. Nothing was changed.",
+    BackupProblem.invalidData =>
+      "That backup contains data NextRep can't restore safely. Nothing was "
+          'changed.',
+  },
   DomainFailure(:final rule) => switch (rule) {
     DomainRule.noHabitsSelected => 'Pick at least one habit to begin.',
     DomainRule.staleDay => "It's a new day — Today has been refreshed.",
@@ -28,6 +43,7 @@ String userMessageFor(AppFailure failure) => switch (failure) {
     DomainRule.reflectionReadOnly =>
       'Past reflections are kept as they were. Only today can be edited.',
     DomainRule.reflectionNotAvailable => 'Reflections open on the day itself.',
+    DomainRule.arcNotDeletable => 'Only a completed Winter Arc can be deleted.',
     DomainRule.sessionNotFound ||
     DomainRule.noSession ||
     DomainRule.sessionNotInSetup ||
