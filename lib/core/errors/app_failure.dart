@@ -35,6 +35,12 @@ enum DomainRule {
   invalidHabitEdit,
   lastEnabledHabit,
   dayAlreadyPerfect,
+
+  /// The arc is over and read-only.
+  arcCompleted,
+
+  /// A configuration change would only apply after the arc's last day.
+  noNextChallengeDay,
 }
 
 /// A domain rule rejected the requested action. Nothing was persisted.

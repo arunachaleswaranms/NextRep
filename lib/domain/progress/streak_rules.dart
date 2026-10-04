@@ -60,4 +60,22 @@ abstract final class StreakRules {
     }
     return Streak(current: run, best: best);
   }
+
+  /// Index of the first mark at which a run reaches [length] days, or null
+  /// if no run ever does. Uses the same counting as [compute].
+  static int? firstReaching(List<StreakMark> marks, int length) {
+    var run = 0;
+    for (final (index, mark) in marks.indexed) {
+      switch (mark) {
+        case StreakMark.hit:
+          if (++run >= length) return index;
+        case StreakMark.miss:
+          run = 0;
+        case StreakMark.skip:
+        case StreakMark.pending:
+          break;
+      }
+    }
+    return null;
+  }
 }

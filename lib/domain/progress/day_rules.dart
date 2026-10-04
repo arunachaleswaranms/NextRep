@@ -66,7 +66,8 @@ final class DayChange {
   /// New mode for the day, if it changes.
   final DayMode? mode;
 
-  /// A configuration revision effective from the day.
+  /// A configuration revision to store, effective from the day or a later
+  /// one (habit edits use the next challenge day).
   final HabitRevision? revision;
 
   /// A new title for a habit.

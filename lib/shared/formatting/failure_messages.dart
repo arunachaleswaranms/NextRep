@@ -14,6 +14,11 @@ String userMessageFor(AppFailure failure) => switch (failure) {
     DomainRule.lastEnabledHabit => 'Keep at least one habit turned on.',
     DomainRule.dayAlreadyPerfect =>
       'Today is already a Perfect Day — no need to scale it down.',
+    DomainRule.arcCompleted =>
+      'Your Winter Arc is complete. Its history is read-only.',
+    DomainRule.noNextChallengeDay =>
+      'Today is the last day, so goal changes would never apply. '
+          'You can still rename habits.',
     DomainRule.noSession ||
     DomainRule.sessionNotInSetup ||
     DomainRule.noActiveSession ||
