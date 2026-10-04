@@ -1,27 +1,27 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../domain/winter_arc/winter_arc_session.dart';
+import '../domain/winter_arc/current_arc_service.dart';
 import 'dependencies.dart';
 
-/// The latest known lifecycle status of the arc. The router listens to it,
-/// so a close-out moves the app to the summary wherever the user is.
-final arcStatusProvider =
-    NotifierProvider<ArcStatusController, WinterArcStatus?>(
-      ArcStatusController.new,
+/// Where the app stands across the user's arcs: the unfinished arc, if
+/// any, and the latest completed one. The router listens to it, so a
+/// close-out, a new setup or a start moves the app to the right place
+/// wherever the user is. Null until first resolved at launch.
+final arcResolutionProvider =
+    NotifierProvider<ArcResolutionController, ArcResolution?>(
+      ArcResolutionController.new,
     );
 
-class ArcStatusController extends Notifier<WinterArcStatus?> {
+class ArcResolutionController extends Notifier<ArcResolution?> {
   @override
-  WinterArcStatus? build() => null;
+  ArcResolution? build() => null;
 
-  /// Runs the arc close-out check (at launch, resume and Today / Journey
-  /// refresh) and publishes the resulting status.
-  Future<WinterArcSession?> reconcile() async {
-    final session = await ref.read(arcLifecycleServiceProvider).reconcile();
-    if (ref.mounted) state = session?.status;
-    return session;
+  /// Runs the arc close-out check (at launch, resume, Today / Journey
+  /// refresh, and after an arc is created or started) and publishes the
+  /// result.
+  Future<ArcResolution> reconcile() async {
+    final resolution = await ref.read(arcLifecycleServiceProvider).resolve();
+    if (ref.mounted) state = resolution;
+    return resolution;
   }
-
-  /// Records a status change made elsewhere (e.g. the arc was started).
-  void set(WinterArcStatus? status) => state = status;
 }

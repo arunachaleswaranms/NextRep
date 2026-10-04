@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -8,8 +9,10 @@ import 'app/dependencies.dart';
 import 'core/database/app_database.dart';
 import 'core/errors/app_failure.dart';
 import 'core/errors/error_reporter.dart';
+import 'data/local_notification_scheduler.dart';
+import 'domain/reminder/reminder_scheduler.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   FlutterError.onError = (details) {
@@ -28,9 +31,27 @@ void main() {
     return true;
   };
 
+  // Local reminders. If the notification plugin can't start, the app runs
+  // without reminders rather than not at all.
+  final taps = StreamController<String?>.broadcast();
+  ReminderScheduler scheduler = const DisabledReminderScheduler();
+  String? launchPayload;
+  try {
+    final local = LocalNotificationScheduler();
+    launchPayload = await local.initialize(onTap: taps.add);
+    scheduler = local;
+  } catch (error, stackTrace) {
+    ErrorReporter.report(toAppFailure(error, stackTrace), context: 'reminders');
+  }
+
   runApp(
     ProviderScope(
-      overrides: [appDatabaseProvider.overrideWithValue(AppDatabase.open())],
+      overrides: [
+        appDatabaseProvider.overrideWithValue(AppDatabase.open()),
+        reminderSchedulerProvider.overrideWithValue(scheduler),
+        reminderLaunchPayloadProvider.overrideWithValue(launchPayload),
+        reminderTapsProvider.overrideWithValue(taps.stream),
+      ],
       // Failures are surfaced to the user with an explicit retry instead of
       // being retried silently in the background.
       retry: (retryCount, error) => null,

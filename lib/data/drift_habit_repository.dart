@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 
 import '../core/database/app_database.dart';
 import '../domain/habit/habit.dart';
+import '../domain/habit/habit_config.dart';
 import '../domain/habit/habit_repository.dart';
 import 'habit_mapping.dart';
 import 'persistence_guard.dart';
@@ -21,6 +22,13 @@ final class DriftHabitRepository implements HabitRepository {
                 .get();
         return rows.map(habitFromRow).toList(growable: false);
       });
+
+  @override
+  Future<HabitHistory> historyForSession(int sessionId) => guardPersistence(
+    'load habit history',
+    // One transaction so habits and revisions are a consistent snapshot.
+    () => _db.transaction(() => loadHabitHistory(_db, sessionId)),
+  );
 
   @override
   Future<Habit?> habit(int sessionId, String habitId) =>

@@ -19,13 +19,22 @@ class _Counter extends Notifier<int> {
   void bump() => state++;
 }
 
-/// The catalog with this arc's unlocks. Null before an arc has started.
+/// The catalog with the home arc's unlocks. Null before an arc has started
+/// or while a new one is in setup.
 final achievementBoardProvider = FutureProvider.autoDispose<AchievementBoard?>((
   ref,
 ) {
   ref.watch(achievementsChangedProvider);
   return ref.watch(achievementServiceProvider).board();
 });
+
+/// The catalog with the unlocks of the started arc [sessionId], for Arc
+/// History. Read-only: nothing is reconciled or celebrated.
+final arcAchievementBoardProvider = FutureProvider.autoDispose
+    .family<AchievementBoard, int>(
+      (ref, sessionId) =>
+          ref.watch(achievementServiceProvider).boardFor(sessionId),
+    );
 
 final achievementSyncProvider = Provider<AchievementSync>(AchievementSync.new);
 

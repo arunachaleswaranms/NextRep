@@ -186,6 +186,11 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                   ),
                 ),
               ),
+              IconButton(
+                tooltip: 'Reminders',
+                onPressed: () => context.push(AppRoutes.reminders),
+                icon: const Icon(Icons.notifications_none_rounded),
+              ),
               const TrophyButton(),
             ],
           ),

@@ -9,7 +9,14 @@ import 'converters.dart';
 // Enum columns are stored by name (textEnum), so enum values must never be
 // renamed without a migration.
 
+/// Winter Arc sessions. Any number may be completed, but the partial unique
+/// index (schema v4) allows at most one unfinished (setup or active)
+/// session, so two arcs can never run side by side.
 @DataClassName('SessionRow')
+@TableIndex.sql(
+  'CREATE UNIQUE INDEX single_open_session ON winter_arc_sessions '
+  "((status IN ('setup', 'active'))) WHERE status IN ('setup', 'active')",
+)
 class WinterArcSessions extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get startDate => text().map(const LocalDateConverter())();
@@ -165,4 +172,57 @@ class AchievementUnlocks extends Table {
 
   @override
   Set<Column> get primaryKey => {sessionId, achievementKey};
+}
+
+/// A nightly reflection (schema v4): one per session and challenge date.
+/// The challenge day number isn't stored; it follows from the session's
+/// start date. Private, local-only text.
+@DataClassName('ReflectionRow')
+class DailyReflections extends Table {
+  IntColumn get sessionId => integer().references(
+    WinterArcSessions,
+    #id,
+    onDelete: KeyAction.cascade,
+  )();
+  TextColumn get date => text().map(const LocalDateConverter())();
+
+  /// Stable `Mood.key`, or null when only text was given.
+  TextColumn get mood => text().nullable()();
+  TextColumn get win => text().nullable()();
+  TextColumn get improvement => text().nullable()();
+  DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get updatedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {sessionId, date};
+}
+
+/// The app's reminder preferences (schema v4): a single row with id 1,
+/// absent until the user first changes a reminder. They belong to the app,
+/// not to an arc. Both reminders are off unless stored as on.
+@DataClassName('ReminderPreferencesRow')
+class ReminderPrefs extends Table {
+  @override
+  String get tableName => 'reminder_preferences';
+
+  // ignore: recursive_getters
+  IntColumn get id => integer().check(id.equals(1))();
+  BoolColumn get dailyEnabled => boolean()();
+  IntColumn get dailyHour =>
+      // ignore: recursive_getters
+      integer().check(dailyHour.isBetweenValues(0, 23))();
+  IntColumn get dailyMinute =>
+      // ignore: recursive_getters
+      integer().check(dailyMinute.isBetweenValues(0, 59))();
+  BoolColumn get reflectionEnabled => boolean()();
+  IntColumn get reflectionHour =>
+      // ignore: recursive_getters
+      integer().check(reflectionHour.isBetweenValues(0, 23))();
+  IntColumn get reflectionMinute =>
+      // ignore: recursive_getters
+      integer().check(reflectionMinute.isBetweenValues(0, 59))();
+  DateTimeColumn get updatedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {id};
 }

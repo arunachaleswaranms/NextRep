@@ -21,9 +21,12 @@ import 'widgets/journey_marker.dart';
 import 'widgets/journey_path.dart';
 
 /// Journey v2: the arc's days as a climb up the mountain, from stored
-/// history. Also shown, read-only, for a completed arc.
+/// history. Without [sessionId] it shows the active arc (the Journey tab);
+/// with one, that arc from Arc History, read-only.
 class JourneyScreen extends ConsumerStatefulWidget {
-  const JourneyScreen({super.key});
+  const JourneyScreen({super.key, this.sessionId});
+
+  final int? sessionId;
 
   @override
   ConsumerState<JourneyScreen> createState() => _JourneyScreenState();
@@ -36,7 +39,11 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
   void initState() {
     super.initState();
     _lifecycle = AppLifecycleListener(
-      onResume: () => ref.invalidate(journeyControllerProvider),
+      onResume: () {
+        // A historical arc never changes; only the active arc's Journey
+        // re-reads on resume.
+        if (widget.sessionId == null) ref.invalidate(journeyControllerProvider);
+      },
     );
   }
 
@@ -46,9 +53,17 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
     super.dispose();
   }
 
+  void _retry() => switch (widget.sessionId) {
+    null => ref.invalidate(journeyControllerProvider),
+    final id => ref.invalidate(arcJourneyProvider(id)),
+  };
+
   @override
   Widget build(BuildContext context) {
-    final journey = ref.watch(journeyControllerProvider);
+    final journey = switch (widget.sessionId) {
+      null => ref.watch(journeyControllerProvider),
+      final id => ref.watch(arcJourneyProvider(id)),
+    };
     final colors = context.winter;
     // Keep showing the previous Journey while a refresh is loading, so the
     // path (and its scroll position) is not torn down.
@@ -69,13 +84,13 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
               _ when value != null => Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _Header(journey: value),
+                  _Header(journey: value, historical: widget.sessionId != null),
                   Expanded(child: JourneyPath(journey: value)),
                 ],
               ),
               AsyncError(:final error, :final stackTrace) => FailureView(
                 failure: toAppFailure(error, stackTrace),
-                onRetry: () => ref.invalidate(journeyControllerProvider),
+                onRetry: _retry,
               ),
               _ => const Center(child: CircularProgressIndicator()),
             },
@@ -96,9 +111,12 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.journey});
+  const _Header({required this.journey, required this.historical});
 
   final JourneyOverview journey;
+
+  /// Shown from Arc History: names the arc by its dates.
+  final bool historical;
 
   @override
   Widget build(BuildContext context) {
@@ -140,9 +158,14 @@ class _Header extends StatelessWidget {
                 onPressed: () => _Legend.show(context),
                 icon: const Icon(Icons.info_outline_rounded),
               ),
-              const TrophyButton(),
+              TrophyButton(sessionId: historical ? journey.session.id : null),
             ],
           ),
+          if (historical)
+            Text(
+              'Winter Arc · ${arcDateRange(journey.session)}',
+              style: text.bodyMedium?.copyWith(color: colors.textSecondary),
+            ),
           Text(dayTitle(journey.position), style: text.headlineSmall),
           Text(
             '${chapterTitle(JourneyChapter.forDay(day))} · '

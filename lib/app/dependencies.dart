@@ -5,12 +5,20 @@ import '../core/time/clock.dart';
 import '../data/drift_achievement_repository.dart';
 import '../data/drift_habit_repository.dart';
 import '../data/drift_progress_repository.dart';
+import '../data/drift_reflection_repository.dart';
+import '../data/drift_reminder_preferences_repository.dart';
 import '../data/drift_winter_arc_repository.dart';
 import '../domain/achievement/achievement_repository.dart';
 import '../domain/achievement/achievement_service.dart';
 import '../domain/habit/habit_repository.dart';
+import '../domain/history/arc_history_service.dart';
 import '../domain/progress/habit_tracking_service.dart';
 import '../domain/progress/progress_repository.dart';
+import '../domain/reflection/reflection_repository.dart';
+import '../domain/reflection/reflection_service.dart';
+import '../domain/reminder/reminder_preferences.dart';
+import '../domain/reminder/reminder_scheduler.dart';
+import '../domain/reminder/reminder_service.dart';
 import '../domain/winter_arc/arc_lifecycle_service.dart';
 import '../domain/winter_arc/winter_arc_repository.dart';
 import '../domain/winter_arc/winter_arc_service.dart';
@@ -65,11 +73,65 @@ final achievementRepositoryProvider = Provider<AchievementRepository>(
   (ref) => DriftAchievementRepository(ref.watch(appDatabaseProvider)),
 );
 
+final reflectionRepositoryProvider = Provider<ReflectionRepository>(
+  (ref) => DriftReflectionRepository(ref.watch(appDatabaseProvider)),
+);
+
 final achievementServiceProvider = Provider<AchievementService>(
   (ref) => AchievementService(
     sessions: ref.watch(winterArcRepositoryProvider),
     progress: ref.watch(progressRepositoryProvider),
     achievements: ref.watch(achievementRepositoryProvider),
+    reflections: ref.watch(reflectionRepositoryProvider),
+    clock: ref.watch(clockProvider),
+  ),
+);
+
+final reflectionServiceProvider = Provider<ReflectionService>(
+  (ref) => ReflectionService(
+    sessions: ref.watch(winterArcRepositoryProvider),
+    reflections: ref.watch(reflectionRepositoryProvider),
+    clock: ref.watch(clockProvider),
+  ),
+);
+
+final arcHistoryServiceProvider = Provider<ArcHistoryService>(
+  (ref) => ArcHistoryService(
+    sessions: ref.watch(winterArcRepositoryProvider),
+    progress: ref.watch(progressRepositoryProvider),
+    achievements: ref.watch(achievementRepositoryProvider),
+    reflections: ref.watch(reflectionRepositoryProvider),
+    clock: ref.watch(clockProvider),
+  ),
+);
+
+/// The OS notification bridge. `main.dart` overrides it with the
+/// plugin-backed scheduler; elsewhere (tests) nothing is ever scheduled.
+final reminderSchedulerProvider = Provider<ReminderScheduler>(
+  (ref) => const DisabledReminderScheduler(),
+);
+
+/// Payload of the reminder that cold-started the app, if any (set in
+/// `main.dart`).
+final reminderLaunchPayloadProvider = Provider<String?>((ref) => null);
+
+/// Payloads of reminders tapped while the app is running (set in
+/// `main.dart`).
+final reminderTapsProvider = Provider<Stream<String?>>(
+  (ref) => const Stream.empty(),
+);
+
+final reminderPreferencesRepositoryProvider =
+    Provider<ReminderPreferencesRepository>(
+      (ref) =>
+          DriftReminderPreferencesRepository(ref.watch(appDatabaseProvider)),
+    );
+
+final reminderServiceProvider = Provider<ReminderService>(
+  (ref) => ReminderService(
+    sessions: ref.watch(winterArcRepositoryProvider),
+    preferences: ref.watch(reminderPreferencesRepositoryProvider),
+    scheduler: ref.watch(reminderSchedulerProvider),
     clock: ref.watch(clockProvider),
   ),
 );

@@ -3227,6 +3227,1016 @@ class AchievementUnlocksCompanion
   }
 }
 
+class $DailyReflectionsTable extends DailyReflections
+    with TableInfo<$DailyReflectionsTable, ReflectionRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $DailyReflectionsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _sessionIdMeta = const VerificationMeta(
+    'sessionId',
+  );
+  @override
+  late final GeneratedColumn<int> sessionId = GeneratedColumn<int>(
+    'session_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES winter_arc_sessions (id) ON DELETE CASCADE',
+    ),
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<LocalDate, String> date =
+      GeneratedColumn<String>(
+        'date',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<LocalDate>($DailyReflectionsTable.$converterdate);
+  static const VerificationMeta _moodMeta = const VerificationMeta('mood');
+  @override
+  late final GeneratedColumn<String> mood = GeneratedColumn<String>(
+    'mood',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _winMeta = const VerificationMeta('win');
+  @override
+  late final GeneratedColumn<String> win = GeneratedColumn<String>(
+    'win',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _improvementMeta = const VerificationMeta(
+    'improvement',
+  );
+  @override
+  late final GeneratedColumn<String> improvement = GeneratedColumn<String>(
+    'improvement',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    sessionId,
+    date,
+    mood,
+    win,
+    improvement,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'daily_reflections';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ReflectionRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('session_id')) {
+      context.handle(
+        _sessionIdMeta,
+        sessionId.isAcceptableOrUnknown(data['session_id']!, _sessionIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sessionIdMeta);
+    }
+    if (data.containsKey('mood')) {
+      context.handle(
+        _moodMeta,
+        mood.isAcceptableOrUnknown(data['mood']!, _moodMeta),
+      );
+    }
+    if (data.containsKey('win')) {
+      context.handle(
+        _winMeta,
+        win.isAcceptableOrUnknown(data['win']!, _winMeta),
+      );
+    }
+    if (data.containsKey('improvement')) {
+      context.handle(
+        _improvementMeta,
+        improvement.isAcceptableOrUnknown(
+          data['improvement']!,
+          _improvementMeta,
+        ),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {sessionId, date};
+  @override
+  ReflectionRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ReflectionRow(
+      sessionId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}session_id'],
+      )!,
+      date: $DailyReflectionsTable.$converterdate.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}date'],
+        )!,
+      ),
+      mood: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}mood'],
+      ),
+      win: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}win'],
+      ),
+      improvement: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}improvement'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $DailyReflectionsTable createAlias(String alias) {
+    return $DailyReflectionsTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<LocalDate, String> $converterdate =
+      const LocalDateConverter();
+}
+
+class ReflectionRow extends DataClass implements Insertable<ReflectionRow> {
+  final int sessionId;
+  final LocalDate date;
+
+  /// Stable `Mood.key`, or null when only text was given.
+  final String? mood;
+  final String? win;
+  final String? improvement;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  const ReflectionRow({
+    required this.sessionId,
+    required this.date,
+    this.mood,
+    this.win,
+    this.improvement,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['session_id'] = Variable<int>(sessionId);
+    {
+      map['date'] = Variable<String>(
+        $DailyReflectionsTable.$converterdate.toSql(date),
+      );
+    }
+    if (!nullToAbsent || mood != null) {
+      map['mood'] = Variable<String>(mood);
+    }
+    if (!nullToAbsent || win != null) {
+      map['win'] = Variable<String>(win);
+    }
+    if (!nullToAbsent || improvement != null) {
+      map['improvement'] = Variable<String>(improvement);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  DailyReflectionsCompanion toCompanion(bool nullToAbsent) {
+    return DailyReflectionsCompanion(
+      sessionId: Value(sessionId),
+      date: Value(date),
+      mood: mood == null && nullToAbsent ? const Value.absent() : Value(mood),
+      win: win == null && nullToAbsent ? const Value.absent() : Value(win),
+      improvement: improvement == null && nullToAbsent
+          ? const Value.absent()
+          : Value(improvement),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory ReflectionRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ReflectionRow(
+      sessionId: serializer.fromJson<int>(json['sessionId']),
+      date: serializer.fromJson<LocalDate>(json['date']),
+      mood: serializer.fromJson<String?>(json['mood']),
+      win: serializer.fromJson<String?>(json['win']),
+      improvement: serializer.fromJson<String?>(json['improvement']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'sessionId': serializer.toJson<int>(sessionId),
+      'date': serializer.toJson<LocalDate>(date),
+      'mood': serializer.toJson<String?>(mood),
+      'win': serializer.toJson<String?>(win),
+      'improvement': serializer.toJson<String?>(improvement),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  ReflectionRow copyWith({
+    int? sessionId,
+    LocalDate? date,
+    Value<String?> mood = const Value.absent(),
+    Value<String?> win = const Value.absent(),
+    Value<String?> improvement = const Value.absent(),
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) => ReflectionRow(
+    sessionId: sessionId ?? this.sessionId,
+    date: date ?? this.date,
+    mood: mood.present ? mood.value : this.mood,
+    win: win.present ? win.value : this.win,
+    improvement: improvement.present ? improvement.value : this.improvement,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  ReflectionRow copyWithCompanion(DailyReflectionsCompanion data) {
+    return ReflectionRow(
+      sessionId: data.sessionId.present ? data.sessionId.value : this.sessionId,
+      date: data.date.present ? data.date.value : this.date,
+      mood: data.mood.present ? data.mood.value : this.mood,
+      win: data.win.present ? data.win.value : this.win,
+      improvement: data.improvement.present
+          ? data.improvement.value
+          : this.improvement,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ReflectionRow(')
+          ..write('sessionId: $sessionId, ')
+          ..write('date: $date, ')
+          ..write('mood: $mood, ')
+          ..write('win: $win, ')
+          ..write('improvement: $improvement, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    sessionId,
+    date,
+    mood,
+    win,
+    improvement,
+    createdAt,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ReflectionRow &&
+          other.sessionId == this.sessionId &&
+          other.date == this.date &&
+          other.mood == this.mood &&
+          other.win == this.win &&
+          other.improvement == this.improvement &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class DailyReflectionsCompanion extends UpdateCompanion<ReflectionRow> {
+  final Value<int> sessionId;
+  final Value<LocalDate> date;
+  final Value<String?> mood;
+  final Value<String?> win;
+  final Value<String?> improvement;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const DailyReflectionsCompanion({
+    this.sessionId = const Value.absent(),
+    this.date = const Value.absent(),
+    this.mood = const Value.absent(),
+    this.win = const Value.absent(),
+    this.improvement = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  DailyReflectionsCompanion.insert({
+    required int sessionId,
+    required LocalDate date,
+    this.mood = const Value.absent(),
+    this.win = const Value.absent(),
+    this.improvement = const Value.absent(),
+    required DateTime createdAt,
+    required DateTime updatedAt,
+    this.rowid = const Value.absent(),
+  }) : sessionId = Value(sessionId),
+       date = Value(date),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<ReflectionRow> custom({
+    Expression<int>? sessionId,
+    Expression<String>? date,
+    Expression<String>? mood,
+    Expression<String>? win,
+    Expression<String>? improvement,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (sessionId != null) 'session_id': sessionId,
+      if (date != null) 'date': date,
+      if (mood != null) 'mood': mood,
+      if (win != null) 'win': win,
+      if (improvement != null) 'improvement': improvement,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  DailyReflectionsCompanion copyWith({
+    Value<int>? sessionId,
+    Value<LocalDate>? date,
+    Value<String?>? mood,
+    Value<String?>? win,
+    Value<String?>? improvement,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return DailyReflectionsCompanion(
+      sessionId: sessionId ?? this.sessionId,
+      date: date ?? this.date,
+      mood: mood ?? this.mood,
+      win: win ?? this.win,
+      improvement: improvement ?? this.improvement,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (sessionId.present) {
+      map['session_id'] = Variable<int>(sessionId.value);
+    }
+    if (date.present) {
+      map['date'] = Variable<String>(
+        $DailyReflectionsTable.$converterdate.toSql(date.value),
+      );
+    }
+    if (mood.present) {
+      map['mood'] = Variable<String>(mood.value);
+    }
+    if (win.present) {
+      map['win'] = Variable<String>(win.value);
+    }
+    if (improvement.present) {
+      map['improvement'] = Variable<String>(improvement.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DailyReflectionsCompanion(')
+          ..write('sessionId: $sessionId, ')
+          ..write('date: $date, ')
+          ..write('mood: $mood, ')
+          ..write('win: $win, ')
+          ..write('improvement: $improvement, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ReminderPrefsTable extends ReminderPrefs
+    with TableInfo<$ReminderPrefsTable, ReminderPreferencesRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ReminderPrefsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    check: () => id.equals(1),
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _dailyEnabledMeta = const VerificationMeta(
+    'dailyEnabled',
+  );
+  @override
+  late final GeneratedColumn<bool> dailyEnabled = GeneratedColumn<bool>(
+    'daily_enabled',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("daily_enabled" IN (0, 1))',
+    ),
+  );
+  static const VerificationMeta _dailyHourMeta = const VerificationMeta(
+    'dailyHour',
+  );
+  @override
+  late final GeneratedColumn<int> dailyHour = GeneratedColumn<int>(
+    'daily_hour',
+    aliasedName,
+    false,
+    check: () => ComparableExpr(dailyHour).isBetweenValues(0, 23),
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _dailyMinuteMeta = const VerificationMeta(
+    'dailyMinute',
+  );
+  @override
+  late final GeneratedColumn<int> dailyMinute = GeneratedColumn<int>(
+    'daily_minute',
+    aliasedName,
+    false,
+    check: () => ComparableExpr(dailyMinute).isBetweenValues(0, 59),
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _reflectionEnabledMeta = const VerificationMeta(
+    'reflectionEnabled',
+  );
+  @override
+  late final GeneratedColumn<bool> reflectionEnabled = GeneratedColumn<bool>(
+    'reflection_enabled',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("reflection_enabled" IN (0, 1))',
+    ),
+  );
+  static const VerificationMeta _reflectionHourMeta = const VerificationMeta(
+    'reflectionHour',
+  );
+  @override
+  late final GeneratedColumn<int> reflectionHour = GeneratedColumn<int>(
+    'reflection_hour',
+    aliasedName,
+    false,
+    check: () => ComparableExpr(reflectionHour).isBetweenValues(0, 23),
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _reflectionMinuteMeta = const VerificationMeta(
+    'reflectionMinute',
+  );
+  @override
+  late final GeneratedColumn<int> reflectionMinute = GeneratedColumn<int>(
+    'reflection_minute',
+    aliasedName,
+    false,
+    check: () => ComparableExpr(reflectionMinute).isBetweenValues(0, 59),
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    dailyEnabled,
+    dailyHour,
+    dailyMinute,
+    reflectionEnabled,
+    reflectionHour,
+    reflectionMinute,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'reminder_preferences';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ReminderPreferencesRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('daily_enabled')) {
+      context.handle(
+        _dailyEnabledMeta,
+        dailyEnabled.isAcceptableOrUnknown(
+          data['daily_enabled']!,
+          _dailyEnabledMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_dailyEnabledMeta);
+    }
+    if (data.containsKey('daily_hour')) {
+      context.handle(
+        _dailyHourMeta,
+        dailyHour.isAcceptableOrUnknown(data['daily_hour']!, _dailyHourMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_dailyHourMeta);
+    }
+    if (data.containsKey('daily_minute')) {
+      context.handle(
+        _dailyMinuteMeta,
+        dailyMinute.isAcceptableOrUnknown(
+          data['daily_minute']!,
+          _dailyMinuteMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_dailyMinuteMeta);
+    }
+    if (data.containsKey('reflection_enabled')) {
+      context.handle(
+        _reflectionEnabledMeta,
+        reflectionEnabled.isAcceptableOrUnknown(
+          data['reflection_enabled']!,
+          _reflectionEnabledMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_reflectionEnabledMeta);
+    }
+    if (data.containsKey('reflection_hour')) {
+      context.handle(
+        _reflectionHourMeta,
+        reflectionHour.isAcceptableOrUnknown(
+          data['reflection_hour']!,
+          _reflectionHourMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_reflectionHourMeta);
+    }
+    if (data.containsKey('reflection_minute')) {
+      context.handle(
+        _reflectionMinuteMeta,
+        reflectionMinute.isAcceptableOrUnknown(
+          data['reflection_minute']!,
+          _reflectionMinuteMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_reflectionMinuteMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ReminderPreferencesRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ReminderPreferencesRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      dailyEnabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}daily_enabled'],
+      )!,
+      dailyHour: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}daily_hour'],
+      )!,
+      dailyMinute: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}daily_minute'],
+      )!,
+      reflectionEnabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}reflection_enabled'],
+      )!,
+      reflectionHour: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}reflection_hour'],
+      )!,
+      reflectionMinute: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}reflection_minute'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $ReminderPrefsTable createAlias(String alias) {
+    return $ReminderPrefsTable(attachedDatabase, alias);
+  }
+}
+
+class ReminderPreferencesRow extends DataClass
+    implements Insertable<ReminderPreferencesRow> {
+  final int id;
+  final bool dailyEnabled;
+  final int dailyHour;
+  final int dailyMinute;
+  final bool reflectionEnabled;
+  final int reflectionHour;
+  final int reflectionMinute;
+  final DateTime updatedAt;
+  const ReminderPreferencesRow({
+    required this.id,
+    required this.dailyEnabled,
+    required this.dailyHour,
+    required this.dailyMinute,
+    required this.reflectionEnabled,
+    required this.reflectionHour,
+    required this.reflectionMinute,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['daily_enabled'] = Variable<bool>(dailyEnabled);
+    map['daily_hour'] = Variable<int>(dailyHour);
+    map['daily_minute'] = Variable<int>(dailyMinute);
+    map['reflection_enabled'] = Variable<bool>(reflectionEnabled);
+    map['reflection_hour'] = Variable<int>(reflectionHour);
+    map['reflection_minute'] = Variable<int>(reflectionMinute);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  ReminderPrefsCompanion toCompanion(bool nullToAbsent) {
+    return ReminderPrefsCompanion(
+      id: Value(id),
+      dailyEnabled: Value(dailyEnabled),
+      dailyHour: Value(dailyHour),
+      dailyMinute: Value(dailyMinute),
+      reflectionEnabled: Value(reflectionEnabled),
+      reflectionHour: Value(reflectionHour),
+      reflectionMinute: Value(reflectionMinute),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory ReminderPreferencesRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ReminderPreferencesRow(
+      id: serializer.fromJson<int>(json['id']),
+      dailyEnabled: serializer.fromJson<bool>(json['dailyEnabled']),
+      dailyHour: serializer.fromJson<int>(json['dailyHour']),
+      dailyMinute: serializer.fromJson<int>(json['dailyMinute']),
+      reflectionEnabled: serializer.fromJson<bool>(json['reflectionEnabled']),
+      reflectionHour: serializer.fromJson<int>(json['reflectionHour']),
+      reflectionMinute: serializer.fromJson<int>(json['reflectionMinute']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'dailyEnabled': serializer.toJson<bool>(dailyEnabled),
+      'dailyHour': serializer.toJson<int>(dailyHour),
+      'dailyMinute': serializer.toJson<int>(dailyMinute),
+      'reflectionEnabled': serializer.toJson<bool>(reflectionEnabled),
+      'reflectionHour': serializer.toJson<int>(reflectionHour),
+      'reflectionMinute': serializer.toJson<int>(reflectionMinute),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  ReminderPreferencesRow copyWith({
+    int? id,
+    bool? dailyEnabled,
+    int? dailyHour,
+    int? dailyMinute,
+    bool? reflectionEnabled,
+    int? reflectionHour,
+    int? reflectionMinute,
+    DateTime? updatedAt,
+  }) => ReminderPreferencesRow(
+    id: id ?? this.id,
+    dailyEnabled: dailyEnabled ?? this.dailyEnabled,
+    dailyHour: dailyHour ?? this.dailyHour,
+    dailyMinute: dailyMinute ?? this.dailyMinute,
+    reflectionEnabled: reflectionEnabled ?? this.reflectionEnabled,
+    reflectionHour: reflectionHour ?? this.reflectionHour,
+    reflectionMinute: reflectionMinute ?? this.reflectionMinute,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  ReminderPreferencesRow copyWithCompanion(ReminderPrefsCompanion data) {
+    return ReminderPreferencesRow(
+      id: data.id.present ? data.id.value : this.id,
+      dailyEnabled: data.dailyEnabled.present
+          ? data.dailyEnabled.value
+          : this.dailyEnabled,
+      dailyHour: data.dailyHour.present ? data.dailyHour.value : this.dailyHour,
+      dailyMinute: data.dailyMinute.present
+          ? data.dailyMinute.value
+          : this.dailyMinute,
+      reflectionEnabled: data.reflectionEnabled.present
+          ? data.reflectionEnabled.value
+          : this.reflectionEnabled,
+      reflectionHour: data.reflectionHour.present
+          ? data.reflectionHour.value
+          : this.reflectionHour,
+      reflectionMinute: data.reflectionMinute.present
+          ? data.reflectionMinute.value
+          : this.reflectionMinute,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ReminderPreferencesRow(')
+          ..write('id: $id, ')
+          ..write('dailyEnabled: $dailyEnabled, ')
+          ..write('dailyHour: $dailyHour, ')
+          ..write('dailyMinute: $dailyMinute, ')
+          ..write('reflectionEnabled: $reflectionEnabled, ')
+          ..write('reflectionHour: $reflectionHour, ')
+          ..write('reflectionMinute: $reflectionMinute, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    dailyEnabled,
+    dailyHour,
+    dailyMinute,
+    reflectionEnabled,
+    reflectionHour,
+    reflectionMinute,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ReminderPreferencesRow &&
+          other.id == this.id &&
+          other.dailyEnabled == this.dailyEnabled &&
+          other.dailyHour == this.dailyHour &&
+          other.dailyMinute == this.dailyMinute &&
+          other.reflectionEnabled == this.reflectionEnabled &&
+          other.reflectionHour == this.reflectionHour &&
+          other.reflectionMinute == this.reflectionMinute &&
+          other.updatedAt == this.updatedAt);
+}
+
+class ReminderPrefsCompanion extends UpdateCompanion<ReminderPreferencesRow> {
+  final Value<int> id;
+  final Value<bool> dailyEnabled;
+  final Value<int> dailyHour;
+  final Value<int> dailyMinute;
+  final Value<bool> reflectionEnabled;
+  final Value<int> reflectionHour;
+  final Value<int> reflectionMinute;
+  final Value<DateTime> updatedAt;
+  const ReminderPrefsCompanion({
+    this.id = const Value.absent(),
+    this.dailyEnabled = const Value.absent(),
+    this.dailyHour = const Value.absent(),
+    this.dailyMinute = const Value.absent(),
+    this.reflectionEnabled = const Value.absent(),
+    this.reflectionHour = const Value.absent(),
+    this.reflectionMinute = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  });
+  ReminderPrefsCompanion.insert({
+    this.id = const Value.absent(),
+    required bool dailyEnabled,
+    required int dailyHour,
+    required int dailyMinute,
+    required bool reflectionEnabled,
+    required int reflectionHour,
+    required int reflectionMinute,
+    required DateTime updatedAt,
+  }) : dailyEnabled = Value(dailyEnabled),
+       dailyHour = Value(dailyHour),
+       dailyMinute = Value(dailyMinute),
+       reflectionEnabled = Value(reflectionEnabled),
+       reflectionHour = Value(reflectionHour),
+       reflectionMinute = Value(reflectionMinute),
+       updatedAt = Value(updatedAt);
+  static Insertable<ReminderPreferencesRow> custom({
+    Expression<int>? id,
+    Expression<bool>? dailyEnabled,
+    Expression<int>? dailyHour,
+    Expression<int>? dailyMinute,
+    Expression<bool>? reflectionEnabled,
+    Expression<int>? reflectionHour,
+    Expression<int>? reflectionMinute,
+    Expression<DateTime>? updatedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (dailyEnabled != null) 'daily_enabled': dailyEnabled,
+      if (dailyHour != null) 'daily_hour': dailyHour,
+      if (dailyMinute != null) 'daily_minute': dailyMinute,
+      if (reflectionEnabled != null) 'reflection_enabled': reflectionEnabled,
+      if (reflectionHour != null) 'reflection_hour': reflectionHour,
+      if (reflectionMinute != null) 'reflection_minute': reflectionMinute,
+      if (updatedAt != null) 'updated_at': updatedAt,
+    });
+  }
+
+  ReminderPrefsCompanion copyWith({
+    Value<int>? id,
+    Value<bool>? dailyEnabled,
+    Value<int>? dailyHour,
+    Value<int>? dailyMinute,
+    Value<bool>? reflectionEnabled,
+    Value<int>? reflectionHour,
+    Value<int>? reflectionMinute,
+    Value<DateTime>? updatedAt,
+  }) {
+    return ReminderPrefsCompanion(
+      id: id ?? this.id,
+      dailyEnabled: dailyEnabled ?? this.dailyEnabled,
+      dailyHour: dailyHour ?? this.dailyHour,
+      dailyMinute: dailyMinute ?? this.dailyMinute,
+      reflectionEnabled: reflectionEnabled ?? this.reflectionEnabled,
+      reflectionHour: reflectionHour ?? this.reflectionHour,
+      reflectionMinute: reflectionMinute ?? this.reflectionMinute,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (dailyEnabled.present) {
+      map['daily_enabled'] = Variable<bool>(dailyEnabled.value);
+    }
+    if (dailyHour.present) {
+      map['daily_hour'] = Variable<int>(dailyHour.value);
+    }
+    if (dailyMinute.present) {
+      map['daily_minute'] = Variable<int>(dailyMinute.value);
+    }
+    if (reflectionEnabled.present) {
+      map['reflection_enabled'] = Variable<bool>(reflectionEnabled.value);
+    }
+    if (reflectionHour.present) {
+      map['reflection_hour'] = Variable<int>(reflectionHour.value);
+    }
+    if (reflectionMinute.present) {
+      map['reflection_minute'] = Variable<int>(reflectionMinute.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ReminderPrefsCompanion(')
+          ..write('id: $id, ')
+          ..write('dailyEnabled: $dailyEnabled, ')
+          ..write('dailyHour: $dailyHour, ')
+          ..write('dailyMinute: $dailyMinute, ')
+          ..write('reflectionEnabled: $reflectionEnabled, ')
+          ..write('reflectionHour: $reflectionHour, ')
+          ..write('reflectionMinute: $reflectionMinute, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -3240,6 +4250,14 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $DayModesTable dayModes = $DayModesTable(this);
   late final $AchievementUnlocksTable achievementUnlocks =
       $AchievementUnlocksTable(this);
+  late final $DailyReflectionsTable dailyReflections = $DailyReflectionsTable(
+    this,
+  );
+  late final $ReminderPrefsTable reminderPrefs = $ReminderPrefsTable(this);
+  late final Index singleOpenSession = Index(
+    'single_open_session',
+    'CREATE UNIQUE INDEX single_open_session ON winter_arc_sessions ((status IN (\'setup\', \'active\'))) WHERE status IN (\'setup\', \'active\')',
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3252,6 +4270,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     habitRevisions,
     dayModes,
     achievementUnlocks,
+    dailyReflections,
+    reminderPrefs,
+    singleOpenSession,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -3282,6 +4303,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('achievement_unlocks', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'winter_arc_sessions',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('daily_reflections', kind: UpdateKind.delete)],
     ),
   ]);
 }
@@ -3386,6 +4414,26 @@ final class $$WinterArcSessionsTableReferences
 
     final cache = $_typedResult.readTableOrNull(
       _achievementUnlocksRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$DailyReflectionsTable, List<ReflectionRow>>
+  _dailyReflectionsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.dailyReflections,
+    aliasName: 'winter_arc_sessions__id__daily_reflections__session_id',
+  );
+
+  $$DailyReflectionsTableProcessedTableManager get dailyReflectionsRefs {
+    final manager = $$DailyReflectionsTableTableManager(
+      $_db,
+      $_db.dailyReflections,
+    ).filter((f) => f.sessionId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _dailyReflectionsRefsTable($_db),
     );
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
@@ -3526,6 +4574,31 @@ class $$WinterArcSessionsTableFilterComposer
           }) => $$AchievementUnlocksTableFilterComposer(
             $db: $db,
             $table: $db.achievementUnlocks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> dailyReflectionsRefs(
+    Expression<bool> Function($$DailyReflectionsTableFilterComposer f) f,
+  ) {
+    final $$DailyReflectionsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.dailyReflections,
+      getReferencedColumn: (t) => t.sessionId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$DailyReflectionsTableFilterComposer(
+            $db: $db,
+            $table: $db.dailyReflections,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -3703,6 +4776,31 @@ class $$WinterArcSessionsTableAnnotationComposer
         );
     return f(composer);
   }
+
+  Expression<T> dailyReflectionsRefs<T extends Object>(
+    Expression<T> Function($$DailyReflectionsTableAnnotationComposer a) f,
+  ) {
+    final $$DailyReflectionsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.dailyReflections,
+      getReferencedColumn: (t) => t.sessionId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$DailyReflectionsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.dailyReflections,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$WinterArcSessionsTableTableManager
@@ -3723,6 +4821,7 @@ class $$WinterArcSessionsTableTableManager
             bool xpTransactionsRefs,
             bool dayModesRefs,
             bool achievementUnlocksRefs,
+            bool dailyReflectionsRefs,
           })
         > {
   $$WinterArcSessionsTableTableManager(
@@ -3787,6 +4886,7 @@ class $$WinterArcSessionsTableTableManager
                 xpTransactionsRefs = false,
                 dayModesRefs = false,
                 achievementUnlocksRefs = false,
+                dailyReflectionsRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -3795,6 +4895,7 @@ class $$WinterArcSessionsTableTableManager
                     if (xpTransactionsRefs) db.xpTransactions,
                     if (dayModesRefs) db.dayModes,
                     if (achievementUnlocksRefs) db.achievementUnlocks,
+                    if (dailyReflectionsRefs) db.dailyReflections,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -3883,6 +4984,27 @@ class $$WinterArcSessionsTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (dailyReflectionsRefs)
+                        await $_getPrefetchedData<
+                          SessionRow,
+                          $WinterArcSessionsTable,
+                          ReflectionRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $$WinterArcSessionsTableReferences
+                              ._dailyReflectionsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$WinterArcSessionsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).dailyReflectionsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.sessionId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -3908,6 +5030,7 @@ typedef $$WinterArcSessionsTableProcessedTableManager =
         bool xpTransactionsRefs,
         bool dayModesRefs,
         bool achievementUnlocksRefs,
+        bool dailyReflectionsRefs,
       })
     >;
 typedef $$HabitsTableCreateCompanionBuilder = HabitsCompanion Function({
@@ -5872,6 +6995,651 @@ typedef $$AchievementUnlocksTableProcessedTableManager =
       AchievementUnlockRow,
       PrefetchHooks Function({bool sessionId})
     >;
+typedef $$DailyReflectionsTableCreateCompanionBuilder =
+    DailyReflectionsCompanion Function({
+      required int sessionId,
+      required LocalDate date,
+      Value<String?> mood,
+      Value<String?> win,
+      Value<String?> improvement,
+      required DateTime createdAt,
+      required DateTime updatedAt,
+      Value<int> rowid,
+    });
+typedef $$DailyReflectionsTableUpdateCompanionBuilder =
+    DailyReflectionsCompanion Function({
+      Value<int> sessionId,
+      Value<LocalDate> date,
+      Value<String?> mood,
+      Value<String?> win,
+      Value<String?> improvement,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+      Value<int> rowid,
+    });
+
+final class $$DailyReflectionsTableReferences
+    extends
+        BaseReferences<_$AppDatabase, $DailyReflectionsTable, ReflectionRow> {
+  $$DailyReflectionsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $WinterArcSessionsTable _sessionIdTable(_$AppDatabase db) => db
+      .winterArcSessions
+      .createAlias('daily_reflections__session_id__winter_arc_sessions__id');
+
+  $$WinterArcSessionsTableProcessedTableManager get sessionId {
+    final $_column = $_itemColumn<int>('session_id')!;
+
+    final manager = $$WinterArcSessionsTableTableManager(
+      $_db,
+      $_db.winterArcSessions,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_sessionIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$DailyReflectionsTableFilterComposer
+    extends Composer<_$AppDatabase, $DailyReflectionsTable> {
+  $$DailyReflectionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnWithTypeConverterFilters<LocalDate, LocalDate, String> get date =>
+      $composableBuilder(
+        column: $table.date,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<String> get mood => $composableBuilder(
+    column: $table.mood,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get win => $composableBuilder(
+    column: $table.win,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get improvement => $composableBuilder(
+    column: $table.improvement,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$WinterArcSessionsTableFilterComposer get sessionId {
+    final $$WinterArcSessionsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sessionId,
+      referencedTable: $db.winterArcSessions,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$WinterArcSessionsTableFilterComposer(
+            $db: $db,
+            $table: $db.winterArcSessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$DailyReflectionsTableOrderingComposer
+    extends Composer<_$AppDatabase, $DailyReflectionsTable> {
+  $$DailyReflectionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get date => $composableBuilder(
+    column: $table.date,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get mood => $composableBuilder(
+    column: $table.mood,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get win => $composableBuilder(
+    column: $table.win,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get improvement => $composableBuilder(
+    column: $table.improvement,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$WinterArcSessionsTableOrderingComposer get sessionId {
+    final $$WinterArcSessionsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sessionId,
+      referencedTable: $db.winterArcSessions,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$WinterArcSessionsTableOrderingComposer(
+            $db: $db,
+            $table: $db.winterArcSessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$DailyReflectionsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $DailyReflectionsTable> {
+  $$DailyReflectionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumnWithTypeConverter<LocalDate, String> get date =>
+      $composableBuilder(column: $table.date, builder: (column) => column);
+
+  GeneratedColumn<String> get mood =>
+      $composableBuilder(column: $table.mood, builder: (column) => column);
+
+  GeneratedColumn<String> get win =>
+      $composableBuilder(column: $table.win, builder: (column) => column);
+
+  GeneratedColumn<String> get improvement => $composableBuilder(
+    column: $table.improvement,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  $$WinterArcSessionsTableAnnotationComposer get sessionId {
+    final $$WinterArcSessionsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.sessionId,
+          referencedTable: $db.winterArcSessions,
+          getReferencedColumn: (t) => t.id,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$WinterArcSessionsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.winterArcSessions,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return composer;
+  }
+}
+
+class $$DailyReflectionsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $DailyReflectionsTable,
+          ReflectionRow,
+          $$DailyReflectionsTableFilterComposer,
+          $$DailyReflectionsTableOrderingComposer,
+          $$DailyReflectionsTableAnnotationComposer,
+          $$DailyReflectionsTableCreateCompanionBuilder,
+          $$DailyReflectionsTableUpdateCompanionBuilder,
+          (ReflectionRow, $$DailyReflectionsTableReferences),
+          ReflectionRow,
+          PrefetchHooks Function({bool sessionId})
+        > {
+  $$DailyReflectionsTableTableManager(
+    _$AppDatabase db,
+    $DailyReflectionsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$DailyReflectionsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$DailyReflectionsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$DailyReflectionsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> sessionId = const Value.absent(),
+                Value<LocalDate> date = const Value.absent(),
+                Value<String?> mood = const Value.absent(),
+                Value<String?> win = const Value.absent(),
+                Value<String?> improvement = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => DailyReflectionsCompanion(
+                sessionId: sessionId,
+                date: date,
+                mood: mood,
+                win: win,
+                improvement: improvement,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required int sessionId,
+                required LocalDate date,
+                Value<String?> mood = const Value.absent(),
+                Value<String?> win = const Value.absent(),
+                Value<String?> improvement = const Value.absent(),
+                required DateTime createdAt,
+                required DateTime updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => DailyReflectionsCompanion.insert(
+                sessionId: sessionId,
+                date: date,
+                mood: mood,
+                win: win,
+                improvement: improvement,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$DailyReflectionsTable, ReflectionRow>(table),
+                  $$DailyReflectionsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({sessionId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (sessionId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.sessionId,
+                        referencedTable: $$DailyReflectionsTableReferences
+                            ._sessionIdTable(db),
+                        referencedColumn: $$DailyReflectionsTableReferences
+                            ._sessionIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$DailyReflectionsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $DailyReflectionsTable,
+      ReflectionRow,
+      $$DailyReflectionsTableFilterComposer,
+      $$DailyReflectionsTableOrderingComposer,
+      $$DailyReflectionsTableAnnotationComposer,
+      $$DailyReflectionsTableCreateCompanionBuilder,
+      $$DailyReflectionsTableUpdateCompanionBuilder,
+      (ReflectionRow, $$DailyReflectionsTableReferences),
+      ReflectionRow,
+      PrefetchHooks Function({bool sessionId})
+    >;
+typedef $$ReminderPrefsTableCreateCompanionBuilder =
+    ReminderPrefsCompanion Function({
+      Value<int> id,
+      required bool dailyEnabled,
+      required int dailyHour,
+      required int dailyMinute,
+      required bool reflectionEnabled,
+      required int reflectionHour,
+      required int reflectionMinute,
+      required DateTime updatedAt,
+    });
+typedef $$ReminderPrefsTableUpdateCompanionBuilder =
+    ReminderPrefsCompanion Function({
+      Value<int> id,
+      Value<bool> dailyEnabled,
+      Value<int> dailyHour,
+      Value<int> dailyMinute,
+      Value<bool> reflectionEnabled,
+      Value<int> reflectionHour,
+      Value<int> reflectionMinute,
+      Value<DateTime> updatedAt,
+    });
+
+class $$ReminderPrefsTableFilterComposer
+    extends Composer<_$AppDatabase, $ReminderPrefsTable> {
+  $$ReminderPrefsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get dailyEnabled => $composableBuilder(
+    column: $table.dailyEnabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get dailyHour => $composableBuilder(
+    column: $table.dailyHour,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get dailyMinute => $composableBuilder(
+    column: $table.dailyMinute,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get reflectionEnabled => $composableBuilder(
+    column: $table.reflectionEnabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get reflectionHour => $composableBuilder(
+    column: $table.reflectionHour,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get reflectionMinute => $composableBuilder(
+    column: $table.reflectionMinute,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ReminderPrefsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ReminderPrefsTable> {
+  $$ReminderPrefsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get dailyEnabled => $composableBuilder(
+    column: $table.dailyEnabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get dailyHour => $composableBuilder(
+    column: $table.dailyHour,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get dailyMinute => $composableBuilder(
+    column: $table.dailyMinute,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get reflectionEnabled => $composableBuilder(
+    column: $table.reflectionEnabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get reflectionHour => $composableBuilder(
+    column: $table.reflectionHour,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get reflectionMinute => $composableBuilder(
+    column: $table.reflectionMinute,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ReminderPrefsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ReminderPrefsTable> {
+  $$ReminderPrefsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<bool> get dailyEnabled => $composableBuilder(
+    column: $table.dailyEnabled,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get dailyHour =>
+      $composableBuilder(column: $table.dailyHour, builder: (column) => column);
+
+  GeneratedColumn<int> get dailyMinute => $composableBuilder(
+    column: $table.dailyMinute,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get reflectionEnabled => $composableBuilder(
+    column: $table.reflectionEnabled,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get reflectionHour => $composableBuilder(
+    column: $table.reflectionHour,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get reflectionMinute => $composableBuilder(
+    column: $table.reflectionMinute,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$ReminderPrefsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ReminderPrefsTable,
+          ReminderPreferencesRow,
+          $$ReminderPrefsTableFilterComposer,
+          $$ReminderPrefsTableOrderingComposer,
+          $$ReminderPrefsTableAnnotationComposer,
+          $$ReminderPrefsTableCreateCompanionBuilder,
+          $$ReminderPrefsTableUpdateCompanionBuilder,
+          (
+            ReminderPreferencesRow,
+            BaseReferences<
+              _$AppDatabase,
+              $ReminderPrefsTable,
+              ReminderPreferencesRow
+            >,
+          ),
+          ReminderPreferencesRow,
+          PrefetchHooks Function()
+        > {
+  $$ReminderPrefsTableTableManager(_$AppDatabase db, $ReminderPrefsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ReminderPrefsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ReminderPrefsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ReminderPrefsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<bool> dailyEnabled = const Value.absent(),
+                Value<int> dailyHour = const Value.absent(),
+                Value<int> dailyMinute = const Value.absent(),
+                Value<bool> reflectionEnabled = const Value.absent(),
+                Value<int> reflectionHour = const Value.absent(),
+                Value<int> reflectionMinute = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+              }) => ReminderPrefsCompanion(
+                id: id,
+                dailyEnabled: dailyEnabled,
+                dailyHour: dailyHour,
+                dailyMinute: dailyMinute,
+                reflectionEnabled: reflectionEnabled,
+                reflectionHour: reflectionHour,
+                reflectionMinute: reflectionMinute,
+                updatedAt: updatedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required bool dailyEnabled,
+                required int dailyHour,
+                required int dailyMinute,
+                required bool reflectionEnabled,
+                required int reflectionHour,
+                required int reflectionMinute,
+                required DateTime updatedAt,
+              }) => ReminderPrefsCompanion.insert(
+                id: id,
+                dailyEnabled: dailyEnabled,
+                dailyHour: dailyHour,
+                dailyMinute: dailyMinute,
+                reflectionEnabled: reflectionEnabled,
+                reflectionHour: reflectionHour,
+                reflectionMinute: reflectionMinute,
+                updatedAt: updatedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$ReminderPrefsTable, ReminderPreferencesRow>(
+                    table,
+                  ),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $ReminderPrefsTable,
+                    ReminderPreferencesRow
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ReminderPrefsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ReminderPrefsTable,
+      ReminderPreferencesRow,
+      $$ReminderPrefsTableFilterComposer,
+      $$ReminderPrefsTableOrderingComposer,
+      $$ReminderPrefsTableAnnotationComposer,
+      $$ReminderPrefsTableCreateCompanionBuilder,
+      $$ReminderPrefsTableUpdateCompanionBuilder,
+      (
+        ReminderPreferencesRow,
+        BaseReferences<
+          _$AppDatabase,
+          $ReminderPrefsTable,
+          ReminderPreferencesRow
+        >,
+      ),
+      ReminderPreferencesRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -5893,4 +7661,8 @@ class $AppDatabaseManager {
       $$DayModesTableTableManager(_db, _db.dayModes);
   $$AchievementUnlocksTableTableManager get achievementUnlocks =>
       $$AchievementUnlocksTableTableManager(_db, _db.achievementUnlocks);
+  $$DailyReflectionsTableTableManager get dailyReflections =>
+      $$DailyReflectionsTableTableManager(_db, _db.dailyReflections);
+  $$ReminderPrefsTableTableManager get reminderPrefs =>
+      $$ReminderPrefsTableTableManager(_db, _db.reminderPrefs);
 }

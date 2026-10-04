@@ -19,6 +19,16 @@ String userMessageFor(AppFailure failure) => switch (failure) {
     DomainRule.noNextChallengeDay =>
       'Today is the last day, so goal changes would never apply. '
           'You can still rename habits.',
+    DomainRule.arcInProgress =>
+      'You already have a Winter Arc in progress. Finish it first.',
+    DomainRule.noCompletedArc => 'There is no finished Winter Arc to reuse.',
+    DomainRule.reflectionEmpty =>
+      'Pick a mood or write a few words before saving.',
+    DomainRule.reflectionTooLong => 'Keep each answer to 240 characters.',
+    DomainRule.reflectionReadOnly =>
+      'Past reflections are kept as they were. Only today can be edited.',
+    DomainRule.reflectionNotAvailable => 'Reflections open on the day itself.',
+    DomainRule.sessionNotFound ||
     DomainRule.noSession ||
     DomainRule.sessionNotInSetup ||
     DomainRule.noActiveSession ||

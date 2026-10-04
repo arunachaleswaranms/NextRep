@@ -29,8 +29,10 @@ void main() {
   });
   tearDown(() => app.db.close());
 
+  // The only session of these tests; once completed it is no longer
+  // "current", so look it up as the latest.
   Future<WinterArcStatus> status() async =>
-      (await app.winterArc.currentSession())!.status;
+      (await app.sessions.latestSession())!.status;
 
   test(
     'the arc stays active on every day up to and including Day 92',
@@ -180,6 +182,19 @@ final class _CountingSessions implements WinterArcRepository {
 
   @override
   Future<WinterArcSession?> latestSession() => _inner.latestSession();
+
+  @override
+  Future<WinterArcSession?> currentSession() => _inner.currentSession();
+
+  @override
+  Future<WinterArcSession?> latestCompletedSession() =>
+      _inner.latestCompletedSession();
+
+  @override
+  Future<WinterArcSession?> sessionById(int id) => _inner.sessionById(id);
+
+  @override
+  Future<List<WinterArcSession>> listSessions() => _inner.listSessions();
 
   @override
   Future<WinterArcSession> createSetupSession({

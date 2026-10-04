@@ -4,6 +4,8 @@ import '../../app/arc_status.dart';
 import '../../app/dependencies.dart';
 import '../../core/errors/action_result.dart';
 import '../../domain/habit/habit.dart';
+import '../../core/errors/app_failure.dart';
+import '../../core/errors/error_reporter.dart';
 import '../../domain/winter_arc/winter_arc_session.dart';
 
 final habitSetupControllerProvider =
@@ -34,12 +36,24 @@ class HabitSetupController extends AsyncNotifier<List<Habit>> {
   }
 
   Future<ActionResult<WinterArcSession>> start() async {
-    final status = ref.read(arcStatusProvider.notifier);
+    final status = ref.read(arcResolutionProvider.notifier);
     final result = await runAction(
       'habit_setup',
       () => ref.read(winterArcServiceProvider).startWinterArc(),
     );
-    if (result case ActionSuccess(:final value)) status.set(value.status);
+    // Publish the started arc so the router leaves setup for Today.
+    if (result is ActionSuccess) await _republish(status);
     return result;
+  }
+
+  static Future<void> _republish(ArcResolutionController status) async {
+    try {
+      await status.reconcile();
+    } catch (error, stackTrace) {
+      ErrorReporter.report(
+        toAppFailure(error, stackTrace),
+        context: 'habit_setup',
+      );
+    }
   }
 }

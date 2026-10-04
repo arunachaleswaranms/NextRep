@@ -35,6 +35,16 @@ class ActiveShell extends StatelessWidget {
           selectedIcon: Icon(Icons.terrain_rounded),
           label: 'Journey',
         ),
+        NavigationDestination(
+          icon: Icon(Icons.edit_note_outlined),
+          selectedIcon: Icon(Icons.edit_note_rounded),
+          label: 'Journal',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.history_outlined),
+          selectedIcon: Icon(Icons.history_rounded),
+          label: 'History',
+        ),
       ],
     ),
   );

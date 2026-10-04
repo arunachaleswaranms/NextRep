@@ -8,8 +8,12 @@ import 'package:nextrep/domain/progress/day_mode.dart';
 
 import '../support/builders.dart';
 
+/// Phase 3 rules only look at the history; no reflections.
+List<EarnedAchievement> _evaluate(ArcHistory history) =>
+    AchievementRules.evaluate(AchievementContext(history: history));
+
 Map<AchievementKey, LocalDate> _earned(ArcHistory history) => {
-  for (final e in AchievementRules.evaluate(history)) e.key: e.earnedOn,
+  for (final e in _evaluate(history)) e.key: e.earnedOn,
 };
 
 /// [days] days on which every habit (`water`, `junk`) was completed.
@@ -19,9 +23,9 @@ Map<int, List<String>> _allDone(Iterable<int> days) => {
 
 void main() {
   test('a fresh arc has earned nothing', () {
-    expect(AchievementRules.evaluate(arcOf(today: 1)), isEmpty);
+    expect(_evaluate(arcOf(today: 1)), isEmpty);
     expect(
-      AchievementRules.evaluate(
+      _evaluate(
         arcOf(
           today: 3,
           partial: {
@@ -173,7 +177,7 @@ void main() {
   });
 
   test('several achievements can be earned together, in catalog order', () {
-    final earned = AchievementRules.evaluate(
+    final earned = _evaluate(
       arcOf(today: 3, done: _allDone([1, 2, 3]), xp: {1: 90, 2: 90, 3: 90}),
     );
     expect(earned.map((e) => e.key), [
@@ -189,9 +193,10 @@ void main() {
   });
 
   test('the catalog has stable, unique keys', () {
-    expect(AchievementCatalog.all, hasLength(10));
-    expect(AchievementCatalog.all.map((d) => d.key).toSet(), hasLength(10));
+    expect(AchievementCatalog.all, hasLength(15));
+    expect(AchievementCatalog.all.map((d) => d.key).toSet(), hasLength(15));
     expect(AchievementKey.values.map((k) => k.id), [
+      // Phase 3: stored ids that must never change.
       'first_rep',
       'first_perfect',
       'streak_3',
@@ -202,6 +207,12 @@ void main() {
       'level_3',
       'halfway',
       'summit',
+      // Phase 4 additions.
+      'first_reflection',
+      'reflections_7',
+      'minimum_3',
+      'perfect_10',
+      'level_5',
     ]);
     expect(AchievementKey.fromId('streak_7'), AchievementKey.streak7);
     expect(AchievementKey.fromId('nope'), isNull);

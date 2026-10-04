@@ -12,7 +12,14 @@ enum AchievementKey {
   level2('level_2'),
   level3('level_3'),
   halfway('halfway'),
-  summit('summit');
+  summit('summit'),
+
+  // Catalog v2 (Phase 4).
+  firstReflection('first_reflection'),
+  reflections7('reflections_7'),
+  minimum3('minimum_3'),
+  perfect10('perfect_10'),
+  level5('level_5');
 
   const AchievementKey(this.id);
 

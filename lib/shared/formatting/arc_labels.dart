@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart';
+
 import '../../domain/journey/arc_milestones.dart';
 import '../../domain/winter_arc/winter_arc_session.dart';
 
@@ -38,4 +40,14 @@ String? nextMilestoneLabel(int dayNumber) {
   if (next == null) return null;
   final days = next.day - dayNumber;
   return '${milestoneTitle(next)} in $days ${days == 1 ? 'day' : 'days'}';
+}
+
+/// "1 Jul – 30 Sep 2026", or "4 Oct 2026 – 3 Jan 2027" when the arc spans
+/// two years.
+String arcDateRange(WinterArcSession session) {
+  final start = session.startDate.toLocalDateTime();
+  final end = session.endDate.toLocalDateTime();
+  final startFormat = start.year == end.year ? 'd MMM' : 'd MMM y';
+  return '${DateFormat(startFormat).format(start)} – '
+      '${DateFormat('d MMM y').format(end)}';
 }

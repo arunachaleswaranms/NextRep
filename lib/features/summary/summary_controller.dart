@@ -1,12 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app/arc_status.dart';
 import '../../app/dependencies.dart';
-import '../../domain/achievement/achievement_catalog.dart';
 import '../../domain/progress/arc_summary.dart';
 import '../../domain/winter_arc/winter_arc_session.dart';
 import '../achievements/achievements_controller.dart';
 
-/// The End-of-Arc summary with the arc it describes.
+/// The summary of one arc, with the arc it describes.
 final class SummaryView {
   const SummaryView({required this.session, required this.summary});
 
@@ -14,22 +14,26 @@ final class SummaryView {
   final ArcSummary summary;
 }
 
-/// Derives the summary from stored history. Achievements are reconciled
-/// first, so the Summit unlock earned by finishing is counted.
-final summaryControllerProvider = FutureProvider.autoDispose<SummaryView>((
-  ref,
-) async {
-  final tracking = ref.watch(habitTrackingServiceProvider);
-  final achievements = ref.watch(achievementServiceProvider);
-  await ref.read(achievementSyncProvider).run();
-  final history = await tracking.history();
-  final board = await achievements.board();
-  return SummaryView(
-    session: history.session,
-    summary: ArcSummary.fromHistory(
-      history,
-      achievementsUnlocked: board?.unlockedCount ?? 0,
-      achievementsTotal: board?.total ?? AchievementCatalog.all.length,
-    ),
-  );
-});
+/// Derives the summary of arc [sessionId] from its stored history only.
+///
+/// When that arc is the app's home (it just completed and nothing new is
+/// set up), achievements are reconciled first so the Summit unlock earned by
+/// finishing is counted. Any other arc is history and only read.
+final summaryControllerProvider = FutureProvider.autoDispose
+    .family<SummaryView, int>((ref, sessionId) async {
+      final tracking = ref.watch(habitTrackingServiceProvider);
+      final achievements = ref.watch(achievementServiceProvider);
+      if (ref.read(arcResolutionProvider)?.home?.id == sessionId) {
+        await ref.read(achievementSyncProvider).run();
+      }
+      final history = await tracking.historyFor(sessionId);
+      final board = await achievements.boardFor(sessionId);
+      return SummaryView(
+        session: history.session,
+        summary: ArcSummary.fromHistory(
+          history,
+          achievementsUnlocked: board.unlockedCount,
+          achievementsTotal: board.total,
+        ),
+      );
+    });
