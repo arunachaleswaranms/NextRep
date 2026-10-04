@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
+import '../../app/arc_status.dart';
 import '../../app/router/app_router.dart';
 import '../../app/theme/winter_tokens.dart';
 import '../../core/errors/app_failure.dart';
+import '../../shared/formatting/arc_labels.dart';
 import '../../shared/widgets/failure_view.dart';
 import '../../shared/widgets/habit_icon.dart';
 import '../../shared/widgets/winter_background.dart';
@@ -13,22 +14,34 @@ import '../../shared/winter_scene/scene_progress.dart';
 import '../../shared/winter_scene/winter_scene.dart';
 import 'summary_controller.dart';
 
-/// End-of-Arc summary: the summit, warm and fully revealed, with the arc's
-/// results derived from stored history. The home of a completed arc.
+/// End-of-Arc summary of arc [sessionId]: the summit, warm and fully
+/// revealed, with the arc's results derived from its stored history. The
+/// home of a completed arc, and the overview of any arc in Arc History.
+/// Read-only.
 class SummaryScreen extends ConsumerWidget {
-  const SummaryScreen({super.key});
+  const SummaryScreen({super.key, required this.sessionId});
+
+  final int sessionId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final view = ref.watch(summaryControllerProvider);
+    final view = ref.watch(summaryControllerProvider(sessionId));
+    final resolution = ref.watch(arcResolutionProvider);
+    // Another arc can only start from the latest completed arc, and only
+    // while nothing is in setup or running.
+    final isHome =
+        resolution != null &&
+        resolution.current == null &&
+        resolution.latestCompleted?.id == sessionId;
     return Scaffold(
       body: WinterBackground(
         child: switch (view) {
-          AsyncData(:final value) => _content(context, value),
+          AsyncData(:final value) => _content(context, value, isHome: isHome),
           AsyncError(:final error, :final stackTrace) => SafeArea(
             child: FailureView(
               failure: toAppFailure(error, stackTrace),
-              onRetry: () => ref.invalidate(summaryControllerProvider),
+              onRetry: () =>
+                  ref.invalidate(summaryControllerProvider(sessionId)),
             ),
           ),
           _ => const Center(child: CircularProgressIndicator()),
@@ -37,14 +50,15 @@ class SummaryScreen extends ConsumerWidget {
     );
   }
 
-  Widget _content(BuildContext context, SummaryView view) {
+  Widget _content(
+    BuildContext context,
+    SummaryView view, {
+    required bool isHome,
+  }) {
     final colors = context.winter;
     final text = Theme.of(context).textTheme;
     final summary = view.summary;
-    final dates =
-        '${DateFormat('d MMM').format(view.session.startDate.toLocalDateTime())}'
-        ' – '
-        '${DateFormat('d MMM y').format(view.session.endDate.toLocalDateTime())}';
+    final dates = arcDateRange(view.session);
     final strongest = summary.strongestHabit;
     final stats = [
       _StatData('Total XP', '${summary.totalXp}', Icons.bolt_rounded),
@@ -113,6 +127,13 @@ class SummaryScreen extends ConsumerWidget {
                     ),
                   ),
                 ),
+                // Opened from Arc History rather than as the home.
+                if (ModalRoute.of(context)?.canPop ?? false)
+                  const Positioned(
+                    left: WinterSpacing.xs,
+                    top: 0,
+                    child: SafeArea(child: BackButton()),
+                  ),
                 Positioned(
                   left: WinterSpacing.lg,
                   right: WinterSpacing.lg,
@@ -219,20 +240,47 @@ class SummaryScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  FilledButton.icon(
-                    onPressed: () => context.push(AppRoutes.summaryJourney),
-                    icon: const Icon(Icons.terrain_rounded),
-                    label: const Text('View Journey'),
+                  if (isHome) ...[
+                    FilledButton.icon(
+                      onPressed: () => context.push(AppRoutes.newArc),
+                      icon: const Icon(Icons.add_rounded),
+                      label: const Text('Start New Arc'),
+                    ),
+                    const SizedBox(height: WinterSpacing.sm),
+                  ],
+                  _SecondaryAction(
+                    icon: Icons.terrain_rounded,
+                    label: 'View Journey',
+                    filled: !isHome,
+                    onPressed: () =>
+                        context.push(AppRoutes.arcJourney(view.session.id)),
                   ),
                   const SizedBox(height: WinterSpacing.sm),
-                  OutlinedButton.icon(
-                    onPressed: () => context.push(AppRoutes.achievements),
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size.fromHeight(52),
-                    ),
-                    icon: const Icon(Icons.emoji_events_rounded),
-                    label: const Text('Achievements'),
+                  _SecondaryAction(
+                    icon: Icons.edit_note_rounded,
+                    label: 'View Journal',
+                    onPressed: () =>
+                        context.push(AppRoutes.arcJournal(view.session.id)),
                   ),
+                  const SizedBox(height: WinterSpacing.sm),
+                  _SecondaryAction(
+                    icon: Icons.emoji_events_rounded,
+                    label: 'Achievements',
+                    onPressed: () => context.push(
+                      AppRoutes.arcAchievements(view.session.id),
+                    ),
+                  ),
+                  if (isHome) ...[
+                    const SizedBox(height: WinterSpacing.xs),
+                    TextButton.icon(
+                      onPressed: () => context.push(AppRoutes.arcs),
+                      style: TextButton.styleFrom(
+                        minimumSize: const Size.fromHeight(48),
+                      ),
+                      icon: const Icon(Icons.history_rounded),
+                      label: const Text('Arc History'),
+                    ),
+                  ],
                   const SizedBox(height: WinterSpacing.md),
                   Text(
                     'Your Winter Arc is complete and kept as it was. '
@@ -248,6 +296,38 @@ class SummaryScreen extends ConsumerWidget {
       ],
     );
   }
+}
+
+/// A full-width summary action: filled for the primary one, outlined
+/// otherwise.
+class _SecondaryAction extends StatelessWidget {
+  const _SecondaryAction({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+    this.filled = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+  final bool filled;
+
+  @override
+  Widget build(BuildContext context) => filled
+      ? FilledButton.icon(
+          onPressed: onPressed,
+          icon: Icon(icon),
+          label: Text(label),
+        )
+      : OutlinedButton.icon(
+          onPressed: onPressed,
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size.fromHeight(52),
+          ),
+          icon: Icon(icon),
+          label: Text(label),
+        );
 }
 
 final class _StatData {

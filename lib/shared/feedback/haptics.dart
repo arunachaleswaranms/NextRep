@@ -25,4 +25,7 @@ abstract final class Haptics {
     await Future<void>.delayed(const Duration(milliseconds: 90));
     await HapticFeedback.mediumImpact();
   }
+
+  /// A reflection was saved.
+  static Future<void> reflectionSaved() => HapticFeedback.lightImpact();
 }

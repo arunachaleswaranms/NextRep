@@ -26,6 +26,7 @@ class HabitsController extends AsyncNotifier<HabitSettings> {
 
   Future<ActionResult<HabitEditOutcome>> edit(String habitId, HabitEdit edit) {
     final shownDate = state.value?.date;
+    final shownSession = state.value?.sessionId;
     // Read dependencies up front: the screen may be closed (and this
     // controller disposed) while the commit is still running.
     final service = ref.read(habitTrackingServiceProvider);
@@ -40,6 +41,7 @@ class HabitsController extends AsyncNotifier<HabitSettings> {
                 habitId: habitId,
                 edit: edit,
                 date: shownDate,
+                sessionId: shownSession,
               );
               return commit.value;
             });

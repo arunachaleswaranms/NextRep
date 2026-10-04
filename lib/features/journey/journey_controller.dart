@@ -16,10 +16,18 @@ final journeyControllerProvider = FutureProvider.autoDispose<JourneyOverview>((
 ) async {
   ref.watch(arcRefreshProvider);
   final tracking = ref.watch(habitTrackingServiceProvider);
-  final status = ref.read(arcStatusProvider.notifier);
+  final status = ref.read(arcResolutionProvider.notifier);
   final achievements = ref.read(achievementSyncProvider);
   await status.reconcile();
   final journey = await tracking.journey();
   await achievements.run();
   return journey;
 });
+
+/// The Journey of the started arc [sessionId], for Arc History. Read-only:
+/// it never closes out an arc or reconciles achievements.
+final arcJourneyProvider = FutureProvider.autoDispose
+    .family<JourneyOverview, int>(
+      (ref, sessionId) =>
+          ref.watch(habitTrackingServiceProvider).journeyFor(sessionId),
+    );

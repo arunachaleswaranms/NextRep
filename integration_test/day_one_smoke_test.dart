@@ -9,6 +9,8 @@ import 'package:nextrep/app/app.dart';
 import 'package:nextrep/app/dependencies.dart';
 import 'package:nextrep/core/database/app_database.dart';
 
+import '../test/support/ui.dart';
+
 /// Runs the Day 1 flow on a real device with the system clock and a real
 /// SQLite file, then relaunches the app on a fresh connection to that file.
 ///
@@ -43,6 +45,9 @@ void main() {
     expect(find.text('Day 1 of 92'), findsOneWidget);
     expect(find.text('0%'), findsOneWidget);
 
+    // Scrolled into view first: on shorter screens (e.g. an iPhone) the
+    // last habit starts below the fold.
+    await reveal(tester, find.byTooltip('Complete No Junk Food'));
     await tester.tap(find.byTooltip('Complete No Junk Food'));
     await tester.pumpAndSettle();
     expect(find.text('25%'), findsOneWidget);

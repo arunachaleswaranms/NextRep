@@ -6,14 +6,20 @@ import '../../../app/router/app_router.dart';
 import '../../../app/theme/winter_tokens.dart';
 import '../achievements_controller.dart';
 
-/// Opens the achievement collection, showing how much of it is unlocked.
+/// Opens the achievement collection, showing how much of it is unlocked:
+/// the home arc's, or arc [sessionId]'s when shown from Arc History.
 class TrophyButton extends ConsumerWidget {
-  const TrophyButton({super.key});
+  const TrophyButton({super.key, this.sessionId});
+
+  final int? sessionId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.winter;
-    final board = ref.watch(achievementBoardProvider).value;
+    final id = sessionId;
+    final board = id == null
+        ? ref.watch(achievementBoardProvider).value
+        : ref.watch(arcAchievementBoardProvider(id)).value;
     final count = board == null
         ? null
         : '${board.unlockedCount}/${board.total}';
@@ -24,7 +30,9 @@ class TrophyButton extends ConsumerWidget {
           : 'Achievements, ${board!.unlockedCount} of ${board.total} unlocked',
       excludeSemantics: true,
       child: TextButton.icon(
-        onPressed: () => context.push(AppRoutes.achievements),
+        onPressed: () => context.push(
+          id == null ? AppRoutes.achievements : AppRoutes.arcAchievements(id),
+        ),
         style: TextButton.styleFrom(
           foregroundColor: colors.celebration,
           minimumSize: const Size(48, 48),

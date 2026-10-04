@@ -11,9 +11,13 @@ import '../../shared/widgets/winter_background.dart';
 import 'achievements_controller.dart';
 import 'widgets/achievement_card.dart';
 
-/// The achievement collection: every badge, locked or unlocked.
+/// The achievement collection: every badge, locked or unlocked. Without
+/// [sessionId] it shows the active arc's; with one, that arc's from Arc
+/// History, read-only.
 class AchievementsScreen extends ConsumerStatefulWidget {
-  const AchievementsScreen({super.key});
+  const AchievementsScreen({super.key, this.sessionId});
+
+  final int? sessionId;
 
   @override
   ConsumerState<AchievementsScreen> createState() => _AchievementsScreenState();
@@ -24,12 +28,18 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen> {
   void initState() {
     super.initState();
     // Self-heal any unlock a failed run missed before showing the board.
-    unawaited(ref.read(achievementSyncProvider).run());
+    // History is read-only, so only the home arc's board is reconciled.
+    if (widget.sessionId == null) {
+      unawaited(ref.read(achievementSyncProvider).run());
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final board = ref.watch(achievementBoardProvider);
+    final AsyncValue<AchievementBoard?> board = switch (widget.sessionId) {
+      null => ref.watch(achievementBoardProvider),
+      final id => ref.watch(arcAchievementBoardProvider(id)),
+    };
     return Scaffold(
       appBar: AppBar(
         title: const Text('Achievements'),
@@ -48,7 +58,10 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen> {
             ),
             AsyncError(:final error, :final stackTrace) => FailureView(
               failure: toAppFailure(error, stackTrace),
-              onRetry: () => ref.invalidate(achievementBoardProvider),
+              onRetry: () => switch (widget.sessionId) {
+                null => ref.invalidate(achievementBoardProvider),
+                final id => ref.invalidate(arcAchievementBoardProvider(id)),
+              },
             ),
             _ => const Center(child: CircularProgressIndicator()),
           },

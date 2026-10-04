@@ -31,7 +31,7 @@ class TodayController extends AsyncNotifier<DaySummary> {
   @override
   Future<DaySummary> build() async {
     final tracking = ref.watch(habitTrackingServiceProvider);
-    final status = ref.read(arcStatusProvider.notifier);
+    final status = ref.read(arcResolutionProvider.notifier);
     final achievements = ref.read(achievementSyncProvider);
     await status.reconcile();
     final summary = await tracking.today();
@@ -46,34 +46,51 @@ class TodayController extends AsyncNotifier<DaySummary> {
     String habitId,
     HabitAction action,
   ) => _mutate(
-    (service, date) =>
-        service.perform(habitId: habitId, action: action, date: date),
+    (service, date, sessionId) => service.perform(
+      habitId: habitId,
+      action: action,
+      date: date,
+      sessionId: sessionId,
+    ),
   );
 
   /// Switches the day on screen to a Minimum Day (one-way).
-  Future<ActionResult<DayCommit<bool>>> activateMinimumDay() =>
-      _mutate((service, date) => service.activateMinimumDay(date: date));
+  Future<ActionResult<DayCommit<bool>>> activateMinimumDay() => _mutate(
+    (service, date, sessionId) =>
+        service.activateMinimumDay(date: date, sessionId: sessionId),
+  );
 
   /// Re-reads today's state, e.g. when the app resumes on a new day or a
   /// habit was edited elsewhere.
   Future<void> refresh() => _queue.run(() => _reload(entryPoint: true));
 
+  /// Runs [body] for the day and arc on screen: a write meant for an arc
+  /// that has since closed is rejected, never applied to another arc.
   Future<ActionResult<T>> _mutate<T>(
-    Future<T> Function(HabitTrackingService service, LocalDate date) body,
+    Future<T> Function(
+      HabitTrackingService service,
+      LocalDate date,
+      int sessionId,
+    )
+    body,
   ) {
     final shownDate = state.value?.date;
+    final shownSession = state.value?.session.id;
     final service = ref.read(habitTrackingServiceProvider);
     final arcRefresh = ref.read(arcRefreshProvider.notifier);
     final achievements = ref.read(achievementSyncProvider);
     final result = _queue.run(() async {
-      final result = shownDate == null
+      final result = shownDate == null || shownSession == null
           ? ActionFailure<T>(
               const DomainFailure(
                 DomainRule.noActiveSession,
                 'Today not loaded',
               ),
             )
-          : await runAction('today', () => body(service, shownDate));
+          : await runAction(
+              'today',
+              () => body(service, shownDate, shownSession),
+            );
       if (result is ActionSuccess<T>) arcRefresh.changed();
       await _reload(entryPoint: false, service: service);
       return result;
@@ -94,7 +111,7 @@ class TodayController extends AsyncNotifier<DaySummary> {
     if (!ref.mounted) return;
     final HabitTrackingService tracking =
         service ?? ref.read(habitTrackingServiceProvider);
-    final status = ref.read(arcStatusProvider.notifier);
+    final status = ref.read(arcResolutionProvider.notifier);
     final achievements = ref.read(achievementSyncProvider);
     final next = await AsyncValue.guard(() async {
       if (entryPoint) await status.reconcile();
