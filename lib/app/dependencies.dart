@@ -25,6 +25,11 @@ final appDatabaseProvider = Provider<AppDatabase>(
 
 final clockProvider = Provider<Clock>((ref) => const SystemClock());
 
+/// Whether looping ambient scene motion (snow, aurora) may run at all. The
+/// platform reduced-motion setting turns it off independently. Widget tests
+/// override it with false so `pumpAndSettle` can settle.
+final ambientMotionProvider = Provider<bool>((ref) => true);
+
 final winterArcRepositoryProvider = Provider<WinterArcRepository>(
   (ref) => DriftWinterArcRepository(ref.watch(appDatabaseProvider)),
 );

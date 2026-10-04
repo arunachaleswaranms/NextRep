@@ -39,7 +39,13 @@ ThemeData buildWinterTheme([WinterColors colors = WinterColors.night]) {
       ),
       headlineMedium: text.headlineMedium?.copyWith(
         fontWeight: FontWeight.w700,
+        letterSpacing: -0.5,
       ),
+      headlineSmall: text.headlineSmall?.copyWith(
+        fontWeight: FontWeight.w700,
+        letterSpacing: -0.3,
+      ),
+      titleLarge: text.titleLarge?.copyWith(fontWeight: FontWeight.w700),
       titleMedium: text.titleMedium?.copyWith(fontWeight: FontWeight.w600),
       bodyMedium: text.bodyMedium?.copyWith(color: colors.textSecondary),
       labelLarge: text.labelLarge?.copyWith(
@@ -62,6 +68,44 @@ ThemeData buildWinterTheme([WinterColors colors = WinterColors.night]) {
           fontWeight: FontWeight.w700,
         ),
       ),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        foregroundColor: colors.textPrimary,
+        side: BorderSide(color: colors.glassBorder),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(WinterRadii.button),
+        ),
+      ),
+    ),
+    appBarTheme: AppBarTheme(
+      backgroundColor: colors.backgroundTop,
+      foregroundColor: colors.textPrimary,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+    ),
+    navigationBarTheme: NavigationBarThemeData(
+      backgroundColor: colors.skyTop,
+      surfaceTintColor: Colors.transparent,
+      indicatorColor: colors.accentSecondary.withValues(alpha: 0.18),
+      iconTheme: WidgetStateProperty.resolveWith(
+        (states) => IconThemeData(
+          color: states.contains(WidgetState.selected)
+              ? colors.accentSecondary
+              : colors.textSecondary,
+        ),
+      ),
+      labelTextStyle: WidgetStateProperty.resolveWith(
+        (states) => text.labelMedium?.copyWith(
+          color: states.contains(WidgetState.selected)
+              ? colors.textPrimary
+              : colors.textSecondary,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    ),
+    bottomSheetTheme: BottomSheetThemeData(
+      dragHandleColor: colors.textSecondary.withValues(alpha: 0.5),
     ),
     switchTheme: SwitchThemeData(
       thumbColor: WidgetStateProperty.resolveWith(

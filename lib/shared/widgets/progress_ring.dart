@@ -17,7 +17,7 @@ class ProgressRing extends StatelessWidget {
   final String label;
   final double size;
 
-  /// Arc colour while incomplete. Defaults to the progress accent.
+  /// Arc colour. Defaults to the progress accent, and success once full.
   final Color? color;
 
   @override
@@ -36,9 +36,9 @@ class ProgressRing extends StatelessWidget {
               value: value,
               strokeWidth: 8,
               strokeCap: StrokeCap.round,
-              color: ratio >= 1
-                  ? colors.success
-                  : color ?? colors.accentSecondary,
+              color:
+                  color ??
+                  (ratio >= 1 ? colors.success : colors.accentSecondary),
             ),
           ),
           Center(
