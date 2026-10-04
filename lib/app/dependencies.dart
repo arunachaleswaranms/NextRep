@@ -2,7 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/database/app_database.dart';
 import '../core/time/clock.dart';
+import '../data/backup_files.dart';
 import '../data/drift_achievement_repository.dart';
+import '../data/drift_backup_store.dart';
 import '../data/drift_habit_repository.dart';
 import '../data/drift_progress_repository.dart';
 import '../data/drift_reflection_repository.dart';
@@ -10,8 +12,11 @@ import '../data/drift_reminder_preferences_repository.dart';
 import '../data/drift_winter_arc_repository.dart';
 import '../domain/achievement/achievement_repository.dart';
 import '../domain/achievement/achievement_service.dart';
+import '../domain/backup/backup_service.dart';
+import '../domain/backup/backup_store.dart';
 import '../domain/habit/habit_repository.dart';
 import '../domain/history/arc_history_service.dart';
+import '../domain/insights/insight_service.dart';
 import '../domain/progress/habit_tracking_service.dart';
 import '../domain/progress/progress_repository.dart';
 import '../domain/reflection/reflection_repository.dart';
@@ -22,6 +27,7 @@ import '../domain/reminder/reminder_service.dart';
 import '../domain/winter_arc/arc_lifecycle_service.dart';
 import '../domain/winter_arc/winter_arc_repository.dart';
 import '../domain/winter_arc/winter_arc_service.dart';
+import 'app_info.dart';
 
 // Composition root. Infrastructure is overridden in main() and in tests;
 // features depend on the service providers only.
@@ -141,4 +147,32 @@ final arcLifecycleServiceProvider = Provider<ArcLifecycleService>(
     sessions: ref.watch(winterArcRepositoryProvider),
     clock: ref.watch(clockProvider),
   ),
+);
+
+final insightServiceProvider = Provider<InsightService>(
+  (ref) => InsightService(
+    sessions: ref.watch(winterArcRepositoryProvider),
+    progress: ref.watch(progressRepositoryProvider),
+    reflections: ref.watch(reflectionRepositoryProvider),
+    clock: ref.watch(clockProvider),
+  ),
+);
+
+final backupStoreProvider = Provider<BackupStore>(
+  (ref) => DriftBackupStore(ref.watch(appDatabaseProvider)),
+);
+
+final backupServiceProvider = Provider<BackupService>(
+  (ref) => BackupService(
+    store: ref.watch(backupStoreProvider),
+    scheduler: ref.watch(reminderSchedulerProvider),
+    clock: ref.watch(clockProvider),
+    appVersion: appVersion,
+  ),
+);
+
+/// The system file UI for saving and choosing backups. Tests override it
+/// with an in-memory fake; nothing here touches the network.
+final backupFilesProvider = Provider<BackupFiles>(
+  (ref) => const SystemBackupFiles(),
 );

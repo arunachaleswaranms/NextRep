@@ -72,6 +72,9 @@ class CelebrationQueue extends Notifier<List<CelebrationEvent>> {
     state = [current.first, for (final (_, e) in indexed) e];
   }
 
+  /// Drops every waiting celebration, e.g. when all data was replaced.
+  void clear() => state = const [];
+
   /// Removes [event] (normally the head) once dismissed.
   void dismiss(CelebrationEvent event) {
     state = [

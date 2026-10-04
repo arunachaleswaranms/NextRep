@@ -13,8 +13,10 @@ import '../journal/journal_controller.dart';
 final arcHistoryProvider = FutureProvider.autoDispose<List<WinterArcSession>>((
   ref,
 ) {
-  // A close-out or a new arc changes the list.
-  ref.watch(arcResolutionProvider);
+  // A close-out, a new arc or a deleted one changes the list.
+  ref
+    ..watch(arcResolutionProvider)
+    ..watch(arcsChangedProvider);
   return ref.watch(arcHistoryServiceProvider).sessions();
 });
 

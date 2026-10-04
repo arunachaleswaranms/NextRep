@@ -40,6 +40,7 @@ class ArcHistoryScreen extends ConsumerWidget {
           ? AppBar(
               title: const Text('Arc History'),
               backgroundColor: Colors.transparent,
+              actions: const [_DataBackupButton()],
             )
           : null,
       extendBodyBehindAppBar: standalone,
@@ -57,22 +58,49 @@ class ArcHistoryScreen extends ConsumerWidget {
                       WinterSpacing.sm,
                     ),
                     sliver: SliverToBoxAdapter(
-                      child: Column(
+                      child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'ARC HISTORY',
-                            style: text.labelLarge?.copyWith(
-                              color: colors.accentSecondary,
-                              letterSpacing: 3,
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'ARC HISTORY',
+                                  style: text.labelLarge?.copyWith(
+                                    color: colors.accentSecondary,
+                                    letterSpacing: 3,
+                                  ),
+                                ),
+                                const SizedBox(height: WinterSpacing.xs),
+                                Text(
+                                  'Every climb you have made, newest first.',
+                                  style: text.bodyMedium,
+                                ),
+                              ],
                             ),
                           ),
-                          const SizedBox(height: WinterSpacing.xs),
-                          Text(
-                            'Every climb you have made, newest first.',
-                            style: text.bodyMedium,
-                          ),
+                          const _DataBackupButton(),
                         ],
+                      ),
+                    ),
+                  ),
+                if (value.isNotEmpty)
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(
+                      WinterSpacing.md,
+                      WinterSpacing.xs,
+                      WinterSpacing.md,
+                      0,
+                    ),
+                    sliver: SliverToBoxAdapter(
+                      child: OutlinedButton.icon(
+                        onPressed: () => context.push(AppRoutes.insights),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(48),
+                        ),
+                        icon: const Icon(Icons.insights_rounded),
+                        label: const Text('Insights'),
                       ),
                     ),
                   ),
@@ -112,4 +140,16 @@ class ArcHistoryScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// Opens Data & Backup from Arc History.
+class _DataBackupButton extends StatelessWidget {
+  const _DataBackupButton();
+
+  @override
+  Widget build(BuildContext context) => IconButton(
+    tooltip: 'Data & Backup',
+    icon: const Icon(Icons.save_alt_rounded),
+    onPressed: () => context.push(AppRoutes.dataBackup),
+  );
 }

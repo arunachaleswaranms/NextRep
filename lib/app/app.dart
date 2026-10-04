@@ -10,6 +10,7 @@ import '../domain/winter_arc/current_arc_service.dart';
 import '../features/celebration/celebration_overlay.dart';
 import '../shared/widgets/failure_view.dart';
 import '../shared/widgets/winter_background.dart';
+import 'app_restart.dart';
 import 'arc_status.dart';
 import 'dependencies.dart';
 import 'router/app_router.dart';
@@ -20,9 +21,21 @@ class NextRepApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final epoch = ref.watch(appEpochProvider);
     final boot = ref.watch(bootLocationProvider);
+    // While the boot location is (re)computed nothing is routed: after a
+    // restore the old router and its screens are gone before the new ones
+    // read the restored data.
+    if (boot.isLoading) {
+      return const _StatusApp(
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
     return switch (boot) {
-      AsyncData(:final value) => _RoutedApp(initialLocation: value),
+      AsyncData(:final value) => _RoutedApp(
+        key: ValueKey(epoch),
+        initialLocation: value,
+      ),
       AsyncError(:final error, :final stackTrace) => _StatusApp(
         child: _BootFailure(failure: toAppFailure(error, stackTrace)),
       ),
@@ -40,7 +53,7 @@ class NextRepApp extends ConsumerWidget {
 /// on resume, and whenever the active arc changes (started, closed, or a
 /// new one).
 class _RoutedApp extends ConsumerStatefulWidget {
-  const _RoutedApp({required this.initialLocation});
+  const _RoutedApp({super.key, required this.initialLocation});
 
   final String initialLocation;
 
@@ -57,6 +70,7 @@ class _RoutedAppState extends ConsumerState<_RoutedApp> {
     resolution: _resolution,
   );
   late final AppLifecycleListener _lifecycle;
+  final _messenger = GlobalKey<ScaffoldMessengerState>();
   StreamSubscription<String?>? _taps;
 
   @override
@@ -69,6 +83,16 @@ class _RoutedAppState extends ConsumerState<_RoutedApp> {
     _lifecycle = AppLifecycleListener(onResume: _onResume);
     _taps = ref.read(reminderTapsProvider).listen(_openReminder);
     _syncReminders();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _showNotice());
+  }
+
+  /// Shows the message left by the action that restarted the app (e.g. a
+  /// restore), once.
+  void _showNotice() {
+    if (!mounted) return;
+    final notice = ref.read(appNoticeProvider.notifier).take();
+    if (notice == null) return;
+    _messenger.currentState?.showSnackBar(SnackBar(content: Text(notice)));
   }
 
   @override
@@ -129,6 +153,7 @@ class _RoutedAppState extends ConsumerState<_RoutedApp> {
     debugShowCheckedModeBanner: false,
     theme: buildWinterTheme(),
     routerConfig: _router,
+    scaffoldMessengerKey: _messenger,
     // Perfect Day, level-up and achievement cards, one at a time, above
     // every route.
     builder: (context, child) => CelebrationOverlay(child: child!),

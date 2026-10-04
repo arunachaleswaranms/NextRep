@@ -83,6 +83,20 @@ class OnboardingScreen extends ConsumerWidget {
                   busy: busy,
                   onPressed: () => _begin(context, ref),
                 ),
+                const SizedBox(height: WinterSpacing.sm),
+                // A returning user on a new device starts from a backup.
+                Center(
+                  child: TextButton.icon(
+                    onPressed: busy
+                        ? null
+                        : () => context.push(AppRoutes.dataBackup),
+                    style: TextButton.styleFrom(
+                      minimumSize: const Size(48, 48),
+                    ),
+                    icon: const Icon(Icons.settings_backup_restore_rounded),
+                    label: const Text('Restore from a backup'),
+                  ),
+                ),
               ],
             ),
           ),

@@ -7,9 +7,11 @@ import '../../domain/reminder/reminder_plan.dart';
 import '../../domain/winter_arc/current_arc_service.dart';
 import '../../domain/winter_arc/winter_arc_session.dart';
 import '../../features/achievements/achievements_screen.dart';
+import '../../features/backup/data_backup_screen.dart';
 import '../../features/habit_setup/habit_setup_screen.dart';
 import '../../features/habits/habits_screen.dart';
 import '../../features/history/arc_history_screen.dart';
+import '../../features/insights/insights_screen.dart';
 import '../../features/journal/journal_screen.dart';
 import '../../features/journey/journey_screen.dart';
 import '../../features/new_arc/new_arc_screen.dart';
@@ -18,6 +20,7 @@ import '../../features/reminders/reminder_settings_screen.dart';
 import '../../features/shell/active_shell.dart';
 import '../../features/summary/summary_screen.dart';
 import '../../features/today/today_screen.dart';
+import '../app_restart.dart';
 import '../arc_status.dart';
 import '../dependencies.dart';
 
@@ -39,6 +42,13 @@ abstract final class AppRoutes {
   /// Arc History when no arc is running (outside the tab shell).
   static const arcs = '/arcs';
   static const reminders = '/settings/reminders';
+
+  /// Data & Backup: export, restore. Reachable in every state, including
+  /// before the first arc (to restore on a new device).
+  static const dataBackup = '/settings/data';
+
+  /// On-device insights across every started arc.
+  static const insights = '/insights';
 
   /// A started arc by id: its summary, read-only. The home of a completed
   /// arc.
@@ -137,6 +147,8 @@ abstract final class AppRoutes {
 /// that ended while the app was away. A reminder that cold-started the app
 /// leads to its own (arc-checked) destination.
 final bootLocationProvider = FutureProvider<String>((ref) async {
+  // A restart (after a restore) resolves the boot location again.
+  ref.watch(appEpochProvider);
   final resolution = await ref.read(arcResolutionProvider.notifier).reconcile();
   final payload = ref.read(reminderLaunchPayloadProvider);
   return payload == null
@@ -188,6 +200,14 @@ GoRouter buildAppRouter({
       GoRoute(
         path: AppRoutes.reminders,
         builder: (context, state) => const ReminderSettingsScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.dataBackup,
+        builder: (context, state) => const DataBackupScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.insights,
+        builder: (context, state) => const InsightsScreen(),
       ),
       GoRoute(
         path: '/arc/:sessionId',

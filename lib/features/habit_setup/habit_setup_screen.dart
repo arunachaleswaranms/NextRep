@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/arc_status.dart';
 import '../../app/router/app_router.dart';
 import '../../app/theme/winter_tokens.dart';
 import '../../core/errors/action_result.dart';
@@ -11,6 +12,7 @@ import '../../shared/formatting/failure_messages.dart';
 import '../../shared/widgets/failure_view.dart';
 import '../../shared/widgets/primary_button.dart';
 import '../../shared/widgets/winter_background.dart';
+import '../summary/arc_removal.dart';
 import 'habit_setup_controller.dart';
 import 'widgets/habit_toggle_tile.dart';
 
@@ -42,6 +44,45 @@ class _HabitSetupScreenState extends ConsumerState<HabitSetupScreen> {
         context.go(AppRoutes.today);
       case ActionFailure(:final failure):
         setState(() => _starting = false);
+        _showFailure(failure);
+    }
+  }
+
+  Future<void> _cancelSetup() async {
+    final hasHistory = ref.read(arcResolutionProvider)?.latestCompleted != null;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Cancel this setup?'),
+        content: Text(
+          hasHistory
+              ? 'Your previous completed Arcs will remain safe.'
+              : 'Your habit choices will be cleared. You can start again '
+                    'whenever you are ready.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Keep Setup'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: context.winter.danger,
+              foregroundColor: context.winter.textPrimary,
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Cancel Setup'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    final result = await ref.read(arcRemovalProvider).cancelSetup();
+    if (!mounted) return;
+    switch (result) {
+      case ActionSuccess(:final value):
+        context.go(value);
+      case ActionFailure(:final failure):
         _showFailure(failure);
     }
   }
@@ -130,6 +171,12 @@ class _HabitSetupScreenState extends ConsumerState<HabitSetupScreen> {
                 label: 'Start Winter Arc',
                 busy: _starting,
                 onPressed: selected == 0 ? null : _start,
+              ),
+              const SizedBox(height: WinterSpacing.xs),
+              TextButton(
+                onPressed: _starting ? null : _cancelSetup,
+                style: TextButton.styleFrom(minimumSize: const Size(48, 48)),
+                child: const Text('Cancel setup'),
               ),
             ],
           ),
