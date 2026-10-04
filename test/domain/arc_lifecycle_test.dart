@@ -214,4 +214,8 @@ final class _CountingSessions implements WinterArcRepository {
     updates++;
     return _inner.updateSession(session);
   }
+
+  @override
+  Future<void> deleteSession(int id, {required WinterArcStatus expected}) =>
+      _inner.deleteSession(id, expected: expected);
 }

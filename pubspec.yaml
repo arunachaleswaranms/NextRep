@@ -29,8 +29,10 @@ environment:
 # versions available, run `flutter pub outdated`.
 dependencies:
   characters: ^1.4.0
+  crypto: ^3.0.7
   drift: ^2.35.1
   drift_flutter: ^0.3.1
+  file_picker: ^13.1.0
   flutter:
     sdk: flutter
   flutter_local_notifications: ^22.3.1

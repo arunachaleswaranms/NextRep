@@ -132,6 +132,40 @@ final class WinterArcService {
     return started;
   });
 
+  /// Permanently deletes the completed arc [sessionId] with all of its
+  /// history: habits, progress, XP, Journey, achievements and reflections.
+  /// Other arcs and the reminder preferences are untouched.
+  ///
+  /// Only a completed arc can be deleted. Throws [DomainRule.arcNotDeletable]
+  /// for an arc in setup or running (cancel a setup with [cancelSetup]) and
+  /// [DomainRule.sessionNotFound] if there is no such arc.
+  Future<void> deleteCompletedArc(int sessionId) => _mutations.run(() async {
+    final session = await _sessions.sessionById(sessionId);
+    if (session == null) {
+      throw DomainFailure(DomainRule.sessionNotFound, 'No session $sessionId');
+    }
+    if (session.status != WinterArcStatus.completed) {
+      throw DomainFailure(
+        DomainRule.arcNotDeletable,
+        'Session $sessionId is ${session.status.name}',
+      );
+    }
+    await _sessions.deleteSession(
+      sessionId,
+      expected: WinterArcStatus.completed,
+    );
+  });
+
+  /// Abandons the arc being set up, deleting it and its provisional habits.
+  /// Completed arcs are untouched. A running arc can't be cancelled.
+  ///
+  /// Throws [DomainRule.noSession] when nothing is unfinished and
+  /// [DomainRule.sessionNotInSetup] when the unfinished arc has started.
+  Future<void> cancelSetup() => _mutations.run(() async {
+    final session = await _requireSetup();
+    await _sessions.deleteSession(session.id, expected: WinterArcStatus.setup);
+  });
+
   Future<WinterArcSession> _createSetup(List<Habit> habits) {
     final start = _clock.today();
     return _sessions.createSetupSession(

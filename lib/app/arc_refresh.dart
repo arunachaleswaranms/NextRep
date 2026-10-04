@@ -10,3 +10,14 @@ class ArcRefresh extends Notifier<int> {
 
   void changed() => state++;
 }
+
+/// Bumped after an arc is deleted (a completed arc, or a cancelled setup),
+/// so lists across arcs (Arc History, Insights) re-read.
+final arcsChangedProvider = NotifierProvider<ArcsChanged, int>(ArcsChanged.new);
+
+class ArcsChanged extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  void changed() => state++;
+}

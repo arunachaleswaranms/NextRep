@@ -13,6 +13,10 @@ abstract interface class ReflectionRepository {
   /// The reflection of [sessionId] for [date], or null.
   Future<DailyReflection?> reflectionOn(int sessionId, LocalDate date);
 
+  /// The date and mood of every reflection of [sessionId], oldest first.
+  /// No text is read, so insights never handle what the user wrote.
+  Future<List<MoodMark>> moodsFor(int sessionId);
+
   /// Number of reflections of [sessionId].
   Future<int> countFor(int sessionId);
 

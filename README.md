@@ -6,10 +6,11 @@ daily habits, show up every day, earn XP, and climb from a frozen trail to a
 warm summit. Day 1 is the day you press Start (Oct 1 → Dec 31 when started on
 Oct 1).
 
-> **Status: Phase 4 — Retention & life after the summit.** Start another
-> arc after finishing one, Arc History with read-only views of every past
-> arc, a nightly Journal, opt-in local reminders with deep links, five more
-> achievements and schema v4. See [docs/PHASE_4.md](docs/PHASE_4.md), and
+> **Status: Phase 5 — Data safety & insight.** A portable, checksummed
+> backup file, a validated, transactional full restore, deleting a
+> completed arc, cancelling a setup, and on-device Insights across arcs
+> (consistency, habits, moods). Schema still v4. See
+> [docs/PHASE_5.md](docs/PHASE_5.md), and [docs/PHASE_4.md](docs/PHASE_4.md),
 > [docs/PHASE_3.md](docs/PHASE_3.md), [docs/PHASE_2.md](docs/PHASE_2.md) and
 > [docs/PHASE_1.md](docs/PHASE_1.md) for the earlier phases.
 
@@ -39,11 +40,16 @@ lib/
     reflection/             daily reflections (Journal), validation
     reminder/               preferences, pure planner, scheduler interface
     history/                Arc History read model
+    backup/                 backup format (codec, checksum), validator,
+                            store interface, export / restore service
+    insights/               pure cross-arc insight rules and service
     xp/                     XP rules, LevelRules
-  data/                     Drift repositories, local notification scheduler
+  data/                     Drift repositories, backup store, system file
+                            picker adapter, local notification scheduler
   features/                 UI per feature: controller + screen + widgets
     onboarding/  habit_setup/  new_arc/  shell/  today/  habits/  journey/
     journal/  history/  reminders/  achievements/  celebration/  summary/
+    backup/  insights/
   shared/                   reusable widgets, formatting, winter_scene/
 ```
 
@@ -72,7 +78,7 @@ XP or achievements.
 
 **Stack:** Flutter 3.47 / Dart 3.13 · Riverpod 3 (state + DI) · Drift 2
 (SQLite) · go_router · intl · flutter_local_notifications (local reminders
-only).
+only) · file_picker (system document UI for backups) · crypto (SHA-256).
 
 ## Setup
 
@@ -101,8 +107,11 @@ flutter analyze
 flutter test                     # unit + data + migration + widget tests
 flutter test test/data/migration_test.dart test/data/migration_v3_test.dart \
   test/data/migration_v4_test.dart  # v1/v2/v3 → v4
+flutter test test/domain/backup_format_test.dart \
+  test/data/backup_restore_test.dart test/domain/arc_deletion_test.dart \
+  test/domain/insight_rules_test.dart   # Phase 5 data safety + insights
 flutter test --coverage
-flutter test integration_test -d <android-device-id>   # on-device flow
+flutter test integration_test -d <device-id> --no-uninstall   # on-device flows
 flutter build apk --debug
 flutter build apk --release
 ```
@@ -164,11 +173,33 @@ survives restarts.
 - Schema v4 (`daily_reflections`, `reminder_preferences`, a unique index
   for one unfinished arc) with tested v3 → v4 and full-chain migrations.
 
+**Phase 5:**
+- **Data & Backup** (from Arc History, and from onboarding on a new
+  device). Export writes `nextrep-backup-YYYY-MM-DD.nextrep`, a versioned
+  (`formatVersion` 1), canonical JSON file with a SHA-256 checksum, through
+  the system save dialog. The file holds reflections and is **not
+  encrypted**, and the app says so before every export.
+- **Restore** validates the whole file first (size, product, version,
+  checksum, every field, every cross-record rule). It previews the counts,
+  asks again when the device has data, then replaces everything in one
+  transaction: any failure rolls back. Reminders come back off. The app then
+  reloads from the restored data.
+- **Delete Arc** for completed arcs (from the summary's menu, with a
+  destructive confirmation) and **Cancel setup** for an arc not yet
+  started. Both are transactional; other arcs and reminder preferences are
+  untouched.
+- **Insights** (from Arc History): weighted consistency across arcs,
+  Perfect and Minimum Day totals, XP and levels, per-habit completion over
+  enabled days (one habit per stable id), and the Journal's mood counts and
+  timeline. Computed on the device, descriptive only.
+- No schema change (still v4); the full migration chain still passes.
+
 ## Explicitly deferred
 
-Data export/backup, deleting arcs, a seasonal preset, analytics dashboard,
-cloud sync, accounts, social, health integrations, AI, backend, payments.
-See [docs/PHASE_4.md](docs/PHASE_4.md#phase-5-handoff).
+Seasonal (1 Oct → 31 Dec) preset, merge-import, encrypted backups, cloud
+sync, accounts, social, health integrations, AI, backend, payments,
+cancelling or deleting an active arc. See
+[docs/PHASE_5.md](docs/PHASE_5.md#phase-6-handoff).
 
 ## CI
 
@@ -185,9 +216,15 @@ Local-only: no backend, analytics, telemetry, ads or trackers.
   (reflection storage errors keep only the error type, because SQLite
   errors can quote the values). Notifications carry generic text only.
 - **Reminders** are scheduled locally by the OS. There's no push service.
+- **Backups** leave the device only when you export one, to the place you
+  pick in the system file UI. They are checksummed (to detect damage), not
+  encrypted. Backup errors never quote the file; restoring never turns
+  reminders on.
 - **Release APK permissions** (`aapt2 dump permissions`):
   - `POST_NOTIFICATIONS` and `VIBRATE` (notifications)
   - `RECEIVE_BOOT_COMPLETED` (restore reminders after a reboot)
   - AndroidX's app-private `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`
-- No `INTERNET` and no exact-alarm permission. `INTERNET` appears only in
-  the debug/profile manifests, which Flutter tooling needs for hot reload.
+- No `INTERNET`, no exact-alarm permission and no storage permission
+  (`MANAGE/READ/WRITE_EXTERNAL_STORAGE`): backups use the system document
+  picker. `INTERNET` appears only in the debug/profile manifests, which
+  Flutter tooling needs for hot reload.
