@@ -1,13 +1,15 @@
 # PROJECT_STATE
 
-_Last updated: 2026-10-04. Phase 3 complete on its branch, PR open, not
+_Last updated: 2026-10-04. Phase 4 complete on its branch, PR open, not
 merged._
 
 ## Repo
 
 - Remote: https://github.com/arunachaleswaranms/NextRep (public)
-- `main`: `789da07` (squash merge of PR #2, Phase 2). Phase 1 is PR #1.
-- Working branch: `phase/3-winter-arc-feel`, branched from `789da07`.
+- `main` baseline: `83680ab` (squash merge of PR #3, Phase 3). PR #1 is
+  Phase 1, PR #2 Phase 2.
+- Working branch: `phase/4-retention-and-arc-history`, from `83680ab`.
+- PR: _pending_. CI: _pending_.
 - Author and committer for all commits:
   `Arunachaleswaran M S <arunachaleswaranms@gmail.com>` (set repo-locally).
   No AI or co-author trailers.
@@ -18,7 +20,9 @@ merged._
   use `export PATH="$HOME/development/flutter/bin:$PATH"`)
 - Android builds: `JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home`
 - Emulator: AVD `RideLink_API36` (API 36, arm64) → `emulator-5554`
-- Drift 2.35.1. Snapshots v1–v3 in `drift_schemas/`, frozen steps in
+- iOS: Xcode 27 beta; CocoaPods **not** installed, and not needed
+  (Swift Package Manager). Simulator iPhone 17 (iOS 27).
+- Drift 2.35.1. Snapshots v1–v4 in `drift_schemas/`, frozen steps in
   `lib/core/database/schema_versions.dart`, test schemas in
   `test/generated_migrations/`
 - CI: `.github/workflows/flutter-ci.yml` (Flutter 3.47.5, JDK 21)
@@ -26,63 +30,74 @@ merged._
 ## Architecture (current)
 
 - Pure-Dart `domain/` owns truth. Drift `data/`, Riverpod controllers in
-  `features/`, `app/` composition root, go_router. The reusable scene is in
-  `shared/winter_scene/`.
+  `features/`, `app/` composition root, go_router.
+- Sessions: any number completed, at most one unfinished (setup/active).
+  This is enforced by the service, the create transaction and the
+  `single_open_session` index.
+- `CurrentArcService` resolves arcs explicitly. Writes go only to the
+  active arc, with the shown session id checked. History views take
+  `/arc/:sessionId` and are read-only.
 - One write path for the current day: `ProgressRepository.commitDay` +
-  `DayRules.settle`, which is the only XP authority.
-- Habit edits: renames now; target / minimum / enabled as a revision
-  effective tomorrow. On Day 92 config edits are rejected.
+  `DayRules.settle`, the only XP authority.
+- Journal: `daily_reflections`, one per session and date; only today of
+  the active arc is writable.
+- Reminders: `ReminderService.reconcile` → pure `ReminderPlanner` →
+  `ReminderScheduler` (`flutter_local_notifications`). Inexact one-shots
+  for 14 days, only while an arc is active.
+- Achievements: 15 keys; `AchievementRules.evaluate(AchievementContext)`
+  is pure; idempotent reconcile of the home arc; no XP.
 - Derived, never stored: streaks, levels, Perfect Days, Journey states,
-  scene milestones, the summary.
-- Achievements: rules derived from `ArcHistory`, unlocks persisted in
-  `achievement_unlocks` by an idempotent reconcile, run best effort outside
-  habit transactions. No XP.
-- Lifecycle: `ArcLifecycleService` marks the arc `completed` after Day 92,
-  at launch, resume and Today / Journey refresh. A completed arc is
-  read-only, and `/summary` is its home (router redirect).
-- Schema v3.
+  summaries, history cards.
+- Schema v4.
+
+## Package additions (Phase 4)
+
+`flutter_local_notifications ^22.3.1`, `timezone ^0.11.1`, `characters
+^1.4.0` (was transitive). Android: core library desugaring
+(`desugar_jdk_libs 2.1.4`).
 
 ## Commands that passed (2026-10-04)
 
 - `dart format .` (clean), `flutter analyze` (no issues)
 - `dart run build_runner build --delete-conflicting-outputs`, schema dump /
-  steps / generate
-- `flutter test`: 257/257. `flutter test --coverage`: 93.2% handwritten lib
-- Migration tests (`migration_test.dart` + `migration_v3_test.dart`): 18/18
-- `flutter test integration_test -d emulator-5554`: 3/3
-- `flutter build apk --debug` and `--release`: pass. `aapt2 dump permissions`
-  on release: no INTERNET.
+  steps / generate (v4)
+- `flutter test`: 348/348. `flutter test --coverage`: 93.0% handwritten lib
+- Migration tests (`migration_test`, `migration_v3_test`,
+  `migration_v4_test`): 28/28
+- `flutter test integration_test`: emulator-5554 4/4; iOS simulator 4/4
+- `flutter build apk --debug` and `--release`; `flutter build ios
+  --simulator`: pass
+- `aapt2 dump permissions` on release:
+  - `POST_NOTIFICATIONS`, `VIBRATE`, `RECEIVE_BOOT_COMPLETED` (plus the
+    existing AndroidX dynamic-receiver permission)
+  - no INTERNET, no SCHEDULE_EXACT_ALARM / USE_EXACT_ALARM
 
-## Emulator / manual status
+## Device status
 
-- Phase 2 release → Phase 3 release upgrade: PASS. Data intact, 2
-  achievements reconciled with their dates.
-- Today hero, habit completion, Perfect Day undo/redo, Minimum Day (→
-  "Still Moving"), habit edit "From tomorrow", Journey v2, Achievements,
-  force-stop/relaunch, background/foreground, reduced motion: PASS.
-- Arc close-out: clock-injected tests only.
-- Physical Android device: **MANUAL REQUIRED** (none connected).
-- iOS: **DEFERRED** (CocoaPods missing).
+- Emulator (API 36): PASS.
+  - Phase 3 → 4 upgrade with data intact.
+  - Notification permission prompt, delivery (background and killed
+    process), tap → Today / Journal including cold launch.
+  - Disable → 0 alarms; denial path; release-build delivery; Journal
+    keyboard.
+- Physical Android: **MANUAL REQUIRED** (none connected).
+- iOS: simulator build and integration tests PASS; iOS notification
+  delivery not checked.
 
 ## Known debt
 
-- Unlocks are permanent (undo doesn't revoke). No new arc after
-  completion.
-- Close-out waits for the next entry point (launch / resume / refresh).
-- Minimum Day is one-way. "Sleep Before Target" is binary. No habit
+- Reminders pause after 14 days without opening the app; delivery is
+  inexact.
+- No export/backup; no deleting arcs; a setup arc can't be cancelled.
+- Unlocks are permanent. Minimum Day is one-way. No habit
   creation/deletion or past-day editing.
+- Close-out still waits for an entry point (launch / resume / refresh).
 - Error reporting is local `dart:developer` logging only.
-
-## Open product decisions
-
-- What happens after the summit: a new arc, arc history, or a seasonal
-  preset?
-- Should achievement unlocks ever be revocable?
-- Should Minimum Day be reversible?
 
 ## Next recommended phase
 
-**Phase 4: life after the summit and gentle retention.** Physical-device and
-iOS pass, a new-arc flow / arc history, opt-in local reminders, an evening
-check-in or journal, achievements v2, Journey parallax. Details in
-`docs/PHASE_3.md#phase-4-handoff`.
+**Phase 5: data safety and insight.** Physical-device pass (Android and
+iOS notifications), local export/backup of arcs and the Journal, then
+cancel-setup / delete-arc on top of it, an optional seasonal (1 Oct →
+31 Dec) preset, on-device cross-arc and mood insights, and Journey scene
+v2 (parallax). Details in `docs/PHASE_4.md#phase-5-handoff`.
