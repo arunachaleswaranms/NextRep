@@ -4,14 +4,18 @@ import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:nextrep/core/database/app_database.dart';
 import 'package:nextrep/core/time/clock.dart';
+import 'package:nextrep/data/backup_files.dart';
 import 'package:nextrep/data/drift_achievement_repository.dart';
+import 'package:nextrep/data/drift_backup_store.dart';
 import 'package:nextrep/data/drift_habit_repository.dart';
 import 'package:nextrep/data/drift_progress_repository.dart';
 import 'package:nextrep/data/drift_reflection_repository.dart';
 import 'package:nextrep/data/drift_reminder_preferences_repository.dart';
 import 'package:nextrep/data/drift_winter_arc_repository.dart';
 import 'package:nextrep/domain/achievement/achievement_service.dart';
+import 'package:nextrep/domain/backup/backup_service.dart';
 import 'package:nextrep/domain/history/arc_history_service.dart';
+import 'package:nextrep/domain/insights/insight_service.dart';
 import 'package:nextrep/domain/progress/habit_tracking_service.dart';
 import 'package:nextrep/domain/reflection/reflection_service.dart';
 import 'package:nextrep/domain/reminder/reminder_plan.dart';
@@ -89,6 +93,7 @@ final class TestApp {
       achievementStore = DriftAchievementRepository(db),
       reflectionStore = DriftReflectionRepository(db),
       reminderStore = DriftReminderPreferencesRepository(db),
+      backupStore = DriftBackupStore(db),
       scheduler = scheduler ?? FakeReminderScheduler() {
     winterArc = WinterArcService(
       sessions: sessions,
@@ -126,6 +131,18 @@ final class TestApp {
       scheduler: this.scheduler,
       clock: clock,
     );
+    backup = BackupService(
+      store: backupStore,
+      scheduler: this.scheduler,
+      clock: clock,
+      appVersion: '1.0.0',
+    );
+    insights = InsightService(
+      sessions: sessions,
+      progress: progress,
+      reflections: reflectionStore,
+      clock: clock,
+    );
   }
 
   final AppDatabase db;
@@ -136,6 +153,7 @@ final class TestApp {
   final DriftAchievementRepository achievementStore;
   final DriftReflectionRepository reflectionStore;
   final DriftReminderPreferencesRepository reminderStore;
+  final DriftBackupStore backupStore;
   final FakeReminderScheduler scheduler;
   late final WinterArcService winterArc;
   late final HabitTrackingService tracking;
@@ -144,4 +162,30 @@ final class TestApp {
   late final ReflectionService reflections;
   late final ArcHistoryService history;
   late final ReminderService reminders;
+  late final BackupService backup;
+  late final InsightService insights;
+}
+
+/// [BackupFiles] in memory: "saving" keeps the file, "picking" returns
+/// [toPick] (null: the user cancelled).
+final class FakeBackupFiles implements BackupFiles {
+  FakeBackupFiles({this.toPick, this.saveAccepted = true});
+
+  Uint8List? toPick;
+  bool saveAccepted;
+  final saved = <(String, Uint8List)>[];
+  int picks = 0;
+
+  @override
+  Future<bool> save(String fileName, Uint8List bytes) async {
+    if (!saveAccepted) return false;
+    saved.add((fileName, bytes));
+    return true;
+  }
+
+  @override
+  Future<Uint8List?> pick() async {
+    picks++;
+    return toPick;
+  }
 }

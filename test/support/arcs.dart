@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart' show DataClass;
 import 'package:nextrep/core/database/app_database.dart';
 import 'package:nextrep/domain/habit/habit_edit.dart';
 import 'package:nextrep/domain/progress/habit_progress_rules.dart';
@@ -103,3 +104,51 @@ Future<List<Object>> snapshotOf(AppDatabase db, int sessionId) async => [
     db.dailyReflections,
   )..where((r) => r.sessionId.equals(sessionId))).get(),
 ];
+
+/// Every row of every app table, as JSON, for "exactly the same data"
+/// checks across databases. XP row ids are dropped: they are internal
+/// insertion counters, not data (a backup doesn't carry them).
+///
+/// With [renumberSessions], arc ids are replaced by their rank (1 = oldest),
+/// for comparing data restored over an existing database, where restored
+/// arcs get fresh ids.
+Future<Map<String, List<String>>> dumpOf(
+  AppDatabase db, {
+  bool renumberSessions = false,
+}) async {
+  final ids = [
+    for (final s in await db.select(db.winterArcSessions).get()) s.id,
+  ]..sort();
+  final rank = {for (final (i, id) in ids.indexed) id: i + 1};
+  Future<List<String>> rows<T extends DataClass>(
+    Future<List<T>> query, {
+    bool dropId = false,
+    String? sessionKey = 'sessionId',
+  }) async => [
+    for (final row in await query)
+      () {
+        final json = row.toJson()..removeWhere((k, _) => dropId && k == 'id');
+        if (renumberSessions && sessionKey != null) {
+          json[sessionKey] = rank[json[sessionKey]];
+        }
+        return json.toString();
+      }(),
+  ]..sort();
+  return {
+    'sessions': await rows(
+      db.select(db.winterArcSessions).get(),
+      sessionKey: 'id',
+    ),
+    'habits': await rows(db.select(db.habits).get()),
+    'revisions': await rows(db.select(db.habitRevisions).get()),
+    'progress': await rows(db.select(db.dailyHabitProgressEntries).get()),
+    'modes': await rows(db.select(db.dayModes).get()),
+    'xp': await rows(db.select(db.xpTransactions).get(), dropId: true),
+    'achievements': await rows(db.select(db.achievementUnlocks).get()),
+    'reflections': await rows(db.select(db.dailyReflections).get()),
+    'reminders': await rows(
+      db.select(db.reminderPrefs).get(),
+      sessionKey: null,
+    ),
+  };
+}
