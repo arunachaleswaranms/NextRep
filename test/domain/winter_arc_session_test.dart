@@ -4,6 +4,8 @@ import 'package:nextrep/domain/winter_arc/winter_arc_session.dart';
 
 WinterArcSession sessionStarting(LocalDate start) => WinterArcSession(
   id: 1,
+  kind: ArcKind.rolling92,
+  participationStartDate: start,
   startDate: start,
   endDate: WinterArcRules.endDateFor(start),
   status: WinterArcStatus.active,

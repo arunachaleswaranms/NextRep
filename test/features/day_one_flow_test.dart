@@ -45,6 +45,8 @@ Future<void> _shutDown(WidgetTester tester) async {
 Future<void> _onboardAndStart(WidgetTester tester) async {
   await tester.tap(find.text("Let's Begin"));
   await tester.pumpAndSettle();
+  await tester.tap(find.text('Rolling 92-Day Arc'));
+  await tester.pumpAndSettle();
   await tester.tap(find.text('Start Winter Arc'));
   await tester.pumpAndSettle();
 }
@@ -69,6 +71,8 @@ void main() {
     expect(find.text('92 days to a better you.'), findsOneWidget);
     await tester.tap(find.text("Let's Begin"));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('Rolling 92-Day Arc'));
+    await tester.pumpAndSettle();
 
     // Habit setup: turn off Learning, turn on English Practice.
     expect(find.text('Choose your habits'), findsOneWidget);
@@ -77,9 +81,14 @@ void main() {
       of: find.widgetWithText(HabitToggleTile, title),
       matching: find.byType(Switch),
     );
+    await tester.scrollUntilVisible(switchOf('Learning / Skills'), 100);
+    await tester.ensureVisible(switchOf('Learning / Skills'));
+    await tester.pumpAndSettle();
     await tester.tap(switchOf('Learning / Skills'));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(switchOf('English Practice'), 100);
+    await tester.ensureVisible(switchOf('English Practice'));
+    await tester.pumpAndSettle();
     await tester.tap(switchOf('English Practice'));
     await tester.pumpAndSettle();
     expect(find.text('4 habits selected'), findsOneWidget);

@@ -57,8 +57,12 @@ final class PerfectDayStats {
 
 /// Derived, read-only history of an arc as of [today].
 ///
-/// Only challenge days from Day 1 up to `min(today, end)` are ever
-/// evaluated; days outside the arc or in the future never affect streaks.
+/// Only participating days, from the participation start up to
+/// `min(today, end)`, are ever evaluated. For a rolling arc that is Day 1
+/// onwards; for a seasonal arc joined late, the days before joining are
+/// neutral: never missed, never part of a streak, a consistency
+/// denominator, a Perfect or Minimum Day, XP or an achievement. Days in the
+/// future never count either.
 final class ArcHistory {
   ArcHistory({
     required this.session,
@@ -72,12 +76,11 @@ final class ArcHistory {
 
   final Map<LocalDate, DayRecord> _cache = {};
 
-  /// Challenge days that have started, oldest first.
-  late final List<LocalDate> elapsedDates = () {
-    final last = today.isBefore(session.endDate) ? today : session.endDate;
-    final count = session.startDate.daysUntil(last) + 1;
-    return [for (var i = 0; i < count; i++) session.startDate.addDays(i)];
-  }();
+  /// Participating challenge days that have started, oldest first (see
+  /// [WinterArcSession.participatingDatesThrough]).
+  late final List<LocalDate> elapsedDates = session.participatingDatesThrough(
+    today,
+  );
 
   DayRecord recordOn(LocalDate date) => _cache.putIfAbsent(
     date,
@@ -131,7 +134,9 @@ final class ArcHistory {
     total: perfectMarks.where((m) => m == StreakMark.hit).length,
   );
 
-  /// All days of the arc, Day 1 first.
+  /// All days of the arc, Day 1 first. A seasonal arc always shows its 92
+  /// season days; the ones before the user joined are
+  /// [JourneyDayState.notJoined].
   List<JourneyDay> journey() => [
     for (var i = 0; i < session.lengthInDays; i++)
       _journeyDay(i + 1, session.startDate.addDays(i)),
@@ -139,6 +144,15 @@ final class ArcHistory {
 
   JourneyDay _journeyDay(int dayNumber, LocalDate date) {
     final isToday = date == today;
+    if (session.isBeforeJoining(date)) {
+      return JourneyDay(
+        dayNumber: dayNumber,
+        date: date,
+        state: JourneyDayState.notJoined,
+        isToday: isToday,
+        xpEarned: 0,
+      );
+    }
     if (date.isAfter(today)) {
       return JourneyDay(
         dayNumber: dayNumber,

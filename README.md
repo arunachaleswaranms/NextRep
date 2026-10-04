@@ -3,14 +3,18 @@
 NextRep is a mobile-first, offline-first habit app. Its first product,
 **Winter Arc**, is a gamified 92-day self-improvement challenge: pick a few
 daily habits, show up every day, earn XP, and climb from a frozen trail to a
-warm summit. Day 1 is the day you press Start (Oct 1 → Dec 31 when started on
-Oct 1).
+warm summit. Two kinds of Arc:
 
-> **Status: Phase 5 — Data safety & insight.** A portable, checksummed
-> backup file, a validated, transactional full restore, deleting a
-> completed arc, cancelling a setup, and on-device Insights across arcs
-> (consistency, habits, moods). Schema still v4. See
-> [docs/PHASE_5.md](docs/PHASE_5.md), and [docs/PHASE_4.md](docs/PHASE_4.md),
+- **Rolling 92-Day Arc**: Day 1 is the day you press Start.
+- **Seasonal Winter Arc**: 1 October – 31 December. Set it up in
+  September, or join the season already in progress; a late join keeps
+  the season's day numbers and the days before it are neutral.
+
+> **Status: Phase 6 — Seasonal Arc & habit evolution.** Arc kinds and
+> late joining (schema v5), the template catalogue, custom habits in setup,
+> clock-time habits (Sleep Before Target), and backup format 2 that still
+> restores format-1 files. See [docs/PHASE_6.md](docs/PHASE_6.md), and
+> [docs/PHASE_5.md](docs/PHASE_5.md), [docs/PHASE_4.md](docs/PHASE_4.md),
 > [docs/PHASE_3.md](docs/PHASE_3.md), [docs/PHASE_2.md](docs/PHASE_2.md) and
 > [docs/PHASE_1.md](docs/PHASE_1.md) for the earlier phases.
 
@@ -30,9 +34,11 @@ lib/
     time/                   LocalDate, Clock abstraction
     utils/                  SerialQueue
   domain/                   pure Dart business logic (owns truth)
-    winter_arc/             session model, current-arc resolution,
+    winter_arc/             session model, arc kinds and seasonal rules,
+                            participation, current-arc resolution,
                             setup/start/new arc, arc close-out
-    habit/                  Habit, dated config (HabitHistory), edit rules
+    habit/                  Habit, dated config (HabitHistory), edit rules,
+                            NightTime, template catalogue, setup rules
     progress/               progress + day rules, streaks, arc history,
                             Minimum Day, tracking service, arc summary
     journey/                Journey day states, milestones, chapters
@@ -106,10 +112,12 @@ dart format .
 flutter analyze
 flutter test                     # unit + data + migration + widget tests
 flutter test test/data/migration_test.dart test/data/migration_v3_test.dart \
-  test/data/migration_v4_test.dart  # v1/v2/v3 → v4
-flutter test test/domain/backup_format_test.dart \
-  test/data/backup_restore_test.dart test/domain/arc_deletion_test.dart \
-  test/domain/insight_rules_test.dart   # Phase 5 data safety + insights
+  test/data/migration_v4_test.dart test/data/migration_v5_test.dart  # → v5
+flutter test test/domain/backup_format_test.dart test/domain/backup_v2_test.dart \
+  test/data/backup_restore_test.dart test/data/backup_v2_restore_test.dart \
+  test/domain/arc_deletion_test.dart test/domain/insight_rules_test.dart
+flutter test test/domain/seasonal_arc_test.dart test/domain/participation_test.dart \
+  test/domain/time_before_test.dart test/domain/setup_habits_test.dart  # Phase 6
 flutter test --coverage
 flutter test integration_test -d <device-id> --no-uninstall   # on-device flows
 flutter build apk --debug
@@ -194,18 +202,39 @@ survives restarts.
   timeline. Computed on the device, descriptive only.
 - No schema change (still v4); the full migration chain still passes.
 
+**Phase 6:**
+- **Arc kinds**: Rolling 92-Day (unchanged) and the **Seasonal Winter Arc**
+  (1 Oct – 31 Dec). The season can be set up in September and joined any
+  day in season; a late join is "Day 15 of 92", never "Day 1".
+- **Participation**: days before joining are neutral everywhere (streaks,
+  Perfect/Minimum Days, XP, consistency, reflections, achievements,
+  Insights) and show as dashed "Before you joined" markers on the Journey.
+  Midwinter needs Day 46 to be a participated day; a late joiner who
+  finishes the season still reaches the Summit.
+- **Habit Setup v2**: a template catalogue, custom habits (done / not done,
+  count, minutes, before a time) with random stable ids, edit and remove
+  in setup, up to 12 habits.
+- **Clock-time habits**: Sleep Before Target is a morning check-in ("Last
+  night · 00:45 / Goal · before 01:00"), done when the bedtime is at or
+  before the goal; the same goal on Minimum Days.
+- Schema v5 (`arc_kind`, `participation_start_date`) with a tested v4 → v5
+  and full-chain migration. Backup format 2; format-1 backups still
+  restore.
+
 ## Explicitly deferred
 
-Seasonal (1 Oct → 31 Dec) preset, merge-import, encrypted backups, cloud
-sync, accounts, social, health integrations, AI, backend, payments,
+Custom seasons or lengths, adding or deleting habits in a running arc, a
+Minimum Day policy for clock-time habits, merge-import, encrypted backups,
+cloud sync, accounts, social, health integrations, AI, backend, payments,
 cancelling or deleting an active arc. See
-[docs/PHASE_5.md](docs/PHASE_5.md#phase-6-handoff).
+[docs/PHASE_6.md](docs/PHASE_6.md#phase-7-handoff).
 
 ## CI
 
 [`.github/workflows/flutter-ci.yml`](.github/workflows/flutter-ci.yml) runs on
 every pull request and push to `main`: format check, analyze, migration
-tests, all tests, and an Android debug build.
+tests (v1 → v5), backup format tests (v1 and v2), all tests, and an
+Android debug build.
 
 ## Privacy
 
@@ -220,6 +249,8 @@ Local-only: no backend, analytics, telemetry, ads or trackers.
   pick in the system file UI. They are checksummed (to detect damage), not
   encrypted. Backup errors never quote the file; restoring never turns
   reminders on.
+- **Habit templates** are bundled in the app; custom habit ids are random
+  and generated on the device.
 - **Release APK permissions** (`aapt2 dump permissions`):
   - `POST_NOTIFICATIONS` and `VIBRATE` (notifications)
   - `RECEIVE_BOOT_COMPLETED` (restore reminders after a reboot)

@@ -140,6 +140,13 @@ class _JourneyPathState extends State<JourneyPath> {
     final layout = JourneyPathLayout(journey.days, textScale: textScale);
     final todayIndex = journey.days.indexWhere((d) => d.isToday);
     // The walked trail ends at today's marker, or at the summit once over.
+    // A season joined late is only walked from the day the user joined.
+    final joinIndex = journey.session.joinedLate
+        ? journey.days.indexWhere((d) => !d.isNotJoined)
+        : -1;
+    final litFrom = joinIndex > 0
+        ? layout.centerOf(layout.indexOfDay(journey.days[joinIndex].dayNumber))
+        : 0.0;
     final litUntil = todayIndex >= 0
         ? layout.centerOf(layout.indexOfDay(journey.days[todayIndex].dayNumber))
         : journey.days.every((d) => !d.isFuture)
@@ -170,6 +177,7 @@ class _JourneyPathState extends State<JourneyPath> {
             final slice = _PathSlice(
               start: layout.starts[index],
               extent: layout.extentOf(item),
+              litFrom: litFrom,
               litUntil: litUntil,
               chapter: switch (item) {
                 DayItem(:final day) => JourneyChapter.forDay(day.dayNumber),
@@ -183,6 +191,7 @@ class _JourneyPathState extends State<JourneyPath> {
               DayItem(:final day) => _DayRow(
                 key: ValueKey(day.dayNumber),
                 day: day,
+                joinDay: journey.session.joinDayNumber,
                 width: width,
                 center: layout.centerOf(index),
                 slice: slice,
@@ -215,10 +224,15 @@ final class _PathSlice {
     required this.litUntil,
     required this.chapter,
     required this.seed,
+    this.litFrom = 0,
   });
 
   final double start;
   final double extent;
+
+  /// The walked trail runs from [litFrom] to [litUntil] (path offsets):
+  /// from the day the user joined to today.
+  final double litFrom;
   final double litUntil;
   final JourneyChapter chapter;
   final int seed;
@@ -247,7 +261,7 @@ class _SlicePainter extends CustomPainter {
     for (var y = size.height; y >= top - 0.01; y -= 3) {
       final g = slice.start + size.height - y;
       final point = Offset(JourneyPathLayout.pathX(g, size.width), y);
-      if (g <= slice.litUntil) {
+      if (g >= slice.litFrom && g <= slice.litUntil) {
         litStarted
             ? lit.lineTo(point.dx, point.dy)
             : lit.moveTo(point.dx, point.dy);
@@ -356,6 +370,7 @@ class _SlicePainter extends CustomPainter {
       old.toTop != toTop ||
       old.slice.start != slice.start ||
       old.slice.extent != slice.extent ||
+      old.slice.litFrom != slice.litFrom ||
       old.slice.litUntil != slice.litUntil;
 }
 
@@ -363,12 +378,16 @@ class _DayRow extends StatelessWidget {
   const _DayRow({
     super.key,
     required this.day,
+    required this.joinDay,
     required this.width,
     required this.center,
     required this.slice,
   });
 
   final JourneyDay day;
+
+  /// The day the user joined the arc, for the "before you joined" note.
+  final int? joinDay;
   final double width;
   final double center;
   final _PathSlice slice;
@@ -470,7 +489,7 @@ class _DayRow extends StatelessWidget {
             day: day,
             onTap: day.isFuture
                 ? null
-                : () => DayDetailSheet.show(context, day),
+                : () => DayDetailSheet.show(context, day, joinDay: joinDay),
           ),
         ),
         Positioned(
@@ -517,8 +536,12 @@ class _ChapterRow extends StatelessWidget {
         )
         .length;
     final cardOnRight = JourneyPathLayout.pathX(center, width) < width / 2;
-    final status = started
-        ? '$full of ${chapter.length} full days'
+    // Days before the user joined a season are not part of their chapter.
+    final joinable = item.days.where((d) => !d.isNotJoined).length;
+    final status = joinable == 0
+        ? 'Before you joined'
+        : started
+        ? '$full of $joinable full days'
         : 'Starts on Day ${chapter.firstDay}';
 
     final card = Semantics(

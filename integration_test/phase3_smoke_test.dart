@@ -60,6 +60,8 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text("Let's Begin"));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('Rolling 92-Day Arc'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Start Winter Arc'));
     await tester.pumpAndSettle();
     expect(find.text('0/15'), findsOneWidget);

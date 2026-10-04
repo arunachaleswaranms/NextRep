@@ -132,7 +132,7 @@ void main() {
     },
   );
 
-  group('v1 → v2 → v3 → v4 with Phase 1 data', () {
+  group('v1 → v2 → v3 → v4 → v5 with Phase 1 data', () {
     late AppDatabase db;
     late TestApp app;
     final day1 = LocalDate(2026, 10, 1);
@@ -144,7 +144,7 @@ void main() {
       db = AppDatabase(schema.newConnection());
       // Runs the real migration chain, then checks the result against the
       // committed v3 snapshot.
-      await verifier.migrateAndValidate(db, 4);
+      await verifier.migrateAndValidate(db, 5);
       app = TestApp(db, FakeClock(DateTime(2026, 10, 3, 20)));
     });
     tearDown(() => db.close());
@@ -323,7 +323,7 @@ void main() {
     }
     final db = AppDatabase(schema.newConnection());
     addTearDown(db.close);
-    await verifier.migrateAndValidate(db, 4);
+    await verifier.migrateAndValidate(db, 5);
 
     final app = TestApp(db, FakeClock(DateTime(2026, 10, 2, 9)));
     expect(

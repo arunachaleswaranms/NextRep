@@ -16,12 +16,32 @@ final class HabitEdit {
 abstract final class HabitEditRules {
   static const int maxTitleLength = 40;
 
-  /// Upper bound for a numeric target, per type.
+  /// Lower bound for a target, per type.
+  static int minTargetFor(HabitType type) => switch (type) {
+    HabitType.binary || HabitType.count || HabitType.duration => 1,
+    HabitType.timeBefore => NightTime.minValue,
+  };
+
+  /// Upper bound for a target, per type.
   static int maxTargetFor(HabitType type) => switch (type) {
     HabitType.binary => 1,
     HabitType.count => 50,
     HabitType.duration => 300,
+    HabitType.timeBefore => NightTime.maxValue,
   };
+
+  /// Whether [config] is a valid configuration for a habit of [type]: a
+  /// target within the type's limits and a Minimum Day target within
+  /// `1..target`, equal to the target for a clock-time habit (Minimum Day
+  /// doesn't loosen a clock time).
+  static bool isValidConfig(HabitType type, HabitConfig config) {
+    final target = config.target;
+    if (target < minTargetFor(type) || target > maxTargetFor(type)) {
+      return false;
+    }
+    if (type.isClockTime) return config.minimumTarget == target;
+    return config.minimumTarget >= 1 && config.minimumTarget <= target;
+  }
 
   /// Validates [edit] against [current] and returns the trimmed title (or
   /// null if unchanged) and the resulting configuration.
@@ -46,16 +66,21 @@ abstract final class HabitEditRules {
       if (title == habit.title) title = null;
     }
 
-    final config = current.copyWith(
+    var config = current.copyWith(
       target: edit.target,
       minimumTarget: edit.minimumTarget,
       enabled: edit.enabled,
     );
+    // A clock-time habit keeps the same target on a Minimum Day.
+    if (habit.type.isClockTime) {
+      config = config.copyWith(minimumTarget: config.target);
+    }
+    final min = minTargetFor(habit.type);
     final max = maxTargetFor(habit.type);
-    if (config.target < 1 || config.target > max) {
+    if (config.target < min || config.target > max) {
       throw DomainFailure(
         DomainRule.invalidHabitEdit,
-        'Target must be 1..$max for "${habit.id}"',
+        'Target must be $min..$max for "${habit.id}"',
       );
     }
     if (config.minimumTarget < 1 || config.minimumTarget > config.target) {

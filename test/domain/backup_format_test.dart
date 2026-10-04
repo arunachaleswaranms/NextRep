@@ -91,7 +91,7 @@ void main() {
       );
       expect(backup.document.exportedAt.isUtc, isFalse, reason: 'local time');
       expect(_json(bytes)['product'], 'NextRep');
-      expect(_json(bytes)['formatVersion'], 1);
+      expect(_json(bytes)['formatVersion'], 2);
     });
 
     test('encoding is deterministic and the checksum is SHA-256 of the '
@@ -174,7 +174,7 @@ void main() {
     test(
       'an unsupported format version, before reading anything else',
       () async {
-        for (final version in [2, 99, 0]) {
+        for (final version in [3, 99, 0]) {
           final bytes = _mutate(await _exported(), (j) {
             j['formatVersion'] = version;
             j['data'] = {'futureLayout': true}; // never looked at

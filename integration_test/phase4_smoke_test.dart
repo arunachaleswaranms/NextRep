@@ -89,6 +89,8 @@ void main() {
 
     // Start New Arc → Reuse Last Setup → Setup → Start.
     await tapVisible(tester, find.text('Start New Arc'));
+    await tester.tap(find.text('Rolling 92-Day Arc'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Reuse last setup'));
     await tester.pumpAndSettle();
     expect(find.byType(HabitSetupScreen), findsOneWidget);

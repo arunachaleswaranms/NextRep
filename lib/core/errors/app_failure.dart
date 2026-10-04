@@ -66,6 +66,26 @@ enum DomainRule {
 
   /// Only a completed arc can be deleted; a setup or active arc can't.
   arcNotDeletable,
+
+  /// The Seasonal Winter Arc can't be set up yet (before 1 September).
+  seasonNotOpen,
+
+  /// The Seasonal Winter Arc can't start before 1 October.
+  seasonNotStarted,
+
+  /// The season of this setup is over (after 31 December); it can only be
+  /// cancelled.
+  seasonEnded,
+
+  /// An arc already has the most habits it can have.
+  habitLimitReached,
+
+  /// The habit (same template, or same name) is already in the arc.
+  duplicateHabit,
+
+  /// A session would break the arc invariants (dates, kind,
+  /// participation).
+  invalidArc,
 }
 
 /// A domain rule rejected the requested action. Nothing was persisted.

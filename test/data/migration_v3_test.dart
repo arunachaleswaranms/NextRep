@@ -150,7 +150,7 @@ void main() {
     expect(await db.select(db.achievementUnlocks).get(), isEmpty);
   });
 
-  group('v2 → v3 → v4 with Phase 2 data', () {
+  group('v2 → v3 → v4 → v5 with Phase 2 data', () {
     late AppDatabase db;
     late TestApp app;
     LocalDate day(int n) => LocalDate(2026, 10, n);
@@ -159,7 +159,7 @@ void main() {
       final schema = await verifier.schemaAt(2);
       _seedV2(schema.rawDatabase);
       db = AppDatabase(schema.newConnection());
-      await verifier.migrateAndValidate(db, 4);
+      await verifier.migrateAndValidate(db, 5);
       app = TestApp(db, FakeClock(DateTime(2026, 10, 6, 20)));
     });
     tearDown(() => db.close());

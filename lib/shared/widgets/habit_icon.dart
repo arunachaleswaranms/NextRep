@@ -28,6 +28,13 @@ class HabitIcon extends StatelessWidget {
     'no_junk_food': Icons.no_food_rounded,
     'sleep': Icons.bedtime_rounded,
     'meditation': Icons.self_improvement_rounded,
+    'journal': Icons.edit_note_rounded,
+    'walk': Icons.directions_walk_rounded,
+    'music': Icons.music_note_rounded,
+    'code': Icons.code_rounded,
+    'nature': Icons.park_rounded,
+    'heart': Icons.favorite_rounded,
+    'star': Icons.star_rounded,
   };
 
   @override

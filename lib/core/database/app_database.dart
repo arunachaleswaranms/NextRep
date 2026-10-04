@@ -36,7 +36,7 @@ class AppDatabase extends _$AppDatabase {
   factory AppDatabase.open() => AppDatabase(driftDatabase(name: 'nextrep'));
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -47,6 +47,7 @@ class AppDatabase extends _$AppDatabase {
       from1To2: _from1To2,
       from2To3: _from2To3,
       from3To4: _from3To4,
+      from4To5: _from4To5,
     ),
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
@@ -117,5 +118,29 @@ class AppDatabase extends _$AppDatabase {
     await m.createTable(schema.dailyReflections);
     await m.createTable(schema.reminderPreferences);
     await m.createIndex(schema.singleOpenSession);
+  }
+
+  /// v4 → v5: arc kind and participation start.
+  ///
+  /// Additive only: two new columns on `winter_arc_sessions`; no other
+  /// table is touched. Every session before v5 was a rolling 92-day arc, so
+  /// the kind defaults to `rolling92`, and a rolling arc is joined on its
+  /// start date, so started sessions (active or completed) get
+  /// `participation_start_date = start_date`. Sessions in setup keep it
+  /// null until they start. `started_at` is deliberately not used: it's an
+  /// instant, and its local date can differ after a time-zone change.
+  static Future<void> _from4To5(Migrator m, Schema5 schema) async {
+    await m.addColumn(
+      schema.winterArcSessions,
+      schema.winterArcSessions.arcKind,
+    );
+    await m.addColumn(
+      schema.winterArcSessions,
+      schema.winterArcSessions.participationStartDate,
+    );
+    await m.database.customStatement('''
+      UPDATE winter_arc_sessions SET participation_start_date = start_date
+      WHERE status IN ('active', 'completed')
+    ''');
   }
 }

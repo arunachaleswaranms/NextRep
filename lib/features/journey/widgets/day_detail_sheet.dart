@@ -16,7 +16,22 @@ class DayDetailSheet extends StatelessWidget {
   final JourneyDay day;
   final DayRecord record;
 
-  static Future<void> show(BuildContext context, JourneyDay day) {
+  /// Shows [day]'s detail. A day before the user joined a seasonal arc
+  /// ([joinDay] is the day they joined) only gets a short, read-only note;
+  /// future days have none.
+  static Future<void> show(
+    BuildContext context,
+    JourneyDay day, {
+    int? joinDay,
+  }) {
+    if (day.isNotJoined) {
+      return showModalBottomSheet<void>(
+        context: context,
+        showDragHandle: true,
+        backgroundColor: context.winter.surface,
+        builder: (_) => NotJoinedDaySheet(day: day, joinDay: joinDay),
+      );
+    }
     final record = day.record;
     if (record == null) return Future.value(); // future days have no detail
     return showModalBottomSheet<void>(
@@ -120,6 +135,55 @@ class DayDetailSheet extends StatelessWidget {
                   ],
                 ),
               ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A season day before the user joined: neutral, with nothing to show.
+class NotJoinedDaySheet extends StatelessWidget {
+  const NotJoinedDaySheet({super.key, required this.day, this.joinDay});
+
+  final JourneyDay day;
+  final int? joinDay;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.winter;
+    final text = Theme.of(context).textTheme;
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          WinterSpacing.lg,
+          0,
+          WinterSpacing.lg,
+          WinterSpacing.lg,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('Day ${day.dayNumber}', style: text.headlineSmall),
+            const SizedBox(height: WinterSpacing.xs),
+            Text(
+              DateFormat('EEEE, d MMMM y').format(day.date.toLocalDateTime()),
+              style: text.bodyMedium,
+            ),
+            const SizedBox(height: WinterSpacing.md),
+            Text(
+              'Before you joined this Seasonal Winter Arc.',
+              style: text.titleMedium,
+            ),
+            const SizedBox(height: WinterSpacing.xs),
+            Text(
+              joinDay == null
+                  ? 'Earlier season days are not counted against you.'
+                  : 'You joined on Day $joinDay. Earlier season days are '
+                        'not counted against you.',
+              style: text.bodyMedium?.copyWith(color: colors.textSecondary),
+            ),
           ],
         ),
       ),

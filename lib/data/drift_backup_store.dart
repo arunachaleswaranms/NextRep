@@ -95,6 +95,8 @@ final class DriftBackupStore implements BackupStore {
             BackupArc(
               session: WinterArcSession(
                 id: s.id,
+                kind: s.arcKind,
+                participationStartDate: s.participationStartDate,
                 startDate: s.startDate,
                 endDate: s.endDate,
                 status: s.status,
@@ -212,11 +214,13 @@ final class DriftBackupStore implements BackupStore {
               _db.winterArcSessions,
               WinterArcSessionsCompanion.insert(
                 id: Value(id),
+                arcKind: Value(s.kind),
                 startDate: s.startDate,
                 endDate: s.endDate,
                 status: s.status,
                 createdAt: s.createdAt,
                 startedAt: Value(s.startedAt),
+                participationStartDate: Value(s.participationStartDate),
               ),
             )
             ..insertAll(_db.habits, [

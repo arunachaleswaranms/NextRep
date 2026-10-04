@@ -3,7 +3,10 @@ import 'package:characters/characters.dart';
 import '../../core/errors/app_failure.dart';
 import '../../core/time/local_date.dart';
 import '../habit/habit.dart';
+import '../habit/habit_config.dart';
 import '../habit/habit_edit.dart';
+import '../habit/setup_habit_rules.dart';
+import '../progress/day_mode.dart';
 import '../reflection/daily_reflection.dart';
 import '../winter_arc/winter_arc_session.dart';
 import '../xp/xp.dart';
@@ -27,14 +30,22 @@ final class ValidatedBackup {
 /// `BackupCodec`). This adds the invariants the app relies on:
 ///
 /// * at most one unfinished (setup or active) arc; unique arc ids; every
-///   arc is a rolling 92-day window; a completed arc is over and a started
-///   one has started
-/// * habits: unique id and sort order per arc, a known type, a target
-///   within the editing limits, a title like one the app could have saved
+///   arc keeps the invariants of its kind (`WinterArcRules.problemWith`: a
+///   rolling 92-day window joined on its start date, or one year's 1
+///   October – 31 December season joined inside it; no participation
+///   while in setup); a completed arc is over and a started one has
+///   started
+/// * habits: unique id and sort order per arc, at most
+///   [SetupHabitRules.maxHabits], a known type, a target within the
+///   editing limits (a clock-time target in the night window, the same on
+///   Minimum Days), a title like one the app could have saved
 /// * every revision, progress row, XP entry, day mode, unlock and
 ///   reflection references its arc (the format nests them) and, where it
-///   has one, a habit of that arc; its date lies inside the arc and not
-///   after the export
+///   has one, a habit of that arc; its date is a participating date of the
+///   arc (never before the user joined) and not after the export
+/// * a clock-time habit's progress is "not logged" (0) or a night time, and
+///   its completion agrees with the target in effect on that date (with
+///   that date's revisions and mode, never today's)
 /// * uniqueness: one progress row per habit and date, one revision per
 ///   habit and date, one mode / reflection per date, one unlock per key,
 ///   one XP entry per source key
@@ -73,10 +84,18 @@ abstract final class BackupValidator {
 
   static void _checkArc(BackupArc arc, String at, LocalDate latest) {
     final session = arc.session;
-    if (session.endDate != WinterArcRules.endDateFor(session.startDate)) {
-      _fail(at, 'not a ${WinterArcRules.lengthInDays}-day arc');
+    // Fixed wording from the rules; it never contains file values.
+    if (WinterArcRules.problemWith(session) case final problem?) {
+      _fail(at, problem);
     }
-    if (session.startDate.isAfter(latest)) {
+    final joined = session.participationStartDate;
+    if (joined != null && joined.isAfter(latest)) {
+      _fail('$at.participationStartDate', 'after the export date');
+    }
+    // A rolling arc's provisional start is the day its setup was made; a
+    // seasonal setup made in September starts on a later 1 October.
+    if (session.kind == ArcKind.rolling92 &&
+        session.startDate.isAfter(latest)) {
       _fail('$at.startDate', 'after the export date');
     }
     if (session.status == WinterArcStatus.completed &&
@@ -84,15 +103,23 @@ abstract final class BackupValidator {
       _fail('$at.endDate', 'a completed arc that has not ended');
     }
 
-    bool inArc(LocalDate date) =>
-        !date.isBefore(session.startDate) && !date.isAfter(session.endDate);
+    // History only exists on participating dates: never before the user
+    // joined a seasonal arc.
+    bool inArc(LocalDate date) => session.isParticipatingOn(date);
     void checkDate(LocalDate date, String where) {
       if (!inArc(date)) _fail(where, 'date outside the arc');
       if (date.isAfter(latest)) _fail(where, 'date after the export');
     }
 
     // Habits.
-    if (arc.habits.isEmpty) _fail('$at.habits', 'an arc has habits');
+    // A setup may be empty for a moment (habits removed before adding
+    // others); a started arc always has habits.
+    if (arc.habits.isEmpty && session.status != WinterArcStatus.setup) {
+      _fail('$at.habits', 'an arc has habits');
+    }
+    if (arc.habits.length > SetupHabitRules.maxHabits) {
+      _fail('$at.habits', 'too many habits');
+    }
     final habits = <String, Habit>{};
     final sortOrders = <int>{};
     for (final (j, habit) in arc.habits.indexed) {
@@ -108,8 +135,8 @@ abstract final class BackupValidator {
           title.length > HabitEditRules.maxTitleLength) {
         _fail('$where.title', 'not a valid habit name');
       }
-      if (habit.target > HabitEditRules.maxTargetFor(habit.type)) {
-        _fail('$where.target', 'target above the limit');
+      if (!HabitEditRules.isValidConfig(habit.type, habit.baseline)) {
+        _fail('$where.target', 'target not valid for the habit');
       }
     }
 
@@ -140,9 +167,7 @@ abstract final class BackupValidator {
       if (!revisionKeys.add((revision.habitId, revision.effectiveFrom))) {
         _fail(where, 'duplicate revision');
       }
-      final target = revision.config.target;
-      if ((habit.type == HabitType.binary && target != 1) ||
-          target > HabitEditRules.maxTargetFor(habit.type)) {
+      if (!HabitEditRules.isValidConfig(habit.type, revision.config)) {
         _fail('$where.target', 'target not valid for the habit');
       }
     }
@@ -154,14 +179,28 @@ abstract final class BackupValidator {
       if (!modeDates.add(mode.date)) _fail(where, 'duplicate day mode');
     }
 
+    final history = HabitHistory(habits: arc.habits, revisions: arc.revisions);
+    final modes = {for (final m in arc.dayModes) m.date: m.mode};
     final progressKeys = <(String, LocalDate)>{};
     for (final (j, row) in arc.progress.indexed) {
       final where = '$at.progress[$j]';
       final p = row.progress;
-      habitFor(p.habitId, where);
+      final habit = habitFor(p.habitId, where);
       checkDate(p.date, '$where.date');
       if (!progressKeys.add((p.habitId, p.date))) {
         _fail(where, 'duplicate progress');
+      }
+      if (habit.type.isClockTime) {
+        if (p.currentValue != 0 && !NightTime.isValidValue(p.currentValue)) {
+          _fail('$where.value', 'not a clock time');
+        }
+        // The target of that date, with its revisions and mode.
+        final target = history
+            .configOn(habit, p.date)
+            .targetFor(modes[p.date] ?? DayMode.normal);
+        if (p.completed != habit.type.isCompletedBy(p.currentValue, target)) {
+          _fail('$where.completed', 'does not match the recorded time');
+        }
       }
     }
 

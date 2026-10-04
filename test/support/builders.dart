@@ -63,6 +63,8 @@ DailyHabitProgress progress(
 /// An active 92-day session starting on [day1].
 WinterArcSession activeSession() => WinterArcSession(
   id: 1,
+  kind: ArcKind.rolling92,
+  participationStartDate: day1,
   startDate: day1,
   endDate: WinterArcRules.endDateFor(day1),
   status: WinterArcStatus.active,

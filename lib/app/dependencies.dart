@@ -15,6 +15,7 @@ import '../domain/achievement/achievement_service.dart';
 import '../domain/backup/backup_service.dart';
 import '../domain/backup/backup_store.dart';
 import '../domain/habit/habit_repository.dart';
+import '../domain/habit/setup_habit_rules.dart';
 import '../domain/history/arc_history_service.dart';
 import '../domain/insights/insight_service.dart';
 import '../domain/progress/habit_tracking_service.dart';
@@ -67,11 +68,18 @@ final progressRepositoryProvider = Provider<ProgressRepository>(
   (ref) => DriftProgressRepository(_database(ref), ref.watch(clockProvider)),
 );
 
+/// Ids of habits the user creates. Tests can override it with a
+/// predictable generator.
+final habitIdGeneratorProvider = Provider<HabitIdGenerator>(
+  (ref) => SecureHabitIdGenerator(),
+);
+
 final winterArcServiceProvider = Provider<WinterArcService>(
   (ref) => WinterArcService(
     sessions: ref.watch(winterArcRepositoryProvider),
     habits: ref.watch(habitRepositoryProvider),
     clock: ref.watch(clockProvider),
+    ids: ref.watch(habitIdGeneratorProvider),
   ),
 );
 

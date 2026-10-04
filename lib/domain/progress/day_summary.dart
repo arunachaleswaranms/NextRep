@@ -51,9 +51,11 @@ final class DaySummary {
   DayCompletion get completion => record.completion;
   bool get isPerfect => record.isPerfect;
 
-  /// Today can be tracked: the arc is active and today is one of its days.
+  /// Today can be tracked: the arc is active and today is one of its
+  /// participating days (never a season day before the user joined).
   bool get isTrackable =>
-      session.status == WinterArcStatus.active && position is ArcInProgress;
+      session.status == WinterArcStatus.active &&
+      session.isParticipatingOn(record.date);
 
   /// Whether the user may still switch today to a Minimum Day.
   bool get canSwitchToMinimum =>

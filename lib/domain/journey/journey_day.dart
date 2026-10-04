@@ -6,6 +6,7 @@ import '../progress/day_record.dart';
 ///
 /// | state | when |
 /// |---|---|
+/// | [notJoined] | a seasonal day before the user joined (neutral) |
 /// | [future] | after today |
 /// | [perfect] | normal day, every enabled habit complete (past or today) |
 /// | [minimumComplete] | Minimum Day, every enabled habit at its minimum (past or today) |
@@ -14,6 +15,10 @@ import '../progress/day_record.dart';
 /// | [minimumPartial] | past Minimum Day with some progress, not all complete |
 /// | [missed] | past day (either mode) with no progress at all |
 enum JourneyDayState {
+  /// A day of a seasonal arc before the user joined it. Neutral: not a
+  /// miss, not a future day; it has no record and no detail beyond the
+  /// explanation.
+  notJoined,
   future,
   today,
   perfect,
@@ -23,7 +28,7 @@ enum JourneyDayState {
   missed;
 
   /// Whether the day is over and its outcome final.
-  bool get isFinal => this != future && this != today;
+  bool get isFinal => this != future && this != today && this != notJoined;
 }
 
 /// One of the arc's days, as shown on the Journey.
@@ -45,7 +50,8 @@ final class JourneyDay {
   /// True for the current date, whatever its [state].
   final bool isToday;
 
-  /// What happened that day. Null for future days.
+  /// What happened that day. Null for future days and days before the
+  /// user joined.
   final DayRecord? record;
 
   /// XP credited to this date (habit completions and Perfect Day bonus).
@@ -53,6 +59,7 @@ final class JourneyDay {
 
   DayMode? get mode => record?.mode;
   bool get isFuture => state == JourneyDayState.future;
+  bool get isNotJoined => state == JourneyDayState.notJoined;
 }
 
 abstract final class JourneyRules {

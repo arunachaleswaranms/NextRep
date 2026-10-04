@@ -1,4 +1,5 @@
 import '../../core/time/local_date.dart';
+import '../habit/habit.dart';
 
 /// A habit's progress on one calendar day.
 ///
@@ -26,15 +27,17 @@ final class DailyHabitProgress {
   final bool completed;
   final DateTime? completedAt;
 
-  /// This progress with [value], completed iff it reaches [target].
+  /// This progress with [value], completed iff [type] says [value] meets
+  /// [target] (see [HabitType.isCompletedBy]).
   ///
   /// Keeps the original completion time while it stays completed.
   DailyHabitProgress withValue(
     int value, {
+    required HabitType type,
     required int target,
     required DateTime now,
   }) {
-    final nowCompleted = value >= target;
+    final nowCompleted = type.isCompletedBy(value, target);
     return DailyHabitProgress(
       habitId: habitId,
       date: date,

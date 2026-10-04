@@ -12,17 +12,28 @@ import '../xp/xp.dart';
 /// Constants of the NextRep backup format.
 ///
 /// The backup format is versioned on its own: [formatVersion] says how a
-/// file is laid out and is unrelated to the database schema version. A
-/// later app can move to format 2 without a schema change, or change the
-/// schema while still writing format 1.
+/// file is laid out and is unrelated to the database schema version.
+///
+/// * Format 1 (Phase 5): every arc is a rolling 92-day arc.
+/// * Format 2 (Phase 6): each arc also states its kind (`rolling92` or
+///   `seasonalWinter`) and its participation start; habits may be
+///   clock-time (`timeBefore`) habits.
+///
+/// The app writes format 2 only and reads both. A format-1 file keeps its
+/// meaning: its checksum and structure are checked by format-1 rules, and
+/// only then is each arc read as a rolling arc joined on its start date.
 abstract final class BackupFormat {
   /// The `product` field of every NextRep backup.
   static const product = 'NextRep';
 
-  /// The only format this app reads and writes.
-  static const formatVersion = 1;
+  /// The format this app writes.
+  static const formatVersion = 2;
 
-  /// The checksum algorithm of [formatVersion] 1.
+  /// The formats this app reads. Anything else, including a newer format,
+  /// is rejected before any of it is interpreted.
+  static const readableVersions = {1, 2};
+
+  /// The checksum algorithm of formats 1 and 2.
   static const checksumAlgorithm = 'sha256';
 
   /// File extension, without the dot.

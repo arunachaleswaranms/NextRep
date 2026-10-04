@@ -52,6 +52,7 @@ final class DriftWinterArcRepository implements WinterArcRepository {
 
   @override
   Future<WinterArcSession> createSetupSession({
+    required ArcKind kind,
     required LocalDate startDate,
     required LocalDate endDate,
     required DateTime createdAt,
@@ -71,6 +72,7 @@ final class DriftWinterArcRepository implements WinterArcRepository {
           .into(_db.winterArcSessions)
           .insertReturning(
             WinterArcSessionsCompanion.insert(
+              arcKind: Value(kind),
               startDate: startDate,
               endDate: endDate,
               status: WinterArcStatus.setup,
@@ -98,6 +100,7 @@ final class DriftWinterArcRepository implements WinterArcRepository {
                 endDate: Value(session.endDate),
                 status: Value(session.status),
                 startedAt: Value(session.startedAt),
+                participationStartDate: Value(session.participationStartDate),
               ),
             );
         if (updated != 1) {
@@ -168,6 +171,8 @@ final class DriftWinterArcRepository implements WinterArcRepository {
 
   WinterArcSession _toDomain(SessionRow row) => WinterArcSession(
     id: row.id,
+    kind: row.arcKind,
+    participationStartDate: row.participationStartDate,
     startDate: row.startDate,
     endDate: row.endDate,
     status: row.status,

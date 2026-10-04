@@ -8,6 +8,7 @@ import '../../core/errors/app_failure.dart';
 import '../../core/errors/error_reporter.dart';
 import '../../core/time/local_date.dart';
 import '../../core/utils/serial_queue.dart';
+import '../../domain/habit/habit.dart';
 import '../../domain/progress/day_summary.dart';
 import '../../domain/progress/habit_progress_rules.dart';
 import '../../domain/progress/habit_tracking_service.dart';
@@ -42,15 +43,19 @@ class TodayController extends AsyncNotifier<DaySummary> {
   /// Applies [action] to [habitId] for the day currently on screen.
   ///
   /// Calls are queued, so rapid taps are processed one at a time.
+  ///
+  /// [time] goes with [HabitAction.setTime] on a clock-time habit.
   Future<ActionResult<DayCommit<ProgressTransition>>> perform(
     String habitId,
-    HabitAction action,
-  ) => _mutate(
+    HabitAction action, {
+    NightTime? time,
+  }) => _mutate(
     (service, date, sessionId) => service.perform(
       habitId: habitId,
       action: action,
       date: date,
       sessionId: sessionId,
+      time: time,
     ),
   );
 

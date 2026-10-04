@@ -415,6 +415,7 @@ void main() {
     await tester.pumpWidget(_app(db, clock));
     await tester.pumpAndSettle();
     await _tap(tester, find.text("Let's Begin"));
+    await _tap(tester, find.text('Rolling 92-Day Arc'));
     expect(find.byType(HabitSetupScreen), findsOneWidget);
     await _tapVisible(tester, find.text('Cancel setup'));
     expect(find.textContaining('start again'), findsOneWidget);

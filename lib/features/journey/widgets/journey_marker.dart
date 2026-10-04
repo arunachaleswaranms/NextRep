@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../../app/theme/winter_tokens.dart';
@@ -5,6 +7,8 @@ import '../../../domain/journey/journey_day.dart';
 import 'journey_day_style.dart';
 
 /// One day on the Journey path. Tappable (read-only detail) unless future.
+/// A season day before the user joined is a small, hollow, dashed marker:
+/// neutral, never a failure.
 class JourneyMarker extends StatelessWidget {
   const JourneyMarker({super.key, required this.day, this.onTap});
 
@@ -34,8 +38,10 @@ class JourneyMarker extends StatelessWidget {
     return Semantics(
       container: true,
       button: onTap != null,
-      label:
-          'Day ${day.dayNumber}, ${state.label}${day.isToday ? ', today' : ''}',
+      label: day.isNotJoined
+          ? 'Day ${day.dayNumber}. Before you joined this Seasonal Winter Arc.'
+          : 'Day ${day.dayNumber}, ${state.label}'
+                '${day.isToday ? ', today' : ''}',
       excludeSemantics: true,
       child: SizedBox.square(
         dimension: extent,
@@ -71,12 +77,15 @@ class JourneyMarker extends StatelessWidget {
                         stops: const [0, 0.5, 0.5, 1],
                       )
                     : null,
-                border: Border.all(
-                  color: day.isToday
-                      ? colors.snow
-                      : color.withValues(alpha: day.isFuture ? 0.6 : 0.9),
-                  width: day.isToday ? 3 : 1.4,
-                ),
+                // A dashed outline is painted instead (below).
+                border: state.dashed
+                    ? null
+                    : Border.all(
+                        color: day.isToday
+                            ? colors.snow
+                            : color.withValues(alpha: day.isFuture ? 0.6 : 0.9),
+                        width: day.isToday ? 3 : 1.4,
+                      ),
                 boxShadow: [
                   if (state.glows || day.isToday)
                     BoxShadow(
@@ -91,16 +100,28 @@ class JourneyMarker extends StatelessWidget {
                 child: InkWell(
                   borderRadius: radius,
                   onTap: onTap,
-                  child: Center(
-                    child: state.icon == null
-                        ? FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Padding(
-                              padding: const EdgeInsets.all(2),
-                              child: Text('${day.dayNumber}', style: textStyle),
+                  child: CustomPaint(
+                    painter: state.dashed
+                        ? _DashedCirclePainter(color.withValues(alpha: 0.9))
+                        : null,
+                    child: Center(
+                      child: state.icon == null
+                          ? FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Padding(
+                                padding: const EdgeInsets.all(2),
+                                child: Text(
+                                  '${day.dayNumber}',
+                                  style: textStyle,
+                                ),
+                              ),
+                            )
+                          : Icon(
+                              state.icon,
+                              size: size * 0.5,
+                              color: foreground,
                             ),
-                          )
-                        : Icon(state.icon, size: size * 0.5, color: foreground),
+                    ),
                   ),
                 ),
               ),
@@ -110,4 +131,29 @@ class JourneyMarker extends StatelessWidget {
       ),
     );
   }
+}
+
+/// A dashed circle outline, for days outside the user's participation.
+class _DashedCirclePainter extends CustomPainter {
+  const _DashedCirclePainter(this.color);
+
+  final Color color;
+
+  static const _dashes = 12;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.4;
+    final rect = Offset.zero & size;
+    const sweep = 2 * math.pi / _dashes;
+    for (var i = 0; i < _dashes; i++) {
+      canvas.drawArc(rect.deflate(0.7), i * sweep, sweep * 0.55, false, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashedCirclePainter old) => old.color != color;
 }
