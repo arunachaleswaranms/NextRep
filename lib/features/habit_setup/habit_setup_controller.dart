@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app/arc_status.dart';
 import '../../app/dependencies.dart';
 import '../../core/errors/action_result.dart';
 import '../../domain/habit/habit.dart';
@@ -32,8 +33,13 @@ class HabitSetupController extends AsyncNotifier<List<Habit>> {
     return result;
   }
 
-  Future<ActionResult<WinterArcSession>> start() => runAction(
-    'habit_setup',
-    () => ref.read(winterArcServiceProvider).startWinterArc(),
-  );
+  Future<ActionResult<WinterArcSession>> start() async {
+    final status = ref.read(arcStatusProvider.notifier);
+    final result = await runAction(
+      'habit_setup',
+      () => ref.read(winterArcServiceProvider).startWinterArc(),
+    );
+    if (result case ActionSuccess(:final value)) status.set(value.status);
+    return result;
+  }
 }
