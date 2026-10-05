@@ -61,8 +61,15 @@ final class FakeReminderScheduler implements ReminderScheduler {
   int scheduleCalls = 0;
   int cancelCalls = 0;
 
+  /// Makes the permission check, or scheduling, throw (a failing plugin).
+  bool failPermissionCheck = false;
+  bool failSchedule = false;
+
   @override
-  Future<bool> permissionGranted() async => granted;
+  Future<bool> permissionGranted() async {
+    if (failPermissionCheck) throw StateError('permission check failed');
+    return granted;
+  }
 
   @override
   Future<bool> requestPermission() async {
@@ -73,6 +80,7 @@ final class FakeReminderScheduler implements ReminderScheduler {
 
   @override
   Future<void> schedule(List<PlannedReminder> reminders) async {
+    if (failSchedule) throw StateError('scheduling failed');
     scheduleCalls++;
     pending = List.unmodifiable(reminders);
   }
