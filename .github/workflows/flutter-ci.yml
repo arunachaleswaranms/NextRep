@@ -55,14 +55,22 @@ jobs:
           test/data/backup_restore_test.dart
           test/data/backup_v2_restore_test.dart
 
+      - name: Release qualification tests (lifecycle, accessibility, dates)
+        run: >-
+          flutter test
+          test/app/day_change_test.dart
+          test/domain/date_edges_test.dart
+          test/features/phase7_lifecycle_test.dart
+          test/features/phase7_accessibility_test.dart
+
       - name: All tests
         run: flutter test
 
   android:
-    name: Android debug build
+    name: Android builds and permission audit
     needs: quality
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
 
@@ -82,3 +90,21 @@ jobs:
 
       - name: Build debug APK
         run: flutter build apk --debug
+
+      # A compile check only. The release build type is signed with the
+      # runner's throwaway debug key: no signing secret exists in CI, and
+      # this artifact is never published.
+      - name: Build release APK
+        run: flutter build apk --release
+
+      - name: Release permission audit
+        run: |
+          AAPT2="$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)aapt2"
+          "$AAPT2" dump permissions build/app/outputs/flutter-apk/app-release.apk | tee permissions.txt
+          for forbidden in INTERNET SCHEDULE_EXACT_ALARM USE_EXACT_ALARM \
+            MANAGE_EXTERNAL_STORAGE READ_EXTERNAL_STORAGE WRITE_EXTERNAL_STORAGE; do
+            if grep -q "android.permission.$forbidden'" permissions.txt; then
+              echo "::error::Release APK requests android.permission.$forbidden"
+              exit 1
+            fi
+          done
