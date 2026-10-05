@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/arc_refresh.dart';
 import '../../app/arc_status.dart';
 import '../../app/router/app_router.dart';
 import '../../app/theme/winter_tokens.dart';
@@ -171,6 +172,8 @@ class _HabitSetupScreenState extends ConsumerState<HabitSetupScreen> {
   @override
   Widget build(BuildContext context) {
     final setup = ref.watch(habitSetupControllerProvider);
+    // The same, with the app left open across midnight.
+    ref.listen(dayChangedProvider, (_, _) => _controller.refresh());
     return Scaffold(
       body: WinterBackground(
         child: SafeArea(

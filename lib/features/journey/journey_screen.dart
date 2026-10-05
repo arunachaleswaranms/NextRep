@@ -83,12 +83,28 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
           SafeArea(
             bottom: false,
             child: switch (journey) {
-              _ when value != null => Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _Header(journey: value, historical: widget.sessionId != null),
-                  Expanded(child: JourneyPath(journey: value)),
-                ],
+              _ when value != null => LayoutBuilder(
+                builder: (context, constraints) => Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // With large text (or a short, landscape screen) the
+                    // header scrolls within at most half the height, so the
+                    // path always keeps room.
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxHeight: constraints.maxHeight / 2,
+                      ),
+                      child: SingleChildScrollView(
+                        primary: false,
+                        child: _Header(
+                          journey: value,
+                          historical: widget.sessionId != null,
+                        ),
+                      ),
+                    ),
+                    Expanded(child: JourneyPath(journey: value)),
+                  ],
+                ),
               ),
               AsyncError(:final error, :final stackTrace) => FailureView(
                 failure: toAppFailure(error, stackTrace),
