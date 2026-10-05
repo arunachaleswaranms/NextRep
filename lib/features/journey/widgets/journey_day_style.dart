@@ -81,3 +81,22 @@ extension JourneyDayStyle on JourneyDayState {
       this == JourneyDayState.minimumComplete ||
       this == JourneyDayState.today;
 }
+
+/// What a screen reader says for a Journey day, e.g. "Day 15. Today. 60
+/// percent complete.", "Day 24. Perfect Day." or "Day 8. Before you
+/// joined this Seasonal Winter Arc." The state is always in words, never
+/// only in the marker's colour or shape.
+String journeyDayLabel(JourneyDay day) {
+  final percent = day.record?.completion.percent ?? 0;
+  final state = switch (day.state) {
+    JourneyDayState.notJoined => 'Before you joined this Seasonal Winter Arc.',
+    JourneyDayState.future => 'Upcoming.',
+    JourneyDayState.today => '$percent percent complete.',
+    JourneyDayState.perfect => 'Perfect Day.',
+    JourneyDayState.minimumComplete => 'Minimum Day completed.',
+    JourneyDayState.partial => 'Partial, $percent percent complete.',
+    JourneyDayState.minimumPartial => 'Minimum Day, $percent percent complete.',
+    JourneyDayState.missed => 'Missed.',
+  };
+  return 'Day ${day.dayNumber}. ${day.isToday ? 'Today. ' : ''}$state';
+}

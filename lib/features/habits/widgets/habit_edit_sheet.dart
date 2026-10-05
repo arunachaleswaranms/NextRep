@@ -128,6 +128,7 @@ class _HabitEditSheetState extends State<HabitEditSheet> {
                 Semantics(
                   button: _goalsEditable,
                   label: 'Goal time, before ${clockLabel(_target)}',
+                  onTap: _goalsEditable ? _pickGoalTime : null,
                   excludeSemantics: true,
                   child: ListTile(
                     contentPadding: EdgeInsets.zero,
@@ -219,10 +220,13 @@ class _Stepper extends StatelessWidget {
         ),
         SizedBox(
           width: 96,
-          child: Text(
-            value,
-            textAlign: TextAlign.center,
-            style: text.titleMedium?.copyWith(color: accent),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              value,
+              textAlign: TextAlign.center,
+              style: text.titleMedium?.copyWith(color: accent),
+            ),
           ),
         ),
         IconButton.filledTonal(

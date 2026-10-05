@@ -23,16 +23,18 @@ class TrophyButton extends ConsumerWidget {
     final count = board == null
         ? null
         : '${board.unlockedCount}/${board.total}';
+    void open() => context.push(
+      id == null ? AppRoutes.achievements : AppRoutes.arcAchievements(id),
+    );
     return Semantics(
       button: true,
       label: count == null
           ? 'Achievements'
           : 'Achievements, ${board!.unlockedCount} of ${board.total} unlocked',
+      onTap: open,
       excludeSemantics: true,
       child: TextButton.icon(
-        onPressed: () => context.push(
-          id == null ? AppRoutes.achievements : AppRoutes.arcAchievements(id),
-        ),
+        onPressed: open,
         style: TextButton.styleFrom(
           foregroundColor: colors.celebration,
           minimumSize: const Size(48, 48),

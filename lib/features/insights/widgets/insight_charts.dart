@@ -73,12 +73,15 @@ class MoodTimeline extends StatelessWidget {
 
   final List<MoodPoint> points;
 
-  static const _rowHeight = 26.0;
+  /// Row height at 1× text; it grows with the text scale so the labels
+  /// never clip.
+  static const _baseRowHeight = 26.0;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.winter;
     final text = Theme.of(context).textTheme;
+    final rowHeight = MediaQuery.textScalerOf(context).scale(_baseRowHeight);
     final moods = Mood.values.reversed.toList(); // best on top
     final spoken = [
       for (final p in points) 'Day ${p.dayNumber}: ${p.mood.label}',
@@ -95,7 +98,7 @@ class MoodTimeline extends StatelessWidget {
             children: [
               for (final mood in moods)
                 SizedBox(
-                  height: _rowHeight,
+                  height: rowHeight,
                   child: Row(
                     children: [
                       Icon(mood.icon, size: 16, color: mood.colorOf(colors)),
@@ -109,12 +112,12 @@ class MoodTimeline extends StatelessWidget {
           const SizedBox(width: WinterSpacing.sm),
           Expanded(
             child: SizedBox(
-              height: _rowHeight * moods.length,
+              height: rowHeight * moods.length,
               child: CustomPaint(
                 painter: _MoodTimelinePainter(
                   points: points,
                   rows: moods,
-                  rowHeight: _rowHeight,
+                  rowHeight: rowHeight,
                   grid: colors.glassBorder,
                   colorOf: (mood) => mood.colorOf(colors),
                 ),

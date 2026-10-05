@@ -121,10 +121,14 @@ class _WinterSceneState extends ConsumerState<WinterScene>
                         ),
                       ),
                     ),
-                    AuroraLayer(
-                      intensity: lit.aurora,
-                      colors: colors,
-                      animation: time,
+                    // Its drift repaints every ambient frame; the boundary
+                    // keeps that from spreading to the screen above.
+                    RepaintBoundary(
+                      child: AuroraLayer(
+                        intensity: lit.aurora,
+                        colors: colors,
+                        animation: time,
+                      ),
                     ),
                     RepaintBoundary(
                       child: CustomPaint(

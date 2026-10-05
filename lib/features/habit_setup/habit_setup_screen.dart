@@ -3,12 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/arc_status.dart';
-import '../../app/dependencies.dart';
 import '../../app/router/app_router.dart';
 import '../../app/theme/winter_tokens.dart';
 import '../../core/errors/action_result.dart';
 import '../../core/errors/app_failure.dart';
-import '../../core/time/clock.dart';
 import '../../domain/habit/habit.dart';
 import '../../domain/habit/setup_habit_rules.dart';
 import '../../domain/winter_arc/winter_arc_service.dart';
@@ -16,6 +14,7 @@ import '../../domain/winter_arc/winter_arc_session.dart';
 import '../../shared/formatting/arc_labels.dart';
 import '../../shared/formatting/failure_messages.dart';
 import '../../shared/widgets/failure_view.dart';
+import '../../shared/widgets/loading_view.dart';
 import '../../shared/widgets/primary_button.dart';
 import '../../shared/widgets/winter_background.dart';
 import '../summary/arc_removal.dart';
@@ -181,7 +180,7 @@ class _HabitSetupScreenState extends ConsumerState<HabitSetupScreen> {
               failure: toAppFailure(error, stackTrace),
               onRetry: () => ref.invalidate(habitSetupControllerProvider),
             ),
-            _ => const Center(child: CircularProgressIndicator()),
+            _ => const LoadingView(),
           },
         ),
       ),
@@ -193,7 +192,6 @@ class _HabitSetupScreenState extends ConsumerState<HabitSetupScreen> {
     final colors = context.winter;
     final habits = setup.habits;
     final selected = setup.enabledCount;
-    final today = ref.read(clockProvider).today();
     final session = setup.session;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -210,7 +208,7 @@ class _HabitSetupScreenState extends ConsumerState<HabitSetupScreen> {
               _ArcHeader(
                 session: session,
                 state: setup.startState,
-                todayDay: session.dayNumberOf(today),
+                todayDay: setup.todayDay,
               ),
               const SizedBox(height: WinterSpacing.lg),
               Text('Choose your habits', style: text.headlineMedium),
@@ -253,6 +251,7 @@ class _HabitSetupScreenState extends ConsumerState<HabitSetupScreen> {
                     ? 'Add Habit, unavailable: ${SetupHabitRules.maxHabits} '
                           'habits is the limit'
                     : 'Add Habit',
+                onTap: setup.atHabitLimit ? null : () => _add(setup),
                 excludeSemantics: true,
                 child: OutlinedButton.icon(
                   onPressed: setup.atHabitLimit ? null : () => _add(setup),

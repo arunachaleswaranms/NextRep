@@ -12,6 +12,8 @@ import '../../domain/winter_arc/winter_arc_session.dart';
 import '../../shared/formatting/arc_labels.dart';
 import '../../shared/widgets/failure_view.dart';
 import '../../shared/widgets/level_bar.dart';
+import '../../shared/widgets/loading_view.dart';
+import '../../shared/widgets/winter_card.dart';
 import '../../shared/winter_scene/scene_progress.dart';
 import '../../shared/winter_scene/winter_scene.dart';
 import '../achievements/widgets/trophy_button.dart';
@@ -92,7 +94,7 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
                 failure: toAppFailure(error, stackTrace),
                 onRetry: _retry,
               ),
-              _ => const Center(child: CircularProgressIndicator()),
+              _ => const LoadingView(),
             },
           ),
         ],
@@ -182,17 +184,12 @@ class _Header extends StatelessWidget {
             style: text.bodyMedium?.copyWith(color: colors.textPrimary),
           ),
           const SizedBox(height: WinterSpacing.sm),
-          Container(
+          WinterCard(
             padding: const EdgeInsets.fromLTRB(
               WinterSpacing.md,
               WinterSpacing.sm,
               WinterSpacing.md,
               WinterSpacing.sm + 2,
-            ),
-            decoration: BoxDecoration(
-              color: colors.glass,
-              borderRadius: BorderRadius.circular(WinterRadii.card),
-              border: Border.all(color: colors.glassBorder),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,

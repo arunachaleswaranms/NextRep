@@ -41,12 +41,19 @@ class ProgressRing extends StatelessWidget {
                   (ratio >= 1 ? colors.success : colors.accentSecondary),
             ),
           ),
-          Center(
-            child: Text(
-              label,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w800,
-                color: colors.textPrimary,
+          // Inside the stroke, and scaled down rather than wrapped or
+          // clipped at large text sizes.
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                label,
+                maxLines: 1,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: colors.textPrimary,
+                ),
               ),
             ),
           ),

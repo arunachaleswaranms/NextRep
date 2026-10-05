@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/arc_refresh.dart';
 import '../../app/router/app_router.dart';
 import '../../app/theme/winter_tokens.dart';
 import '../../core/errors/action_result.dart';
@@ -13,6 +14,7 @@ import '../../domain/reflection/reflection_service.dart';
 import '../../shared/feedback/haptics.dart';
 import '../../shared/formatting/arc_labels.dart';
 import '../../shared/widgets/failure_view.dart';
+import '../../shared/widgets/loading_view.dart';
 import '../../shared/widgets/winter_background.dart';
 import 'journal_controller.dart';
 import 'widgets/reflection_editor.dart';
@@ -85,6 +87,12 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
       null => ref.watch(journalControllerProvider),
       final id => ref.watch(arcJournalProvider(id)),
     };
+    // Midnight passed with the Journal open: today's entry is a new one.
+    ref.listen(dayChangedProvider, (_, _) {
+      if (!_historical) {
+        unawaited(ref.read(journalControllerProvider.notifier).refresh());
+      }
+    });
     final body = switch (journal) {
       AsyncData(:final value) => _content(context, value),
       AsyncError(:final error, :final stackTrace) => FailureView(
@@ -94,7 +102,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
           final id => ref.invalidate(arcJournalProvider(id)),
         },
       ),
-      _ => const Center(child: CircularProgressIndicator()),
+      _ => const LoadingView(),
     };
     return Scaffold(
       appBar: _historical

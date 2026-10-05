@@ -78,6 +78,7 @@ class _MoodOption extends StatelessWidget {
       selected: selected,
       enabled: onTap != null,
       label: 'Mood: ${mood.label}',
+      onTap: onTap,
       excludeSemantics: true,
       child: AnimatedContainer(
         duration: context.motion.standard,

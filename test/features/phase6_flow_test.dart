@@ -601,7 +601,7 @@ void main() {
         scrollable: find.byType(Scrollable).last,
       );
       expect(notJoined, findsOneWidget);
-      expect(find.bySemanticsLabel(RegExp(r'^Day 14, Missed')), findsNothing);
+      expect(find.bySemanticsLabel(RegExp(r'^Day 14. Missed')), findsNothing);
       await _tap(tester, notJoined);
       expect(
         find.text('Before you joined this Seasonal Winter Arc.'),

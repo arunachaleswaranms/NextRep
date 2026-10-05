@@ -11,7 +11,8 @@ import 'celebration_queue.dart';
 /// Shows queued celebrations over the whole app, one at a time.
 ///
 /// Each card stays for [WinterDurations.celebrationHold] or until tapped,
-/// then the next one appears. It never blocks the screen below: only the
+/// then the next one appears. With a screen reader or switch access on it
+/// stays until dismissed, so there is time to hear and act on it. It never blocks the screen below: only the
 /// card itself takes touches. Its haptic plays when it appears.
 class CelebrationOverlay extends ConsumerStatefulWidget {
   const CelebrationOverlay({super.key, required this.child});
@@ -51,6 +52,7 @@ class _CelebrationOverlayState extends ConsumerState<CelebrationOverlay> {
       DayCelebration() => Haptics.levelUp(),
       AchievementCelebration() => Haptics.achievementUnlocked(),
     });
+    if (MediaQuery.maybeAccessibleNavigationOf(context) ?? false) return;
     _timer = Timer(WinterDurations.celebrationHold, () => _dismiss(head));
   }
 

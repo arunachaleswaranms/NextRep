@@ -8,10 +8,11 @@ import '../../app/theme/winter_tokens.dart';
 import '../../core/errors/action_result.dart';
 import '../../core/errors/app_failure.dart';
 import '../../domain/winter_arc/winter_arc_session.dart';
-import '../../shared/formatting/failure_messages.dart';
 import '../../shared/formatting/arc_labels.dart';
+import '../../shared/formatting/failure_messages.dart';
 import '../../shared/widgets/failure_view.dart';
 import '../../shared/widgets/habit_icon.dart';
+import '../../shared/widgets/loading_view.dart';
 import '../../shared/widgets/winter_background.dart';
 import '../../shared/winter_scene/scene_progress.dart';
 import '../../shared/winter_scene/winter_scene.dart';
@@ -82,11 +83,14 @@ class SummaryScreen extends ConsumerWidget {
                   ref.invalidate(summaryControllerProvider(sessionId)),
             ),
           ),
-          _ => const Center(child: CircularProgressIndicator()),
+          _ => const LoadingView(),
         },
       ),
     );
   }
+
+  /// "1 day", "12 days".
+  static String _days(int count) => '$count ${count == 1 ? 'day' : 'days'}';
 
   Widget _content(
     BuildContext context,
@@ -137,13 +141,14 @@ class SummaryScreen extends ConsumerWidget {
     return CustomScrollView(
       slivers: [
         SliverToBoxAdapter(
-          child: SizedBox(
-            height: 340,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                // Summit reveal: the walked trail draws itself to the top.
-                TweenAnimationBuilder<double>(
+          // At least 340 tall, and taller when the heading needs it (large
+          // text, a late-join line): the heading is laid out in flow, below
+          // the Back and options buttons, and the scene fills behind it.
+          child: Stack(
+            children: [
+              // Summit reveal: the walked trail draws itself to the top.
+              Positioned.fill(
+                child: TweenAnimationBuilder<double>(
                   tween: Tween(begin: 0, end: 1),
                   duration: context.motion.celebration * 3,
                   curve: Curves.easeInOutCubic,
@@ -153,7 +158,9 @@ class SummaryScreen extends ConsumerWidget {
                     maxSnow: 36,
                   ),
                 ),
-                DecoratedBox(
+              ),
+              Positioned.fill(
+                child: DecoratedBox(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
@@ -166,78 +173,80 @@ class SummaryScreen extends ConsumerWidget {
                     ),
                   ),
                 ),
-                // Opened from Arc History rather than as the home.
-                if (ModalRoute.of(context)?.canPop ?? false)
-                  const Positioned(
-                    left: WinterSpacing.xs,
-                    top: 0,
-                    child: SafeArea(child: BackButton()),
-                  ),
-                if (onDelete != null)
-                  Positioned(
-                    right: WinterSpacing.xs,
-                    top: 0,
-                    child: SafeArea(
-                      child: PopupMenuButton<void>(
-                        tooltip: 'Arc options',
-                        icon: const Icon(Icons.more_vert_rounded),
-                        itemBuilder: (context) => [
-                          PopupMenuItem(
-                            onTap: onDelete,
-                            child: ListTile(
-                              leading: Icon(
-                                Icons.delete_forever_rounded,
-                                color: colors.danger,
-                              ),
-                              title: const Text('Delete Arc'),
-                            ),
-                          ),
-                        ],
+              ),
+              Container(
+                constraints: const BoxConstraints(minHeight: 340),
+                alignment: AlignmentDirectional.bottomStart,
+                padding: EdgeInsets.fromLTRB(
+                  WinterSpacing.lg,
+                  MediaQuery.paddingOf(context).top + kToolbarHeight,
+                  WinterSpacing.lg,
+                  WinterSpacing.md,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      view.session.isSeasonal
+                          ? 'SEASONAL WINTER ARC COMPLETE'
+                          : 'WINTER ARC COMPLETE',
+                      style: text.labelLarge?.copyWith(
+                        color: colors.warmLight,
+                        letterSpacing: 3,
                       ),
                     ),
-                  ),
+                    const SizedBox(height: WinterSpacing.xs),
+                    Text(
+                      view.session.isSeasonal
+                          ? '${summary.totalDays}-day season'
+                          : '${summary.totalDays} days',
+                      style: text.displaySmall,
+                    ),
+                    Text(dates, style: text.bodyMedium),
+                    // Season length and participation are different
+                    // things; consistency counts participated days.
+                    if (joinedLabel(view.session) case final joined?)
+                      Text(
+                        joined,
+                        style: text.bodyMedium?.copyWith(
+                          color: colors.textPrimary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              // Opened from Arc History rather than as the home.
+              if (ModalRoute.of(context)?.canPop ?? false)
+                const Positioned(
+                  left: WinterSpacing.xs,
+                  top: 0,
+                  child: SafeArea(child: BackButton()),
+                ),
+              if (onDelete != null)
                 Positioned(
-                  left: WinterSpacing.lg,
-                  right: WinterSpacing.lg,
-                  bottom: WinterSpacing.md,
+                  right: WinterSpacing.xs,
+                  top: 0,
                   child: SafeArea(
-                    top: false,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          view.session.isSeasonal
-                              ? 'SEASONAL WINTER ARC COMPLETE'
-                              : 'WINTER ARC COMPLETE',
-                          style: text.labelLarge?.copyWith(
-                            color: colors.warmLight,
-                            letterSpacing: 3,
-                          ),
-                        ),
-                        const SizedBox(height: WinterSpacing.xs),
-                        Text(
-                          view.session.isSeasonal
-                              ? '${summary.totalDays}-day season'
-                              : '${summary.totalDays} days',
-                          style: text.displaySmall,
-                        ),
-                        Text(dates, style: text.bodyMedium),
-                        // Season length and participation are different
-                        // things; consistency counts participated days.
-                        if (joinedLabel(view.session) case final joined?)
-                          Text(
-                            joined,
-                            style: text.bodyMedium?.copyWith(
-                              color: colors.textPrimary,
-                              fontWeight: FontWeight.w600,
+                    child: PopupMenuButton<void>(
+                      tooltip: 'Arc options',
+                      icon: const Icon(Icons.more_vert_rounded),
+                      itemBuilder: (context) => [
+                        PopupMenuItem(
+                          onTap: onDelete,
+                          child: ListTile(
+                            leading: Icon(
+                              Icons.delete_forever_rounded,
+                              color: colors.danger,
                             ),
+                            title: const Text('Delete Arc'),
                           ),
+                        ),
                       ],
                     ),
                   ),
                 ),
-              ],
-            ),
+            ],
           ),
         ),
         SliverPadding(
@@ -274,8 +283,8 @@ class SummaryScreen extends ConsumerWidget {
                                 style: text.titleMedium,
                               ),
                               Text(
-                                'Best streak ${strongest.bestStreak} days · '
-                                'done on ${strongest.completedDays} days',
+                                'Best streak ${_days(strongest.bestStreak)} · '
+                                'done on ${_days(strongest.completedDays)}',
                                 style: text.bodySmall,
                               ),
                             ],

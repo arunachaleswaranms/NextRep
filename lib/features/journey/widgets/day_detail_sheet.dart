@@ -103,7 +103,18 @@ class DayDetailSheet extends StatelessWidget {
             ),
             _Fact(label: 'Completion', value: '${completion.percent}%'),
             _Fact(label: 'XP earned', value: '${day.xpEarned} XP'),
-            _Fact(label: 'Perfect Day', value: record.isPerfect ? 'Yes' : 'No'),
+            // A Minimum Day is never a Perfect Day by design, so it gets no
+            // "Perfect Day: No" row that would read like a failure.
+            if (record.mode.isMinimum)
+              _Fact(
+                label: 'Minimum Day',
+                value: record.isMinimumComplete ? 'Completed' : 'In part',
+              )
+            else
+              _Fact(
+                label: 'Perfect Day',
+                value: record.isPerfect ? 'Yes' : 'No',
+              ),
             const Divider(height: WinterSpacing.xl),
             for (final entry in record.entries)
               Padding(
@@ -123,14 +134,18 @@ class DayDetailSheet extends StatelessWidget {
                     Expanded(
                       child: Text(entry.habit.title, style: text.bodyLarge),
                     ),
-                    Text(
-                      progressLabel(
-                        entry.habit,
-                        entry.progress.currentValue,
-                        target: entry.target,
-                        completed: entry.progress.completed,
+                    const SizedBox(width: WinterSpacing.sm),
+                    Flexible(
+                      child: Text(
+                        progressLabel(
+                          entry.habit,
+                          entry.progress.currentValue,
+                          target: entry.target,
+                          completed: entry.progress.completed,
+                        ),
+                        textAlign: TextAlign.end,
+                        style: text.bodyMedium,
                       ),
-                      style: text.bodyMedium,
                     ),
                   ],
                 ),
@@ -154,7 +169,7 @@ class NotJoinedDaySheet extends StatelessWidget {
     final colors = context.winter;
     final text = Theme.of(context).textTheme;
     return SafeArea(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(
           WinterSpacing.lg,
           0,
@@ -205,7 +220,14 @@ class _Fact extends StatelessWidget {
       child: Row(
         children: [
           Expanded(child: Text(label, style: text.bodyMedium)),
-          Text(value, style: text.titleSmall),
+          const SizedBox(width: WinterSpacing.sm),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              style: text.titleSmall,
+            ),
+          ),
         ],
       ),
     );

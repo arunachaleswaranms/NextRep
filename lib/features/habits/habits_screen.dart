@@ -12,6 +12,7 @@ import '../../shared/formatting/failure_messages.dart';
 import '../../shared/formatting/habit_labels.dart';
 import '../../shared/widgets/failure_view.dart';
 import '../../shared/widgets/habit_icon.dart';
+import '../../shared/widgets/loading_view.dart';
 import '../../shared/widgets/winter_background.dart';
 import '../../shared/widgets/winter_card.dart';
 import 'habits_controller.dart';
@@ -64,19 +65,20 @@ class HabitsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(habitsControllerProvider);
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Your habits'),
-        backgroundColor: context.winter.backgroundTop,
-      ),
+      appBar: AppBar(title: const Text('Your habits')),
       body: WinterBackground(
-        child: switch (settings) {
-          AsyncData(:final value) => _content(context, ref, value),
-          AsyncError(:final error, :final stackTrace) => FailureView(
-            failure: toAppFailure(error, stackTrace),
-            onRetry: () => ref.invalidate(habitsControllerProvider),
-          ),
-          _ => const Center(child: CircularProgressIndicator()),
-        },
+        // Keeps the last card clear of the system gesture bar.
+        child: SafeArea(
+          top: false,
+          child: switch (settings) {
+            AsyncData(:final value) => _content(context, ref, value),
+            AsyncError(:final error, :final stackTrace) => FailureView(
+              failure: toAppFailure(error, stackTrace),
+              onRetry: () => ref.invalidate(habitsControllerProvider),
+            ),
+            _ => const LoadingView(),
+          },
+        ),
       ),
     );
   }

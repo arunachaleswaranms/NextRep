@@ -271,7 +271,7 @@ class _Chip extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, size: 13, color: color),
-        const SizedBox(width: 4),
+        const SizedBox(width: WinterSpacing.xs),
         Flexible(
           child: Text(
             label,

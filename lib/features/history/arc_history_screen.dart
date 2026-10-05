@@ -6,7 +6,9 @@ import '../../app/router/app_router.dart';
 import '../../app/theme/winter_tokens.dart';
 import '../../core/errors/app_failure.dart';
 import '../../domain/winter_arc/winter_arc_session.dart';
+import '../../shared/widgets/empty_state_view.dart';
 import '../../shared/widgets/failure_view.dart';
+import '../../shared/widgets/loading_view.dart';
 import '../../shared/widgets/winter_background.dart';
 import 'arc_history_controller.dart';
 import 'widgets/arc_history_tile.dart';
@@ -107,7 +109,13 @@ class ArcHistoryScreen extends ConsumerWidget {
                 if (value.isEmpty)
                   const SliverFillRemaining(
                     hasScrollBody: false,
-                    child: Center(child: Text('No arcs yet.')),
+                    child: EmptyStateView(
+                      icon: Icons.landscape_outlined,
+                      title: 'No arcs yet.',
+                      message:
+                          'Every Winter Arc you start is kept here, newest '
+                          'first.',
+                    ),
                   ),
                 SliverPadding(
                   padding: const EdgeInsets.fromLTRB(
@@ -134,7 +142,7 @@ class ArcHistoryScreen extends ConsumerWidget {
               failure: toAppFailure(error, stackTrace),
               onRetry: () => ref.invalidate(arcHistoryProvider),
             ),
-            _ => const Center(child: CircularProgressIndicator()),
+            _ => const LoadingView(),
           },
         ),
       ),

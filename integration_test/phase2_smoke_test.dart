@@ -87,7 +87,10 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('JOURNEY'), findsOneWidget);
-    expect(find.bySemanticsLabel('Day 1, Today, today'), findsOneWidget);
+    expect(
+      find.bySemanticsLabel('Day 1. Today. 0 percent complete.'),
+      findsOneWidget,
+    );
 
     await tester.pumpWidget(const SizedBox());
     await settleTimers(tester);

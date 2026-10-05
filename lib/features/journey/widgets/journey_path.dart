@@ -15,6 +15,9 @@ import '../../../shared/winter_scene/sky_layer.dart';
 import 'day_detail_sheet.dart';
 import 'journey_marker.dart';
 
+/// Shared by every row label, rather than built per row.
+final _dayMonth = DateFormat('d MMM');
+
 /// An entry of the path, bottom (Day 1) to top (the summit).
 sealed class PathItem {
   const PathItem();
@@ -415,7 +418,7 @@ class _DayRow extends StatelessWidget {
             day.isToday
                 ? 'TODAY · Day ${day.dayNumber}'
                 : 'Day ${day.dayNumber} · '
-                      '${DateFormat('d MMM').format(day.date.toLocalDateTime())}',
+                      '${_dayMonth.format(day.date.toLocalDateTime())}',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: text.labelSmall?.copyWith(
@@ -693,7 +696,7 @@ class _SummitRow extends StatelessWidget {
             WinterSpacing.md,
             WinterSpacing.md,
             WinterSpacing.md,
-            48,
+            WinterSpacing.xxl,
           ),
           child: Semantics(
             container: true,
