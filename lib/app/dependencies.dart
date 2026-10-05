@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/database/app_database.dart';
+import '../core/errors/app_failure.dart';
+import '../core/errors/error_reporter.dart';
 import '../core/time/clock.dart';
 import '../data/backup_files.dart';
 import '../data/drift_achievement_repository.dart';
@@ -154,6 +156,10 @@ final reminderServiceProvider = Provider<ReminderService>(
     preferences: ref.watch(reminderPreferencesRepositoryProvider),
     scheduler: ref.watch(reminderSchedulerProvider),
     clock: ref.watch(clockProvider),
+    onScheduleError: (error, stackTrace) => ErrorReporter.report(
+      toAppFailure(error, stackTrace),
+      context: 'reminders',
+    ),
   ),
 );
 

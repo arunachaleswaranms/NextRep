@@ -2,10 +2,14 @@ import 'dart:developer' as developer;
 
 import 'app_failure.dart';
 
-/// Single place where failures are recorded so none are silently dropped.
+/// Single place where failures are recorded.
 ///
-/// Phase 1 logs locally only (no telemetry). A crash/diagnostics sink can be
-/// added here later without touching call sites.
+/// Local only, by design: there is no crash or telemetry service. Reports go
+/// to `dart:developer`'s log, which is visible in debug and profile builds
+/// (DevTools, `flutter logs`) and is a no-op in release builds, so a
+/// release build writes nothing about failures anywhere. Messages carry
+/// operation names and ids only, never reflection text or backup contents
+/// (see `guardPrivatePersistence`).
 abstract final class ErrorReporter {
   static void report(AppFailure failure, {String context = 'app'}) {
     developer.log(

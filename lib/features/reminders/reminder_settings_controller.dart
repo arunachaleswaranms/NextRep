@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/arc_status.dart';
 import '../../app/dependencies.dart';
 import '../../core/errors/action_result.dart';
+import '../../core/errors/app_failure.dart';
+import '../../core/errors/error_reporter.dart';
 import '../../core/utils/serial_queue.dart';
 import '../../domain/reminder/reminder_preferences.dart';
 import '../../domain/reminder/reminder_service.dart';
@@ -41,9 +43,24 @@ class ReminderSettingsController extends AsyncNotifier<ReminderSettingsView> {
     final active = ref.watch(arcResolutionProvider)?.active != null;
     return ReminderSettingsView(
       preferences: await service.preferences(),
-      permissionGranted: await service.permissionGranted(),
+      permissionGranted: await _permissionGranted(service),
       arcActive: active,
     );
+  }
+
+  /// A failing permission check must not take the whole screen down (the
+  /// user could then not turn reminders off): it reads as "not allowed",
+  /// which only shows the system-settings notice.
+  static Future<bool> _permissionGranted(ReminderService service) async {
+    try {
+      return await service.permissionGranted();
+    } catch (error, stackTrace) {
+      ErrorReporter.report(
+        toAppFailure(error, stackTrace),
+        context: 'reminders',
+      );
+      return false;
+    }
   }
 
   /// Applies [change] to the stored preferences (not to what is on screen,

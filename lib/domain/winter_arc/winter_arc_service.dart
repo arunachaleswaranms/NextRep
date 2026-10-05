@@ -96,6 +96,7 @@ final class ArcSetup {
     required this.session,
     required this.habits,
     required this.startState,
+    required this.today,
   });
 
   final WinterArcSession session;
@@ -103,6 +104,14 @@ final class ArcSetup {
   /// In display order.
   final List<Habit> habits;
   final SetupStartState startState;
+
+  /// The date [startState] was decided on, so everything Habit Setup shows
+  /// comes from the same moment (never a widget's own clock read).
+  final LocalDate today;
+
+  /// The season day number of [today] for this arc (a late join shows
+  /// "Day 15"), or 1 for a rolling arc.
+  int get todayDay => session.dayNumberOf(today);
 
   int get enabledCount => habits.where((h) => h.enabled).length;
 
@@ -204,10 +213,12 @@ final class WinterArcService {
   /// The arc in setup, its habits and whether it can start today.
   Future<ArcSetup> setup() async {
     final session = await _requireSetup();
+    final today = _clock.today();
     return ArcSetup(
       session: session,
       habits: await _habits.habitsForSession(session.id),
-      startState: ArcStartRules.stateOn(session, _clock.today()),
+      startState: ArcStartRules.stateOn(session, today),
+      today: today,
     );
   }
 

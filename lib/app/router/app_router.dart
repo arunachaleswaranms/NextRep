@@ -18,6 +18,7 @@ import '../../features/new_arc/new_arc_screen.dart';
 import '../../features/onboarding/onboarding_screen.dart';
 import '../../features/reminders/reminder_settings_screen.dart';
 import '../../features/shell/active_shell.dart';
+import '../../features/shell/unknown_page_screen.dart';
 import '../../features/summary/summary_screen.dart';
 import '../../features/today/today_screen.dart';
 import '../app_restart.dart';
@@ -177,6 +178,9 @@ GoRouter buildAppRouter({
     refreshListenable: resolution,
     redirect: (context, state) =>
         AppRoutes.redirect(resolution.value, state.uri.path),
+    // An unknown location (never a link the app builds itself) gets a
+    // calm page with a way home, never go_router's exception text.
+    errorBuilder: (context, state) => const UnknownPageScreen(),
     routes: [
       GoRoute(
         path: AppRoutes.onboarding,
