@@ -22,7 +22,7 @@ Environment: Flutter 3.47.5 / Dart 3.13.4. Android builds use JDK 21
   `flutter test test/app/day_change_test.dart test/domain/date_edges_test.dart test/features/phase7_lifecycle_test.dart test/features/phase7_accessibility_test.dart`
 - [x] `flutter test --coverage`
 - [x] Generated code unchanged: `dart run build_runner build --delete-conflicting-outputs` leaves no diff (only needed after a table change)
-- [ ] CI green on the release commit (Flutter CI: quality, Android builds and permission audit)
+- [x] CI green on the release commit (Flutter CI: quality, Android builds and permission audit; run 37318757893)
 
 ## Android
 

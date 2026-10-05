@@ -1,128 +1,116 @@
 # PROJECT_STATE
 
-_Last updated: 2026-10-05. Phase 6 complete on its branch, PR open, not
+_Last updated: 2026-10-05. Phase 7 complete on its branch; PR open, not
 merged._
+
+**SOFTWARE RELEASE CANDIDATE: PASS · STORE SUBMISSION: MANUAL GATES
+REMAIN**
 
 ## Repo
 
 - Remote: https://github.com/arunachaleswaranms/NextRep (public)
-- `main` baseline: `7a0ac04` (squash merge of PR #5, Phase 5). PRs #1–#5
-  are Phases 1–5.
-- Working branch: `phase/6-seasonal-arc-and-habit-evolution`, from
-  `7a0ac04`.
-- PR: #6 (https://github.com/arunachaleswaranms/NextRep/pull/6), open for
-  review, not merged.
-- CI: Flutter CI run 37225305174 on the PR (`b449ab0`), both jobs green
-  (format, analyze, migrations v1 → v5, backup format tests, all tests;
-  Android debug build).
-- Author and committer for all commits:
-  `Arunachaleswaran M S <arunachaleswaranms@gmail.com>` (set repo-locally).
-  No AI or co-author trailers.
+- `main` baseline: `840ed50` (squash merge of PR #6, Phase 6). PRs #1–#6
+  are Phases 1–6.
+- Branch: `phase/7-release-readiness-and-premium-ux`, from `840ed50`
+- Code HEAD qualified: `56f64d7`. This file and later doc-only commits
+  follow it.
+- PR: #7 (https://github.com/arunachaleswaranms/NextRep/pull/7), open for
+  review, not merged
+- CI: Flutter CI run 37318757893 on `56f64d7`: **green** (Format, analyze
+  and test; Android builds and permission audit, which ran on the release APK)
+- Author and committer of every commit:
+  `Arunachaleswaran M S <arunachaleswaranms@gmail.com>` (repo-local
+  config). No AI or co-author trailers.
 
 ## Environment
 
-- Flutter 3.47.5 stable / Dart 3.13.4 at `~/development/flutter` (not on PATH;
-  use `export PATH="$HOME/development/flutter/bin:$PATH"`)
+- Flutter 3.47.5 stable / Dart 3.13.4 at `~/development/flutter` (not on
+  PATH)
 - Android builds: `JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home`
-- Emulator: AVD `RideLink_API36` (API 36, arm64) → `emulator-5554`
-- Physical Android: CPH2707 (Android 16) over wireless ADB
-- iOS: Xcode 27 beta, Swift Package Manager. Simulator iPhone 17 (iOS 27).
-- Integration tests: always pass `--no-uninstall` (the default uninstall
-  wipes the app's data on the device).
-- Drift 2.35.1. Snapshots v1–v5 in `drift_schemas/` (v1–v4 unchanged).
-
-## Architecture (current)
-
-- Pure-Dart `domain/` owns truth. Drift `data/`, Riverpod controllers in
-  `features/`, `app/` composition root, go_router.
-- Arcs: `ArcKind` (`rolling92`, `seasonalWinter`) and
-  `participationStartDate` are persisted. `WinterArcRules.problemWith`
-  validates sessions. Seasonal rules live in `SeasonalWinterRules` and
-  start rules in `ArcStartRules`.
-- Participation lives on `WinterArcSession` (`isParticipatingOn`,
-  `participatingDatesThrough`). `ArcHistory.elapsedDates` = participating
-  dates, so pre-join days are neutral everywhere.
-- Habits:
-  - `HabitType.timeBefore` uses `NightTime` (1080–1799, 0 = not logged).
-  - `HabitType.isCompletedBy` is the one completion rule.
-  - Code-only `HabitTemplateCatalog`; `SetupHabitRules` covers custom
-    habits, the 12-habit limit and duplicates.
-  - Ids come from an injectable `HabitIdGenerator`.
-- Backup: `BackupCodec` dispatches on version (format 1 frozen, format 2
-  written). Other modules are unchanged from Phase 5.
-- At most one unfinished arc. Derived, never stored: streaks, levels,
-  Perfect Days, Journey, summaries, insights.
+- Emulator: AVD `RideLink_API36` → `emulator-5554`
+- iOS: Xcode 27 beta, Swift Package Manager, iPhone 17 simulator (iOS 27)
+- Integration tests: always pass `--no-uninstall`
+- Brand assets: `flutter test tool/brand_assets/generate_brand_assets.dart`
 
 ## Versions
 
-- Database schema: **v5** (`arc_kind`, `participation_start_date`)
-- Backup `formatVersion`: **2** (reads 1 and 2)
-- App version: 1.0.0
+- Database schema: **v5** (unchanged in Phase 7)
+- Backup `formatVersion`: **2** (reads 1 and 2; unchanged)
+- App version: `1.0.0+1` (the scaffold value; release version not chosen)
 
-## Dependencies added
+## Results (final code)
 
-None.
+| Gate | Result |
+|---|---|
+| format / analyze | clean / no issues |
+| `flutter test` | **602 / 602** (566 at baseline) |
+| Coverage | **93.3%** of handwritten lib (excluding `.g.dart` and the generated `schema_versions.dart`, as in Phase 6); 91.8% including it |
+| Migrations v1 → v5 | 39 / 39 |
+| Backup format 1 + 2 | 70 / 70 |
+| Phase 7 suites | ticker 5, date edges 4, lifecycle 13, accessibility 14 |
+| build_runner | no generated diff |
+| Integration, emulator-5554 | **7 / 7** |
+| Integration, iPhone 17 simulator | **7 / 7** (Phase 2 smoke re-run after its label fix) |
+| `flutter build apk --debug` / `--release` | PASS / PASS (debug-signed) |
+| `flutter build appbundle --release` | PASS (debug-signed, `CN=Android Debug`, **not uploadable**) |
+| `flutter build ios --simulator` / `--release --no-codesign` | PASS / PASS |
 
-## Commands that passed (2026-10-04/05, final code)
+## Devices
 
-- `dart format --set-exit-if-changed .`, `flutter analyze`: clean
-- `dart run build_runner build --delete-conflicting-outputs`: v5 snapshot
-  added
-- `flutter test`: **566/566**. `flutter test --coverage`: **93.3%** of
-  handwritten lib
-- Migration tests (v1 → v5): 39/39. Backup tests (format 1 + 2): 70/70
-- New suites: seasonal 22, participation 20, time-before 17, setup
-  habits 16, backup v2 15, restore v2 10, v5 migration 11, Phase 6 flows 15
-- `flutter test integration_test --no-uninstall`:
-  - emulator-5554: 6/6
-  - CPH2707: 6/6 (Phase 2 re-run after a wireless drop)
-  - iPhone 17 simulator: 6/6
-- `flutter build apk --debug` / `--release`, `flutter build ios
-  --simulator`: pass
-- `aapt2 dump permissions` (release): `RECEIVE_BOOT_COMPLETED`, `VIBRATE`,
-  `POST_NOTIFICATIONS`, the app-private receiver permission.
-  - Absent: INTERNET, SCHEDULE_EXACT_ALARM, USE_EXACT_ALARM,
-    MANAGE/READ/WRITE_EXTERNAL_STORAGE.
+- **Android emulator (API 36), release build: PASS**
+  - Cold launch 1.15 s.
+  - Notification permission deny and allow.
+  - Inexact alarms scheduled; a real reminder delivered.
+  - Background and cold-start taps open the Journal.
+  - The OS-revoked notice is shown with the preference kept.
+  - DocumentsUI export; malformed and damaged files refused; restore with
+    reminders off and no alarms left.
+  - Adaptive icon and night splash checked; landscape is usable.
+- **Physical Android: MANUAL REQUIRED.** CPH2707 wasn't connected this
+  session; it last passed in Phase 6.
+- **iOS simulator: PASS** (builds and 7/7 integration).
+- **Physical iOS: MANUAL REQUIRED.** No iPhone available.
 
-## Device status
+## Release configuration
 
-- Emulator (API 36, release): PASS, using the real in-season date with no
-  clock change. Covered:
-  - seasonal late join (Day 4), Habit Setup v2, templates, the custom form
-  - Android time picker: pass, and daytime refused
-  - Journey pre-join markers, trail and chapter count
-  - persistence across reinstall and the date rollover
-- Physical Android CPH2707: PASS.
-  - Integration 6/6.
-  - Release installed over the Phase 5 data: a real v4 → v5 migration,
-    with the arc kept as rolling.
-  - Left installed with its data.
-- iOS: simulator build and integration 6/6. **PHYSICAL iOS — MANUAL
-  REQUIRED** (no iPhone connected).
+- Android `applicationId` and iOS bundle id are both `com.nextrep.nextrep`.
+  **PRODUCTION IDENTIFIER — USER DECISION REQUIRED**: it looks like the
+  scaffold default and is permanent once published.
+- Android signing: release uses the git-ignored `android/key.properties`
+  when present, else the debug key. **ANDROID STORE SIGNING — NOT YET
+  QUALIFIED.**
+- iOS signing: **iOS RELEASE SIGNING — MANUAL REQUIRED.**
+- Release permissions (aapt2): `POST_NOTIFICATIONS`, `VIBRATE`,
+  `RECEIVE_BOOT_COMPLETED`, and the app-private
+  `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`.
+  - INTERNET, SCHEDULE_EXACT_ALARM, USE_EXACT_ALARM and
+    MANAGE/READ/WRITE_EXTERNAL_STORAGE are absent. CI audits this.
 
-## Known debt
+## Known debt / owner decisions
 
-- Habits can't be added to or deleted from a running arc (needs a dated
-  existence model).
-- Clock-time habits: night window only, same target on Minimum Days, no
-  bedtime analytics.
-- A seasonal setup that outlives its season must be cancelled by hand.
-- Unchanged from Phase 5:
-  - backups are unencrypted (by design)
+- Identifiers (above). Android system backup is still enabled (decide:
+  keep it or `allowBackup="false"`).
+- Manrope isn't bundled (the app uses platform fonts). iPad is enabled
+  (needs screenshots). Phone landscape is cramped on the Journey.
+- Unchanged from Phase 6:
+  - no habit add or delete in a running arc
+  - the clock-time Minimum Day policy
+  - backups unencrypted by design
   - no merge-import
-  - decoding runs on the UI isolate
+  - decoding on the UI isolate
   - reminders are inexact and pause after 14 idle days
-  - Minimum Day is one-way
-  - no past-day editing
-  - close-out waits for an entry point
 
-## Next recommended phase
+## Exact recommended next step
 
-**Phase 7:**
-- active-arc habit creation with dated existence
-- a clock-time Minimum Day policy and bedtime trends
-- an iOS device pass and a screen-reader audit
-- an optional encrypted backup as format 3
-- Journey parallax and seasonal atmosphere
+Review and merge PR #7. Then run **Phase 8 as release execution**, not
+features:
 
-Details in `docs/PHASE_6.md#phase-7-handoff`.
+1. Decide the identifiers, the backup policy, the font, iPad support and
+   the version.
+2. Create the Android upload key and Apple signing.
+3. Run the physical Android and iPhone passes (TalkBack, VoiceOver,
+   delivery, Files / Drive, a profile frame check).
+4. Capture the screenshots and publish the privacy policy.
+5. Run Play internal testing and TestFlight.
+
+Details: `docs/PHASE_7.md#phase-8-handoff`, `docs/RELEASE_CHECKLIST.md`.
