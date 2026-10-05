@@ -133,8 +133,8 @@ flutter build ios --release --no-codesign
 ```
 
 Release signing is documented in
-[docs/ANDROID_SIGNING.md](docs/ANDROID_SIGNING.md). Brand assets are
-generated with `flutter test tool/brand_assets/generate_brand_assets.dart`.
+[docs/ANDROID_SIGNING.md](docs/ANDROID_SIGNING.md). Brand assets come
+from `flutter test tool/brand_assets/generate_brand_assets.dart`.
 
 If your default `java` is newer than 21, point Gradle at JDK 21 for the build,
 e.g. `JAVA_HOME=$(/usr/libexec/java_home -v 21) flutter build apk --debug`.
