@@ -91,6 +91,8 @@ String journeyDayLabel(JourneyDay day) {
   final state = switch (day.state) {
     JourneyDayState.notJoined => 'Before you joined this Seasonal Winter Arc.',
     JourneyDayState.future => 'Upcoming.',
+    JourneyDayState.today when day.mode?.isMinimum ?? false =>
+      'Minimum Day, $percent percent complete.',
     JourneyDayState.today => '$percent percent complete.',
     JourneyDayState.perfect => 'Perfect Day.',
     JourneyDayState.minimumComplete => 'Minimum Day completed.',

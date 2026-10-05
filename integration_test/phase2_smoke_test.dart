@@ -87,8 +87,11 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('JOURNEY'), findsOneWidget);
+    // A Minimum Day in progress: the marker says so in words.
     expect(
-      find.bySemanticsLabel('Day 1. Today. 0 percent complete.'),
+      find.bySemanticsLabel(
+        RegExp(r'^Day 1\. Today\. Minimum Day, \d+ percent complete\.$'),
+      ),
       findsOneWidget,
     );
 
