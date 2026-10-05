@@ -38,68 +38,72 @@ class JourneyMarker extends StatelessWidget {
     return Semantics(
       container: true,
       button: onTap != null,
-      label: day.isNotJoined
-          ? 'Day ${day.dayNumber}. Before you joined this Seasonal Winter Arc.'
-          : 'Day ${day.dayNumber}, ${state.label}'
-                '${day.isToday ? ', today' : ''}',
+      label: journeyDayLabel(day),
+      // The tap is repeated here: the excluded child's own action is not
+      // exposed to assistive technologies.
+      onTap: onTap,
       excludeSemantics: true,
-      child: SizedBox.square(
-        dimension: extent,
-        child: Center(
-          child: AnimatedOpacity(
-            duration: context.motion.standard,
-            opacity: state.opacity,
-            child: AnimatedContainer(
-              duration: context.motion.standard,
-              curve: Curves.easeOutCubic,
-              width: size,
-              height: size,
-              decoration: BoxDecoration(
-                borderRadius: radius,
-                color: switch (state.fill) {
-                  MarkerFill.full => color,
-                  MarkerFill.half => null,
-                  MarkerFill.none =>
-                    day.isToday
-                        ? colors.accent.withValues(alpha: 0.35)
-                        : colors.skyTop.withValues(alpha: 0.6),
-                },
-                gradient: state.fill == MarkerFill.half
-                    ? LinearGradient(
-                        begin: Alignment.bottomCenter,
-                        end: Alignment.topCenter,
-                        colors: [
-                          color.withValues(alpha: 0.55),
-                          color.withValues(alpha: 0.55),
-                          colors.skyTop.withValues(alpha: 0.7),
-                          colors.skyTop.withValues(alpha: 0.7),
-                        ],
-                        stops: const [0, 0.5, 0.5, 1],
-                      )
-                    : null,
-                // A dashed outline is painted instead (below).
-                border: state.dashed
-                    ? null
-                    : Border.all(
-                        color: day.isToday
-                            ? colors.snow
-                            : color.withValues(alpha: day.isFuture ? 0.6 : 0.9),
-                        width: day.isToday ? 3 : 1.4,
-                      ),
-                boxShadow: [
-                  if (state.glows || day.isToday)
-                    BoxShadow(
-                      color: (day.isToday ? colors.accentSecondary : color)
-                          .withValues(alpha: 0.5),
-                      blurRadius: day.isToday ? 18 : 12,
-                    ),
-                ],
-              ),
-              child: Material(
-                type: MaterialType.transparency,
-                child: InkWell(
-                  borderRadius: radius,
-                  onTap: onTap,
+      // The whole reserved square is the touch target, not just the drawn
+      // marker (as small as 26 dp before joining).
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: onTap,
+          child: SizedBox.square(
+            dimension: extent,
+            child: Center(
+              child: AnimatedOpacity(
+                duration: context.motion.standard,
+                opacity: state.opacity,
+                child: AnimatedContainer(
+                  duration: context.motion.standard,
+                  curve: Curves.easeOutCubic,
+                  width: size,
+                  height: size,
+                  decoration: BoxDecoration(
+                    borderRadius: radius,
+                    color: switch (state.fill) {
+                      MarkerFill.full => color,
+                      MarkerFill.half => null,
+                      MarkerFill.none =>
+                        day.isToday
+                            ? colors.accent.withValues(alpha: 0.35)
+                            : colors.skyTop.withValues(alpha: 0.6),
+                    },
+                    gradient: state.fill == MarkerFill.half
+                        ? LinearGradient(
+                            begin: Alignment.bottomCenter,
+                            end: Alignment.topCenter,
+                            colors: [
+                              color.withValues(alpha: 0.55),
+                              color.withValues(alpha: 0.55),
+                              colors.skyTop.withValues(alpha: 0.7),
+                              colors.skyTop.withValues(alpha: 0.7),
+                            ],
+                            stops: const [0, 0.5, 0.5, 1],
+                          )
+                        : null,
+                    // A dashed outline is painted instead (below).
+                    border: state.dashed
+                        ? null
+                        : Border.all(
+                            color: day.isToday
+                                ? colors.snow
+                                : color.withValues(
+                                    alpha: day.isFuture ? 0.6 : 0.9,
+                                  ),
+                            width: day.isToday ? 3 : 1.4,
+                          ),
+                    boxShadow: [
+                      if (state.glows || day.isToday)
+                        BoxShadow(
+                          color: (day.isToday ? colors.accentSecondary : color)
+                              .withValues(alpha: 0.5),
+                          blurRadius: day.isToday ? 18 : 12,
+                        ),
+                    ],
+                  ),
                   child: CustomPaint(
                     painter: state.dashed
                         ? _DashedCirclePainter(color.withValues(alpha: 0.9))

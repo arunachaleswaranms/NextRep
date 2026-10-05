@@ -85,15 +85,15 @@ void main() {
 
     // Journey v2: today is perfect, every day is on the path.
     await openTab(tester, 'Journey');
-    expect(find.bySemanticsLabel('Day 1, Perfect, today'), findsOneWidget);
-    await tester.tap(find.bySemanticsLabel('Day 1, Perfect, today'));
+    expect(find.bySemanticsLabel('Day 1. Today. Perfect Day.'), findsOneWidget);
+    await tester.tap(find.bySemanticsLabel('Day 1. Today. Perfect Day.'));
     await tester.pumpAndSettle();
     expect(find.text('Normal Day'), findsOneWidget);
     expect(find.text('90 XP'), findsOneWidget);
     await tester.tapAt(const Offset(10, 10));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
-      find.bySemanticsLabel('Day 92, Upcoming'),
+      find.bySemanticsLabel('Day 92. Upcoming.'),
       500,
       scrollable: find.byType(Scrollable).last,
     );

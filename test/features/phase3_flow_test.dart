@@ -197,11 +197,18 @@ void main() {
     await _openTab(tester, 'Journey');
     expect(find.text('JOURNEY'), findsOneWidget);
     expect(find.text('Frozen Forest · Frozen Trail'), findsOneWidget);
-    expect(find.bySemanticsLabel('Day 3, Today, today'), findsOneWidget);
-    expect(find.bySemanticsLabel('Day 2, Missed'), findsOneWidget);
-    expect(find.bySemanticsLabel('Day 4, Upcoming'), findsOneWidget);
+    expect(
+      find.bySemanticsLabel('Day 3. Today. 0 percent complete.'),
+      findsOneWidget,
+    );
+    expect(find.bySemanticsLabel('Day 2. Missed.'), findsOneWidget);
+    expect(find.bySemanticsLabel('Day 4. Upcoming.'), findsOneWidget);
 
-    await tester.tap(find.bySemanticsLabel('Day 1, Partial'));
+    await tester.tap(
+      find.bySemanticsLabel(
+        RegExp(r'^Day 1\. Partial, \d+ percent complete\.$'),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.text('Day 1'), findsOneWidget);
     expect(find.text('Thursday, 1 October 2026'), findsOneWidget);
@@ -212,13 +219,13 @@ void main() {
     await tester.pumpAndSettle();
 
     // Future days are not interactive.
-    await tester.tap(find.bySemanticsLabel('Day 4, Upcoming'));
+    await tester.tap(find.bySemanticsLabel('Day 4. Upcoming.'));
     await tester.pumpAndSettle();
     expect(find.text('Thursday, 1 October 2026'), findsNothing);
 
     // All 92 days and the summit are on the path.
     await tester.scrollUntilVisible(
-      find.bySemanticsLabel('Day 92, Upcoming'),
+      find.bySemanticsLabel('Day 92. Upcoming.'),
       400,
       scrollable: find.byType(Scrollable).last,
     );
@@ -400,7 +407,10 @@ void main() {
 
     await _openTab(tester, 'Journey');
     expect(tester.takeException(), isNull);
-    expect(find.bySemanticsLabel('Day 20, Today, today'), findsOneWidget);
+    expect(
+      find.bySemanticsLabel('Day 20. Today. 0 percent complete.'),
+      findsOneWidget,
+    );
     await _shutDown(tester);
 
     clock.current = DateTime(2027, 1, 3, 9);

@@ -27,7 +27,7 @@ class DataBackupScreen extends ConsumerWidget {
     final proceed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        icon: const Icon(Icons.lock_outline_rounded),
+        icon: const Icon(Icons.info_outline_rounded),
         title: const Text('Export Backup'),
         content: const Text(
           'This backup contains your private NextRep history and '
@@ -195,7 +195,14 @@ class DataBackupScreen extends ConsumerWidget {
     context: context,
     builder: (context) => AlertDialog(
       icon: const Icon(Icons.error_outline_rounded),
-      title: Text(restoring ? "Couldn't restore" : "Can't use this file"),
+      // Only a problem with the file itself is blamed on the file.
+      title: Text(
+        restoring
+            ? "Couldn't restore"
+            : failure is BackupFailure
+            ? "Can't use this file"
+            : "Couldn't open the file",
+      ),
       content: Text(
         restoring && failure is! BackupFailure
             ? 'The restore did not complete, so nothing was changed. Your '
@@ -284,8 +291,8 @@ class DataBackupScreen extends ConsumerWidget {
                 icon: Icons.lock_open_rounded,
                 text:
                     'A backup includes your reflections and is not encrypted. '
-                    'It carries a checksum, so a damaged or edited file is '
-                    'refused instead of restored.',
+                    'The backup includes a checksum so accidental corruption '
+                    'can be detected.',
               ),
               const SizedBox(height: WinterSpacing.sm),
               _Note(
@@ -327,6 +334,7 @@ class _Action extends StatelessWidget {
       button: true,
       enabled: onTap != null,
       label: '$title. $subtitle',
+      onTap: onTap,
       excludeSemantics: true,
       child: WinterCard(
         onTap: onTap,

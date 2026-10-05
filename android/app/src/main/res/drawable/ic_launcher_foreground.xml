@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Output of tool/brand_assets/generate_brand_assets.dart: change the geometry there, not here. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path android:pathData="M-2,110 L-2,80 L18,73 L30,63 L41,54 L50,63 L62,41 L73,56 L81,61 L93,68 L110,75 L110,110 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="linear"
+                android:startX="0"
+                android:startY="41"
+                android:endX="0"
+                android:endY="90"
+                android:startColor="#FFF2F6FF"
+                android:endColor="#FFB9CDEE" />
+        </aapt:attr>
+    </path>
+    <path
+        android:fillColor="#520E1A33"
+        android:pathData="M62,41 L73,56 L81,61 L93,68 L110,75 L110,110 L74,110 L65,62 Z" />
+    <path
+        android:fillColor="#420E1A33"
+        android:pathData="M41,54 L50,63 L47,69 L42,64 Z" />
+    <path android:pathData="M53,32 A9,9 0 1,0 71,32 A9,9 0 1,0 53,32 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="radial"
+                android:centerX="62"
+                android:centerY="32"
+                android:gradientRadius="9"
+                android:startColor="#8CFFB45C"
+                android:endColor="#00FFB45C" />
+        </aapt:attr>
+    </path>
+    <path
+        android:fillColor="#FFFFB45C"
+        android:pathData="M58.8,32 A3.2,3.2 0 1,0 65.2,32 A3.2,3.2 0 1,0 58.8,32 Z" />
+</vector>

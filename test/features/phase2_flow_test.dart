@@ -107,7 +107,10 @@ void main() {
     expect(find.text('JOURNEY'), findsOneWidget);
     expect(find.text('Day 1 of 92'), findsOneWidget);
     expect(find.byType(JourneyMarker), findsWidgets);
-    expect(find.bySemanticsLabel('Day 1, Today, today'), findsOneWidget);
+    expect(
+      find.bySemanticsLabel('Day 1. Today. 0 percent complete.'),
+      findsOneWidget,
+    );
 
     // Journey keeps its scroll position across tab switches. The path
     // climbs upwards: dragging down moves towards the summit.
@@ -134,7 +137,10 @@ void main() {
     // Journey re-read the persisted change made on Today.
     await tester.drag(find.byType(Scrollable).last, const Offset(0, -600));
     await tester.pumpAndSettle();
-    await tester.tap(find.bySemanticsLabel('Day 1, Today, today'));
+    // The marker's label now carries the persisted progress.
+    await tester.tap(
+      find.bySemanticsLabel('Day 1. Today. 25 percent complete.'),
+    );
     await tester.pumpAndSettle();
     expect(find.text('Day 1'), findsOneWidget);
     expect(find.text('Normal Day'), findsOneWidget);

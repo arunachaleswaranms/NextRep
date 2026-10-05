@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- WinterColors.background: the window behind the launch mark and the
+         Flutter UI, so the app never flashes white while it starts. -->
+    <color name="nextrep_background">#FF070B18</color>
+</resources>

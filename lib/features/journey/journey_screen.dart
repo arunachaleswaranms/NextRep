@@ -12,6 +12,8 @@ import '../../domain/winter_arc/winter_arc_session.dart';
 import '../../shared/formatting/arc_labels.dart';
 import '../../shared/widgets/failure_view.dart';
 import '../../shared/widgets/level_bar.dart';
+import '../../shared/widgets/loading_view.dart';
+import '../../shared/widgets/winter_card.dart';
 import '../../shared/winter_scene/scene_progress.dart';
 import '../../shared/winter_scene/winter_scene.dart';
 import '../achievements/widgets/trophy_button.dart';
@@ -81,18 +83,34 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
           SafeArea(
             bottom: false,
             child: switch (journey) {
-              _ when value != null => Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _Header(journey: value, historical: widget.sessionId != null),
-                  Expanded(child: JourneyPath(journey: value)),
-                ],
+              _ when value != null => LayoutBuilder(
+                builder: (context, constraints) => Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // With large text (or a short, landscape screen) the
+                    // header scrolls within at most half the height, so the
+                    // path always keeps room.
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxHeight: constraints.maxHeight / 2,
+                      ),
+                      child: SingleChildScrollView(
+                        primary: false,
+                        child: _Header(
+                          journey: value,
+                          historical: widget.sessionId != null,
+                        ),
+                      ),
+                    ),
+                    Expanded(child: JourneyPath(journey: value)),
+                  ],
+                ),
               ),
               AsyncError(:final error, :final stackTrace) => FailureView(
                 failure: toAppFailure(error, stackTrace),
                 onRetry: _retry,
               ),
-              _ => const Center(child: CircularProgressIndicator()),
+              _ => const LoadingView(),
             },
           ),
         ],
@@ -182,17 +200,12 @@ class _Header extends StatelessWidget {
             style: text.bodyMedium?.copyWith(color: colors.textPrimary),
           ),
           const SizedBox(height: WinterSpacing.sm),
-          Container(
+          WinterCard(
             padding: const EdgeInsets.fromLTRB(
               WinterSpacing.md,
               WinterSpacing.sm,
               WinterSpacing.md,
               WinterSpacing.sm + 2,
-            ),
-            decoration: BoxDecoration(
-              color: colors.glass,
-              borderRadius: BorderRadius.circular(WinterRadii.card),
-              border: Border.all(color: colors.glassBorder),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,

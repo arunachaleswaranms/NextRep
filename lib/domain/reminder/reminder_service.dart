@@ -14,6 +14,10 @@ enum ReminderUpdate {
   /// A reminder was being turned on but notification permission was
   /// denied. Nothing was saved.
   permissionDenied,
+
+  /// Saved, but the system scheduler failed. The next launch or resume
+  /// reconciles again, so the reminders catch up then.
+  savedNotScheduled,
 }
 
 /// Reminder use cases: the user's preferences and the reminders they imply
@@ -29,12 +33,17 @@ final class ReminderService {
     required this._preferences,
     required this._scheduler,
     required this._clock,
+    this._onScheduleError,
   }) : _arcs = CurrentArcService(sessions);
 
   final CurrentArcService _arcs;
   final ReminderPreferencesRepository _preferences;
   final ReminderScheduler _scheduler;
   final Clock _clock;
+
+  /// Told about a scheduler failure that [update] doesn't surface as a
+  /// failure (the preferences were saved).
+  final void Function(Object error, StackTrace stackTrace)? _onScheduleError;
   final _queue = SerialQueue();
 
   Future<ReminderPreferences> preferences() => _preferences.load();
@@ -65,7 +74,14 @@ final class ReminderService {
       return ReminderUpdate.permissionDenied;
     }
     await _preferences.save(next, at: _clock.now());
-    await _reconcile();
+    try {
+      await _reconcile();
+    } catch (error, stackTrace) {
+      // The preference is stored: say so rather than "something went
+      // wrong" with a switch that then reads as on.
+      _onScheduleError?.call(error, stackTrace);
+      return ReminderUpdate.savedNotScheduled;
+    }
     return ReminderUpdate.saved;
   });
 

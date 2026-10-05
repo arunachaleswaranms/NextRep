@@ -6,7 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/theme/winter_tokens.dart';
 import '../../core/errors/app_failure.dart';
 import '../../domain/achievement/achievement.dart';
+import '../../shared/widgets/empty_state_view.dart';
 import '../../shared/widgets/failure_view.dart';
+import '../../shared/widgets/loading_view.dart';
 import '../../shared/widgets/winter_background.dart';
 import 'achievements_controller.dart';
 import 'widgets/achievement_card.dart';
@@ -53,8 +55,9 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen> {
               context,
               value,
             ),
-            AsyncValue(hasError: false, hasValue: true) => const Center(
-              child: Text('Start your Winter Arc to collect achievements.'),
+            AsyncValue(hasError: false, hasValue: true) => const EmptyStateView(
+              icon: Icons.emoji_events_outlined,
+              title: 'Start your Winter Arc to collect achievements.',
             ),
             AsyncError(:final error, :final stackTrace) => FailureView(
               failure: toAppFailure(error, stackTrace),
@@ -63,7 +66,7 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen> {
                 final id => ref.invalidate(arcAchievementBoardProvider(id)),
               },
             ),
-            _ => const Center(child: CircularProgressIndicator()),
+            _ => const LoadingView(),
           },
         ),
       ),

@@ -12,6 +12,7 @@ import '../../domain/winter_arc/winter_arc_session.dart';
 import '../../shared/formatting/failure_messages.dart';
 import '../../shared/formatting/habit_labels.dart';
 import '../../shared/widgets/failure_view.dart';
+import '../../shared/widgets/loading_view.dart';
 import '../../shared/widgets/winter_background.dart';
 import '../../shared/widgets/winter_card.dart';
 import 'new_arc_controller.dart';
@@ -36,6 +37,10 @@ class _NewArcScreenState extends ConsumerState<NewArcScreen> {
   /// The kind picked in step 1; null while choosing it.
   ArcKind? _kind;
 
+  /// The kind being created for a first-time user (straight from step 1),
+  /// so its card shows the progress.
+  ArcKind? _creating;
+
   Future<void> _create(ArcKind kind, NewArcBaseline baseline) async {
     final result = await ref
         .read(newArcControllerProvider.notifier)
@@ -55,7 +60,11 @@ class _NewArcScreenState extends ConsumerState<NewArcScreen> {
     // Without a finished arc there's nothing to reuse: start from the
     // starter habits straight away.
     if (!returning) {
-      _create(kind, NewArcBaseline.fresh);
+      setState(() => _creating = kind);
+      _create(
+        kind,
+        NewArcBaseline.fresh,
+      ).whenComplete(() => mounted ? setState(() => _creating = null) : null);
       return;
     }
     setState(() => _kind = kind);
@@ -82,9 +91,7 @@ class _NewArcScreenState extends ConsumerState<NewArcScreen> {
         body: WinterBackground(
           child: SafeArea(
             child: switch (reusable) {
-              AsyncLoading() when !reusable.hasValue => const Center(
-                child: CircularProgressIndicator(),
-              ),
+              AsyncLoading() when !reusable.hasValue => const LoadingView(),
               // Without knowing whether there's an arc to reuse, a returning
               // user could be sent down the first-time path.
               AsyncError(:final error, :final stackTrace) => FailureView(
@@ -95,6 +102,7 @@ class _NewArcScreenState extends ConsumerState<NewArcScreen> {
                 returning: returning,
                 season: season,
                 busy: busy != null,
+                creating: _creating,
                 onChoose: (kind) => _chooseKind(kind, returning: returning),
               ),
               _ => _BaselineStep(
@@ -119,11 +127,13 @@ class _KindStep extends StatelessWidget {
     required this.season,
     required this.busy,
     required this.onChoose,
+    this.creating,
   });
 
   final bool returning;
   final SeasonAvailability season;
   final bool busy;
+  final ArcKind? creating;
   final ValueChanged<ArcKind> onChoose;
 
   @override
@@ -153,6 +163,7 @@ class _KindStep extends StatelessWidget {
           title: 'Rolling 92-Day Arc',
           description:
               "Start whenever you're ready. 92 days from the day you begin.",
+          busy: creating == ArcKind.rolling92,
           enabled: !busy,
           onTap: () => onChoose(ArcKind.rolling92),
         ),
@@ -162,6 +173,9 @@ class _KindStep extends StatelessWidget {
           title: 'Seasonal Winter Arc',
           description: seasonal.description,
           status: seasonal.status,
+          statusIcon: seasonal.icon,
+          busy: creating == ArcKind.seasonalWinter,
+          unavailable: !season.canSetUp,
           enabled: !busy && season.canSetUp,
           onTap: () => onChoose(ArcKind.seasonalWinter),
         ),
@@ -169,22 +183,31 @@ class _KindStep extends StatelessWidget {
     );
   }
 
-  static ({String description, String status}) _seasonalCopy(
+  static ({String description, String status, IconData icon}) _seasonalCopy(
     SeasonAvailability season,
   ) {
     const window = 'October 1 – December 31.';
     return switch (season.phase) {
       SeasonPhase.closed => (
-        description: '$window One shared season, every year.',
+        description:
+            '$window One shared season every year, with setup opening in '
+            'September.',
         status: 'Preseason opens September 1',
+        icon: Icons.schedule_rounded,
       ),
       SeasonPhase.preseason => (
-        description: '$window Set up your habits now.',
+        description:
+            '$window Set up your habits now, then join on October 1. Day '
+            'numbers follow the season.',
         status: 'Preseason · the season starts October 1',
+        icon: Icons.event_available_rounded,
       ),
       SeasonPhase.inSeason => (
-        description: '$window Join the season already in progress.',
+        description:
+            '$window Join the season already in progress. Days before you '
+            "join don't count against you.",
         status: 'In season · ${season.year}',
+        icon: Icons.ac_unit_rounded,
       ),
     };
   }
@@ -270,6 +293,8 @@ class _Choice extends StatelessWidget {
     required this.onTap,
     this.busy = false,
     this.status,
+    this.statusIcon,
+    this.unavailable = false,
     this.preview,
   });
 
@@ -282,6 +307,11 @@ class _Choice extends StatelessWidget {
 
   /// Availability, e.g. "Preseason opens September 1".
   final String? status;
+  final IconData? statusIcon;
+
+  /// Not offered at this time of year (the season is closed). Shown as an
+  /// intentional, calm state rather than a greyed-out card.
+  final bool unavailable;
 
   /// The habits this choice starts with, if shown.
   final List<Habit>? preview;
@@ -301,18 +331,26 @@ class _Choice extends StatelessWidget {
         title,
         description,
         ?status,
+        if (unavailable) 'Not available yet',
         if (habits.isNotEmpty) 'Habits: $summary',
       ].join('. '),
+      onTap: enabled ? onTap : null,
       excludeSemantics: true,
       child: Opacity(
-        opacity: enabled || busy ? 1 : 0.5,
+        opacity: enabled || busy || unavailable ? 1 : 0.5,
         child: WinterCard(
           highlighted: busy,
           onTap: enabled ? onTap : null,
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(icon, color: colors.accentSecondary, size: 28),
+              Icon(
+                icon,
+                color: unavailable
+                    ? colors.textSecondary
+                    : colors.accentSecondary,
+                size: 28,
+              ),
               const SizedBox(width: WinterSpacing.md),
               Expanded(
                 child: Column(
@@ -322,12 +360,30 @@ class _Choice extends StatelessWidget {
                     const SizedBox(height: WinterSpacing.xs),
                     Text(description, style: text.bodyMedium),
                     if (status case final status?) ...[
-                      const SizedBox(height: WinterSpacing.xs),
-                      Text(
-                        status,
-                        style: text.labelLarge?.copyWith(
-                          color: colors.accentSecondary,
-                        ),
+                      const SizedBox(height: WinterSpacing.sm),
+                      Row(
+                        children: [
+                          if (statusIcon case final statusIcon?) ...[
+                            Icon(
+                              statusIcon,
+                              size: 16,
+                              color: unavailable
+                                  ? colors.warmLight
+                                  : colors.accentSecondary,
+                            ),
+                            const SizedBox(width: WinterSpacing.xs),
+                          ],
+                          Expanded(
+                            child: Text(
+                              status,
+                              style: text.labelLarge?.copyWith(
+                                color: unavailable
+                                    ? colors.warmLight
+                                    : colors.accentSecondary,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                     if (habits.isNotEmpty) ...[
@@ -346,7 +402,7 @@ class _Choice extends StatelessWidget {
                   dimension: 22,
                   child: CircularProgressIndicator(strokeWidth: 2.5),
                 )
-              else
+              else if (!unavailable)
                 Icon(Icons.chevron_right_rounded, color: colors.textSecondary),
             ],
           ),

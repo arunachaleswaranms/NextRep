@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 
 import '../../../app/theme/winter_tokens.dart';
 import '../../../domain/habit/habit.dart';
@@ -86,6 +87,12 @@ class TimeBeforeHabitTile extends StatelessWidget {
           ? (logged == null
                 ? 'Double tap to log a time'
                 : 'Double tap to change the time')
+          : null,
+      onTap: enabled ? () => _pick(context) : null,
+      // The card's Clear button is inside the excluded subtree, so it is
+      // offered as a custom action instead.
+      customSemanticsActions: logged != null && enabled
+          ? {CustomSemanticsAction(label: 'Clear time'): onClear}
           : null,
       excludeSemantics: true,
       child: WinterCard(

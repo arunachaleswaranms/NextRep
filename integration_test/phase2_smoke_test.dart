@@ -87,7 +87,13 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('JOURNEY'), findsOneWidget);
-    expect(find.bySemanticsLabel('Day 1, Today, today'), findsOneWidget);
+    // A Minimum Day in progress: the marker says so in words.
+    expect(
+      find.bySemanticsLabel(
+        RegExp(r'^Day 1\. Today\. Minimum Day, \d+ percent complete\.$'),
+      ),
+      findsOneWidget,
+    );
 
     await tester.pumpWidget(const SizedBox());
     await settleTimers(tester);

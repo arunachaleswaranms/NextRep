@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Output of tool/brand_assets/generate_brand_assets.dart: change the geometry there, not here. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M-2,110 L-2,80 L18,73 L30,63 L41,54 L50,63 L62,41 L73,56 L81,61 L93,68 L110,75 L110,110 Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M58.8,32 A3.2,3.2 0 1,0 65.2,32 A3.2,3.2 0 1,0 58.8,32 Z" />
+</vector>

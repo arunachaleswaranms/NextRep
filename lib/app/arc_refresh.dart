@@ -21,3 +21,15 @@ class ArcsChanged extends Notifier<int> {
 
   void changed() => state++;
 }
+
+/// Bumped when the local date changes while the app stays open (see
+/// [DayChangeTicker]), so screens that show "today" without a habit change
+/// to trigger them (the Journal) re-read.
+final dayChangedProvider = NotifierProvider<DayChanged, int>(DayChanged.new);
+
+class DayChanged extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  void changed() => state++;
+}

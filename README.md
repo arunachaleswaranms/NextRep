@@ -10,13 +10,15 @@ warm summit. Two kinds of Arc:
   September, or join the season already in progress; a late join keeps
   the season's day numbers and the days before it are neutral.
 
-> **Status: Phase 6 — Seasonal Arc & habit evolution.** Arc kinds and
-> late joining (schema v5), the template catalogue, custom habits in setup,
-> clock-time habits (Sleep Before Target), and backup format 2 that still
-> restores format-1 files. See [docs/PHASE_6.md](docs/PHASE_6.md), and
-> [docs/PHASE_5.md](docs/PHASE_5.md), [docs/PHASE_4.md](docs/PHASE_4.md),
-> [docs/PHASE_3.md](docs/PHASE_3.md), [docs/PHASE_2.md](docs/PHASE_2.md) and
-> [docs/PHASE_1.md](docs/PHASE_1.md) for the earlier phases.
+> **Status: Phase 7: Release readiness & premium UX.** Software release
+> candidate. Store submission still has manual gates (production
+> identifiers, signing, physical-device passes, screenshots). See
+> [docs/PHASE_7.md](docs/PHASE_7.md),
+> [docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md),
+> [docs/STORE_READINESS.md](docs/STORE_READINESS.md),
+> [PRIVACY.md](PRIVACY.md) and [CHANGELOG.md](CHANGELOG.md). Earlier
+> phases: [6](docs/PHASE_6.md), [5](docs/PHASE_5.md), [4](docs/PHASE_4.md),
+> [3](docs/PHASE_3.md), [2](docs/PHASE_2.md), [1](docs/PHASE_1.md).
 
 ## Architecture
 
@@ -118,11 +120,21 @@ flutter test test/domain/backup_format_test.dart test/domain/backup_v2_test.dart
   test/domain/arc_deletion_test.dart test/domain/insight_rules_test.dart
 flutter test test/domain/seasonal_arc_test.dart test/domain/participation_test.dart \
   test/domain/time_before_test.dart test/domain/setup_habits_test.dart  # Phase 6
+flutter test test/app/day_change_test.dart test/domain/date_edges_test.dart \
+  test/features/phase7_lifecycle_test.dart \
+  test/features/phase7_accessibility_test.dart                          # Phase 7
 flutter test --coverage
 flutter test integration_test -d <device-id> --no-uninstall   # on-device flows
 flutter build apk --debug
-flutter build apk --release
+flutter build apk --release      # debug-signed unless android/key.properties exists
+flutter build appbundle --release
+flutter build ios --simulator
+flutter build ios --release --no-codesign
 ```
+
+Release signing is documented in
+[docs/ANDROID_SIGNING.md](docs/ANDROID_SIGNING.md). Brand assets come
+from `flutter test tool/brand_assets/generate_brand_assets.dart`.
 
 If your default `java` is newer than 21, point Gradle at JDK 21 for the build,
 e.g. `JAVA_HOME=$(/usr/libexec/java_home -v 21) flutter build apk --debug`.
@@ -221,6 +233,26 @@ survives restarts.
   and full-chain migration. Backup format 2; format-1 backups still
   restore.
 
+**Phase 7:**
+- Release audit and fixes; no new product scope (schema v5, backup format
+  2).
+- Branding: NextRep icon set (adaptive, themed, iOS, store), a night launch
+  screen, and the "NextRep" name.
+- The app moves to the new day at local midnight while open. An arc that
+  ends at midnight opens its summary.
+- Failure states with a way forward. A release-mode error panel. Labelled
+  loading and intentional empty states.
+- Accessibility:
+  - screen-reader tap actions on every custom button
+  - Journey days spoken in words, with 56 dp targets
+  - 2× text fixes
+  - celebrations wait for screen-reader users
+- Release qualification on the emulator: notifications (deny, allow,
+  deliver, background and cold-start taps, revoked) and the document
+  picker (export, corrupted files, restore).
+- Privacy, store readiness and metadata, release checklist, changelog. CI
+  adds a release compile and a permission audit.
+
 ## Explicitly deferred
 
 Custom seasons or lengths, adding or deleting habits in a running arc, a
@@ -232,18 +264,26 @@ cancelling or deleting an active arc. See
 ## CI
 
 [`.github/workflows/flutter-ci.yml`](.github/workflows/flutter-ci.yml) runs on
-every pull request and push to `main`: format check, analyze, migration
-tests (v1 → v5), backup format tests (v1 and v2), all tests, and an
-Android debug build.
+every pull request and push to `main`:
+
+- format check and analyze
+- migration tests (v1 → v5) and backup format tests (v1 and v2)
+- the release qualification tests, then all tests
+- Android debug and release builds (the release build is debug-signed: no
+  secrets in CI)
+- a release permission audit that fails on `INTERNET`, exact-alarm or
+  broad storage permissions
 
 ## Privacy
 
 Local-only: no backend, analytics, telemetry, ads or trackers.
 
 - **Reflections** are private text stored only in the on-device SQLite
-  database. They are never uploaded, logged or put in error reports
-  (reflection storage errors keep only the error type, because SQLite
-  errors can quote the values). Notifications carry generic text only.
+  database. NextRep never uploads, logs or reports them (reflection storage
+  errors keep only the error type, because SQLite errors can quote the
+  values). The phone's own system backup (Android Backup, iCloud) may
+  include app data when the user has it on; see [PRIVACY.md](PRIVACY.md).
+  Notifications carry generic text only.
 - **Reminders** are scheduled locally by the OS. There's no push service.
 - **Backups** leave the device only when you export one, to the place you
   pick in the system file UI. They are checksummed (to detect damage), not

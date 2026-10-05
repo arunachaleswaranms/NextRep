@@ -17,6 +17,7 @@ import '../../domain/xp/level_rules.dart';
 import '../../shared/feedback/haptics.dart';
 import '../../shared/formatting/failure_messages.dart';
 import '../../shared/widgets/failure_view.dart';
+import '../../shared/widgets/loading_view.dart';
 import '../../shared/widgets/winter_background.dart';
 import '../achievements/widgets/trophy_button.dart';
 import '../celebration/celebration_queue.dart';
@@ -158,7 +159,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
       ..showSnackBar(
         SnackBar(
           content: Text(message),
-          duration: const Duration(seconds: 3),
+          duration: const Duration(seconds: 4),
           action: undo == null
               ? null
               : SnackBarAction(label: 'Undo', onPressed: undo),
@@ -180,7 +181,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
               failure: toAppFailure(error, stackTrace),
               onRetry: () => ref.invalidate(todayControllerProvider),
             ),
-            _ => const Center(child: CircularProgressIndicator()),
+            _ => const LoadingView(),
           },
         ),
       ),

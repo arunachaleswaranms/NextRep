@@ -20,9 +20,14 @@ class PrimaryButton extends StatelessWidget {
   Widget build(BuildContext context) => FilledButton(
     onPressed: busy ? null : onPressed,
     child: busy
-        ? const SizedBox.square(
-            dimension: 22,
-            child: CircularProgressIndicator(strokeWidth: 2.5),
+        // The button keeps its name while busy, so a screen reader still
+        // knows what is in progress.
+        ? Semantics(
+            label: label,
+            child: const SizedBox.square(
+              dimension: 22,
+              child: CircularProgressIndicator(strokeWidth: 2.5),
+            ),
           )
         : Text(label),
   );

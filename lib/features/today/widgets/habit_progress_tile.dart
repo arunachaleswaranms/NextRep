@@ -47,91 +47,96 @@ class HabitProgressTile extends StatelessWidget {
         ? colors.recovery
         : WinterHabitAccents.of(_habit.iconKey);
 
-    return WinterCard(
-      highlighted: completed,
-      accent: accent,
-      onTap: enabled && !_habit.type.isNumeric
-          ? () => onAction(
-              completed ? HabitAction.undoCompletion : HabitAction.complete,
-            )
-          : null,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              HabitIcon(
-                iconKey: _habit.iconKey,
-                active: completed,
-                accent: accent,
-              ),
-              const SizedBox(width: WinterSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(_habit.title, style: text.titleMedium),
-                    const SizedBox(height: 2),
-                    Wrap(
-                      spacing: WinterSpacing.sm,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        Text(
-                          progressLabel(
-                            _habit,
-                            progress.currentValue,
-                            target: entry.target,
-                            completed: completed,
+    // Binary habits expose done / not done as a checked state, not only
+    // through the icon.
+    return Semantics(
+      checked: _habit.type.isNumeric ? null : completed,
+      child: WinterCard(
+        highlighted: completed,
+        accent: accent,
+        onTap: enabled && !_habit.type.isNumeric
+            ? () => onAction(
+                completed ? HabitAction.undoCompletion : HabitAction.complete,
+              )
+            : null,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                HabitIcon(
+                  iconKey: _habit.iconKey,
+                  active: completed,
+                  accent: accent,
+                ),
+                const SizedBox(width: WinterSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(_habit.title, style: text.titleMedium),
+                      const SizedBox(height: 2),
+                      Wrap(
+                        spacing: WinterSpacing.sm,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          Text(
+                            progressLabel(
+                              _habit,
+                              progress.currentValue,
+                              target: entry.target,
+                              completed: completed,
+                            ),
+                            style: text.bodyMedium?.copyWith(
+                              color: completed ? colors.textPrimary : null,
+                              fontWeight: completed ? FontWeight.w600 : null,
+                            ),
                           ),
-                          style: text.bodyMedium?.copyWith(
-                            color: completed ? colors.textPrimary : null,
-                            fontWeight: completed ? FontWeight.w600 : null,
-                          ),
-                        ),
-                        if (minimum) const _MinimumChip(),
-                      ],
-                    ),
-                    if (streak > 0) ...[
-                      const SizedBox(height: WinterSpacing.xs),
-                      Text(
-                        streakLabel(streak),
-                        style: text.bodySmall?.copyWith(
-                          color: colors.textSecondary,
-                        ),
+                          if (minimum) const _MinimumChip(),
+                        ],
                       ),
+                      if (streak > 0) ...[
+                        const SizedBox(height: WinterSpacing.xs),
+                        Text(
+                          streakLabel(streak),
+                          style: text.bodySmall?.copyWith(
+                            color: colors.textSecondary,
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
-              ),
-              if (_habit.type.isNumeric)
-                ..._stepper(context, accent)
-              else
-                _check(context, accent),
-            ],
-          ),
-          if (_habit.type.isNumeric) ...[
-            const SizedBox(height: WinterSpacing.sm + 2),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(WinterRadii.pill),
-              child: TweenAnimationBuilder<double>(
-                tween: Tween(
-                  end: (progress.currentValue / entry.target).clamp(0.0, 1.0),
-                ),
-                duration: context.motion.standard,
-                curve: Curves.easeOutCubic,
-                builder: (context, value, _) => LinearProgressIndicator(
-                  value: value,
-                  semanticsLabel: '${_habit.title} progress',
-                  minHeight: 6,
-                  color: accent,
-                  backgroundColor: colors.surfaceElevated.withValues(
-                    alpha: 0.7,
+                if (_habit.type.isNumeric)
+                  ..._stepper(context, accent)
+                else
+                  _check(context, accent),
+              ],
+            ),
+            if (_habit.type.isNumeric) ...[
+              const SizedBox(height: WinterSpacing.sm + 2),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(WinterRadii.pill),
+                child: TweenAnimationBuilder<double>(
+                  tween: Tween(
+                    end: (progress.currentValue / entry.target).clamp(0.0, 1.0),
+                  ),
+                  duration: context.motion.standard,
+                  curve: Curves.easeOutCubic,
+                  builder: (context, value, _) => LinearProgressIndicator(
+                    value: value,
+                    semanticsLabel: '${_habit.title} progress',
+                    minHeight: 6,
+                    color: accent,
+                    backgroundColor: colors.surfaceElevated.withValues(
+                      alpha: 0.7,
+                    ),
                   ),
                 ),
               ),
-            ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -169,7 +174,7 @@ class HabitProgressTile extends StatelessWidget {
     final value = entry.progress.currentValue;
     return [
       IconButton.filledTonal(
-        tooltip: 'Remove from ${_habit.title}',
+        tooltip: 'Decrease ${_habit.title}',
         style: IconButton.styleFrom(
           backgroundColor: colors.surfaceElevated,
           foregroundColor: colors.textPrimary,

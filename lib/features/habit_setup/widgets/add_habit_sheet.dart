@@ -93,6 +93,7 @@ class AddHabitSheet extends StatelessWidget {
           Semantics(
             button: true,
             label: 'Create your own habit',
+            onTap: () => Navigator.of(context).pop(const CustomChoice()),
             excludeSemantics: true,
             child: WinterCard(
               onTap: () => Navigator.of(context).pop(const CustomChoice()),
@@ -151,6 +152,9 @@ class _TemplateCard extends StatelessWidget {
         goals,
         if (added) 'already added',
       ].join(', '),
+      onTap: added
+          ? null
+          : () => Navigator.of(context).pop(TemplateChoice(template)),
       excludeSemantics: true,
       child: Opacity(
         opacity: added ? 0.5 : 1,

@@ -9,9 +9,12 @@ import '../core/errors/error_reporter.dart';
 import '../domain/winter_arc/current_arc_service.dart';
 import '../features/celebration/celebration_overlay.dart';
 import '../shared/widgets/failure_view.dart';
+import '../shared/widgets/loading_view.dart';
 import '../shared/widgets/winter_background.dart';
 import 'app_restart.dart';
+import 'arc_refresh.dart';
 import 'arc_status.dart';
+import 'day_change.dart';
 import 'dependencies.dart';
 import 'router/app_router.dart';
 import 'theme/winter_theme.dart';
@@ -27,9 +30,7 @@ class NextRepApp extends ConsumerWidget {
     // restore the old router and its screens are gone before the new ones
     // read the restored data.
     if (boot.isLoading) {
-      return const _StatusApp(
-        child: Center(child: CircularProgressIndicator()),
-      );
+      return const _StatusApp(child: LoadingView());
     }
     return switch (boot) {
       AsyncData(:final value) => _RoutedApp(
@@ -39,7 +40,7 @@ class NextRepApp extends ConsumerWidget {
       AsyncError(:final error, :final stackTrace) => _StatusApp(
         child: _BootFailure(failure: toAppFailure(error, stackTrace)),
       ),
-      _ => const _StatusApp(child: Center(child: CircularProgressIndicator())),
+      _ => const _StatusApp(child: LoadingView()),
     };
   }
 }
@@ -51,7 +52,8 @@ class NextRepApp extends ConsumerWidget {
 ///
 /// It also keeps the pending reminders in line with the arcs: after launch,
 /// on resume, and whenever the active arc changes (started, closed, or a
-/// new one).
+/// new one). While the app is in the foreground it moves every screen to
+/// the new day at local midnight.
 class _RoutedApp extends ConsumerStatefulWidget {
   const _RoutedApp({super.key, required this.initialLocation});
 
@@ -70,6 +72,10 @@ class _RoutedAppState extends ConsumerState<_RoutedApp> {
     resolution: _resolution,
   );
   late final AppLifecycleListener _lifecycle;
+  late final DayChangeTicker _dayChange = DayChangeTicker(
+    clock: ref.read(clockProvider),
+    onDayChanged: _onDayChanged,
+  );
   final _messenger = GlobalKey<ScaffoldMessengerState>();
   StreamSubscription<String?>? _taps;
 
@@ -80,8 +86,15 @@ class _RoutedAppState extends ConsumerState<_RoutedApp> {
       _resolution.value = next;
       if (previous?.active?.id != next?.active?.id) _syncReminders();
     });
-    _lifecycle = AppLifecycleListener(onResume: _onResume);
+    _lifecycle = AppLifecycleListener(
+      onResume: () {
+        _dayChange.start();
+        unawaited(_onResume());
+      },
+      onPause: _dayChange.stop,
+    );
     _taps = ref.read(reminderTapsProvider).listen(_openReminder);
+    _dayChange.start();
     _syncReminders();
     WidgetsBinding.instance.addPostFrameCallback((_) => _showNotice());
   }
@@ -98,6 +111,7 @@ class _RoutedAppState extends ConsumerState<_RoutedApp> {
   @override
   void dispose() {
     unawaited(_taps?.cancel());
+    _dayChange.stop();
     _lifecycle.dispose();
     _router.dispose();
     _resolution.dispose();
@@ -114,6 +128,15 @@ class _RoutedAppState extends ConsumerState<_RoutedApp> {
       ErrorReporter.report(toAppFailure(error, stackTrace), context: 'resume');
     }
     if (mounted) await _syncReminders();
+  }
+
+  /// Local midnight passed with the app open: close out an arc that has
+  /// just ended, then have every screen re-read the new day.
+  Future<void> _onDayChanged() async {
+    await _onResume();
+    if (!mounted) return;
+    ref.read(arcRefreshProvider.notifier).changed();
+    ref.read(dayChangedProvider.notifier).changed();
   }
 
   /// A reminder was tapped while the app was running. Its destination is

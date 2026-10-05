@@ -4,6 +4,7 @@ import '../../app/dependencies.dart';
 import '../../core/errors/action_result.dart';
 import '../../core/errors/app_failure.dart';
 import '../../core/errors/error_reporter.dart';
+import '../../core/time/clock.dart';
 import '../../core/utils/serial_queue.dart';
 import '../../domain/reflection/daily_reflection.dart';
 import '../../domain/reflection/reflection_service.dart';
@@ -44,8 +45,9 @@ class JournalController extends AsyncNotifier<JournalView> {
     final service = ref.read(reflectionServiceProvider);
     final achievements = ref.read(achievementSyncProvider);
     final changed = ref.read(reflectionsChangedProvider.notifier);
+    final clock = ref.read(clockProvider);
     final result = _queue.run(() async {
-      final ActionResult<ReflectionSave> result = shown == null
+      var result = shown == null
           ? const ActionFailure<ReflectionSave>(
               DomainFailure(DomainRule.noActiveSession, 'Journal not loaded'),
             )
@@ -57,6 +59,15 @@ class JournalController extends AsyncNotifier<JournalView> {
                 draft: draft,
               ),
             );
+      // Saved just after midnight: the entry on screen is yesterday's, so
+      // say that the day moved on rather than that it is read-only.
+      if (result is ActionFailure<ReflectionSave> &&
+          shown != null &&
+          shown.today != clock.today()) {
+        result = const ActionFailure<ReflectionSave>(
+          DomainFailure(DomainRule.staleDay, 'Journal day rolled over'),
+        );
+      }
       if (result is ActionSuccess) changed.bump();
       await _reload(service);
       return result;

@@ -226,6 +226,7 @@ class _HabitFormSheetState extends State<HabitFormSheet> {
                     label:
                         'Goal time, before ${clockLabel(_target)}. '
                         'Double tap to change.',
+                    onTap: _pickTime,
                     excludeSemantics: true,
                     child: ListTile(
                       contentPadding: EdgeInsets.zero,
@@ -259,6 +260,7 @@ class _HabitFormSheetState extends State<HabitFormSheet> {
                       button: true,
                       selected: key == _icon,
                       label: 'Icon ${key.replaceAll('_', ' ')}',
+                      onTap: () => setState(() => _icon = key),
                       excludeSemantics: true,
                       child: InkWell(
                         borderRadius: BorderRadius.circular(WinterRadii.button),
@@ -309,11 +311,15 @@ class _Stepper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
+    // One node reads "Goal, 5 pages"; the visible texts aren't read twice.
     return Semantics(
+      container: true,
       label: '$label, $value',
       child: Row(
         children: [
-          Expanded(child: Text(label, style: text.bodyLarge)),
+          Expanded(
+            child: ExcludeSemantics(child: Text(label, style: text.bodyLarge)),
+          ),
           IconButton.filledTonal(
             tooltip: 'Decrease $label',
             onPressed: onMinus,
@@ -321,10 +327,15 @@ class _Stepper extends StatelessWidget {
           ),
           SizedBox(
             width: 96,
-            child: Text(
-              value,
-              textAlign: TextAlign.center,
-              style: text.titleMedium?.copyWith(color: accent),
+            child: ExcludeSemantics(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  value,
+                  textAlign: TextAlign.center,
+                  style: text.titleMedium?.copyWith(color: accent),
+                ),
+              ),
             ),
           ),
           IconButton.filledTonal(

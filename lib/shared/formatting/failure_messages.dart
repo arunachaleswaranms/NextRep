@@ -14,7 +14,7 @@ String userMessageFor(AppFailure failure) => switch (failure) {
       'That backup was made by a newer version of NextRep. Update the app '
           'to restore it. Nothing was changed.',
     BackupProblem.checksumMismatch =>
-      'That backup is damaged or was edited after it was exported, so it '
+      'That backup is damaged or was changed after it was exported, so it '
           "can't be restored safely. Nothing was changed.",
     BackupProblem.invalidData =>
       "That backup contains data NextRep can't restore safely. Nothing was "

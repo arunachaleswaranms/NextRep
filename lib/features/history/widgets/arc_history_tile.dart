@@ -32,6 +32,7 @@ class ArcHistoryTile extends ConsumerWidget {
     return Semantics(
       button: true,
       label: _label(kind, range, status, joined, stats),
+      onTap: onTap,
       excludeSemantics: true,
       child: WinterCard(
         highlighted: active,
@@ -63,13 +64,26 @@ class ArcHistoryTile extends ConsumerWidget {
             const SizedBox(height: WinterSpacing.sm),
             switch (card) {
               AsyncValue(:final value?) => _Stats(card: value),
-              AsyncError() => Text(
-                "Couldn't load this arc's results.",
-                style: text.bodySmall,
+              AsyncError() => Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      "Couldn't load this arc's results.",
+                      style: text.bodySmall,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () =>
+                        ref.invalidate(arcHistoryCardProvider(session.id)),
+                    child: const Text('Try again'),
+                  ),
+                ],
               ),
               _ => const SizedBox(
-                height: 48,
-                child: Center(child: LinearProgressIndicator()),
+                height: WinterSpacing.xxl,
+                child: Center(
+                  child: LinearProgressIndicator(semanticsLabel: 'Loading'),
+                ),
               ),
             },
           ],

@@ -29,6 +29,7 @@ class CelebrationCard extends StatelessWidget {
     return Semantics(
       container: true,
       liveRegion: true,
+      button: true,
       hint: 'Tap to dismiss',
       child: Material(
         color: colors.surfaceElevated,

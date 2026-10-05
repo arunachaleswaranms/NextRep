@@ -8,6 +8,7 @@ import '../../domain/reminder/reminder_preferences.dart';
 import '../../domain/reminder/reminder_service.dart';
 import '../../shared/formatting/failure_messages.dart';
 import '../../shared/widgets/failure_view.dart';
+import '../../shared/widgets/loading_view.dart';
 import '../../shared/widgets/winter_background.dart';
 import '../../shared/widgets/winter_card.dart';
 import 'reminder_settings_controller.dart';
@@ -55,6 +56,9 @@ class _ReminderSettingsScreenState
       ActionSuccess(value: ReminderUpdate.permissionDenied) =>
         "Notifications weren't allowed, so the reminder stays off. "
             'You can allow them in system settings at any time.',
+      ActionSuccess(value: ReminderUpdate.savedNotScheduled) =>
+        "Saved. Reminders couldn't be scheduled just now; NextRep will try "
+            'again the next time it opens.',
       ActionSuccess() => null,
       ActionFailure(:final failure) => userMessageFor(failure),
     };
@@ -94,7 +98,7 @@ class _ReminderSettingsScreenState
               failure: toAppFailure(error, stackTrace),
               onRetry: () => ref.invalidate(reminderSettingsProvider),
             ),
-            _ => const Center(child: CircularProgressIndicator()),
+            _ => const LoadingView(),
           },
         ),
       ),

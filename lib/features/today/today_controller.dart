@@ -97,7 +97,10 @@ class TodayController extends AsyncNotifier<DaySummary> {
               () => body(service, shownDate, shownSession),
             );
       if (result is ActionSuccess<T>) arcRefresh.changed();
-      await _reload(entryPoint: false, service: service);
+      // A rejected write (most often a day that rolled over while Today was
+      // open) re-runs the entry-point checks, so an arc that ended at
+      // midnight closes and leads to its summary straight away.
+      await _reload(entryPoint: result is! ActionSuccess<T>, service: service);
       return result;
     });
     // Achievements derive from the committed day. They are reconciled in a

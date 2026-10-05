@@ -7,6 +7,7 @@ import '../../domain/insights/insight_snapshot.dart';
 import '../../domain/reflection/daily_reflection.dart';
 import '../../shared/widgets/failure_view.dart';
 import '../../shared/widgets/habit_icon.dart';
+import '../../shared/widgets/loading_view.dart';
 import '../../shared/widgets/winter_background.dart';
 import '../../shared/widgets/winter_card.dart';
 import '../journal/widgets/mood_style.dart';
@@ -37,7 +38,7 @@ class InsightsScreen extends ConsumerWidget {
               failure: toAppFailure(error, stackTrace),
               onRetry: () => ref.invalidate(insightsProvider),
             ),
-            _ => const Center(child: CircularProgressIndicator()),
+            _ => const LoadingView(),
           },
         ),
       ),
@@ -364,6 +365,9 @@ class _Reflections extends StatelessWidget {
     }
     final count = overall.reflectionCount;
     final most = moods.counts.values.fold(0, (a, b) => a > b ? a : b);
+    // Reflections saved without any mood: say so instead of drawing empty
+    // mood bars.
+    final noMoods = moods.withMood == 0;
     return WinterCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -381,7 +385,12 @@ class _Reflections extends StatelessWidget {
             ),
           ),
           const SizedBox(height: WinterSpacing.md),
-          for (final mood in Mood.values.reversed) ...[
+          if (noMoods) ...[
+            Text('No moods picked yet.', style: text.bodyMedium),
+            const SizedBox(height: WinterSpacing.sm),
+          ],
+          for (final mood
+              in noMoods ? const <Mood>[] : Mood.values.reversed) ...[
             Semantics(
               container: true,
               label: '${mood.label}: ${moods.counts[mood]}',
@@ -390,10 +399,14 @@ class _Reflections extends StatelessWidget {
                 children: [
                   Icon(mood.icon, size: 18, color: mood.colorOf(colors)),
                   const SizedBox(width: WinterSpacing.xs),
-                  SizedBox(
-                    width: 76,
+                  // Grows with large text instead of wrapping the label.
+                  ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minWidth: MediaQuery.textScalerOf(context).scale(76),
+                    ),
                     child: Text(mood.label, style: text.bodyMedium),
                   ),
+                  const SizedBox(width: WinterSpacing.xs),
                   Expanded(
                     child: RatioBar(
                       value: most == 0 ? 0 : moods.counts[mood]! / most,
