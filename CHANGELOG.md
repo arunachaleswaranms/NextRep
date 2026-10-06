@@ -9,7 +9,25 @@ Data compatibility is listed per phase: the on-device database schema
 version and the backup file `formatVersion`. Every schema upgrade is a
 tested migration from every earlier version.
 
-## Unreleased: Phase 7, release readiness and premium UX
+## Unreleased: Phase 8, store launch and physical qualification
+
+Schema **v5** (unchanged) · backup format **2** (unchanged, still reads 1)
+
+### Fixed
+- At large text, the level and XP next to the XP pill (Today, Journey)
+  wrap instead of being cut to "Le…".
+- Screen readers hear "1 reflection", "1 Perfect Day" and "N of 15
+  achievements" on Arc History cards, and no doubled period on the Arc
+  choice cards.
+
+### Added
+- A dev-only generator for a synthetic screenshot backup
+  (`tool/screenshots/`). It isn't part of the app.
+- Release qualification of the release build on the emulator: an upgrade
+  from schema v4 and v5 data, notifications, document-picker backups, 2×
+  text and "Remove animations". See `docs/PHASE_8.md`.
+
+## Phase 7: release readiness and premium UX (#7)
 
 Schema **v5** (unchanged) · backup format **2** (unchanged, still reads 1)
 
