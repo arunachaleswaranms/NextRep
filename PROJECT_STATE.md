@@ -14,8 +14,10 @@ REMAIN**
 - Branch: `phase/8-store-launch-and-physical-qualification`, from `57a3c13`
 - Code HEAD qualified: `7ebd644` (fixes); `9b86821` adds the dev-only
   screenshot tool. Later commits are docs only.
-- PR: see the Phase 8 pull request (open for review, not merged)
-- CI: recorded on the PR
+- PR: #8 (https://github.com/arunachaleswaranms/NextRep/pull/8), open for
+  review, not merged
+- CI: Flutter CI run 37510250285 on `fbf026e`: **green** (Format, analyze
+  and test; Android builds and permission audit, run on the release APK)
 - Author and committer of every commit:
   `Arunachaleswaran M S <arunachaleswaranms@gmail.com>` (repo-local
   config). No AI or co-author trailers.
