@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/semantics.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -149,6 +149,8 @@ void main() {
       final seasonal = _node(tester, RegExp(r'^Seasonal Winter Arc\.'));
       expect(seasonal.label, contains("Days before you join don't count"));
       expect(seasonal.label, contains('In season · 2026'));
+      // Found on a device: the description's own period was doubled.
+      expect(seasonal.label, isNot(contains('..')));
       expect(seasonal.label, isNot(contains('Not available')));
       expect(seasonal.hasAction(SemanticsAction.tap), isTrue);
       handle.dispose();
@@ -277,6 +279,32 @@ void main() {
       await _shutDown(tester);
     });
 
+    testWidgets('an Arc History card speaks its counts in the singular when '
+        'there is one', (tester) async {
+      // Found on a device in Phase 8: "1 reflections".
+      await _setPhoneSize(tester);
+      final handle = tester.ensureSemantics();
+      final db = memoryDatabase();
+      addTearDown(db.close);
+      final app = await _seasonalArc(db, DateTime(2026, 10, 6));
+      final arc = (await app.sessions.currentSession())!;
+      await app.reflections.save(
+        sessionId: arc.id,
+        date: app.clock.today(),
+        draft: const ReflectionDraft(mood: Mood.good),
+      );
+      await tester.pumpWidget(_app(db, app.clock));
+      await tester.pumpAndSettle();
+      await _openTab(tester, 'History');
+      final card = _node(tester, RegExp(r'^Seasonal Winter Arc · 2026, '));
+      expect(card.label, contains('0 Perfect Days'));
+      expect(card.label, contains('1 reflection'));
+      expect(card.label, isNot(contains('1 reflections')));
+      expect(card.label, matches(RegExp(r'\d+ of 15 achievements')));
+      handle.dispose();
+      await _shutDown(tester);
+    });
+
     testWidgets('Today meets the tap-target and labelled-target guidelines', (
       tester,
     ) async {
@@ -327,6 +355,28 @@ void main() {
         await _shutDown(tester);
       });
     }
+
+    testWidgets('the level and XP beside the XP pill are never cut short at '
+        '2x', (tester) async {
+      // Found on a device in Phase 8: "Le…" and "30 / 250…" on Today.
+      await _setPhoneSize(tester);
+      _textScale(tester, 2);
+      final db = memoryDatabase();
+      addTearDown(db.close);
+      final app = await _seasonalArc(db, DateTime(2026, 10, 6));
+      await tester.pumpWidget(_app(db, app.clock));
+      await tester.pumpAndSettle();
+      expect(find.byType(TodayScreen), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      for (final label in ['Level 1', '0 / 250 XP']) {
+        final paragraph = tester.renderObject<RenderParagraph>(
+          find.text(label),
+        );
+        expect(paragraph.didExceedMaxLines, isFalse, reason: label);
+        expect(paragraph.size.width, greaterThan(0), reason: label);
+      }
+      await _shutDown(tester);
+    });
 
     testWidgets('a late-joined Summary heading at 2x grows instead of '
         'running under the top buttons', (tester) async {

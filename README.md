@@ -10,15 +10,24 @@ warm summit. Two kinds of Arc:
   September, or join the season already in progress; a late join keeps
   the season's day numbers and the days before it are neutral.
 
-> **Status: Phase 7: Release readiness & premium UX.** Software release
-> candidate. Store submission still has manual gates (production
-> identifiers, signing, physical-device passes, screenshots). See
-> [docs/PHASE_7.md](docs/PHASE_7.md),
+> **Status: Phase 8: Store launch & physical qualification.** Software
+> release candidate, qualified on the release build in the emulator and
+> simulator. Store submission still has manual gates:
+>
+> - production identifiers, the first version and the Android backup
+>   policy (owner decisions)
+> - signing
+> - physical Android / iPhone passes (TalkBack, VoiceOver)
+> - the privacy-policy URL
+> - iPhone screenshots
+>
+> See [docs/PHASE_8.md](docs/PHASE_8.md),
 > [docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md),
 > [docs/STORE_READINESS.md](docs/STORE_READINESS.md),
 > [PRIVACY.md](PRIVACY.md) and [CHANGELOG.md](CHANGELOG.md). Earlier
-> phases: [6](docs/PHASE_6.md), [5](docs/PHASE_5.md), [4](docs/PHASE_4.md),
-> [3](docs/PHASE_3.md), [2](docs/PHASE_2.md), [1](docs/PHASE_1.md).
+> phases: [7](docs/PHASE_7.md), [6](docs/PHASE_6.md), [5](docs/PHASE_5.md),
+> [4](docs/PHASE_4.md), [3](docs/PHASE_3.md), [2](docs/PHASE_2.md),
+> [1](docs/PHASE_1.md).
 
 ## Architecture
 
@@ -134,7 +143,10 @@ flutter build ios --release --no-codesign
 
 Release signing is documented in
 [docs/ANDROID_SIGNING.md](docs/ANDROID_SIGNING.md). Brand assets come
-from `flutter test tool/brand_assets/generate_brand_assets.dart`.
+from `flutter test tool/brand_assets/generate_brand_assets.dart`. A
+synthetic backup for store screenshots comes from
+`SCREENSHOT_DATE=<device date> flutter test tool/screenshots/generate_screenshot_backup.dart`
+(see [docs/STORE_METADATA.md](docs/STORE_METADATA.md#screenshots)).
 
 If your default `java` is newer than 21, point Gradle at JDK 21 for the build,
 e.g. `JAVA_HOME=$(/usr/libexec/java_home -v 21) flutter build apk --debug`.
@@ -252,6 +264,24 @@ survives restarts.
   picker (export, corrupted files, restore).
 - Privacy, store readiness and metadata, release checklist, changelog. CI
   adds a release compile and a permission audit.
+
+**Phase 8:**
+- Qualification, not features (schema v5, backup format 2, no dependency
+  change).
+- The release build on the emulator:
+  - in-place upgrades from schema v5 data and from a Phase 5 (schema v4)
+    release
+  - the core flow, notifications (deny, allow, delivery, background and
+    cold-start taps, revocation)
+  - document-picker backups (export, restore, corrupt copies refused)
+  - 2× text and "Remove animations"
+- Three P2 fixes found on the device:
+  - the level row cut short at 2×
+  - "1 reflections"
+  - a doubled period in a spoken label
+- Store screenshots from a synthetic backup tool.
+- Physical Android, TalkBack, iPhone, VoiceOver, signing and owner
+  decisions remain manual.
 
 ## Explicitly deferred
 
