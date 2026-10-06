@@ -99,15 +99,17 @@ class ArcHistoryTile extends ConsumerWidget {
     String? joined,
     ArcHistoryCard? card,
   ) {
+    String count(int n, String one, String many) => '$n ${n == 1 ? one : many}';
     final parts = ['$kind, $range, ${status.toLowerCase()}', ?joined];
     if (card != null) {
       final s = card.summary;
       parts.addAll([
         'Level ${s.level.level}, ${s.totalXp} XP',
-        '${s.perfectDays} Perfect Days, best streak ${s.bestPerfectStreak}',
+        '${count(s.perfectDays, 'Perfect Day', 'Perfect Days')}, '
+            'best streak ${s.bestPerfectStreak}',
         'Consistency ${s.consistencyPercent} percent',
-        '${s.achievementsUnlocked} achievements, '
-            '${card.reflectionCount} reflections',
+        '${s.achievementsUnlocked} of ${s.achievementsTotal} achievements, '
+            '${count(card.reflectionCount, 'reflection', 'reflections')}',
       ]);
     }
     return parts.join('. ');

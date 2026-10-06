@@ -327,13 +327,21 @@ class _Choice extends StatelessWidget {
     return Semantics(
       button: true,
       enabled: enabled,
-      label: [
-        title,
-        description,
-        ?status,
-        if (unavailable) 'Not available yet',
-        if (habits.isNotEmpty) 'Habits: $summary',
-      ].join('. '),
+      // The description is a sentence that already ends in a period.
+      label:
+          [
+                title,
+                description,
+                ?status,
+                if (unavailable) 'Not available yet',
+                if (habits.isNotEmpty) 'Habits: $summary',
+              ]
+              .map(
+                (part) => part.endsWith('.')
+                    ? part.substring(0, part.length - 1)
+                    : part,
+              )
+              .join('. '),
       onTap: enabled ? onTap : null,
       excludeSemantics: true,
       child: Opacity(

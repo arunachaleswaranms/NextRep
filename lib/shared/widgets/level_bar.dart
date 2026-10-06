@@ -22,27 +22,20 @@ class LevelBar extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
+          // Side by side when they fit; at large text the XP figure moves
+          // under the level instead of both being cut short.
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: WinterSpacing.sm,
             children: [
-              Flexible(
-                child: Text(
-                  'Level ${level.level}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: text.labelLarge?.copyWith(color: colors.celebration),
-                ),
+              Text(
+                'Level ${level.level}',
+                style: text.labelLarge?.copyWith(color: colors.celebration),
               ),
-              const SizedBox(width: WinterSpacing.sm),
-              const Spacer(),
-              Flexible(
-                flex: 2,
-                child: Text(
-                  '${level.xpIntoLevel} / ${level.xpForLevel} XP',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.end,
-                  style: text.bodySmall?.copyWith(color: colors.textSecondary),
-                ),
+              Text(
+                '${level.xpIntoLevel} / ${level.xpForLevel} XP',
+                style: text.bodySmall?.copyWith(color: colors.textSecondary),
               ),
             ],
           ),
