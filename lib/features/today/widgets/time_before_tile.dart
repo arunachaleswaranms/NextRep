@@ -67,11 +67,7 @@ class TimeBeforeHabitTile extends StatelessWidget {
     final accent = WinterHabitAccents.of(_habit.iconKey);
     final goal = 'Goal · before ${clockLabel(entry.target)}';
     final record = clockRecordLabel(_habit);
-    final status = logged == null
-        ? 'Not logged'
-        : completed
-        ? 'Done'
-        : 'After the goal';
+    final status = completed ? 'Done' : 'After the goal';
 
     return Semantics(
       container: true,
@@ -80,7 +76,8 @@ class TimeBeforeHabitTile extends StatelessWidget {
         _habit.title,
         if (logged == null) 'not logged' else '$record ${logged.hhmm}',
         'goal before ${clockLabel(entry.target)}',
-        status,
+        // Found on a device: "not logged" was said twice.
+        if (logged != null) status,
         if (streak > 0) '$streak day streak',
       ].join(', '),
       hint: enabled
