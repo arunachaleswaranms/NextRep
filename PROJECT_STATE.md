@@ -14,7 +14,11 @@ human pass outstanding) · STORE SUBMISSION: MANUAL GATES REMAIN**
 - Branch: `phase/8-5-physical-android-qualification`, from `a454230`
 - Phase 8.5 changes: one screen-reader label fix (the bedtime card said
   "not logged" twice) with a regression test, and the qualification docs
-- PR: Phase 8.5, open for review, not merged
+- PR: #9 (https://github.com/arunachaleswaranms/NextRep/pull/9), open for
+  review, not merged
+- Phase 8.5 CI: Flutter CI run 37685338871 on `3d2f087`: **green** (Format,
+  analyze and test; Android builds and permission audit). Later commits
+  are docs only.
 - Phase 8 CI: Flutter CI run 37510250285 on `fbf026e`: **green**
 - Author and committer of every commit:
   `Arunachaleswaran M S <arunachaleswaranms@gmail.com>` (repo-local
