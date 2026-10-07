@@ -3,7 +3,10 @@
 Run this top to bottom for every store release. Tick an item only after
 doing it for **this** build. Items ticked below were done in Phase 8 on
 2026-10-06, on the commit named in [PROJECT_STATE.md](../PROJECT_STATE.md).
-Evidence for each is in [PHASE_8.md](PHASE_8.md).
+Evidence for each is in [PHASE_8.md](PHASE_8.md). Physical Android items
+were done in Phase 8.5 on 2026-10-07/08, on a OnePlus CPH2707 (Android 16).
+Evidence for those is in
+[PHASE_8_5_PHYSICAL_ANDROID.md](PHASE_8_5_PHYSICAL_ANDROID.md).
 
 Unticked items are still open, and some can only be done by the owner (an
 account, a key, a physical device). Emulator and simulator runs never tick
@@ -40,11 +43,12 @@ Environment: Flutter 3.47.5 / Dart 3.13.4. Android builds use JDK 21
   - in-place upgrade from schema v5 data, and from a Phase 5 (schema v4) release
   - fresh install
   - core flow, notifications, document-picker backup, 2× text, "Remove animations"
-- [ ] Physical Android device, release build of this commit: install over the previous version, cold launch, background / resume, force stop / relaunch
-- [ ] Physical: notification permission, a delivered reminder, a tap from the background and from a cold start, revoked permission, reboot recovery
-- [ ] Physical: backup export through the document picker (Files, Drive), restore, a corrupted copy refused
-- [ ] Physical: keyboard, landscape, large text, reduced motion ("Remove animations"), Journey and Today scrolling, themed icon
-- [ ] Physical: `flutter run --profile` frame check of Today and the Journey
+- [x] Physical Android device, release build of this commit: install over the previous version, cold launch, background / resume, force stop / relaunch (Phase 8.5; same version and schema, so no migration ran on the device)
+- [x] Physical: notification permission, a delivered reminder, a tap from the background and from a cold start, revoked permission, reboot recovery (Phase 8.5)
+- [x] Physical: backup export through the document picker (Files), restore, a corrupted copy refused (Phase 8.5)
+- [ ] Physical: backup export to Drive through the document picker
+- [x] Physical: keyboard, landscape, large text, reduced motion (animator scales 0), Journey and Today scrolling, themed icon (Phase 8.5)
+- [x] Physical: `flutter run --profile` frame check of Today and the Journey (Phase 8.5: no frame over 16.7 ms, none over the 90 Hz budget while scrolling)
 
 ## iOS
 
@@ -81,7 +85,7 @@ pass on a physical device is still required.
 - [x] Text scale 1.3× and 2× on the priority screens (widget tests; 2× on the emulator)
 - [x] Reduced motion (widget tests; "Remove animations" on the emulator)
 - [x] Touch targets (`androidTapTargetGuideline` on Today)
-- [ ] TalkBack pass on a physical Android device (adb input can't drive TalkBack's gestures)
+- [ ] TalkBack pass on a physical Android device (adb input can't drive TalkBack's gestures). Phase 8.5: onboarding, Arc choice and habit setup were done by the owner; the node tree of every other screen was checked on the phone; the rest of the human pass is open
 - [ ] VoiceOver pass on an iPhone
 
 ## Store
