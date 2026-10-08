@@ -20,7 +20,7 @@ Done for v1.0.0 in Phase 9 on 2026-10-08. Evidence:
 - [x] Physical Android smoke: cold launch, Today, Journey, Journal, Insights, History, backup screen, reminders, force-stop / relaunch
 - [x] Release notes in `docs/releases/v<version>.md`, with the APK SHA-256
 - [x] README, CHANGELOG and PROJECT_STATE updated
-- [ ] CI green on the release commit
+- [x] CI green on the release commit (run 37811403687 on `b1aeb05`)
 - [ ] Owner: after merge, tag `v<version>` and publish the GitHub Release with the APK, its `.sha256` file and the release notes
 - [ ] Owner: keystore backed up in two secure places, password in a password manager
 

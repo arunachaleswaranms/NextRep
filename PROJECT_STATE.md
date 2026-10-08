@@ -23,8 +23,11 @@ planned. TalkBack was deliberately deferred and doesn't block this model.
 - `main` baseline: `78f78ef` (squash merge of PR #9, Phase 8.5). PRs #1–#9
   are Phases 1–8.5.
 - Branch: `phase/9-github-release-and-self-distribution`, from `78f78ef`
-- PR: PR_PLACEHOLDER
-- CI: CI_PLACEHOLDER
+- PR: #10 (https://github.com/arunachaleswaranms/NextRep/pull/10), open for
+  review, not merged. No `v1.0.0` tag, no GitHub Release.
+- Phase 9 CI: Flutter CI run 37811403687 on `b1aeb05`: **green** (Format,
+  analyze and test; Android builds and permission audit). Later commits
+  are docs only.
 - Author and committer of every commit:
   `Arunachaleswaran M S <arunachaleswaranms@gmail.com>` (repo-local
   config). No AI or co-author trailers.
