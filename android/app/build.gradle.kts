@@ -59,6 +59,15 @@ android {
         }
     }
 
+    // AGP otherwise adds a dependency list to the APK signing block,
+    // encrypted for Google Play with random padding. It serves only Play;
+    // leaving it out makes release APKs byte-reproducible: the same commit
+    // and signing key always give the same SHA-256.
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
+
     buildTypes {
         release {
             signingConfig = if (hasReleaseSigning) {
