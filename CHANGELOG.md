@@ -9,7 +9,22 @@ Data compatibility is listed per phase: the on-device database schema
 version and the backup file `formatVersion`. Every schema upgrade is a
 tested migration from every earlier version.
 
-## Unreleased: Phase 8, store launch and physical qualification
+## Unreleased: Phase 8.5, physical Android qualification
+
+Schema **v5** (unchanged) · backup format **2** (unchanged, still reads 1)
+
+### Fixed
+- Screen readers hear "not logged" once, not twice, on a bedtime habit
+  that has no time yet.
+
+### Added
+- Release qualification on a physical Android phone (OnePlus CPH2707,
+  Android 16): an in-place install, real reminders including after a
+  reboot, document-picker backups, 2× text, reduced motion and profile
+  frame timings. The human TalkBack pass is still open. See
+  `docs/PHASE_8_5_PHYSICAL_ANDROID.md`.
+
+## Phase 8: store launch and physical qualification (#8)
 
 Schema **v5** (unchanged) · backup format **2** (unchanged, still reads 1)
 

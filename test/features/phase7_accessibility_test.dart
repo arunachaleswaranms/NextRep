@@ -179,6 +179,28 @@ void main() {
       expect(card.label, contains('goal before'));
       expect(card.hasAction(SemanticsAction.tap), isTrue);
       expect(card.hasAction(SemanticsAction.customAction), isTrue);
+      expect(card.label, contains('Done'));
+      handle.dispose();
+      await _shutDown(tester);
+    });
+
+    testWidgets('the clock-time card says "not logged" once', (tester) async {
+      await _setPhoneSize(tester);
+      final handle = tester.ensureSemantics();
+      final db = memoryDatabase();
+      addTearDown(db.close);
+      final app = await _seasonalArc(db, DateTime(2026, 10, 6));
+      await tester.pumpWidget(_app(db, app.clock));
+      await tester.pumpAndSettle();
+      await reveal(tester, find.byType(TimeBeforeHabitTile));
+
+      // Found on a physical device: the status repeated "not logged".
+      final card = _node(tester, RegExp(r'^Sleep Before Target, '));
+      expect(
+        RegExp('not logged', caseSensitive: false).allMatches(card.label),
+        hasLength(1),
+      );
+      expect(card.label, contains('goal before 23:30'));
       handle.dispose();
       await _shutDown(tester);
     });
