@@ -95,7 +95,10 @@ Release steps, in order:
 1. Merge the release PR after review.
 2. On `main`, run `tool/release/prepare_android_release.sh` with the release
    key configured. It builds, verifies and stages the APK and its checksum
-   in `build/release-candidate/` (git-ignored).
+   in `build/release-candidate/` (git-ignored). `flutter clean` deletes
+   that folder, so don't run it until the release is published. Release
+   builds are reproducible: the same commit and key always give the same
+   SHA-256.
 3. Create the tag `v<version>` and a GitHub Release from
    `docs/releases/v<version>.md`. Attach the two staged files, and nothing
    else.

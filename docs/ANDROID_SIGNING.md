@@ -77,7 +77,14 @@ quality gates and builds the release APK, then checks it with the SDK's
 
 It then stages `build/release-candidate/NextRep-v<version>-android.apk`
 and its `.sha256` file and checks the staged copy again. It never reads the
-password, creates keys, tags, pushes or uploads.
+password, creates keys, tags, pushes or uploads. `flutter clean` deletes
+`build/`, including the staged files, so run it before the script and not
+afterwards.
+
+Release APKs are byte-reproducible: the same commit and key give the same
+SHA-256. `build.gradle.kts` leaves out AGP's Play-only dependency block,
+which was encrypted with random padding and changed the hash on every
+build.
 
 To check any APK by hand:
 

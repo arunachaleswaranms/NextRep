@@ -37,6 +37,8 @@ Schema **v5** (unchanged) · backup format **2** (unchanged, still reads 1)
 - Version 1.0.0 (1). The Android application id stays `com.nextrep.nextrep`.
 - A permanent Android release signing key, and a release script that
   builds, verifies and stages the signed APK with its checksum.
+- Release APKs are byte-reproducible: AGP's Play-only dependency block is
+  left out.
 - MIT license. README install, update and build-from-source guides, a
   direct-distribution guide and the v1.0.0 release notes.
 - Google Play and App Store publication is no longer planned.
