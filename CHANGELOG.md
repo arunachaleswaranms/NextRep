@@ -1,52 +1,84 @@
 # Changelog
 
-NextRep's release history, by development phase. Each phase was reviewed and
-merged as one pull request. No version has been published to a store yet.
-The first public version number will be chosen at release (see
-[docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md)).
+## 1.0.0 — 2026
+
+First public release, distributed as a signed Android APK on GitHub
+Releases. Release notes: [docs/releases/v1.0.0.md](docs/releases/v1.0.0.md).
+
+Schema **v5** · backup format **2** (reads 1 and 2)
+
+NextRep's Winter Arc is a private, local-first 92-day habit challenge:
+
+- Rolling 92-Day and Seasonal Winter Arcs (1 October – 31 December, with
+  late joining).
+- Template and custom habits, including clock-time habits and Sleep Before
+  Target.
+- Streaks, XP, levels, Perfect Days and Minimum Day.
+- The Journey mountain path, 15 achievements, the nightly Journal, Arc
+  History and cross-arc Insights.
+- Optional local reminders, and backup and restore to a `.nextrep` file.
+- No account, server, analytics or cloud sync. The Android release has no
+  Internet permission.
+
+## Development history
+
+The entries below record each development phase before 1.0.0. Each phase
+was reviewed and merged as one pull request. None of them was published as
+a release.
 
 Data compatibility is listed per phase: the on-device database schema
 version and the backup file `formatVersion`. Every schema upgrade is a
 tested migration from every earlier version.
 
-## Unreleased: Phase 8.5, physical Android qualification
+### Phase 9: GitHub release and self-distribution
 
 Schema **v5** (unchanged) · backup format **2** (unchanged, still reads 1)
 
-### Fixed
+- Version 1.0.0 (1). The Android application id stays `com.nextrep.nextrep`.
+- A permanent Android release signing key, and a release script that
+  builds, verifies and stages the signed APK with its checksum.
+- MIT license. README install, update and build-from-source guides, a
+  direct-distribution guide and the v1.0.0 release notes.
+- Google Play and App Store publication is no longer planned.
+
+### Phase 8.5: physical Android qualification (#9)
+
+Schema **v5** (unchanged) · backup format **2** (unchanged, still reads 1)
+
+#### Fixed
 - Screen readers hear "not logged" once, not twice, on a bedtime habit
   that has no time yet.
 
-### Added
+#### Added
 - Release qualification on a physical Android phone (OnePlus CPH2707,
   Android 16): an in-place install, real reminders including after a
   reboot, document-picker backups, 2× text, reduced motion and profile
   frame timings. The human TalkBack pass is still open. See
   `docs/PHASE_8_5_PHYSICAL_ANDROID.md`.
 
-## Phase 8: store launch and physical qualification (#8)
+### Phase 8: store launch and physical qualification (#8)
 
 Schema **v5** (unchanged) · backup format **2** (unchanged, still reads 1)
 
-### Fixed
+#### Fixed
 - At large text, the level and XP next to the XP pill (Today, Journey)
   wrap instead of being cut to "Le…".
 - Screen readers hear "1 reflection", "1 Perfect Day" and "N of 15
   achievements" on Arc History cards, and no doubled period on the Arc
   choice cards.
 
-### Added
+#### Added
 - A dev-only generator for a synthetic screenshot backup
   (`tool/screenshots/`). It isn't part of the app.
 - Release qualification of the release build on the emulator: an upgrade
   from schema v4 and v5 data, notifications, document-picker backups, 2×
   text and "Remove animations". See `docs/PHASE_8.md`.
 
-## Phase 7: release readiness and premium UX (#7)
+### Phase 7: release readiness and premium UX (#7)
 
 Schema **v5** (unchanged) · backup format **2** (unchanged, still reads 1)
 
-### Added
+#### Added
 - NextRep branding: an app icon generated from one vector geometry
   (adaptive and themed Android icons, every iOS size, store icons), a night
   launch screen with no white flash, and the "NextRep" display name.
@@ -60,7 +92,7 @@ Schema **v5** (unchanged) · backup format **2** (unchanged, still reads 1)
 - CI: release qualification tests, a release APK compile and a release
   permission audit.
 
-### Changed
+#### Changed
 - Onboarding explains the climb, custom habits, Rolling vs Seasonal and
   on-device privacy, and keeps "Let's Begin" on screen at any text size.
 - The Arc choice says that days before a late join don't count, and shows
@@ -76,7 +108,7 @@ Schema **v5** (unchanged) · backup format **2** (unchanged, still reads 1)
   screen; a scheduling failure after saving says the setting was saved.
 - Release builds no longer print framework errors to the system log.
 
-## Phase 6: Seasonal Winter Arc and habit evolution (#6)
+### Phase 6: Seasonal Winter Arc and habit evolution (#6)
 
 Schema **v5** · backup format **2** (reads 1)
 
@@ -88,7 +120,7 @@ Schema **v5** · backup format **2** (reads 1)
 - Clock-time habits ("before a time") and Sleep Before Target.
 - Backup format 2; format-1 backups still restore.
 
-## Phase 5: data safety, backup and cross-Arc insights (#5)
+### Phase 5: data safety, backup and cross-Arc insights (#5)
 
 Schema **v4** · backup format **1**
 
@@ -99,7 +131,7 @@ Schema **v4** · backup format **1**
 - Insights across arcs: consistency, Perfect and Minimum Days, XP, per-habit
   completion and moods.
 
-## Phase 4: retention, Arc history and local reflections (#4)
+### Phase 4: retention, Arc history and local reflections (#4)
 
 Schema **v4**
 
@@ -109,7 +141,7 @@ Schema **v4**
 - Optional local reminders, off by default.
 - 15 achievements.
 
-## Phase 3: Winter Arc visual experience and achievements (#3)
+### Phase 3: Winter Arc visual experience and achievements (#3)
 
 Schema **v3**
 
@@ -118,14 +150,14 @@ Schema **v3**
 - 10 achievements with celebrations. Goal edits apply from the next day.
 - The arc closes after Day 92 and opens its summary. GitHub Actions CI.
 
-## Phase 2: habit loop depth and Journey foundation (#2)
+### Phase 2: habit loop depth and Journey foundation (#2)
 
 Schema **v2**
 
 - Streaks, Perfect Days and their bonus, levels.
 - Minimum Day, habit editing, the Today / Journey shell, Journey v1.
 
-## Phase 1: foundation and Day 1 (#1)
+### Phase 1: foundation and Day 1 (#1)
 
 Schema **v1**
 
