@@ -1,14 +1,14 @@
 # NextRep Privacy
 
-_Last updated: 5 October 2026. Applies to NextRep 1.0.0 (Winter Arc)._
+_Last updated: 8 October 2026. Applies to NextRep 1.0.0 (Winter Arc)._
 
 NextRep is a local-first app. Everything you put into it stays on your
 device, in the app's own storage, unless you choose to move it. NextRep has
 no servers, no accounts and no network access.
 
-This page describes what the app actually does, as built. It is not a
-substitute for the privacy policy you publish with a store listing (see
-[docs/STORE_READINESS.md](docs/STORE_READINESS.md)).
+This page describes what the app actually does, as built. It applies to
+the official Android APKs published on this repository's GitHub Releases
+page, and to builds made from this source.
 
 ## What NextRep stores, and where
 
@@ -112,5 +112,8 @@ a reminder on.
 
 ## Contact
 
-NextRep is published by its developer. A contact address for privacy
-questions is required on store listings. Add it here before release.
+NextRep is an open-source project published by its developer on GitHub.
+For privacy questions, open an issue in the
+[NextRep repository](https://github.com/arunachaleswaranms/NextRep/issues).
+Don't include reflections, backup files or other personal data in an
+issue: issues are public.

@@ -1,11 +1,11 @@
-# Template for android/key.properties (production upload signing).
+# Template for android/key.properties (release signing).
 #
 # Copy to android/key.properties and fill in real values. That file is
 # git-ignored and must never be committed, shared or uploaded to CI.
 # See docs/ANDROID_SIGNING.md.
 storePassword=<keystore password>
 keyPassword=<key password>
-keyAlias=upload
+keyAlias=<key alias>
 # Absolute path, or relative to android/app/. Keep the keystore outside the
 # repository.
-storeFile=/absolute/path/outside/the/repo/nextrep-upload.jks
+storeFile=/absolute/path/outside/the/repo/release.jks
