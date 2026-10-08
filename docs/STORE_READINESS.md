@@ -1,5 +1,11 @@
 # Store readiness
 
+> **Not current (Phase 9, 2026-10-08):** Google Play and App Store
+> publication is not planned. NextRep is distributed as a signed APK on
+> GitHub Releases ([DIRECT_DISTRIBUTION.md](DIRECT_DISTRIBUTION.md)). This
+> document is kept as the Phase 7–8 record. Its open store gates are not
+> project blockers.
+
 Preparation notes for the Google Play and App Store listings, based on what
 the app does as built (Phase 7, re-checked on the Phase 8 release build).
 **Nothing has been submitted.** Google and

@@ -7,11 +7,11 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
-// Production signing is configured outside the repository: when
+// Release signing is configured outside the repository: when
 // android/key.properties exists (git-ignored, see docs/ANDROID_SIGNING.md),
-// release builds are signed with that upload key. Without it they fall back
-// to the debug key so `flutter run --release` keeps working; such builds are
-// NOT store-ready.
+// release builds are signed with the permanent NextRep release key. Without
+// it they fall back to the debug key so `flutter run --release` and CI keep
+// working; such builds are never distributed.
 val keystorePropertiesFile = rootProject.file("key.properties")
 val keystoreProperties = Properties().apply {
     if (keystorePropertiesFile.exists()) {
@@ -33,8 +33,8 @@ android {
     }
 
     defaultConfig {
-        // PRODUCTION IDENTIFIER: confirm before the first store upload; it
-        // can never change for a published app (docs/STORE_READINESS.md).
+        // PERMANENT IDENTIFIER: installed copies only update in place under
+        // this id and the same signing key (docs/DIRECT_DISTRIBUTION.md).
         applicationId = "com.nextrep.nextrep"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
@@ -57,6 +57,15 @@ android {
                 storePassword = keystoreProperties.getProperty("storePassword")
             }
         }
+    }
+
+    // AGP otherwise adds a dependency list to the APK signing block,
+    // encrypted for Google Play with random padding. It serves only Play;
+    // leaving it out makes release APKs byte-reproducible: the same commit
+    // and signing key always give the same SHA-256.
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
     }
 
     buildTypes {

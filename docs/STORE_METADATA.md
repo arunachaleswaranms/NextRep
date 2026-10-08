@@ -1,5 +1,11 @@
 # Store metadata (release-candidate draft)
 
+> **Not current (Phase 9, 2026-10-08):** Google Play and App Store
+> publication is not planned. NextRep is distributed as a signed APK on
+> GitHub Releases ([DIRECT_DISTRIBUTION.md](DIRECT_DISTRIBUTION.md)). This
+> document is kept as the Phase 7–8 record. Its open store gates are not
+> project blockers.
+
 Draft listing copy. Nothing here has been published. Each claim matches
 what the app does today. Keep it that way when editing: no "scientifically
 proven", no guaranteed results, no health or mental-health claims.

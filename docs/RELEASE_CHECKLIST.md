@@ -1,5 +1,31 @@
 # Release checklist
 
+> **Distribution model (Phase 9):** NextRep ships as a signed APK on GitHub
+> Releases ([DIRECT_DISTRIBUTION.md](DIRECT_DISTRIBUTION.md)). For a
+> release, run the **Direct distribution** section below plus the Code
+> section. The iOS, TalkBack, VoiceOver and Store items below are Phase 7–8
+> history. Store publication is not planned, so they don't block a release.
+
+## Direct distribution (GitHub, Android)
+
+Done for v1.0.0 in Phase 9 on 2026-10-08. Evidence:
+[PHASE_9.md](PHASE_9.md).
+
+- [x] `pubspec.yaml` version is the release (`1.0.0+1`); the planned tag is `v<versionName>`
+- [x] `applicationId` is still `com.nextrep.nextrep`
+- [x] Schema and backup format unchanged, or migrated and tested (v5, format 2)
+- [x] `android/key.properties` points at the permanent release key and is git-ignored ([ANDROID_SIGNING.md](ANDROID_SIGNING.md))
+- [x] `flutter clean`, then `tool/release/prepare_android_release.sh`: gates, build, signer (not `CN=Android Debug`, certificate `65:B7:0C:D0:…:F0:BA`), package and version, permission audit, staged APK and `.sha256`
+- [x] Physical Android: `adb install -r` of a same-key build over the previous install keeps the data (signed update continuity)
+- [x] Physical Android smoke: cold launch, Today, Journey, Journal, Insights, History, backup screen, reminders, force-stop / relaunch
+- [x] Release notes in `docs/releases/v<version>.md`, with the APK SHA-256
+- [x] README, CHANGELOG and PROJECT_STATE updated
+- [x] CI green on the release commit (run 37811403687 on `b1aeb05`)
+- [ ] Owner: after merge, tag `v<version>` and publish the GitHub Release with the APK, its `.sha256` file and the release notes
+- [ ] Owner: keystore backed up in two secure places, password in a password manager
+
+## Store-release record (Phases 7–8)
+
 Run this top to bottom for every store release. Tick an item only after
 doing it for **this** build. Items ticked below were done in Phase 8 on
 2026-10-06, on the commit named in [PROJECT_STATE.md](../PROJECT_STATE.md).
@@ -88,7 +114,7 @@ pass on a physical device is still required.
 - [ ] TalkBack pass on a physical Android device (adb input can't drive TalkBack's gestures). Phase 8.5: onboarding, Arc choice and habit setup were done by the owner; the node tree of every other screen was checked on the phone; the rest of the human pass is open
 - [ ] VoiceOver pass on an iPhone
 
-## Store
+## Store (not planned; Phase 7–8 history)
 
 - [ ] **Identifiers**: final Android `applicationId` and iOS bundle id chosen (currently `com.nextrep.nextrep`; see [STORE_READINESS.md](STORE_READINESS.md))
 - [ ] **Version**: release `version:` in `pubspec.yaml` chosen and the build number set (currently `1.0.0+1`, the scaffold value)

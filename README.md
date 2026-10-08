@@ -1,33 +1,164 @@
-# NextRep — Winter Arc
+# NextRep
 
-NextRep is a mobile-first, offline-first habit app. Its first product,
-**Winter Arc**, is a gamified 92-day self-improvement challenge: pick a few
-daily habits, show up every day, earn XP, and climb from a frozen trail to a
-warm summit. Two kinds of Arc:
+**A private, local-first Winter Arc: a 92-day self-improvement challenge
+for your daily habits.**
+
+> **Status: v1.0.0 release candidate, pending owner publication.**
+> Android APKs are published on the
+> [GitHub Releases](https://github.com/arunachaleswaranms/NextRep/releases)
+> page.
+
+## What is NextRep?
+
+NextRep's **Winter Arc** is a 92-day challenge: pick a few daily habits,
+show up every day, earn XP, and climb from a frozen trail to a warm summit.
+Two kinds of Arc:
 
 - **Rolling 92-Day Arc**: Day 1 is the day you press Start.
 - **Seasonal Winter Arc**: 1 October – 31 December. Set it up in
-  September, or join the season already in progress; a late join keeps
-  the season's day numbers and the days before it are neutral.
+  September, or join the season already in progress. A late join keeps the
+  season's day numbers, and the days before it are neutral.
 
-> **Status: Phase 8: Store launch & physical qualification.** Software
-> release candidate, qualified on the release build in the emulator and
-> simulator. Store submission still has manual gates:
->
-> - production identifiers, the first version and the Android backup
->   policy (owner decisions)
-> - signing
-> - physical Android / iPhone passes (TalkBack, VoiceOver)
-> - the privacy-policy URL
-> - iPhone screenshots
->
-> See [docs/PHASE_8.md](docs/PHASE_8.md),
-> [docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md),
-> [docs/STORE_READINESS.md](docs/STORE_READINESS.md),
-> [PRIVACY.md](PRIVACY.md) and [CHANGELOG.md](CHANGELOG.md). Earlier
-> phases: [7](docs/PHASE_7.md), [6](docs/PHASE_6.md), [5](docs/PHASE_5.md),
-> [4](docs/PHASE_4.md), [3](docs/PHASE_3.md), [2](docs/PHASE_2.md),
-> [1](docs/PHASE_1.md).
+NextRep is **local-first and private**. There's no account, no server, no
+analytics and no cloud sync. Everything stays on your phone.
+
+## Features
+
+- **Habits**: a catalogue of templates plus your own custom habits (done /
+  not done, counts, minutes, or "before a time"), up to 12 per arc. Goal
+  edits apply from the next day.
+- **Sleep Before Target**: a morning check-in of last night's bedtime
+  against your goal.
+- **Today**: check off habits, with streaks, XP, levels and a Perfect Day
+  bonus when every habit is done.
+- **Minimum Day**: on a hard day, switch today to each habit's minimum and
+  keep your streaks.
+- **Journey**: your 92 days on a mountain path in six chapters, with
+  milestones.
+- **15 achievements**, with celebrations.
+- **Journal**: a 20-second nightly reflection (mood, one win, one thing to
+  improve).
+- **Arc History and summaries**: every finished arc, read-only, with its
+  Journey and Journal. Start the next arc from the last one's setup.
+- **Insights** across arcs: consistency, Perfect and Minimum Days, XP,
+  per-habit completion and moods.
+- **Reminders**: an optional daily nudge and an evening reflection prompt,
+  scheduled on the device. Off by default.
+- **Backup & restore** to a `.nextrep` file.
+- A winter scene that respects reduced motion, large-text support and
+  screen-reader labels.
+
+## Download
+
+Android APKs are published on the
+[GitHub Releases](https://github.com/arunachaleswaranms/NextRep/releases)
+page as `NextRep-v<version>-android.apk`, each with a `.sha256` checksum
+file.
+
+**v1.0.0: release candidate, pending owner publication.**
+
+Only download NextRep from this repository's Releases page. How to check a
+download: [docs/DIRECT_DISTRIBUTION.md](docs/DIRECT_DISTRIBUTION.md).
+
+There is no iPhone release. The app builds for iOS from source (below).
+
+## Install on Android
+
+Requires Android 7.0 or newer.
+
+1. Download `NextRep-v<version>-android.apk` from
+   [GitHub Releases](https://github.com/arunachaleswaranms/NextRep/releases)
+   on your phone.
+2. Open the downloaded file. Android may ask you to allow your browser or
+   file manager to **install unknown apps**.
+3. Allow it **only for the app you used to open the APK** (for example
+   your browser or Files).
+4. Tap **Install**, then open NextRep.
+5. If you like, turn the "install unknown apps" permission off again
+   afterwards in Settings.
+
+You don't need to change any other security setting. Leave Google Play
+Protect on.
+
+## Updating
+
+1. Download the newer NextRep APK from the Releases page.
+2. Open it and tap **Update**. It installs over your current NextRep.
+3. **Don't uninstall first.** Uninstalling deletes the app's data.
+
+Your data stays because every official release is signed with the same
+key, and Android only accepts an update signed with it. Before a major
+upgrade, export a backup anyway (below).
+
+If Android refuses the update, don't uninstall to force it. Get the APK
+again from the Releases page and check it
+([docs/DIRECT_DISTRIBUTION.md](docs/DIRECT_DISTRIBUTION.md)).
+
+## Backup & Restore
+
+Open **Data & Backup** from Arc History (or from onboarding on a new
+device):
+
+- **Export Backup** writes everything (arcs, habits, history, XP,
+  achievements and your Journal reflections) to a
+  `nextrep-backup-YYYY-MM-DD.nextrep` file, wherever you choose in the
+  system file dialog.
+- **Restore Backup** checks the whole file first, shows what it contains,
+  and asks before replacing the data on this device. Reminders come back
+  turned off. Turn them on again if you want them.
+
+**Backups are not encrypted by NextRep.** Anyone who can open the file can
+read your reflections. Keep it somewhere you trust. The file includes a
+checksum to detect accidental damage; it isn't a security feature.
+
+## Privacy
+
+No account, no server, no analytics, telemetry, ads or trackers, and no
+cloud sync. The Android release doesn't request the `INTERNET` permission.
+Reminders are local notifications with generic text. Your phone's own
+system backup may include app data if you have it turned on.
+
+Full details: [PRIVACY.md](PRIVACY.md).
+
+## Build from source
+
+Requires Flutter stable 3.47.x. Android builds need JDK 17–21. iOS builds
+use Swift Package Manager, so CocoaPods isn't needed.
+
+```bash
+git clone https://github.com/arunachaleswaranms/NextRep.git
+cd NextRep
+flutter pub get
+flutter run            # on a connected device or emulator
+flutter test           # run the tests
+```
+
+An APK for your own device:
+
+```bash
+flutter build apk --debug
+```
+
+`flutter build apk --release` without a signing configuration is also
+debug-signed. To sign with your own key, see
+[docs/ANDROID_SIGNING.md](docs/ANDROID_SIGNING.md#building-your-own-copy).
+A self-built APK can't update an official install (and vice versa),
+because the signing keys differ. Move data between them with a backup.
+
+Generated Drift code is committed. Only run
+`dart run build_runner build` after editing database tables. If your
+default `java` is newer than 21, point Gradle at JDK 21, e.g.
+`JAVA_HOME=$(/usr/libexec/java_home -v 21) flutter build apk --debug`.
+
+## License
+
+[MIT](LICENSE) © 2026 Arunachaleswaran M S.
+
+---
+
+# Development
+
+The rest of this README is for people working on the code.
 
 ## Architecture
 
@@ -97,25 +228,6 @@ XP or achievements.
 (SQLite) · go_router · intl · flutter_local_notifications (local reminders
 only) · file_picker (system document UI for backups) · crypto (SHA-256).
 
-## Setup
-
-Requires Flutter stable (3.47.x). For Android builds use JDK 17–21. iOS
-builds use Swift Package Manager (enabled in this Flutter install), so
-CocoaPods isn't needed.
-
-```bash
-flutter pub get
-# Only needed after editing Drift tables (generated code is committed):
-dart run build_runner build
-```
-
-Run on a device or emulator:
-
-```bash
-flutter devices
-flutter run -d <device-id>
-```
-
 ## Quality gates
 
 ```bash
@@ -151,137 +263,20 @@ synthetic backup for store screenshots comes from
 If your default `java` is newer than 21, point Gradle at JDK 21 for the build,
 e.g. `JAVA_HOME=$(/usr/libexec/java_home -v 21) flutter build apk --debug`.
 
-## What's in the app
+## CI
 
-**Phase 1:** dark Winter Arc theme tokens. Onboarding → Habit Setup → Today
-with boot routing. Seven starter habits (binary, count, duration).
-Idempotent XP ledger (+15 per habit-day, revoked on undo). Local SQLite that
-survives restarts.
+[`.github/workflows/flutter-ci.yml`](.github/workflows/flutter-ci.yml) runs on
+every pull request and push to `main`:
 
-**Phase 2:**
-- Per-habit current/best streaks. Perfect Day streak, best and total.
-- Perfect Day bonus (+30 XP once per Normal Day with every habit done,
-  revoked on undo). Levels every 250 XP, derived from the ledger.
-- Minimum Day: a deliberate, one-way switch of today to each habit's minimum
-  target. Keeps streaks, never a Perfect Day.
-- Habit editing after the start (name, targets, enable). Past days keep
-  their configuration. Phase 3 moved goal edits to the next day.
-- Today / Journey bottom-nav shell. Journey v1 is a 92-day grid of
-  deterministic day states with a read-only day detail.
-- Schema v2 with a tested v1 → v2 migration.
-- First motion/haptics layer. Respects the reduced-motion setting.
-
-**Phase 3:**
-- Winter scene (sky, aurora, mountains, camp and shelter light, trail,
-  snow). It's programmatic, offline, reduced-motion aware and stops in the
-  background.
-- Today hero and new habit cards. Journey v2: 92 days on a mountain path
-  in six chapters, with milestone flags.
-- 10 achievements with persisted unlocks, an Achievements screen and
-  queued celebration cards. Achievements never grant XP.
-- Goal and on/off edits apply from the next day; renames apply now. On
-  Day 92 only renames are possible.
-- The arc closes after Day 92. A completed arc is read-only and opens on
-  the End-of-Arc summary.
-- Schema v3 (`achievement_unlocks`) with tested v2 → v3 and v1 → v2 → v3
-  migrations. GitHub Actions CI.
-
-**Phase 4:**
-- Start New Arc from the completed summary: reuse the last setup (each
-  habit's final configuration) or start fresh, then Habit Setup. Returning
-  users skip onboarding. At most one arc in setup or running; a completed
-  arc is never written again.
-- Tabs: Today · Journey · Journal · History. Arc History lists every arc
-  newest first. A past arc opens its own read-only summary, Journey,
-  Journal and achievements.
-- Journal: a 20-second nightly reflection (mood, one win, one thing to
-  improve). Only today is editable; past entries and completed arcs are
-  read-only.
-- Reminders: an optional daily nudge and evening reflection prompt. Off by
-  default, local and inexact, only while an arc runs, deep-linking to
-  Today or the Journal (also on cold launch).
-- 15 achievements (Looking Inward, Seven Check-ins, Adaptable, Ten Clean
-  Sweeps, Stronger Every Day added).
-- Schema v4 (`daily_reflections`, `reminder_preferences`, a unique index
-  for one unfinished arc) with tested v3 → v4 and full-chain migrations.
-
-**Phase 5:**
-- **Data & Backup** (from Arc History, and from onboarding on a new
-  device). Export writes `nextrep-backup-YYYY-MM-DD.nextrep`, a versioned
-  (`formatVersion` 1), canonical JSON file with a SHA-256 checksum, through
-  the system save dialog. The file holds reflections and is **not
-  encrypted**, and the app says so before every export.
-- **Restore** validates the whole file first (size, product, version,
-  checksum, every field, every cross-record rule). It previews the counts,
-  asks again when the device has data, then replaces everything in one
-  transaction: any failure rolls back. Reminders come back off. The app then
-  reloads from the restored data.
-- **Delete Arc** for completed arcs (from the summary's menu, with a
-  destructive confirmation) and **Cancel setup** for an arc not yet
-  started. Both are transactional; other arcs and reminder preferences are
-  untouched.
-- **Insights** (from Arc History): weighted consistency across arcs,
-  Perfect and Minimum Day totals, XP and levels, per-habit completion over
-  enabled days (one habit per stable id), and the Journal's mood counts and
-  timeline. Computed on the device, descriptive only.
-- No schema change (still v4); the full migration chain still passes.
-
-**Phase 6:**
-- **Arc kinds**: Rolling 92-Day (unchanged) and the **Seasonal Winter Arc**
-  (1 Oct – 31 Dec). The season can be set up in September and joined any
-  day in season; a late join is "Day 15 of 92", never "Day 1".
-- **Participation**: days before joining are neutral everywhere (streaks,
-  Perfect/Minimum Days, XP, consistency, reflections, achievements,
-  Insights) and show as dashed "Before you joined" markers on the Journey.
-  Midwinter needs Day 46 to be a participated day; a late joiner who
-  finishes the season still reaches the Summit.
-- **Habit Setup v2**: a template catalogue, custom habits (done / not done,
-  count, minutes, before a time) with random stable ids, edit and remove
-  in setup, up to 12 habits.
-- **Clock-time habits**: Sleep Before Target is a morning check-in ("Last
-  night · 00:45 / Goal · before 01:00"), done when the bedtime is at or
-  before the goal; the same goal on Minimum Days.
-- Schema v5 (`arc_kind`, `participation_start_date`) with a tested v4 → v5
-  and full-chain migration. Backup format 2; format-1 backups still
-  restore.
-
-**Phase 7:**
-- Release audit and fixes; no new product scope (schema v5, backup format
-  2).
-- Branding: NextRep icon set (adaptive, themed, iOS, store), a night launch
-  screen, and the "NextRep" name.
-- The app moves to the new day at local midnight while open. An arc that
-  ends at midnight opens its summary.
-- Failure states with a way forward. A release-mode error panel. Labelled
-  loading and intentional empty states.
-- Accessibility:
-  - screen-reader tap actions on every custom button
-  - Journey days spoken in words, with 56 dp targets
-  - 2× text fixes
-  - celebrations wait for screen-reader users
-- Release qualification on the emulator: notifications (deny, allow,
-  deliver, background and cold-start taps, revoked) and the document
-  picker (export, corrupted files, restore).
-- Privacy, store readiness and metadata, release checklist, changelog. CI
-  adds a release compile and a permission audit.
-
-**Phase 8:**
-- Qualification, not features (schema v5, backup format 2, no dependency
-  change).
-- The release build on the emulator:
-  - in-place upgrades from schema v5 data and from a Phase 5 (schema v4)
-    release
-  - the core flow, notifications (deny, allow, delivery, background and
-    cold-start taps, revocation)
-  - document-picker backups (export, restore, corrupt copies refused)
-  - 2× text and "Remove animations"
-- Three P2 fixes found on the device:
-  - the level row cut short at 2×
-  - "1 reflections"
-  - a doubled period in a spoken label
-- Store screenshots from a synthetic backup tool.
-- Physical Android, TalkBack, iPhone, VoiceOver, signing and owner
-  decisions remain manual.
+- format check and analyze
+- migration tests (v1 → v5) and backup format tests (v1 and v2)
+- the release qualification tests, then all tests
+- Android debug and release builds. The CI release APK is debug-signed (CI
+  holds no signing secrets). It is a compile and permission check only and
+  is never distributed. Official APKs are built and signed on the
+  maintainer's machine ([docs/ANDROID_SIGNING.md](docs/ANDROID_SIGNING.md)).
+- a release permission audit that fails on `INTERNET`, exact-alarm or
+  broad storage permissions
 
 ## Explicitly deferred
 
@@ -291,41 +286,26 @@ cloud sync, accounts, social, health integrations, AI, backend, payments,
 cancelling or deleting an active arc. See
 [docs/PHASE_6.md](docs/PHASE_6.md#phase-7-handoff).
 
-## CI
+## Project history
 
-[`.github/workflows/flutter-ci.yml`](.github/workflows/flutter-ci.yml) runs on
-every pull request and push to `main`:
+NextRep was built in reviewed phases, one pull request each. The
+user-facing history is in [CHANGELOG.md](CHANGELOG.md). Per-phase
+implementation and qualification records:
+[1](docs/PHASE_1.md), [2](docs/PHASE_2.md), [3](docs/PHASE_3.md),
+[4](docs/PHASE_4.md), [5](docs/PHASE_5.md), [6](docs/PHASE_6.md),
+[7](docs/PHASE_7.md), [8](docs/PHASE_8.md),
+[8.5](docs/PHASE_8_5_PHYSICAL_ANDROID.md), [9](docs/PHASE_9.md).
+Current status: [PROJECT_STATE.md](PROJECT_STATE.md).
 
-- format check and analyze
-- migration tests (v1 → v5) and backup format tests (v1 and v2)
-- the release qualification tests, then all tests
-- Android debug and release builds (the release build is debug-signed: no
-  secrets in CI)
-- a release permission audit that fails on `INTERNET`, exact-alarm or
-  broad storage permissions
+Release documents:
 
-## Privacy
+- [docs/DIRECT_DISTRIBUTION.md](docs/DIRECT_DISTRIBUTION.md): official
+  APKs and how to check them
+- [docs/ANDROID_SIGNING.md](docs/ANDROID_SIGNING.md): the release key
+- [docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md)
+- [docs/releases/](docs/releases/): release notes
 
-Local-only: no backend, analytics, telemetry, ads or trackers.
-
-- **Reflections** are private text stored only in the on-device SQLite
-  database. NextRep never uploads, logs or reports them (reflection storage
-  errors keep only the error type, because SQLite errors can quote the
-  values). The phone's own system backup (Android Backup, iCloud) may
-  include app data when the user has it on; see [PRIVACY.md](PRIVACY.md).
-  Notifications carry generic text only.
-- **Reminders** are scheduled locally by the OS. There's no push service.
-- **Backups** leave the device only when you export one, to the place you
-  pick in the system file UI. They are checksummed (to detect damage), not
-  encrypted. Backup errors never quote the file; restoring never turns
-  reminders on.
-- **Habit templates** are bundled in the app; custom habit ids are random
-  and generated on the device.
-- **Release APK permissions** (`aapt2 dump permissions`):
-  - `POST_NOTIFICATIONS` and `VIBRATE` (notifications)
-  - `RECEIVE_BOOT_COMPLETED` (restore reminders after a reboot)
-  - AndroidX's app-private `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`
-- No `INTERNET`, no exact-alarm permission and no storage permission
-  (`MANAGE/READ/WRITE_EXTERNAL_STORAGE`): backups use the system document
-  picker. `INTERNET` appears only in the debug/profile manifests, which
-  Flutter tooling needs for hot reload.
+Google Play and App Store publication is not planned.
+[docs/STORE_READINESS.md](docs/STORE_READINESS.md) and
+[docs/STORE_METADATA.md](docs/STORE_METADATA.md) are kept as Phase 7–8
+history.
