@@ -1,4 +1,5 @@
 import '../../core/time/clock.dart';
+import '../../core/time/local_date.dart';
 import '../../core/utils/serial_queue.dart';
 import '../progress/arc_history.dart';
 import '../progress/progress_repository.dart';
@@ -14,12 +15,17 @@ import 'achievement_rules.dart';
 /// Achievement use cases.
 ///
 /// Whether an achievement is earned is derived from stored history and
-/// reflections; the unlock itself (what, when) is persisted. [reconcile]
-/// brings the two in line. It is idempotent and self-healing: if a run fails
-/// (for example after a habit action or reflection that did commit), the
-/// next run (Today refresh, launch, Journey refresh) stores whatever is
-/// still missing. Achievement work is secondary and never part of a habit
-/// action's or reflection's transaction.
+/// reflections; the unlock itself (what, when) is persisted. [sync] brings
+/// the two in line. It is idempotent and self-healing: if a run fails (for
+/// example after a habit action or reflection that did commit), the next
+/// run (Today refresh, launch, Journey refresh) catches up. Achievement
+/// work is secondary and never part of a habit action's or reflection's
+/// transaction.
+///
+/// Past unlocks are permanent. Today's are provisional: today can still
+/// change (an undone completion, a Minimum Day returned to full targets),
+/// so an unlock dated today that the history no longer earns is removed,
+/// and stored again if it is earned again later that day.
 final class AchievementService {
   AchievementService({
     required WinterArcRepository sessions,
@@ -36,18 +42,25 @@ final class AchievementService {
   final Clock _clock;
   final _queue = SerialQueue();
 
+  /// Reconciles the home arc's unlocks (see [sync]) and returns the newly
+  /// stored ones in catalog order, the ones to celebrate.
+  Future<List<AchievementUnlock>> reconcile() async => (await sync()).unlocked;
+
   /// Stores every achievement the home arc qualifies for that is not
-  /// unlocked yet, and returns the newly stored unlocks in catalog order.
+  /// unlocked yet, and removes today's unlocks it no longer qualifies for.
+  /// Unlocks dated before today are never removed.
   ///
   /// The home arc is the active arc or, with nothing unfinished, the arc
-  /// that just completed (so its Summit is stored). Returns nothing when no
+  /// that just completed (so its Summit is stored). Changes nothing when no
   /// arc has started or a new one is still in setup.
-  Future<List<AchievementUnlock>> reconcile() => _queue.run(() async {
+  Future<UnlockChanges> sync() => _queue.run(() async {
     final session = (await _arcs.resolve()).home;
-    if (session == null) return const [];
-    return _achievements.unlockNew(
+    if (session == null) return const UnlockChanges();
+    final today = _clock.today();
+    return _achievements.reconcileUnlocks(
       session.id,
-      AchievementRules.evaluate(await _contextOf(session)),
+      AchievementRules.evaluate(await _contextOf(session, today)),
+      today: today,
       at: _clock.now(),
     );
   });
@@ -63,11 +76,14 @@ final class AchievementService {
   Future<AchievementBoard> boardFor(int sessionId) async =>
       _boardOf(await _arcs.requireStarted(sessionId));
 
-  Future<AchievementContext> _contextOf(WinterArcSession session) async {
+  Future<AchievementContext> _contextOf(
+    WinterArcSession session,
+    LocalDate today,
+  ) async {
     final history = ArcHistory(
       session: session,
       records: await _progress.loadArc(session.id),
-      today: _clock.today(),
+      today: today,
     );
     final reflections = await _reflections.reflectionsFor(session.id);
     return AchievementContext(

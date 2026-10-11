@@ -123,10 +123,13 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(CelebrationCard), findsNothing);
 
-    // Undo and redo: already unlocked, so nothing is celebrated again.
+    // Undo and redo: undoing today's only completion removes the unlock
+    // (Phase 10A), redoing stores it again, but it isn't celebrated twice.
     await reveal(tester, find.byTooltip('Undo No Junk Food'));
     await tester.tap(find.byTooltip('Undo No Junk Food'));
     await tester.pumpAndSettle();
+    expect(find.text('0/15'), findsOneWidget);
+    expect(await db.select(db.achievementUnlocks).get(), isEmpty);
     await tester.tap(find.byTooltip('Complete No Junk Food'));
     await tester.pumpAndSettle();
     expect(find.byType(CelebrationCard), findsNothing);
