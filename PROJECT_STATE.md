@@ -1,14 +1,15 @@
 # PROJECT_STATE
 
 _Last updated: 2026-10-12. v1.0.0 is released (tag `v1.0.0` on
-`b3f9c5c`, PR #10). Phase 10A (Daily Integrity & Sleep UX, toward v1.1.0)
-is complete on its branch; its PR is open and not merged._
+`b3f9c5c`, PR #10). Phase 10A is merged (PR #11, `ba72cf0`). Phase 10B
+(Shareable Cards & Meaningful Motion, toward v1.1.0) is complete on its
+branch; its PR is open and not merged._
 
 | | |
 |---|---|
 | RELEASED | **v1.0.0** (GitHub Release, signed APK) |
-| IN PROGRESS | **v1.1.0**: Phase 10A ready for review; 10B / 10C not started |
-| ANDROID PHYSICAL | **PASS** for v1.0.0 (Phase 8.5 / 9). Phase 10A is not a release candidate and has had no physical run |
+| IN PROGRESS | **v1.1.0**: Phase 10A merged; Phase 10B ready for review; 10C not started |
+| ANDROID PHYSICAL | **PASS** for v1.0.0 (Phase 8.5 / 9). Phases 10A / 10B are not release candidates and have had no physical run |
 | STORE SUBMISSION | **NOT APPLICABLE / NOT PLANNED** |
 
 NextRep is distributed as a signed Android APK on GitHub Releases
@@ -20,16 +21,37 @@ planned. TalkBack was deliberately deferred and doesn't block this model.
 ## Repo
 
 - Remote: https://github.com/arunachaleswaranms/NextRep (public, MIT)
-- `main` baseline: `b3f9c5c` (squash merge of PR #10, Phase 9), tagged
-  `v1.0.0`. PRs #1–#10 are Phases 1–9.
-- Branch: `phase/10a-daily-integrity`, from `b3f9c5c`
-- PR: "Phase 10A: reversible Minimum Day and sleep UX", open for review,
+- `main`: `ba72cf0` (squash merge of PR #11, Phase 10A). `v1.0.0` is
+  tagged on `b3f9c5c` (PR #10). PRs #1–#11 are Phases 1–10A.
+- Branch: `phase/10b-sharing-motion`, from `ba72cf0`
+- PR: "Phase 10B: shareable cards and meaningful motion", open for review,
   not merged. No v1.1 tag or release.
 - Author and committer of every commit:
   `Arunachaleswaran M S <arunachaleswaranms@gmail.com>` (repo-local
   config). No AI or co-author trailers.
 
-## Phase 10A (v1.1, in review)
+## Phase 10B (v1.1, in review)
+
+Evidence and rules: [docs/PHASE_10B.md](docs/PHASE_10B.md).
+
+- **Share cards**, always started by the user and handed to the system
+  share sheet (`share_plus` 13.3.1): Today's Progress and My Arc from a new
+  Share progress button on Today, and an unlocked achievement from its new
+  detail sheet. Locked achievements can't be shared.
+- Every card is a **1080 × 1350 PNG** from a fixed canvas, byte-identical
+  on any device or text size. Built from persisted read models; sharing
+  writes nothing.
+- Today's Progress has non-persisted switches for habit names, XP & level
+  and streak. No card ever carries reflections, moods, logged times
+  (bedtime), reminder settings or calendar dates.
+- The PNG is staged in app-private cache and deleted when the sheet closes;
+  no storage, media, contacts or photo permission. Release permissions are
+  unchanged from v1.0.0.
+- **Motion:** the Minimum Day target change eases instead of snapping
+  (keyed to target and mode, not to + / −); the share preview reveals once.
+  Both honour reduced motion. Journey and celebrations are unchanged.
+
+## Phase 10A (v1.1, merged)
 
 Evidence and rules: [docs/PHASE_10A.md](docs/PHASE_10A.md).
 
@@ -44,8 +66,8 @@ Evidence and rules: [docs/PHASE_10A.md](docs/PHASE_10A.md).
 - **Sleep Before Target reads as "Last night's bedtime"**, counted for
   today, with an explanation. Its date semantics are unchanged. Custom
   clock-time habits keep neutral wording.
-- Next: Phase 10B (sharing cards, motion), Phase 10C (templates, more
-  achievements). Water / social-media reminders are v1.2 planning.
+- Next: Phase 10C (templates, more achievements). Water / social-media
+  reminders are v1.2 planning.
 
 ## Environment
 
@@ -62,11 +84,11 @@ Evidence and rules: [docs/PHASE_10A.md](docs/PHASE_10A.md).
 
 | | |
 |---|---|
-| Version | `1.0.0+1`: versionName 1.0.0, versionCode 1 (unchanged in Phase 10A; bumped when v1.1.0 is prepared) |
+| Version | `1.0.0+1`: versionName 1.0.0, versionCode 1 (unchanged in Phases 10A / 10B; bumped when v1.1.0 is prepared) |
 | Tag | `v1.0.0` on `b3f9c5c` |
 | Android `applicationId` | `com.nextrep.nextrep` (kept for update continuity) |
-| Database schema | **v5** (unchanged through Phase 10A) |
-| Backup | export `formatVersion` **2**; import reads 1 and 2 (unchanged through Phase 10A) |
+| Database schema | **v5** (unchanged through Phase 10B) |
+| Backup | export `formatVersion` **2**; import reads 1 and 2 (unchanged through Phase 10B) |
 | License | MIT, © 2026 Arunachaleswaran M S |
 | Signing certificate | `CN=Arunachaleswaran M S, OU=NextRep`, RSA 4096, valid 2026-10-08 to 2056-09-30 |
 | Certificate SHA-256 | `65:B7:0C:D0:96:D1:BB:F2:C0:F5:0E:E0:2F:4B:55:97:46:25:CC:4C:DB:EA:D7:39:22:5F:06:75:AF:C8:F0:BA` |
@@ -81,15 +103,16 @@ and are git-ignored. Key rules:
 
 ## Results
 
-| Gate | Phase 10A branch | v1.0.0 |
-|---|---|---|
-| format / analyze | clean / no issues | clean / no issues |
-| `flutter test` | **635 / 635** | 605 / 605 |
-| Migrations / backup 1+2 | 39 / 71 | 39 / 70 |
-| APK debug | PASS | PASS |
-| APK release (release key) | not built (not a release candidate) | PASS |
-| Signed update continuity (physical, `adb install -r`, same key) | n/a | **PASS**, data kept |
-| Physical v1.0.0 smoke | n/a | **PASS** |
+| Gate | Phase 10B branch | Phase 10A | v1.0.0 |
+|---|---|---|---|
+| format / analyze | clean / no issues | clean / no issues | clean / no issues |
+| `flutter test` | **693 / 693** | 635 / 635 | 605 / 605 |
+| Migrations / backup 1+2 | 39 / 71 | 39 / 71 | 39 / 70 |
+| APK debug | PASS | PASS | PASS |
+| APK release | PASS (local; not a release candidate) | not built | PASS |
+| iOS simulator build | PASS (local) | not run | PASS |
+| Signed update continuity (physical, `adb install -r`, same key) | n/a | n/a | **PASS**, data kept |
+| Physical v1.0.0 smoke | n/a | n/a | **PASS** |
 
 v1.0.0 coverage was 93.3% of handwritten lib.
 Earlier results: integration 7 / 7 on emulator-5554 and on the iPhone 17
@@ -125,7 +148,8 @@ disclosed in [PRIVACY.md](PRIVACY.md).
 
 ## Remaining actions (owner)
 
-1. Independent review of the Phase 10A PR, then merge.
-2. Phases 10B and 10C, then prepare v1.1.0 (version bump, release notes,
-   signed APK and physical qualification). Nothing for v1.1 is tagged or
-   published yet.
+1. Independent review of the Phase 10B PR, then merge.
+2. Phase 10C, then prepare v1.1.0: version bump, release notes, a Share
+   cards section in PRIVACY.md (it still describes 1.0.0), signed APK and
+   physical qualification, including the share sheet on a real device.
+   Nothing for v1.1 is tagged or published yet.
