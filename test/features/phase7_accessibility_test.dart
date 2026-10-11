@@ -179,7 +179,9 @@ void main() {
       expect(card.label, contains('goal before'));
       expect(card.hasAction(SemanticsAction.tap), isTrue);
       expect(card.hasAction(SemanticsAction.customAction), isTrue);
-      expect(card.label, contains('Done'));
+      expect(card.label, contains('Goal met'));
+      expect(card.label, contains("last night's bedtime"));
+      expect(card.label, contains("counts toward today's check-in"));
       handle.dispose();
       await _shutDown(tester);
     });

@@ -30,10 +30,17 @@ String progressLabel(
 /// value that isn't one.
 String clockLabel(int value) => NightTime.tryValue(value)?.hhmm ?? '--:--';
 
-/// "Last night" for a sleep habit (logged the next morning), otherwise
-/// "Logged".
+/// Whether [habit] is the built-in Sleep Before Target: a morning check-in
+/// of the bedtime of the sleep that ended that morning, which belongs to
+/// the day the user wakes up. Decided by the stable id, so a renamed one
+/// keeps this copy and a custom clock-time habit (even one with the sleep
+/// icon) never gets it.
+bool isBedtimeCheckIn(Habit habit) =>
+    habit.id == 'sleep_before' && habit.type == HabitType.timeBefore;
+
+/// "Last night's bedtime" for Sleep Before Target, otherwise "Logged".
 String clockRecordLabel(Habit habit) =>
-    habit.iconKey == 'sleep' ? 'Last night' : 'Logged';
+    isBedtimeCheckIn(habit) ? "Last night's bedtime" : 'Logged';
 
 /// What a habit type is called in the app.
 String habitTypeLabel(HabitType type) => switch (type) {
