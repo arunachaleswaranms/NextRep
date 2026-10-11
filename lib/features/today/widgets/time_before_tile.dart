@@ -11,11 +11,13 @@ import '../../../shared/widgets/winter_card.dart';
 /// A clock-time habit on Today, e.g. Sleep Before Target: the time
 /// recorded for today against the goal.
 ///
-/// Sleep Before Target is a morning check-in: today's record is the time
-/// the user went to bed for the sleep that ended this morning ("Last
-/// night"). Tapping the card opens a clock picker; a recorded time can be
-/// changed or cleared. A time after the goal stays recorded, it just isn't
-/// a completion.
+/// Sleep Before Target ([isBedtimeCheckIn]) is a morning check-in: today's
+/// record is the time the user went to bed for the sleep that ended this
+/// morning ("Last night's bedtime"), and the card says so, with an
+/// explanation of why it counts for today. Other clock-time habits keep
+/// neutral wording. Tapping the card opens a clock picker; a recorded time
+/// can be changed or cleared. A time after the goal stays recorded, it just
+/// isn't a completion.
 class TimeBeforeHabitTile extends StatelessWidget {
   const TimeBeforeHabitTile({
     super.key,
@@ -41,7 +43,7 @@ class TimeBeforeHabitTile extends StatelessWidget {
     final picked = await showTimePicker(
       context: context,
       initialTime: TimeOfDay(hour: initial.hour, minute: initial.minute),
-      helpText: clockRecordLabel(_habit) == 'Last night'
+      helpText: isBedtimeCheckIn(_habit)
           ? 'When did you go to bed last night?'
           : 'What time was it?',
     );
@@ -67,17 +69,28 @@ class TimeBeforeHabitTile extends StatelessWidget {
     final accent = WinterHabitAccents.of(_habit.iconKey);
     final goal = 'Goal · before ${clockLabel(entry.target)}';
     final record = clockRecordLabel(_habit);
-    final status = completed ? 'Done' : 'After the goal';
+    final bedtime = isBedtimeCheckIn(_habit);
+    final status = completed
+        ? (bedtime ? 'Goal met' : 'Done')
+        : 'After the goal';
 
     return Semantics(
       container: true,
       button: enabled,
       label: [
         _habit.title,
-        if (logged == null) 'not logged' else '$record ${logged.hhmm}',
+        if (bedtime)
+          logged == null
+              ? "last night's bedtime not logged"
+              : "last night's bedtime ${logged.hhmm}"
+        else if (logged == null)
+          'not logged'
+        else
+          '$record ${logged.hhmm}',
         'goal before ${clockLabel(entry.target)}',
         // Found on a device: "not logged" was said twice.
         if (logged != null) status,
+        if (bedtime) "counts toward today's check-in",
         if (streak > 0) '$streak day streak',
       ].join(', '),
       hint: enabled
@@ -86,11 +99,15 @@ class TimeBeforeHabitTile extends StatelessWidget {
                 : 'Double tap to change the time')
           : null,
       onTap: enabled ? () => _pick(context) : null,
-      // The card's Clear button is inside the excluded subtree, so it is
-      // offered as a custom action instead.
-      customSemanticsActions: logged != null && enabled
-          ? {CustomSemanticsAction(label: 'Clear time'): onClear}
-          : null,
+      // The card's Clear and info buttons are inside the excluded subtree,
+      // so they are offered as custom actions instead.
+      customSemanticsActions: {
+        if (logged != null && enabled)
+          const CustomSemanticsAction(label: 'Clear time'): onClear,
+        if (bedtime)
+          const CustomSemanticsAction(label: BedtimeExplanation.question): () =>
+              BedtimeExplanation.show(context),
+      },
       excludeSemantics: true,
       child: WinterCard(
         highlighted: completed,
@@ -108,7 +125,25 @@ class TimeBeforeHabitTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(_habit.title, style: text.titleMedium),
+                  if (bedtime)
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(_habit.title, style: text.titleMedium),
+                        ),
+                        IconButton(
+                          tooltip: BedtimeExplanation.question,
+                          iconSize: 20,
+                          onPressed: () => BedtimeExplanation.show(context),
+                          icon: Icon(
+                            Icons.info_outline_rounded,
+                            color: colors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    )
+                  else
+                    Text(_habit.title, style: text.titleMedium),
                   const SizedBox(height: 2),
                   if (logged != null)
                     Text(
@@ -117,11 +152,25 @@ class TimeBeforeHabitTile extends StatelessWidget {
                         color: colors.textPrimary,
                         fontWeight: FontWeight.w600,
                       ),
+                    )
+                  else if (bedtime)
+                    Text(
+                      record,
+                      style: text.bodyMedium?.copyWith(
+                        color: colors.textPrimary,
+                      ),
                     ),
                   Text(goal, style: text.bodyMedium),
-                  if (logged != null && !completed)
+                  if (logged != null && (bedtime || !completed))
                     Text(
-                      'After the goal',
+                      status,
+                      style: text.bodySmall?.copyWith(
+                        color: completed ? accent : colors.textSecondary,
+                      ),
+                    )
+                  else if (logged == null && bedtime && enabled)
+                    Text(
+                      "Tap to log it for today's check-in",
                       style: text.bodySmall?.copyWith(
                         color: colors.textSecondary,
                       ),
@@ -158,4 +207,28 @@ class TimeBeforeHabitTile extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Why last night's bedtime counts for today, for Sleep Before Target.
+abstract final class BedtimeExplanation {
+  static const question = 'Why does this count for today?';
+
+  static Future<void> show(BuildContext context) => showDialog<void>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text(question),
+      content: const SingleChildScrollView(
+        child: Text(
+          'Your sleep ended this morning, so last night\'s bedtime belongs '
+          "to today's check-in. Log it each morning after you wake up.",
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Got it'),
+        ),
+      ],
+    ),
+  );
 }

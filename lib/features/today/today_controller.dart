@@ -59,10 +59,22 @@ class TodayController extends AsyncNotifier<DaySummary> {
     ),
   );
 
-  /// Switches the day on screen to a Minimum Day (one-way).
+  /// Switches the day on screen to a Minimum Day.
   Future<ActionResult<DayCommit<bool>>> activateMinimumDay() => _mutate(
     (service, date, sessionId) =>
         service.activateMinimumDay(date: date, sessionId: sessionId),
+  );
+
+  /// Returns the Minimum Day on screen to full targets.
+  ///
+  /// [date] pins the day the request was made for (an Undo offered when
+  /// Minimum Day was switched on): if Today has moved on to a new day since,
+  /// the request is rejected as stale rather than applied to another day.
+  Future<ActionResult<DayCommit<bool>>> returnToFullTargets({
+    LocalDate? date,
+  }) => _mutate(
+    (service, shown, sessionId) =>
+        service.returnToFullTargets(date: date ?? shown, sessionId: sessionId),
   );
 
   /// Re-reads today's state, e.g. when the app resumes on a new day or a

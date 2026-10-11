@@ -61,5 +61,9 @@ final class DaySummary {
   bool get canSwitchToMinimum =>
       isTrackable && mode == DayMode.normal && !record.isPerfect;
 
+  /// Whether today is a Minimum Day the user may still return to full
+  /// targets.
+  bool get canReturnToFullTargets => isTrackable && mode == DayMode.minimum;
+
   Streak streakFor(String habitId) => habitStreaks[habitId] ?? Streak.none;
 }

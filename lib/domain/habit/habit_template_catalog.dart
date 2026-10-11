@@ -85,7 +85,9 @@ abstract final class HabitTemplateCatalog {
       iconKey: 'sleep',
       enabledByDefault: false,
       starter: true,
-      description: 'Each morning, log when you went to bed last night.',
+      description:
+          'Morning check-in: log when you went to sleep last night. It '
+          'counts toward the day you wake up.',
     ),
     const HabitTemplate(
       id: 'meditation',

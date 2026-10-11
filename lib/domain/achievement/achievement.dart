@@ -72,7 +72,12 @@ final class EarnedAchievement {
   String toString() => 'EarnedAchievement(${key.id}, $earnedOn)';
 }
 
-/// A persisted unlock. Written once per session and key, never changed.
+/// A persisted unlock, at most one per session and key.
+///
+/// An unlock dated before today is permanent. One dated today is
+/// provisional while the day can still change: if today's history stops
+/// earning it (an undone completion, a Minimum Day returned to full
+/// targets), reconciliation removes it again.
 final class AchievementUnlock {
   const AchievementUnlock({
     required this.key,
@@ -87,6 +92,19 @@ final class AchievementUnlock {
 
   /// When the unlock was first persisted.
   final DateTime unlockedAt;
+}
+
+/// What one reconciliation changed.
+final class UnlockChanges {
+  const UnlockChanges({this.unlocked = const [], this.revoked = const []});
+
+  /// Newly stored unlocks, in the order earned.
+  final List<AchievementUnlock> unlocked;
+
+  /// Today's unlocks that history no longer earns, now removed.
+  final List<AchievementUnlock> revoked;
+
+  bool get isEmpty => unlocked.isEmpty && revoked.isEmpty;
 }
 
 /// One catalog entry with its unlock, if any.

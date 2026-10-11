@@ -72,9 +72,10 @@ final class HabitEditOutcome {
   final LocalDate? configFrom;
 }
 
-/// Use cases of a Winter Arc: tracking the current day, Minimum Day, habit
-/// editing, and the derived history (Today, Journey, summary). Writes need
-/// an active arc; a completed arc stays readable.
+/// Use cases of a Winter Arc: tracking the current day, Minimum Day (and
+/// returning to full targets), habit editing, and the derived history
+/// (Today, Journey, summary). Writes need an active arc; a completed arc
+/// stays readable.
 ///
 /// Reads come in two kinds. [today], [journey], [history] and
 /// [habitSettings] show the arc the home is on ([ArcResolution.home]).
@@ -181,7 +182,7 @@ final class HabitTrackingService {
   ///
   /// Effective targets drop to each habit's minimum target. Progress is kept;
   /// habits whose progress already meets the minimum become complete and earn
-  /// their XP. One-way: there is no switch back to normal for that date.
+  /// their XP. [returnToFullTargets] switches back while the day is today.
   /// Idempotent: the value is false if the day already was a Minimum Day.
   /// Rejected if the day is already a Perfect Day.
   Future<DayCommit<bool>> activateMinimumDay({
@@ -204,6 +205,34 @@ final class HabitTrackingService {
           );
         }
         const change = DayChange(mode: DayMode.minimum);
+        return (DayRules.settle(day, change, now: now), true);
+      },
+    );
+  }
+
+  /// Switches [date] (which must be today) from a Minimum Day back to a
+  /// normal day with full targets.
+  ///
+  /// Progress values are kept exactly; completion is re-evaluated against
+  /// the full targets, so habit XP that is no longer earned is revoked and XP
+  /// still earned stays. If every full target is already met the day becomes
+  /// a Perfect Day and earns its bonus. Past dates can't be changed: a day
+  /// that has rolled over is rejected with [DomainRule.staleDay].
+  /// Idempotent: the value is false if the day already was a normal day.
+  Future<DayCommit<bool>> returnToFullTargets({
+    required LocalDate date,
+    int? sessionId,
+  }) async {
+    final session = await _trackableSession(date, sessionId: sessionId);
+    final now = _clock.now();
+    return _progress.commitDay(
+      sessionId: session.id,
+      date: date,
+      build: (day) {
+        if (day.mode != DayMode.minimum) {
+          return (DayRules.settle(day, const DayChange(), now: now), false);
+        }
+        const change = DayChange(mode: DayMode.normal);
         return (DayRules.settle(day, change, now: now), true);
       },
     );

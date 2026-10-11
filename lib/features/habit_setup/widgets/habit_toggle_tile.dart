@@ -46,6 +46,13 @@ class HabitToggleTile extends StatelessWidget {
                 Text(habit.title, style: text.titleMedium),
                 const SizedBox(height: 2),
                 Text(goals, style: text.bodyMedium),
+                if (isBedtimeCheckIn(habit))
+                  Text(
+                    "Morning check-in · counts toward the day you wake up",
+                    style: text.bodySmall?.copyWith(
+                      color: colors.textSecondary,
+                    ),
+                  ),
               ],
             ),
           ),

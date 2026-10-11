@@ -484,7 +484,10 @@ void main() {
       expect(find.text('Goal · before 23:30'), findsOneWidget);
       expect(
         find.bySemanticsLabel(
-          RegExp(r'^Sleep Before Target, not logged, goal before 23:30'),
+          RegExp(
+            r"^Sleep Before Target, last night's bedtime not logged, "
+            'goal before 23:30',
+          ),
         ),
         findsOneWidget,
       );
@@ -493,13 +496,15 @@ void main() {
       await _tap(tester, sleepCard());
       expect(find.text('When did you go to bed last night?'), findsOneWidget);
       await _pickTime(tester, 23, 10);
-      expect(find.text('Last night · 23:10'), findsOneWidget);
+      expect(find.text("Last night's bedtime · 23:10"), findsOneWidget);
       expect(
         find.text('Sleep Before Target complete · +15 XP'),
         findsOneWidget,
       );
       expect(
-        find.bySemanticsLabel(RegExp(r'Last night 23:10, .*Done')),
+        find.bySemanticsLabel(
+          RegExp(r"last night's bedtime 23:10, .*Goal met"),
+        ),
         findsOneWidget,
       );
 
@@ -507,7 +512,7 @@ void main() {
       await clearCelebrations(tester);
       await _tap(tester, sleepCard());
       await _pickTime(tester, 0, 10);
-      expect(find.text('Last night · 00:10'), findsOneWidget);
+      expect(find.text("Last night's bedtime · 00:10"), findsOneWidget);
       expect(find.text('After the goal'), findsOneWidget);
       expect(find.text('Sleep Before Target marked not done'), findsOneWidget);
       final app = TestApp(db, clock);
@@ -516,10 +521,10 @@ void main() {
       // Clear it.
       await _tap(tester, find.byTooltip('Clear Sleep Before Target time'));
       expect(find.text('Sleep Before Target time cleared'), findsOneWidget);
-      expect(find.textContaining('Last night ·'), findsNothing);
+      expect(find.textContaining("Last night's bedtime ·"), findsNothing);
       // Undo brings 00:10 back.
       await _tap(tester, find.text('Undo'));
-      expect(find.text('Last night · 00:10'), findsOneWidget);
+      expect(find.text("Last night's bedtime · 00:10"), findsOneWidget);
       await _shutDown(tester);
     });
 
@@ -559,7 +564,7 @@ void main() {
         150,
         scrollable: find.byType(Scrollable).first,
       );
-      expect(find.text('Last night · 00:40'), findsOneWidget);
+      expect(find.text("Last night's bedtime · 00:40"), findsOneWidget);
       expect(tester.takeException(), isNull);
       await _shutDown(tester);
 

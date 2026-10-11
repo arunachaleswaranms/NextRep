@@ -3,11 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/dependencies.dart';
 import '../../core/errors/app_failure.dart';
 import '../../core/errors/error_reporter.dart';
+import '../../core/time/local_date.dart';
 import '../../core/utils/serial_queue.dart';
 import '../../domain/achievement/achievement.dart';
 import '../celebration/celebration_queue.dart';
 
-/// Bumped when new unlocks are stored, so the board re-reads.
+/// Bumped when unlocks are stored or removed, so the board re-reads.
 final achievementsChangedProvider = NotifierProvider<_Counter, int>(
   _Counter.new,
 );
@@ -39,7 +40,11 @@ final arcAchievementBoardProvider = FutureProvider.autoDispose
 final achievementSyncProvider = Provider<AchievementSync>(AchievementSync.new);
 
 /// Runs achievement reconciliation for the UI: stores newly earned unlocks,
-/// queues their celebration, and refreshes the board.
+/// removes today's unlocks that are no longer earned, queues a celebration
+/// for the new ones only, and refreshes the board.
+///
+/// An unlock removed by an earlier run and earned again for the same date
+/// (undo, then redo) is stored again but not celebrated a second time.
 ///
 /// Best effort by design. Achievements are secondary, derived state: a
 /// failure is reported and swallowed, never surfaced as a failed habit
@@ -52,16 +57,26 @@ final class AchievementSync {
   final Ref _ref;
   final _queue = SerialQueue();
 
+  /// Unlocks removed by this app session's runs, by key and date.
+  final _revoked = <(AchievementKey, LocalDate)>{};
+
   Future<List<AchievementUnlock>> run() => _queue.run(() async {
     try {
-      final unlocked = await _ref.read(achievementServiceProvider).reconcile();
-      if (unlocked.isNotEmpty) {
+      final changes = await _ref.read(achievementServiceProvider).sync();
+      if (!changes.isEmpty) {
         _ref.read(achievementsChangedProvider.notifier).bump();
+      }
+      _revoked.addAll([for (final u in changes.revoked) (u.key, u.unlockedOn)]);
+      final celebrate = [
+        for (final u in changes.unlocked)
+          if (!_revoked.remove((u.key, u.unlockedOn))) u,
+      ];
+      if (celebrate.isNotEmpty) {
         _ref
             .read(celebrationQueueProvider.notifier)
-            .add(AchievementCelebration(unlocked));
+            .add(AchievementCelebration(celebrate));
       }
-      return unlocked;
+      return changes.unlocked;
     } catch (error, stackTrace) {
       ErrorReporter.report(
         toAppFailure(error, stackTrace),

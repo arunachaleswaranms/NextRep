@@ -227,7 +227,7 @@ void main() {
       expect(await totalXp(), 15);
     });
 
-    test('is one-way: no action reverts the day to normal', () async {
+    test('habit actions never change the mode by themselves', () async {
       await app.tracking.activateMinimumDay(date: day1);
       await completeAll();
       await act('no_junk_food', HabitAction.undoCompletion);
@@ -281,6 +281,178 @@ void main() {
       final today = await app.tracking.today();
       expect(today.streakFor('water').current, 3);
       expect(today.perfectDays.streak.current, 0);
+    });
+  });
+
+  // Phase 10A: while the day is still today a Minimum Day can return to full
+  // targets. Past days stay as they were.
+  group('returning to full targets', () {
+    Future<Map<String, int>> ledger() async => {
+      for (final row in await app.db.select(app.db.xpTransactions).get())
+        row.sourceKey: row.amount,
+    };
+
+    test('restores full targets, keeps progress, and reconciles XP', () async {
+      await act('workout', HabitAction.increment, times: 3); // 15 / 30 min
+      await act('water', HabitAction.increment, times: 4); // 4 / 8
+      await act('learning', HabitAction.increment, times: 4); // 20 / 20 min
+      await act('no_junk_food', HabitAction.complete);
+      expect(await totalXp(), 2 * 15);
+
+      await app.tracking.activateMinimumDay(date: day1);
+      final minimum = await app.tracking.today();
+      expect(minimum.mode, DayMode.minimum);
+      expect(minimum.record.isMinimumComplete, isTrue);
+      expect(minimum.totalXp, 4 * 15);
+
+      final commit = await app.tracking.returnToFullTargets(date: day1);
+      expect(commit.value, isTrue);
+      expect(commit.xpBefore, 4 * 15);
+      expect(commit.xpAfter, 2 * 15);
+      expect(commit.settlement.ledger.granted, isEmpty);
+      expect(
+        commit.settlement.ledger.revoked.map((x) => x.habitId),
+        unorderedEquals(['workout', 'water']),
+      );
+
+      final today = await app.tracking.today();
+      expect(today.mode, DayMode.normal);
+      final byId = {for (final e in today.entries) e.habit.id: e};
+      // Full targets are back.
+      expect(byId['workout']!.target, 30);
+      expect(byId['water']!.target, 8);
+      expect(byId['learning']!.target, 20);
+      expect(byId['no_junk_food']!.target, 1);
+      // Progress values are exactly what the user entered.
+      expect(byId['workout']!.progress.currentValue, 15);
+      expect(byId['water']!.progress.currentValue, 4);
+      expect(byId['learning']!.progress.currentValue, 20);
+      expect(byId['no_junk_food']!.progress.currentValue, 1);
+      // Below the full target: incomplete again, and its XP is revoked.
+      expect(byId['workout']!.progress.completed, isFalse);
+      expect(byId['water']!.progress.completed, isFalse);
+      // Still deserved: kept.
+      expect(byId['learning']!.progress.completed, isTrue);
+      expect(byId['no_junk_food']!.progress.completed, isTrue);
+      expect(today.totalXp, 2 * 15);
+      expect(await ledger(), {
+        XpRules.habitCompletionKey('learning', day1): 15,
+        XpRules.habitCompletionKey('no_junk_food', day1): 15,
+      });
+      expect(today.isPerfect, isFalse);
+      expect(today.canSwitchToMinimum, isTrue);
+      expect(today.canReturnToFullTargets, isFalse);
+
+      // The mode is stored explicitly, in the existing table.
+      final modes = await app.db.select(app.db.dayModes).get();
+      expect(modes.single.mode, DayMode.normal);
+      expect(modes.single.date, day1);
+    });
+
+    test('a day already meeting every full target becomes a Perfect Day '
+        'with exactly one bonus', () async {
+      // Increments stop at the effective target, so the numeric habits reach
+      // their full targets before the switch; the binary habit (same target
+      // on a Minimum Day) is completed after it.
+      await completeAll(except: 'no_junk_food');
+      await app.tracking.activateMinimumDay(date: day1);
+      await act('no_junk_food', HabitAction.complete);
+      // Every full target met, but a Minimum Day: no bonus.
+      expect(await totalXp(), 4 * 15);
+      expect((await app.tracking.today()).isPerfect, isFalse);
+
+      final commit = await app.tracking.returnToFullTargets(date: day1);
+      expect(commit.settlement.ledger.perfectDayGranted, isTrue);
+      expect(commit.settlement.ledger.granted, hasLength(1));
+      final today = await app.tracking.today();
+      expect(today.isPerfect, isTrue);
+      expect(today.totalXp, 4 * 15 + XpRules.perfectDayBonus);
+      expect(today.perfectDays.total, 1);
+      final keys = await ledgerKeys();
+      expect(keys.where((k) => k == XpRules.perfectDayKey(day1)), hasLength(1));
+
+      // A Perfect Day can't be scaled down again.
+      expect(
+        app.tracking.activateMinimumDay(date: day1),
+        _failsWith(DomainRule.dayAlreadyPerfect),
+      );
+    });
+
+    test('is idempotent: a second return changes nothing', () async {
+      await act('workout', HabitAction.increment, times: 2); // 10 min
+      await app.tracking.activateMinimumDay(date: day1);
+      final first = await app.tracking.returnToFullTargets(date: day1);
+      final again = await app.tracking.returnToFullTargets(date: day1);
+      expect(first.value, isTrue);
+      expect(again.value, isFalse);
+      expect(again.settlement.hasWrites, isFalse);
+      expect(await totalXp(), 0);
+
+      // On a day that never was a Minimum Day it is a no-op too.
+      app.clock.current = DateTime(2026, 10, 2, 7);
+      final normal = await app.tracking.returnToFullTargets(
+        date: app.clock.today(),
+      );
+      expect(normal.value, isFalse);
+      expect(normal.settlement.hasWrites, isFalse);
+    });
+
+    test('switching back and forth never duplicates or loses XP', () async {
+      await act('workout', HabitAction.increment, times: 2); // 10 min
+      await act('learning', HabitAction.increment, times: 4); // 20 min
+      for (var i = 0; i < 3; i++) {
+        await app.tracking.activateMinimumDay(date: day1);
+        await app.tracking.activateMinimumDay(date: day1);
+        expect(await totalXp(), 2 * 15, reason: 'minimum, round $i');
+        await app.tracking.returnToFullTargets(date: day1);
+        await app.tracking.returnToFullTargets(date: day1);
+        expect(await totalXp(), 15, reason: 'normal, round $i');
+      }
+      expect(await ledger(), {
+        XpRules.habitCompletionKey('learning', day1): 15,
+      });
+      final modes = await app.db.select(app.db.dayModes).get();
+      expect(modes.single.mode, DayMode.normal);
+    });
+
+    test(
+      'a day that rolled over is rejected and stays a Minimum Day',
+      () async {
+        await act('water', HabitAction.increment, times: 3);
+        await app.tracking.activateMinimumDay(date: day1);
+        app.clock.current = DateTime(2026, 10, 2, 0, 1);
+        await expectLater(
+          app.tracking.returnToFullTargets(date: day1),
+          _failsWith(DomainRule.staleDay),
+        );
+        final history = await app.tracking.history();
+        expect(history.recordOn(day1).mode, DayMode.minimum);
+        expect(history.recordOn(day1).isMinimumComplete, isFalse);
+        expect(history.records.totalXp, 15);
+      },
+    );
+
+    test('a past or future date can never be changed', () async {
+      await app.tracking.activateMinimumDay(date: day1);
+      app.clock.current = DateTime(2026, 10, 5, 7);
+      for (final date in [day1, day1.addDays(2), day1.addDays(6)]) {
+        await expectLater(
+          app.tracking.returnToFullTargets(date: date),
+          _failsWith(DomainRule.staleDay),
+        );
+      }
+      final modes = await app.db.select(app.db.dayModes).get();
+      expect(modes.single.mode, DayMode.minimum);
+      expect(modes.single.date, day1);
+    });
+
+    test('a completed arc is read-only', () async {
+      await app.tracking.activateMinimumDay(date: day1);
+      app.clock.current = DateTime(2027, 1, 1, 7);
+      await expectLater(
+        app.tracking.returnToFullTargets(date: LocalDate(2027, 1, 1)),
+        _failsWith(DomainRule.arcNotRunningToday),
+      );
     });
   });
 
@@ -458,7 +630,7 @@ void main() {
       expect(water.target, 3);
       expect(water.progress.currentValue, 1);
 
-      // Still one-way and idempotent after restart.
+      // Still a Minimum Day and idempotent after restart.
       final again = await run.tracking.activateMinimumDay(date: day1);
       expect(again.value, isFalse);
       await run.tracking.perform(

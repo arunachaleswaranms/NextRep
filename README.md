@@ -32,7 +32,8 @@ analytics and no cloud sync. Everything stays on your phone.
 - **Today**: check off habits, with streaks, XP, levels and a Perfect Day
   bonus when every habit is done.
 - **Minimum Day**: on a hard day, switch today to each habit's minimum and
-  keep your streaks.
+  keep your streaks. Changed your mind? Return to full targets any time
+  that day.
 - **Journey**: your 92 days on a mountain path in six chapters, with
   milestones.
 - **15 achievements**, with celebrations.

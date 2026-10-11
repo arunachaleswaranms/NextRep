@@ -252,9 +252,10 @@ final class _FailingAchievements implements AchievementRepository {
   Future<List<AchievementUnlock>> unlocks(int sessionId) async => const [];
 
   @override
-  Future<List<AchievementUnlock>> unlockNew(
+  Future<UnlockChanges> reconcileUnlocks(
     int sessionId,
     List<EarnedAchievement> earned, {
+    required LocalDate today,
     required DateTime at,
   }) async => throw const PersistenceFailure('disk full');
 }

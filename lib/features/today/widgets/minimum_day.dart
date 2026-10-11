@@ -42,9 +42,13 @@ class RoughDayCard extends StatelessWidget {
   }
 }
 
-/// Shown on Today while it is a Minimum Day.
+/// Shown on Today while it is a Minimum Day. Offers the way back to full
+/// targets while the day can still be tracked.
 class MinimumDayBanner extends StatelessWidget {
-  const MinimumDayBanner({super.key});
+  const MinimumDayBanner({super.key, this.onReturnToFullTargets});
+
+  /// Asks to return today to full targets; null hides the action.
+  final VoidCallback? onReturnToFullTargets;
 
   @override
   Widget build(BuildContext context) {
@@ -84,6 +88,20 @@ class MinimumDayBanner extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text('Consistency beats intensity.', style: text.bodyMedium),
+                if (onReturnToFullTargets case final onPressed?) ...[
+                  const SizedBox(height: WinterSpacing.xs),
+                  TextButton.icon(
+                    style: TextButton.styleFrom(
+                      foregroundColor: colors.recovery,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: WinterSpacing.sm,
+                      ),
+                    ),
+                    onPressed: onPressed,
+                    icon: const Icon(Icons.undo_rounded),
+                    label: const Text('Return to full targets'),
+                  ),
+                ],
               ],
             ),
           ),
@@ -173,7 +191,8 @@ class MinimumDaySheet extends StatelessWidget {
             Text(
               'Your progress so far is kept. Minimum Days keep habit '
               'streaks going, but are not Perfect Days. This applies to '
-              'today only and cannot be undone.',
+              'today only, and you can return to full targets any time '
+              'today.',
               style: text.bodySmall?.copyWith(color: colors.textSecondary),
             ),
             const SizedBox(height: WinterSpacing.lg),
@@ -195,4 +214,34 @@ class MinimumDaySheet extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Confirms returning a Minimum Day to full targets. Resolves to `true` only
+/// when the user confirms.
+abstract final class ReturnToFullTargetsDialog {
+  static Future<bool> show(BuildContext context) async =>
+      await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Return to full targets?'),
+          content: const SingleChildScrollView(
+            child: Text(
+              'Your progress stays as it is. Habits that no longer meet '
+              'their full targets may become incomplete, and XP will be '
+              'adjusted to match.',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Return to full targets'),
+            ),
+          ],
+        ),
+      ) ??
+      false;
 }

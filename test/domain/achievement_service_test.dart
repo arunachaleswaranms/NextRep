@@ -69,15 +69,24 @@ void main() {
     expect(first.single.unlockedOn, day1);
     expect(first.single.unlockedAt, DateTime(2026, 10, 1, 9));
 
-    // Reconciling again, or undoing the habit, never unlocks it twice and
-    // never takes it away.
-    expect(await app.achievements.reconcile(), isEmpty);
-    await act('no_junk_food', HabitAction.undoCompletion);
+    // Reconciling again never unlocks it twice.
     expect(await app.achievements.reconcile(), isEmpty);
     final stored = await rows();
     expect(stored, hasLength(1));
     expect(stored.single.achievementKey, 'first_rep');
     expect(stored.single.unlockedAt, DateTime(2026, 10, 1, 9));
+
+    // Phase 10A: undoing it while it is still today takes it away again
+    // (see achievement_reconciliation_test.dart); once the day is over it
+    // is permanent.
+    await act('no_junk_food', HabitAction.undoCompletion);
+    expect(await app.achievements.reconcile(), isEmpty);
+    expect(await rows(), isEmpty);
+    await act('no_junk_food', HabitAction.complete);
+    expect(await app.achievements.reconcile(), hasLength(1));
+    app.clock.current = DateTime(2026, 10, 2, 7);
+    expect(await app.achievements.reconcile(), isEmpty);
+    expect(await rows(), hasLength(1));
   });
 
   test('multiple achievements unlock together, in catalog order', () async {
@@ -148,11 +157,15 @@ void main() {
       EarnedAchievement(key: AchievementKey.halfway, earnedOn: day1),
     ];
     final at = DateTime(2026, 10, 1, 10);
-    expect(await store.unlockNew(1, earned, at: at), hasLength(1));
-    expect(
-      await store.unlockNew(1, earned, at: at.add(const Duration(days: 1))),
-      isEmpty,
+    final first = await store.reconcileUnlocks(1, earned, today: day1, at: at);
+    expect(first.unlocked, hasLength(1));
+    final again = await store.reconcileUnlocks(
+      1,
+      earned,
+      today: day1,
+      at: at.add(const Duration(days: 1)),
     );
+    expect(again.isEmpty, isTrue);
     final stored = await store.unlocks(1);
     expect(stored.single.unlockedAt, at);
 
@@ -213,9 +226,10 @@ final class _FailingAchievements implements AchievementRepository {
   Future<List<AchievementUnlock>> unlocks(int sessionId) async => const [];
 
   @override
-  Future<List<AchievementUnlock>> unlockNew(
+  Future<UnlockChanges> reconcileUnlocks(
     int sessionId,
     List<EarnedAchievement> earned, {
+    required LocalDate today,
     required DateTime at,
   }) async => throw const PersistenceFailure('disk full');
 }

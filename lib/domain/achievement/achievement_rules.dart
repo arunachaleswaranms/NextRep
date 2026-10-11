@@ -42,8 +42,8 @@ final class AchievementContext {
 /// the user joined a seasonal arc are not part of the history, so nothing
 /// can be earned on them. Nothing here reads UI state or
 /// storage, and past challenge days are immutable, so the result for a past
-/// date never changes; only today can add (or, before it is persisted,
-/// drop) an achievement.
+/// date never changes; only today can add or drop an achievement (an
+/// unlock dated today is removed again if today stops earning it).
 abstract final class AchievementRules {
   static const int snowballStreak = 3;
   static const int coldFrontStreak = 7;
