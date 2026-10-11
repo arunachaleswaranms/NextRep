@@ -6,6 +6,7 @@ import 'package:nextrep/core/errors/app_failure.dart';
 import 'package:nextrep/core/time/local_date.dart';
 import 'package:nextrep/domain/habit/habit.dart';
 import 'package:nextrep/domain/journey/journey_day.dart';
+import 'package:nextrep/domain/progress/day_mode.dart';
 import 'package:nextrep/domain/progress/habit_progress_rules.dart';
 import 'package:nextrep/domain/winter_arc/winter_arc_service.dart';
 import 'package:nextrep/domain/winter_arc/winter_arc_session.dart';
@@ -228,5 +229,47 @@ void main() {
     final restored = (await target.sessions.currentSession())!;
     expect(restored.kind, ArcKind.seasonalWinter);
     expect(restored.participationStartDate, LocalDate(2026, 10, 15));
+  });
+
+  // Phase 10A stores an explicit `normal` mode for a day returned to full
+  // targets, in the existing table. It is a value format 2 already has, so
+  // backups stay format 2 and keep restoring into this schema.
+  test('a Minimum Day returned to full targets round-trips in format 2, '
+      'beside a Minimum Day that stayed one', () async {
+    final source = _empty(DateTime(2026, 10, 1, 9));
+    await source.winterArc.beginSetup();
+    await source.winterArc.startWinterArc();
+    await source.tracking.activateMinimumDay(date: source.clock.today());
+    await completeHabit(source, 'no_junk_food');
+    source.clock.current = DateTime(2026, 10, 2, 9);
+    await source.tracking.activateMinimumDay(date: source.clock.today());
+    await completeHabit(source, 'no_junk_food');
+    await source.tracking.returnToFullTargets(date: source.clock.today());
+    await source.achievements.reconcile();
+
+    final export = await source.backup.export();
+    final target = _empty(source.clock.now());
+    await _restoreInto(target, export.bytes);
+
+    final modes = {
+      for (final row in await target.db.select(target.db.dayModes).get())
+        row.date: row.mode,
+    };
+    expect(modes, {
+      LocalDate(2026, 10, 1): DayMode.minimum,
+      LocalDate(2026, 10, 2): DayMode.normal,
+    });
+    final history = await target.tracking.history();
+    expect(
+      history.records.totalXp,
+      (await source.tracking.history()).records.totalXp,
+    );
+    expect(
+      (await target.achievements.board())!.unlockedCount,
+      (await source.achievements.board())!.unlockedCount,
+    );
+    // Restored data keeps working: today can switch again.
+    await target.tracking.activateMinimumDay(date: target.clock.today());
+    expect((await target.tracking.today()).mode, DayMode.minimum);
   });
 }
