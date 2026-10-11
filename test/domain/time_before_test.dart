@@ -268,6 +268,22 @@ void main() {
     );
 
     test(
+      'returning to full targets keeps the clock target and the logged time',
+      () async {
+        await setTime(0, 45);
+        await app.tracking.activateMinimumDay(date: day1);
+        await app.tracking.returnToFullTargets(date: day1);
+        final today = await app.tracking.today();
+        expect(today.mode, DayMode.normal);
+        final entry = today.record.entryFor('sleep_before')!;
+        expect(entry.target, _t(1, 0));
+        expect(entry.progress.currentValue, _t(0, 45));
+        expect(entry.progress.completed, isTrue);
+        expect(today.totalXp, XpRules.habitCompletion);
+      },
+    );
+
+    test(
       'a target edit applies from tomorrow; past days keep their target',
       () async {
         await setTime(0, 45);

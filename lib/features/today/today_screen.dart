@@ -9,6 +9,7 @@ import '../../app/router/app_router.dart';
 import '../../app/theme/winter_tokens.dart';
 import '../../core/errors/action_result.dart';
 import '../../core/errors/app_failure.dart';
+import '../../core/time/local_date.dart';
 import '../../domain/habit/habit.dart';
 import '../../domain/progress/day_summary.dart';
 import '../../domain/progress/habit_progress_rules.dart';
@@ -36,6 +37,7 @@ class TodayScreen extends ConsumerStatefulWidget {
 
 class _TodayScreenState extends ConsumerState<TodayScreen> {
   late final AppLifecycleListener _lifecycle;
+  bool _returningToFull = false;
 
   TodayController get _controller => ref.read(todayControllerProvider.notifier);
 
@@ -141,9 +143,49 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
       case ActionSuccess(:final value) when value.value:
         unawaited(Haptics.minimumDay());
         _celebrate(value);
-        _showSnack('Minimum Day on. Keep moving.');
+        // Undo is pinned to the day it was offered for: after a rollover
+        // the domain rejects it as stale, it never changes another day.
+        final date = value.settlement.date;
+        _showSnack(
+          'Minimum Day activated',
+          undo: () => _returnOnce(() => _returnToFullTargets(date: date)),
+        );
       case ActionSuccess():
         break; // already a Minimum Day; nothing changed
+      case ActionFailure(:final failure):
+        _showSnack(userMessageFor(failure));
+    }
+  }
+
+  Future<void> _confirmReturnToFullTargets() => _returnOnce(() async {
+    final confirmed = await ReturnToFullTargetsDialog.show(context);
+    if (confirmed && mounted) await _returnToFullTargets();
+  });
+
+  /// Runs [body] unless a return to full targets is already being confirmed
+  /// or saved, so repeated taps can't stack dialogs or requests (the domain
+  /// is idempotent as well).
+  Future<void> _returnOnce(Future<void> Function() body) async {
+    if (_returningToFull) return;
+    _returningToFull = true;
+    try {
+      await body();
+    } finally {
+      _returningToFull = false;
+    }
+  }
+
+  /// Returns today to full targets through the domain. Progress is kept;
+  /// completion and XP follow from what is persisted.
+  Future<void> _returnToFullTargets({LocalDate? date}) async {
+    final result = await _controller.returnToFullTargets(date: date);
+    if (!mounted) return;
+    switch (result) {
+      case ActionSuccess(:final value) when value.value:
+        _celebrate(value);
+        _showSnack('Back to full targets');
+      case ActionSuccess():
+        break; // already on full targets; nothing changed
       case ActionFailure(:final failure):
         _showSnack(userMessageFor(failure));
     }
@@ -229,9 +271,13 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
           AnimatedSize(
             duration: context.motion.standard,
             child: summary.mode.isMinimum
-                ? const Padding(
-                    padding: EdgeInsets.only(top: WinterSpacing.md),
-                    child: MinimumDayBanner(),
+                ? Padding(
+                    padding: const EdgeInsets.only(top: WinterSpacing.md),
+                    child: MinimumDayBanner(
+                      onReturnToFullTargets: summary.canReturnToFullTargets
+                          ? _confirmReturnToFullTargets
+                          : null,
+                    ),
                   )
                 : const SizedBox(width: double.infinity),
           ),
