@@ -5,9 +5,11 @@ import '../../../app/theme/winter_tokens.dart';
 import '../../../domain/achievement/achievement.dart';
 import '../../../shared/widgets/winter_card.dart';
 import 'achievement_badge.dart';
+import 'achievement_detail_sheet.dart';
 
 /// One achievement in the collection: badge, title, criteria and, once
-/// unlocked, when.
+/// unlocked, when. An unlocked one opens its details, where it can be
+/// shared; a locked one does nothing when tapped.
 class AchievementCard extends StatelessWidget {
   const AchievementCard({super.key, required this.status, required this.board});
 
@@ -24,8 +26,12 @@ class AchievementCard extends StatelessWidget {
         ? null
         : 'Day ${board.dayNumberOf(unlock.unlockedOn)} · '
               '${DateFormat('d MMM').format(unlock.unlockedOn.toLocalDateTime())}';
+    void open() => AchievementDetailSheet.show(context, status, board);
     return Semantics(
       container: true,
+      button: unlock != null,
+      onTap: unlock != null ? open : null,
+      onTapHint: unlock != null ? 'show details and share' : null,
       label: [
         definition.title,
         if (when != null) 'Unlocked, $when' else 'Locked',
@@ -35,6 +41,7 @@ class AchievementCard extends StatelessWidget {
       child: WinterCard(
         highlighted: unlock != null,
         accent: definition.key.accent(colors),
+        onTap: unlock != null ? open : null,
         padding: const EdgeInsets.all(WinterSpacing.md),
         child: Column(
           children: [
