@@ -1,10 +1,18 @@
 # NextRep Privacy
 
-_Last updated: 8 October 2026. Applies to NextRep 1.0.0 (Winter Arc)._
+_Last updated: 12 October 2026. Applies to NextRep 1.1.0 (Winter Arc)._
 
 NextRep is a local-first app. Everything you put into it stays on your
-device, in the app's own storage, unless you choose to move it. NextRep has
-no servers, no accounts and no network access.
+device, in the app's own storage, unless you choose to move it: by
+exporting a backup, or by sharing a progress card. NextRep has no servers,
+no accounts and no network access.
+
+In short:
+
+- **Automatic transmission: none.** NextRep never sends anything by itself.
+- **Sharing you start: possible.** You can make a progress, goal or
+  achievement image and hand it to another app through your phone's share
+  sheet. Nothing leaves NextRep until you tap **Share** and pick an app.
 
 This page describes what the app actually does, as built. It applies to
 the official Android APKs published on this repository's GitHub Releases
@@ -38,14 +46,70 @@ the device.
 - No analytics, telemetry, crash reporting, advertising, tracking or ad
   identifiers.
 - No cloud sync and no NextRep servers.
-- No sale or sharing of your data. NextRep never has it.
+- No sale or disclosure of your data. NextRep never automatically
+  transmits, sells or discloses anything you put into it. The only data
+  that leaves the app is what you choose to move yourself: a backup you
+  export, or a share card you send (below).
 - No AI or remote processing. Insights are counts and percentages computed
   on the device. Reflection text is never read for insights.
-- No health, location, contacts, camera, microphone or photo access.
+- No health, location, contacts, camera, microphone, photo or usage access.
 
 Failures are recorded only through the Dart developer log. That log is
 visible in debug and profile builds and does nothing in release builds.
 Even there, the entries never include reflection text or backup contents.
+
+## Share cards
+
+From version 1.1.0 you can share a picture of your progress. There are
+three cards: **Today's Progress** and **My Arc** (from Share progress on
+Today), and an unlocked **achievement** (from its detail sheet).
+
+How it works:
+
+- The card is drawn **on your device** as a 1080 × 1350 PNG image. Nothing
+  is uploaded to make it.
+- A card is shared **only when you tap Share**. NextRep then opens the
+  operating system's own share sheet, and you pick where it goes. NextRep
+  never posts, uploads or sends anything by itself.
+- The image carries only the progress, goals or achievement you chose to
+  show, with a subtle NextRep name. It contains no link.
+- The image may go with a short caption describing the card: for example
+  your Arc and challenge day, or the achievement title. The caption contains
+  no repository link, tracking parameter or referral identifier.
+- NextRep keeps **no share history** and doesn't record which app you
+  choose. (Android tells the share library which app was picked; NextRep
+  only looks at whether the sheet was used or closed, and keeps nothing.)
+- NextRep doesn't read your contacts or social accounts, and doesn't know
+  who you send a card to.
+- The image is written to NextRep's **private cache** only for as long as
+  the share takes, and NextRep deletes its copy when the sheet closes.
+  Android's share library may keep its own copy in the app's private cache
+  until the next share or until the system clears the cache. NextRep never
+  saves cards to your Photos, Gallery or Downloads, and it needs no storage,
+  media, photo or contacts permission to share.
+- Sharing doesn't change your data and earns no XP.
+
+On **Today's Progress** you can hide habit names, your XP and level, and
+your streak before you share. Hidden values are not in the image at all.
+Today's Progress shows Sleep Before as done or not done, without a time.
+
+**My Arc** shows your habits with their full daily goals. For a "before a
+time" habit, the goal is its target time (for example "Before 23:30"). It
+never shows a time you logged.
+
+A share card **never** contains:
+
+- your Journal reflections (win, thing to improve) or moods
+- backup contents
+- reminder settings
+- logged clock times, such as your exact Sleep Before bedtime
+- calendar dates (cards use the Arc day number)
+- device identifiers, or anything about how the app is signed
+
+**Once you share a card, the app you picked has it.** WhatsApp, Instagram,
+email, a messaging app or a cloud drive each have their own privacy
+practices, which NextRep doesn't control. Share only what you're happy for
+that app, and the people you send it to, to see.
 
 ## Backups you export
 
@@ -94,8 +158,9 @@ can turn them off in system settings.
 | `RECEIVE_BOOT_COMPLETED` | re-schedule pending reminders after a restart |
 | `com.nextrep.nextrep.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` | an app-private AndroidX permission; it grants nothing to other apps |
 
-The app requests no storage permission: backups go through the system
-document picker. It requests no exact-alarm permission: reminders may arrive
+The app requests no storage, media, photo or contacts permission: backups
+go through the system document picker, and share cards through the system
+share sheet. It requests no exact-alarm permission: reminders may arrive
 a few minutes late. `INTERNET` appears only in debug and profile builds,
 which Flutter's development tools need. It is never in a release build.
 

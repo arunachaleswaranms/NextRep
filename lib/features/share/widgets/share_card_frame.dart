@@ -6,11 +6,10 @@ import '../../../shared/winter_scene/mountain_layer.dart';
 import '../../../shared/winter_scene/scene_progress.dart';
 import '../../../shared/winter_scene/sky_layer.dart';
 import '../share_card_capture.dart';
-import '../share_card_data.dart';
 
 /// The shared look of every share card: a still night sky with aurora and
 /// mountains at the top, the NextRep mark, the card's [child], a [tagline]
-/// and the project link at the bottom.
+/// and a quiet "Made with NextRep" at the bottom. No link is printed.
 ///
 /// Laid out on the fixed [ShareCardCapture.canvas] with a fixed type scale,
 /// independent of the phone's width and text size: it is a designed image,
@@ -184,11 +183,6 @@ class _Footer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.winter;
-    final quiet = TextStyle(
-      fontSize: 9.5,
-      letterSpacing: 0.3,
-      color: colors.textSecondary,
-    );
     return Column(
       children: [
         Text(
@@ -209,12 +203,12 @@ class _Footer extends StatelessWidget {
           color: colors.glassBorder,
           margin: const EdgeInsets.only(bottom: 8),
         ),
-        Text('Made with NextRep', style: quiet),
-        const SizedBox(height: 2),
         Text(
-          shareProjectLabel,
-          style: quiet.copyWith(
-            color: colors.textSecondary.withValues(alpha: 0.8),
+          'Made with NextRep',
+          style: TextStyle(
+            fontSize: 9.5,
+            letterSpacing: 0.3,
+            color: colors.textSecondary,
           ),
         ),
       ],

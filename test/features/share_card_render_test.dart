@@ -11,6 +11,7 @@ import 'package:nextrep/domain/habit/habit_template_catalog.dart';
 import 'package:nextrep/domain/progress/day_mode.dart';
 import 'package:nextrep/features/share/share_card_capture.dart';
 import 'package:nextrep/features/share/share_card_data.dart';
+import 'package:nextrep/features/share/widgets/share_card_frame.dart';
 import 'package:nextrep/features/share/widgets/share_cards.dart';
 
 import '../support/share_fixtures.dart';
@@ -56,6 +57,42 @@ Future<Uint8List> _render(
 
 void _expect1080x1350(Uint8List png) {
   expect(pngSize(png), (width: 1080, height: 1350));
+}
+
+/// The rendered card is branded with the NextRep name only: no repository
+/// or other link appears anywhere in its text.
+void _expectNoLink() {
+  final card = find.byType(ShareCardFrame);
+  expect(card, findsOneWidget);
+  final texts = find.descendant(
+    of: card,
+    matching: find.byWidgetPredicate((w) => w is Text || w is RichText),
+  );
+  expect(texts, findsWidgets);
+  for (final element in texts.evaluate()) {
+    final text = switch (element.widget) {
+      final Text t => t.data ?? t.textSpan?.toPlainText() ?? '',
+      final RichText r => r.text.toPlainText(),
+      _ => '',
+    }.toLowerCase();
+    for (final link in [
+      'github',
+      'http',
+      'www.',
+      '.com',
+      'arunachaleswaranms',
+    ]) {
+      expect(text, isNot(contains(link)), reason: text);
+    }
+  }
+  expect(
+    find.descendant(of: card, matching: find.text('Made with NextRep')),
+    findsOneWidget,
+  );
+  expect(
+    find.descendant(of: card, matching: find.text('NEXTREP')),
+    findsOneWidget,
+  );
 }
 
 /// The six Phase 10C templates and six of v1.0: twelve built-in habits.
@@ -148,6 +185,7 @@ void main() {
   for (final MapEntry(key: name, value: card) in cases.entries) {
     testWidgets('$name renders a 1080 x 1350 PNG', (tester) async {
       _expect1080x1350(await _render(tester, card()));
+      _expectNoLink();
     });
   }
 
@@ -166,6 +204,7 @@ void main() {
         ),
       );
       _expect1080x1350(png);
+      _expectNoLink();
     }
   });
 
@@ -194,7 +233,6 @@ void main() {
     expect(find.text('Sleep Before Target'), findsOneWidget);
     expect(find.textContaining(loggedBedtime.hhmm), findsNothing);
     expect(find.textContaining('23:30'), findsNothing);
-    expect(find.text('github.com/arunachaleswaranms/NextRep'), findsOneWidget);
     expect(find.text('Made with NextRep'), findsOneWidget);
   });
 

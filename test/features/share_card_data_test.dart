@@ -234,11 +234,7 @@ void main() {
       final data = TodayShareCardData.fromSummary(
         shareSummary(habits: habits, done: {'water'}, xp: 1080, today: 24),
       );
-      expect(
-        data.shareText,
-        'My Winter Arc · Day 24/92 — NextRep\n'
-        'https://github.com/arunachaleswaranms/NextRep',
-      );
+      expect(data.shareText, 'My Winter Arc · Day 24/92 — NextRep');
       for (final habit in habits) {
         expect(data.shareText, isNot(contains(habit.title)));
       }
@@ -295,7 +291,7 @@ void main() {
       );
       expect(rolling.headline, 'MY 92-DAY WINTER ARC');
       expect(rolling.subtitle, 'Rolling 92-day Arc');
-      expect(rolling.shareText, startsWith('My 92-day Winter Arc — NextRep'));
+      expect(rolling.shareText, 'My 92-day Winter Arc — NextRep');
 
       final seasonal = ArcShareCardData.fromSummary(
         shareSummary(
@@ -306,6 +302,7 @@ void main() {
       expect(seasonal.headline, 'MY SEASONAL WINTER ARC');
       expect(seasonal.subtitle, 'Winter season 2026 · 92 days');
       expect(seasonal.startLabel, 'DAY 1');
+      expect(seasonal.shareText, 'My Seasonal Winter Arc — NextRep');
     });
 
     test('18. a late seasonal join never claims Day 1', () {
@@ -345,6 +342,7 @@ void main() {
       expect(data.dayNumber, 12);
       expect(data.unlockedLabel, 'UNLOCKED · DAY 12');
       expect(data.fileName, 'nextrep-achievement-cold-front.png');
+      expect(data.shareText, 'Achievement unlocked: Cold Front — NextRep');
     });
 
     test('23. no calendar date', () {
@@ -383,6 +381,48 @@ void main() {
       expect(data.semanticsLabel, isNot(contains(privateNote)));
       expect(data.shareText, isNot(contains(privateNote)));
     });
+  });
+
+  test('no card carries a link: share text names NextRep only', () {
+    final habits = catalogHabits(count: 12);
+    final board = _board(
+      unlockedOnDay: {for (final d in AchievementCatalog.all) d.key: 5},
+    );
+    final everything = [
+      ..._todayStrings(
+        TodayShareCardData.fromSummary(
+          shareSummary(habits: habits, done: {'water'}, today: 24),
+        ),
+      ),
+      ..._todayStrings(
+        TodayShareCardData.fromSummary(
+          shareSummary(
+            habits: habits,
+            session: seasonalSession(joinDay: 15),
+            today: 30,
+          ),
+        ),
+      ),
+      ..._arcStrings(
+        ArcShareCardData.fromSummary(shareSummary(habits: habits)),
+      ),
+      ..._arcStrings(
+        ArcShareCardData.fromSummary(
+          shareSummary(habits: habits, session: seasonalSession()),
+        ),
+      ),
+      for (final status in board.entries) ...[
+        AchievementShareCardData.of(status, board)!.shareText,
+        AchievementShareCardData.of(status, board)!.semanticsLabel,
+      ],
+    ];
+    for (final text in everything) {
+      for (final link in ['github', 'http://', 'https://', 'www.', '.com']) {
+        expect(text.toLowerCase(), isNot(contains(link)), reason: text);
+      }
+      expect(text, isNot(contains('arunachaleswaranms')), reason: text);
+      expect(text, isNot(contains('?')), reason: text);
+    }
   });
 
   test('file name pieces are sanitized', () {

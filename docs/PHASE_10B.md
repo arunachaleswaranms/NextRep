@@ -79,14 +79,14 @@ Compatibility checked before adding it:
 
 It adds no networking. Its Android code only builds a chooser intent with a
 content URI; its iOS code presents `UIActivityViewController`. The share
-text carries the repository link as plain text; `ShareParams.uri` (which
-makes iOS fetch a page preview) is not used.
+text is plain text with no link; `ShareParams.uri` (which makes iOS fetch a
+page preview) is not used.
 
 ## Native share behavior
 
 - PNG is the primary artifact (`image/png`). The short accompanying text
-  names the arc and day or the achievement, plus
-  `https://github.com/arunachaleswaranms/NextRep`. No habit data, no
+  names the arc and day or the achievement, then "— NextRep" (for example
+  `My Winter Arc · Day 24/92 — NextRep`). No link, no habit data, no
   tracking or referral parameters, no ids. The image stands alone if a
   receiving app drops the text.
 - File names: `nextrep-day-<n>.png` (`nextrep-today.png` outside the arc's
@@ -129,8 +129,8 @@ PNGs are **byte-identical**.
 
 Every card: a still night sky with aurora and mountains (the app's own
 `SkyPainter`, `AuroraPainter`, `MountainPainter`, no ambient motion), the
-NextRep mark, a tagline, and at the bottom "Made with NextRep" and
-`github.com/arunachaleswaranms/NextRep` in small secondary type.
+NextRep mark, a tagline, and at the bottom "Made with NextRep" in small
+secondary type. No link is printed on a card.
 
 ### 1. Today's Progress
 

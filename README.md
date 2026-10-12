@@ -3,8 +3,8 @@
 **A private, local-first Winter Arc: a 92-day self-improvement challenge
 for your daily habits.**
 
-> **Status: v1.0.0 release candidate, pending owner publication.**
-> Android APKs are published on the
+> **Status: v1.0.0 is released. v1.1.0 is a qualified release candidate,
+> pending review and publication.** Android APKs are published on the
 > [GitHub Releases](https://github.com/arunachaleswaranms/NextRep/releases)
 > page.
 
@@ -36,7 +36,12 @@ analytics and no cloud sync. Everything stays on your phone.
   that day.
 - **Journey**: your 92 days on a mountain path in six chapters, with
   milestones.
-- **32 achievements** in six categories, with celebrations.
+- **32 achievements** in six categories, with celebrations. Existing
+  history counts toward new ones.
+- **Share cards**: share Today's Progress, your Arc's goals or an unlocked
+  achievement as an image, through your phone's share sheet. Made on the
+  device; nothing is posted automatically. Today's Progress can hide habit
+  names, XP and your streak.
 - **Journal**: a 20-second nightly reflection (mood, one win, one thing to
   improve).
 - **Arc History and summaries**: every finished arc, read-only, with its
@@ -56,7 +61,8 @@ Android APKs are published on the
 page as `NextRep-v<version>-android.apk`, each with a `.sha256` checksum
 file.
 
-**v1.0.0: release candidate, pending owner publication.**
+**Latest release: v1.0.0.** v1.1.0 is a release candidate, pending review
+and publication ([release notes](docs/releases/v1.1.0.md)).
 
 Only download NextRep from this repository's Releases page. How to check a
 download: [docs/DIRECT_DISTRIBUTION.md](docs/DIRECT_DISTRIBUTION.md).
@@ -83,16 +89,19 @@ Protect on.
 
 ## Updating
 
-1. Download the newer NextRep APK from the Releases page.
-2. Open it and tap **Update**. It installs over your current NextRep.
-3. **Don't uninstall first.** Uninstalling deletes the app's data.
+1. Optional but recommended: **Export Backup** first (below).
+2. Download the newer NextRep APK from the Releases page.
+3. Open it and tap **Update**. It installs over your current NextRep and
+   keeps your data.
+4. **Don't uninstall first.** Uninstalling deletes the app's data.
 
 Your data stays because every official release is signed with the same
 key, and Android only accepts an update signed with it. Before a major
 upgrade, export a backup anyway (below).
 
-If Android refuses the update, don't uninstall to force it. Get the APK
-again from the Releases page and check it
+If Android refuses the update or reports a signing or package conflict,
+stop. Don't uninstall to force it. Get the APK again from the Releases page
+and check its checksum and signer
 ([docs/DIRECT_DISTRIBUTION.md](docs/DIRECT_DISTRIBUTION.md)).
 
 ## Backup & Restore
@@ -116,7 +125,9 @@ checksum to detect accidental damage; it isn't a security feature.
 
 No account, no server, no analytics, telemetry, ads or trackers, and no
 cloud sync. The Android release doesn't request the `INTERNET` permission.
-Reminders are local notifications with generic text. Your phone's own
+Nothing is sent automatically. A share card leaves the app only when you
+tap Share and pick an app in the system share sheet. It never includes
+your Journal or moods, and carries no link in the image or its caption. Reminders are local notifications with generic text. Your phone's own
 system backup may include app data if you have it turned on.
 
 Full details: [PRIVACY.md](PRIVACY.md).
@@ -239,6 +250,7 @@ flutter test test/data/migration_test.dart test/data/migration_v3_test.dart \
   test/data/migration_v4_test.dart test/data/migration_v5_test.dart  # → v5
 flutter test test/domain/backup_format_test.dart test/domain/backup_v2_test.dart \
   test/data/backup_restore_test.dart test/data/backup_v2_restore_test.dart \
+  test/data/phase10c_backup_test.dart \
   test/domain/arc_deletion_test.dart test/domain/insight_rules_test.dart
 flutter test test/domain/seasonal_arc_test.dart test/domain/participation_test.dart \
   test/domain/time_before_test.dart test/domain/setup_habits_test.dart  # Phase 6
@@ -276,8 +288,9 @@ every pull request and push to `main`:
   holds no signing secrets). It is a compile and permission check only and
   is never distributed. Official APKs are built and signed on the
   maintainer's machine ([docs/ANDROID_SIGNING.md](docs/ANDROID_SIGNING.md)).
-- a release permission audit that fails on `INTERNET`, exact-alarm or
-  broad storage permissions
+- a release permission audit that fails on `INTERNET`, exact-alarm,
+  storage, media, contacts, accounts, camera, microphone or usage-access
+  permissions
 
 ## Explicitly deferred
 
@@ -295,7 +308,9 @@ implementation and qualification records:
 [1](docs/PHASE_1.md), [2](docs/PHASE_2.md), [3](docs/PHASE_3.md),
 [4](docs/PHASE_4.md), [5](docs/PHASE_5.md), [6](docs/PHASE_6.md),
 [7](docs/PHASE_7.md), [8](docs/PHASE_8.md),
-[8.5](docs/PHASE_8_5_PHYSICAL_ANDROID.md), [9](docs/PHASE_9.md).
+[8.5](docs/PHASE_8_5_PHYSICAL_ANDROID.md), [9](docs/PHASE_9.md),
+[10A](docs/PHASE_10A.md), [10B](docs/PHASE_10B.md),
+[10C](docs/PHASE_10C.md), [10D](docs/PHASE_10D.md).
 Current status: [PROJECT_STATE.md](PROJECT_STATE.md).
 
 Release documents:

@@ -89,7 +89,7 @@ build.
 To check any APK by hand:
 
 ```bash
-"$ANDROID_HOME"/build-tools/<version>/apksigner verify --print-certs NextRep-v1.0.0-android.apk
+"$ANDROID_HOME"/build-tools/<version>/apksigner verify --print-certs NextRep-v<version>-android.apk
 ```
 
 `keytool -printcert -jarfile` prints "Not a signed jar file" for NextRep
