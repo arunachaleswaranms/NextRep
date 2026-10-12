@@ -35,7 +35,16 @@ class HabitIcon extends StatelessWidget {
     'nature': Icons.park_rounded,
     'heart': Icons.favorite_rounded,
     'star': Icons.star_rounded,
+    'hair_care': Icons.content_cut_rounded,
+    'skin_care': Icons.face_retouching_natural_rounded,
+    'fruit': Icons.eco_rounded,
+    'nuts_seeds': Icons.grain_rounded,
+    'mobility': Icons.accessibility_new_rounded,
+    'reading': Icons.auto_stories_rounded,
   };
+
+  /// Whether [iconKey] has its own glyph (anything else gets a fallback).
+  static bool hasIcon(String iconKey) => _icons.containsKey(iconKey);
 
   @override
   Widget build(BuildContext context) {

@@ -266,7 +266,17 @@ abstract final class WinterHabitAccents {
     'nature': Color(0xFF9BD67F),
     'heart': Color(0xFFFF8FA3),
     'star': Color(0xFFFFD66B),
+    'hair_care': Color(0xFFD9A6FF),
+    'skin_care': Color(0xFFFFB3A1),
+    'fruit': Color(0xFFFF9F7A),
+    'nuts_seeds': Color(0xFFE0B98A),
+    'mobility': Color(0xFF6FE0D0),
+    'reading': Color(0xFF9DB8FF),
   };
+
+  /// Whether [iconKey] has its own accent (anything else gets the primary
+  /// accent).
+  static bool hasAccent(String iconKey) => _byIconKey.containsKey(iconKey);
 
   /// The accent of [iconKey], or the primary accent for unknown keys.
   static Color of(String iconKey) =>
