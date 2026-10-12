@@ -23,17 +23,18 @@ is not an official build. Don't install it.
 The checksum shows that the file you downloaded is the file that was
 published, and wasn't damaged or swapped on the way.
 
-macOS / Linux, with both files in the same folder:
+macOS / Linux, with both files in the same folder (for example
+`<version>` = `1.1.0`):
 
 ```bash
-shasum -a 256 -c NextRep-v1.0.0-android.apk.sha256
-# NextRep-v1.0.0-android.apk: OK
+shasum -a 256 -c NextRep-v<version>-android.apk.sha256
+# NextRep-v<version>-android.apk: OK
 ```
 
 Windows (PowerShell):
 
 ```powershell
-Get-FileHash NextRep-v1.0.0-android.apk -Algorithm SHA256
+Get-FileHash NextRep-v<version>-android.apk -Algorithm SHA256
 ```
 
 Compare the hash with the one in the `.sha256` file and in the release
@@ -52,7 +53,7 @@ Subject: CN=Arunachaleswaran M S, OU=NextRep
 With the Android SDK build-tools installed you can check it:
 
 ```bash
-apksigner verify --print-certs NextRep-v1.0.0-android.apk
+apksigner verify --print-certs NextRep-v<version>-android.apk
 # Signer #1 certificate SHA-256 digest: 65b70cd096d1bbf2c0f50ee02f4b55974625cc4cdbead739225f0675afc8f0ba
 ```
 
@@ -63,13 +64,14 @@ password are never published.
 ## How updates stay safe
 
 Android itself checks every update: it only installs a new APK over an
-installed app when both are signed with the same certificate. Once NextRep
-v1.0.0 is installed, Android refuses any "update" that isn't signed with
-the NextRep release key, so a tampered APK can't replace your install or
-read its data.
+installed app when both are signed with the same certificate. Once an
+official NextRep is installed, Android refuses any "update" that isn't
+signed with the NextRep release key, so a tampered APK can't replace your
+install or read its data.
 
 Because every release uses the same key, a newer official APK installs
-over the old one and keeps your data. You don't need to uninstall.
+over the old one and keeps your data (for example v1.1.0 over v1.0.0). You
+don't need to uninstall. Exporting a backup first is still a good habit.
 
 If Android ever says an update conflicts with the installed app or that the
 package is invalid, **don't uninstall to force it.** That means the APK
@@ -97,8 +99,10 @@ Release steps, in order:
    key configured. It builds, verifies and stages the APK and its checksum
    in `build/release-candidate/` (git-ignored). `flutter clean` deletes
    that folder, so don't run it until the release is published. Release
-   builds are reproducible: the same commit and key always give the same
-   SHA-256.
+   builds have been byte-identical across clean builds of the same commit
+   with the same key and toolchain, so the SHA-256 should match the one in
+   the release notes. If it doesn't, stop and find out why before
+   publishing.
 3. Create the tag `v<version>` and a GitHub Release from
    `docs/releases/v<version>.md`. Attach the two staged files, and nothing
    else.

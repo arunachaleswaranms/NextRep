@@ -1,5 +1,57 @@
 # Changelog
 
+## 1.1.0 — 2026
+
+Installs over 1.0.0 and keeps your data. Release notes:
+[docs/releases/v1.1.0.md](docs/releases/v1.1.0.md). Built in Phases 10A
+(#11), 10B (#12) and 10C (#13), and qualified in Phase 10D
+([docs/PHASE_10D.md](docs/PHASE_10D.md)).
+
+Schema **v5** · backup format **2** (reads 1 and 2)
+
+### Added
+
+- **Share cards**: Today's Progress, My Arc and an unlocked achievement,
+  each a 1080 × 1350 PNG made on the device and handed to the system share
+  sheet when you tap Share. Today's Progress can hide habit names, XP &
+  level and the streak. No account, no social graph, no automatic posting.
+- **Six optional habit templates** for Arc setup: Hair Care, Skin Care, Eat
+  Fruit, Nuts / Seeds, Stretch / Mobility and Reading. They aren't added to
+  an Arc that is already running.
+- **17 new achievements** (32 in all) in six categories: Progress,
+  Consistency, Resilience, Habit Mastery, Reflection and Journey. Longer
+  streaks and Perfect Day counts, Minimum Day resilience, reflection and
+  journey milestones, and activity milestones for No Junk Food, Workout,
+  Water, Learning and Sleep Before. Achievements still give 0 XP.
+- Existing history is **backfilled** against the new achievements on first
+  launch, dated when it earned them. The current Arc's new unlocks are
+  celebrated together once; completed Arcs are filled in silently.
+
+### Changed
+
+- **Minimum Day can be undone the same day**: Undo on the snackbar, or
+  "Return to full targets" on the banner. Progress is kept, and completion
+  and XP are worked out again. Past days never change.
+- Achievements unlocked today follow today's history, so undoing a habit or
+  a Minimum Day can take back today's unlock. Earlier unlocks never change.
+- **Sleep Before Target** reads as "Last night's bedtime", counted for
+  today. Custom clock-time habits keep neutral wording.
+- The Achievements screen is grouped by category.
+- Motion: the Minimum Day target change eases instead of snapping, and the
+  share preview reveals once. Reduced motion turns both off.
+
+### Privacy / compatibility
+
+- Still local-first: no account, server, analytics, ads or cloud sync. The
+  Android release still has no `INTERNET` permission, and sharing needs no
+  storage, media, photo or contacts permission.
+- [PRIVACY.md](PRIVACY.md) now covers share cards: nothing is sent
+  automatically, and a card leaves the app only when you share it.
+- Same application id (`com.nextrep.nextrep`) and signing certificate as
+  1.0.0, so it updates in place. No data migration.
+- 1.0.0 backups restore into 1.1.0. A 1.1.0 backup that holds one of the
+  new achievements can't be restored into 1.0.0.
+
 ## 1.0.0 — 2026
 
 First public release, distributed as a signed Android APK on GitHub
