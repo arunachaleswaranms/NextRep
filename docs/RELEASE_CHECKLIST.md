@@ -16,13 +16,14 @@ Done for v1.1.0 in Phase 10D on 2026-10-12, on the PR head. Evidence:
 - [x] `applicationId` is still `com.nextrep.nextrep`
 - [x] Schema and backup format unchanged (v5, export format 2, import 1 and 2)
 - [x] `android/key.properties` points at the permanent release key and is git-ignored; the key was not rotated
-- [x] Gates: format clean, analyze clean, `flutter test` 768 / 768, coverage 93.9%, migrations 39, backup 76, release qualification 39, Phase 10A 78 / 10B 62 / 10C 102
+- [x] Gates: format clean, analyze clean, `flutter test` 769 / 769, coverage 93.8%, migrations 39, backup 76, release qualification 39, Phase 10A 78 / 10B 63 / 10C 102
 - [x] `flutter clean`, then `tool/release/prepare_android_release.sh`: one signer `65:B7:0C:D0:…:F0:BA` (not `CN=Android Debug`), `com.nextrep.nextrep` 1.1.0 (2), minSdk 24, targetSdk 36, permission audit (no network, exact-alarm, storage, media, contacts, accounts, camera, microphone or usage access), staged APK and `.sha256`
-- [x] Byte-identical across two clean builds of the same commit in the fixed local environment (`3775470e…f00f5`), and again on the final head
+- [x] Byte-identical across two clean builds of the same commit in the fixed local environment (`f6bf2a3a…a2d779`), and again on the final head
 - [x] `flutter build apk --debug`, `flutter build ios --simulator`, `flutter build ios --release --no-codesign`
 - [x] Physical Android (OnePlus CPH2707, Android 16): the installed official v1.0.0 verified byte-identical to the published asset, backup exported first, `adb install -r` of v1.1.0 → Success, `firstInstallTime` unchanged, same signer, data intact with no restore
 - [x] Physical smoke: cold launch, Today, Journey, Journal, Insights, History, Achievements (6 categories, 32), reminders, Data & Backup, force-stop / relaunch, background / resume
 - [x] Physical share: Today's Progress (privacy switches), My Arc, Achievement; native chooser, cancel, no duplicate chooser, WhatsApp picker reached and backed out (nothing sent)
+- [x] Share output carries no repository link: card footer "Made with NextRep" only, caption without a URL; corrected candidate installed over the earlier v1.1.0 build (`adb install -r` Success, data intact) and the three cards and caption re-checked on the phone
 - [x] Physical backup after the update: format 2, checksum valid, data identical to the pre-update backup
 - [x] Emulator: v1.0.0 → v1.1.0 backfill (one combined celebration for the active Arc, completed Arc silent, historical dates, XP unchanged), Minimum Day return to full targets, Sleep Before copy, the six templates in setup and the 12-habit limit
 - [x] Release notes in `docs/releases/v1.1.0.md`, with the APK size and SHA-256

@@ -7,8 +7,11 @@ v1.1.0 release candidate**: version bump, release and privacy documents, a
 reproducible signed APK, and a real v1.0.0 → v1.1.0 in-place update on a
 physical phone.
 
-Release qualification only. **No product feature was added and no app code
-changed** beyond the version name. No release-blocking bug was found.
+Release qualification only. **No product feature was added.** App code
+changed only for the version name and one review correction: share cards
+and their caption no longer carry the repository link (see
+[Review correction](#review-correction-no-link-in-shared-output)). No
+release-blocking bug was found.
 
 **Result: v1.1.0 RELEASE CANDIDATE: QUALIFIED, READY FOR INDEPENDENT
 REVIEW.** Nothing was tagged, uploaded or published.
@@ -40,8 +43,9 @@ REVIEW.** Nothing was tagged, uploaded or published.
   targets), today's achievement unlocks provisional, Sleep Before Target
   as "Last night's bedtime".
 - **10B:** Today's Progress, My Arc and Achievement share cards (1080 ×
-  1350 PNG, privacy switches, system share sheet), Minimum Day and share
-  preview motion that honours reduced motion.
+  1350 PNG, privacy switches, system share sheet; subtle NextRep branding,
+  no link in the image or caption), Minimum Day and share preview motion
+  that honours reduced motion.
 - **10C:** six optional templates (Hair Care, Skin Care, Eat Fruit, Nuts /
   Seeds, Stretch / Mobility, Reading), 32 achievements in six categories,
   history backfill (completed Arcs silent), still 0 XP.
@@ -58,6 +62,9 @@ v1.0 (its validator rejects unknown keys); v1.0 backups restore into v1.1.
   `READ_MEDIA_VISUAL_USER_SELECTED`, `READ_CONTACTS`, `WRITE_CONTACTS`,
   `GET_ACCOUNTS`, `CAMERA`, `RECORD_AUDIO` and `PACKAGE_USAGE_STATS`, on top
   of `INTERNET`, exact-alarm and storage permissions.
+- `lib/features/share/share_card_data.dart`,
+  `lib/features/share/widgets/share_card_frame.dart`: the repository link
+  removed from the card footer and the share caption (review correction).
 - Documents: PRIVACY.md (share cards), CHANGELOG 1.1.0,
   [releases/v1.1.0.md](releases/v1.1.0.md), README, DIRECT_DISTRIBUTION
   and ANDROID_SIGNING examples made version-generic, RELEASE_CHECKLIST,
@@ -66,19 +73,19 @@ v1.0 (its validator rejects unknown keys); v1.0 backups restore into v1.1.
 ## Automated validation
 
 Flutter 3.47.5 / Dart 3.13.4, JDK 21.0.12, Android build-tools 36.0.0,
-Xcode 27.0.
+Xcode 27.0. Re-run in full on `6895fe0` after the review correction.
 
 | Gate | Result |
 |---|---|
 | `dart format --output=none --set-exit-if-changed .` | clean (251 files, 0 changed) |
 | `flutter analyze` | no issues |
-| `flutter test` | **768 / 768** |
-| `flutter test --coverage` | 768 / 768; **93.9%** of handwritten `lib` (8,392 / 8,940 lines; 92.4% including `schema_versions.dart`). v1.0.0: 93.3% |
+| `flutter test` | **769 / 769** |
+| `flutter test --coverage` | 769 / 769; **93.8%** of handwritten `lib` (8,384 / 8,935 lines; 92.4% including `schema_versions.dart`). v1.0.0: 93.3% |
 | Migrations v1 → v5 (`migration_test`, `_v3`, `_v4`, `_v5`) | **39 / 39** |
 | Backup (`backup_format_test`, `backup_v2_test`, `backup_restore_test`, `backup_v2_restore_test`, `phase10c_backup_test`) | **76 / 76** |
 | Release qualification (`day_change`, `date_edges`, `phase7_lifecycle`, `phase7_accessibility`) | **39 / 39** |
 | Phase 10A (`phase10a_flow`, `achievement_reconciliation`, `phase2_tracking`, `time_before`, `phase3_flow`) | **78 / 78** |
-| Phase 10B (`phase10b_flow`, `share_card_data`, `share_card_render`, `arc_labels`) | **62 / 62** |
+| Phase 10B (`phase10b_flow`, `share_card_data`, `share_card_render`, `arc_labels`) | **63 / 63** |
 | Phase 10C (`phase10c_catalog`, `phase10c_achievement_rules`, `phase10c_backfill`, `phase10c_flow`, `phase10c_backup`, `achievement_rules`, `achievement_service`, `achievement_v2`) | **102 / 102** |
 | `flutter build apk --debug` | PASS |
 | `flutter build apk --release` | PASS |
@@ -90,13 +97,13 @@ Xcode 27.0.
 Built by `flutter clean` + `tool/release/prepare_android_release.sh` on the
 owner's machine with the permanent key from `android/key.properties`
 (git-ignored, never printed). The script re-ran format, analyze and the
-full suite (768 / 768) before building.
+full suite (769 / 769) before building, on `6895fe0`.
 
 | | |
 |---|---|
 | File | `build/release-candidate/NextRep-v1.1.0-android.apk` (git-ignored) |
 | Size | **63,684,809 bytes** |
-| SHA-256 | **`3775470e9b461ca8f151b4698ed2dc4c543ef9acb9c95f03932cf2e6647f00f5`** |
+| SHA-256 | **`f6bf2a3a5f32a1d53c12d54764361a42f5201ac5d3a60bec2907e15ea2a2d779`** |
 | Checksum file | `NextRep-v1.1.0-android.apk.sha256`, `shasum -a 256 -c` OK |
 | Signers (`apksigner verify --print-certs`) | exactly **one**: `CN=Arunachaleswaran M S, OU=NextRep`, `65b70cd096d1bbf2c0f50ee02f4b55974625cc4cdbead739225f0675afc8f0ba`; **not** `CN=Android Debug` |
 | Package (`aapt2 dump badging`) | `com.nextrep.nextrep`, versionCode `2`, versionName `1.1.0`, label `NextRep` |
@@ -126,15 +133,58 @@ system share sheet from app-private cache.
 
 | Build | Commit | SHA-256 |
 |---|---|---|
-| A: `flutter clean` + script (with gates) | `0560f20` | `3775470e…f00f5` |
-| B: `flutter clean` + script (`SKIP_CHECKS=1`) | `0560f20` | `3775470e…f00f5`, `cmp`: byte-identical |
-| Final head: `flutter clean` + script | final PR head (docs only since `0560f20`) | `3775470e…f00f5`, byte-identical (see the PR) |
+| A: `flutter clean` + script (with gates) | `6895fe0` | `f6bf2a3a…a2d779` |
+| B: `flutter clean` + script (`SKIP_CHECKS=1`) | `6895fe0` | `f6bf2a3a…a2d779`, `cmp`: byte-identical |
+| Final head: `flutter clean` + script | final PR head (docs only since `6895fe0`) | see the PR |
 
 **Byte-identical across clean builds in the fixed qualified local
 environment** (same commit, key, Flutter, JDK and build-tools). This is not
-a claim of universal reproducibility. The commits after `0560f20` change
-only Markdown, which isn't packaged, so the physically qualified APK is the
-same file as the final-head candidate.
+a claim of universal reproducibility. The commits after `6895fe0` change
+only Markdown, which isn't packaged. The candidate installed on the phone
+in the [requalification](#review-correction-no-link-in-shared-output) is
+this file (pulled back from the phone: same SHA-256).
+
+## Review correction: no link in shared output
+
+Independent review asked that nothing a user shares promote the
+repository. The candidate first qualified in this phase (built from
+`0560f20`) is **superseded and must not be published**; the APK above
+replaces it.
+
+| | Before | After |
+|---|---|---|
+| Card footer (all three cards) | "Made with NextRep" and `github.com/arunachaleswaranms/NextRep` | "Made with NextRep" only; the NEXTREP mark at the top unchanged |
+| Today's Progress caption | `My Winter Arc · Day 24/92 — NextRep` + newline + repository URL | `My Winter Arc · Day 24/92 — NextRep` |
+| My Arc caption | `My 92-day Winter Arc — NextRep` (or `My Seasonal Winter Arc — NextRep`) + URL | the same without the URL |
+| Achievement caption | `Achievement unlocked: Clean Week — NextRep` + URL | the same without the URL |
+| Constants | `shareProjectUrl`, `shareProjectLabel` | removed |
+
+No other link, website, QR code, handle, referral or tracking parameter was
+added. The share architecture, privacy switches, file names and 1080 × 1350
+canvas are unchanged.
+
+Tests: `share_card_data_test` asserts that no Today (rolling and seasonal),
+My Arc (rolling and seasonal) or achievement (all 32) string contains
+`github`, `http://`, `https://`, `www.` or `.com`; `share_card_render_test`
+walks every `Text` / `RichText` inside `ShareCardFrame` for each rendered
+card (12 layouts, including 12 habits, long titles, Minimum Day and
+seasonal, and all 32 achievements) and asserts no link, while "Made with
+NextRep" and NEXTREP are still drawn; the flow tests assert the exact
+URL-free captions handed to the share sheet. The compiled `libapp.so` of
+every ABI in the APK no longer contains `arunachaleswaranms/NextRep`.
+
+**Physical delta check** (OnePlus CPH2707, 12 October 2026). The full
+v1.0.0 → v1.1.0 update below was qualified with the superseded build; this
+change touches only the share footer and caption, so it was not repeated.
+
+| | |
+|---|---|
+| `adb install -r` of the corrected candidate over the earlier 1.1.0 (2) build | **Success**; still 1.1.0 (2), `firstInstallTime` 2026-10-08 22:02:50 unchanged |
+| Installed APK (pulled) | SHA-256 `{NS}`, the candidate above |
+| Data | same Arc, Day 9 of 92, 75 XP, Level 1, 0 of 4 today, 3 of 32 achievements; no onboarding, no reset; again after force-stop and relaunch |
+| Today's Progress, My Arc, Achievement (Clean Sweep) previews | "Made with NextRep" only, **no repository or other link**, footer balanced, no clipping |
+| Native chooser (Achievement) | "Share 1 image", caption **`Achievement unlocked: Clean Sweep — NextRep`**: no `github.com`, `http://` or `https://` |
+| WhatsApp (app target) | "Send to…" picker opened with the image; **backed out with nothing selected. Nothing was sent.** |
 
 ## Physical Android
 
@@ -175,7 +225,8 @@ reflection, 1 past Minimum Day, achievements `first_rep`, `first_perfect`,
 
 ### In-place update
 
-`adb install -r build/release-candidate/NextRep-v1.1.0-android.apk` →
+`adb install -r build/release-candidate/NextRep-v1.1.0-android.apk` (the
+superseded build; see [Review correction](#review-correction-no-link-in-shared-output)) →
 **Success**. No `INSTALL_FAILED_UPDATE_INCOMPATIBLE`, no uninstall.
 
 | After | |
@@ -248,7 +299,7 @@ settings, a logged bedtime or device data.
 
 | | |
 |---|---|
-| Native chooser | PASS: "Share 1 image", a thumbnail of the card, the caption "Achievement unlocked: Clean Sweep — NextRep…" |
+| Native chooser | PASS: "Share 1 image", a thumbnail of the card, the caption (now URL-free: "Achievement unlocked: Clean Sweep — NextRep") |
 | Two quick taps on Share | **one** chooser on the activity stack |
 | Cancel | back in the preview, Share available again, no error |
 | WhatsApp (`com.whatsapp`, the app target, not a contact shortcut) | PASS: WhatsApp's "Send to…" picker opened with the image (`ExternalShareAlias`). **Backed out with nothing selected; nothing was sent.** |
@@ -376,7 +427,7 @@ After independent review and merge:
 
 1. On `main`, `flutter clean`, then `tool/release/prepare_android_release.sh`
    with the release key. Confirm the SHA-256 is
-   `3775470e9b461ca8f151b4698ed2dc4c543ef9acb9c95f03932cf2e6647f00f5`. If it
+   `f6bf2a3a5f32a1d53c12d54764361a42f5201ac5d3a60bec2907e15ea2a2d779`. If it
    differs, stop and find out why.
 2. Create the tag `v1.1.0` and a GitHub Release "NextRep v1.1.0" from
    [releases/v1.1.0.md](releases/v1.1.0.md). Attach

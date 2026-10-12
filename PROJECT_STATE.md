@@ -9,7 +9,7 @@ tagged or published._
 | | |
 |---|---|
 | RELEASED | **v1.0.0** (GitHub Release, signed APK) |
-| RELEASE CANDIDATE | **v1.1.0 (2)**: qualified in Phase 10D, signed APK `3775470e…f00f5`, pending review, merge and publication |
+| RELEASE CANDIDATE | **v1.1.0 (2)**: qualified in Phase 10D, signed APK `f6bf2a3a…a2d779`, pending review, merge and publication |
 | ANDROID PHYSICAL | **PASS** for v1.1.0: v1.0.0 → v1.1.0 in-place update on the OnePlus CPH2707 (Phase 10D) |
 | STORE SUBMISSION | **NOT APPLICABLE / NOT PLANNED** |
 
@@ -33,19 +33,24 @@ planned. TalkBack was deliberately deferred and doesn't block this model.
 
 ## Phase 10D (v1.1.0 release qualification, in review)
 
-Evidence: [docs/PHASE_10D.md](docs/PHASE_10D.md). No product change.
+Evidence: [docs/PHASE_10D.md](docs/PHASE_10D.md). No product feature; one
+review correction removed the repository link from share cards and their
+caption.
 
 - Version **1.1.0+2** (versionName 1.1.0, versionCode 2). Same application
   id, signing key, schema v5 and backup format 2.
 - Release script and CI permission audit also reject media, contacts,
   accounts, camera, microphone and usage-access permissions.
 - Signed candidate `NextRep-v1.1.0-android.apk`, 63,684,809 bytes, SHA-256
-  `3775470e9b461ca8f151b4698ed2dc4c543ef9acb9c95f03932cf2e6647f00f5`,
+  `f6bf2a3a5f32a1d53c12d54764361a42f5201ac5d3a60bec2907e15ea2a2d779`,
   byte-identical across clean builds in the fixed local environment.
 - Physical: the official v1.0.0 on the OnePlus updated in place
   (`adb install -r`, `firstInstallTime` unchanged, same signer); data
   intact without a restore; backups before and after hold identical data;
-  share sheet and WhatsApp picker reached (nothing sent).
+  share sheet and WhatsApp picker reached (nothing sent). The corrected
+  candidate was installed over the earlier v1.1.0 build (`adb install -r`,
+  Success, data intact) and its three cards and share caption re-checked:
+  "Made with NextRep" only, no link.
 - Emulator: backfill on a real v1.0.0 → v1.1.0 update (one combined
   celebration, completed Arc silent, historical dates, XP unchanged),
   templates in setup, Minimum Day return.
@@ -144,7 +149,7 @@ Evidence and rules: [docs/PHASE_10A.md](docs/PHASE_10A.md).
 | v1.0.0 APK | `NextRep-v1.0.0-android.apk`, 63,140,933 bytes, minSdk 24, targetSdk 36 |
 | v1.0.0 APK SHA-256 | `03c76da2131d234877e68e9c19f47888b5b7e31a8e639e838e7f9851798c94b9` (reproducible) |
 | v1.1.0 candidate | `NextRep-v1.1.0-android.apk`, 63,684,809 bytes, minSdk 24, targetSdk 36 |
-| v1.1.0 candidate SHA-256 | `3775470e9b461ca8f151b4698ed2dc4c543ef9acb9c95f03932cf2e6647f00f5` (byte-identical across clean builds, fixed environment) |
+| v1.1.0 candidate SHA-256 | `f6bf2a3a5f32a1d53c12d54764361a42f5201ac5d3a60bec2907e15ea2a2d779` (byte-identical across clean builds, fixed environment) |
 | Release permissions | `POST_NOTIFICATIONS`, `VIBRATE`, `RECEIVE_BOOT_COMPLETED`, app-private `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` (unchanged in v1.1.0). INTERNET, exact-alarm, storage, media, contacts, accounts, camera, microphone and usage-access permissions absent |
 
 The keystore and `android/key.properties` live only on the owner's machine
@@ -157,7 +162,7 @@ and are git-ignored. Key rules:
 | Gate | v1.1.0 (Phase 10D) | Phase 10C | Phase 10B | Phase 10A | v1.0.0 |
 |---|---|---|---|---|---|
 | format / analyze | clean / no issues | clean / no issues | clean / no issues | clean / no issues | clean / no issues |
-| `flutter test` | **768 / 768** | 766 / 766 | 693 / 693 | 635 / 635 | 605 / 605 |
+| `flutter test` | **769 / 769** | 766 / 766 | 693 / 693 | 635 / 635 | 605 / 605 |
 | Migrations / backup 1+2 | 39 / 76 | 39 / 76 | 39 / 71 | 39 / 71 | 39 / 70 |
 | APK debug | PASS | PASS | PASS | PASS | PASS |
 | APK release | **PASS, release key, reproducible** | PASS (local) | PASS (local) | not built | PASS |
@@ -165,7 +170,7 @@ and are git-ignored. Key rules:
 | Signed update continuity (physical, `adb install -r`, same key) | **PASS** v1.0.0 → v1.1.0, data kept | n/a | n/a | n/a | **PASS**, data kept |
 | Physical smoke | **PASS** (incl. share sheet) | n/a | n/a | n/a | **PASS** |
 
-Coverage of handwritten lib: 93.9% at v1.1.0 (93.3% at v1.0.0).
+Coverage of handwritten lib: 93.8% at v1.1.0 (93.3% at v1.0.0).
 Earlier results: integration 7 / 7 on emulator-5554 and on the iPhone 17
 simulator (Phase 8); iOS simulator and no-codesign release builds PASS
 (Phase 8).
@@ -205,7 +210,7 @@ disclosed in [PRIVACY.md](PRIVACY.md).
 
 1. Independent review of the Phase 10D PR, then merge.
 2. On `main`: `flutter clean`, `tool/release/prepare_android_release.sh`,
-   and confirm the SHA-256 is `3775470e…f00f5`.
+   and confirm the SHA-256 is `f6bf2a3a…a2d779`.
 3. Tag `v1.1.0` and publish the GitHub Release from
    [docs/releases/v1.1.0.md](docs/releases/v1.1.0.md) with the APK and its
    `.sha256` file. Nothing for v1.1.0 is tagged or published yet.
