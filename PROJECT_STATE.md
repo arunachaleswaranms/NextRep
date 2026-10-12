@@ -1,16 +1,16 @@
 # PROJECT_STATE
 
 _Last updated: 2026-10-12. v1.0.0 is released (tag `v1.0.0` on
-`b3f9c5c`, PR #10). Phases 10A (PR #11, `ba72cf0`) and 10B (PR #12,
-`5cb6d90`) are merged. Phase 10C (New Habit Templates & Expanded
-Achievements, toward v1.1.0) is complete on its branch; its PR is open and
-not merged._
+`b3f9c5c`, PR #10). Phases 10A (PR #11), 10B (PR #12) and 10C (PR #13,
+`901caca`) are merged. Phase 10D (v1.1.0 release qualification) is
+complete on its branch; its PR is open and not merged. v1.1.0 is not
+tagged or published._
 
 | | |
 |---|---|
 | RELEASED | **v1.0.0** (GitHub Release, signed APK) |
-| IN PROGRESS | **v1.1.0**: Phases 10A and 10B merged; Phase 10C ready for review; 10D (release qualification) not started |
-| ANDROID PHYSICAL | **PASS** for v1.0.0 (Phase 8.5 / 9). Phases 10A–10C are not release candidates and have had no physical run |
+| RELEASE CANDIDATE | **v1.1.0 (2)**: qualified in Phase 10D, signed APK `3775470e…f00f5`, pending review, merge and publication |
+| ANDROID PHYSICAL | **PASS** for v1.1.0: v1.0.0 → v1.1.0 in-place update on the OnePlus CPH2707 (Phase 10D) |
 | STORE SUBMISSION | **NOT APPLICABLE / NOT PLANNED** |
 
 NextRep is distributed as a signed Android APK on GitHub Releases
@@ -22,16 +22,37 @@ planned. TalkBack was deliberately deferred and doesn't block this model.
 ## Repo
 
 - Remote: https://github.com/arunachaleswaranms/NextRep (public, MIT)
-- `main`: `5cb6d90` (squash merge of PR #12, Phase 10B). `v1.0.0` is
-  tagged on `b3f9c5c` (PR #10). PRs #1–#12 are Phases 1–10B.
-- Branch: `phase/10c-habits-achievements`, from `5cb6d90`
-- PR: "Phase 10C: expand habit templates and achievements", open for
-  review, not merged. No v1.1 tag or release.
+- `main`: `901caca` (squash merge of PR #13, Phase 10C). `v1.0.0` is
+  tagged on `b3f9c5c` (PR #10). PRs #1–#13 are Phases 1–10C.
+- Branch: `phase/10d-v1.1-release-qualification`, from `901caca`
+- PR: "Phase 10D: qualify NextRep v1.1.0 release", open for review, not
+  merged. No v1.1.0 tag or release.
 - Author and committer of every commit:
   `Arunachaleswaran M S <arunachaleswaranms@gmail.com>` (repo-local
   config). No AI or co-author trailers.
 
-## Phase 10C (v1.1, in review)
+## Phase 10D (v1.1.0 release qualification, in review)
+
+Evidence: [docs/PHASE_10D.md](docs/PHASE_10D.md). No product change.
+
+- Version **1.1.0+2** (versionName 1.1.0, versionCode 2). Same application
+  id, signing key, schema v5 and backup format 2.
+- Release script and CI permission audit also reject media, contacts,
+  accounts, camera, microphone and usage-access permissions.
+- Signed candidate `NextRep-v1.1.0-android.apk`, 63,684,809 bytes, SHA-256
+  `3775470e9b461ca8f151b4698ed2dc4c543ef9acb9c95f03932cf2e6647f00f5`,
+  byte-identical across clean builds in the fixed local environment.
+- Physical: the official v1.0.0 on the OnePlus updated in place
+  (`adb install -r`, `firstInstallTime` unchanged, same signer); data
+  intact without a restore; backups before and after hold identical data;
+  share sheet and WhatsApp picker reached (nothing sent).
+- Emulator: backfill on a real v1.0.0 → v1.1.0 update (one combined
+  celebration, completed Arc silent, historical dates, XP unchanged),
+  templates in setup, Minimum Day return.
+- PRIVACY.md covers share cards; release notes in
+  [docs/releases/v1.1.0.md](docs/releases/v1.1.0.md).
+
+## Phase 10C (v1.1, merged)
 
 Evidence and rules: [docs/PHASE_10C.md](docs/PHASE_10C.md).
 
@@ -110,17 +131,19 @@ Evidence and rules: [docs/PHASE_10A.md](docs/PHASE_10A.md).
 
 | | |
 |---|---|
-| Version | `1.0.0+1`: versionName 1.0.0, versionCode 1 (unchanged in Phases 10A–10C; bumped when v1.1.0 is prepared) |
-| Tag | `v1.0.0` on `b3f9c5c` |
+| Version | `1.1.0+2`: versionName 1.1.0, versionCode 2 (Phase 10D). Released: 1.0.0 (1) |
+| Tag | `v1.0.0` on `b3f9c5c`; `v1.1.0` planned, not created |
 | Android `applicationId` | `com.nextrep.nextrep` (kept for update continuity) |
-| Database schema | **v5** (unchanged through Phase 10C) |
-| Backup | export `formatVersion` **2**; import reads 1 and 2 (unchanged through Phase 10C) |
+| Database schema | **v5** (unchanged through v1.1.0) |
+| Backup | export `formatVersion` **2**; import reads 1 and 2 (unchanged through v1.1.0) |
 | License | MIT, © 2026 Arunachaleswaran M S |
 | Signing certificate | `CN=Arunachaleswaran M S, OU=NextRep`, RSA 4096, valid 2026-10-08 to 2056-09-30 |
 | Certificate SHA-256 | `65:B7:0C:D0:96:D1:BB:F2:C0:F5:0E:E0:2F:4B:55:97:46:25:CC:4C:DB:EA:D7:39:22:5F:06:75:AF:C8:F0:BA` |
 | v1.0.0 APK | `NextRep-v1.0.0-android.apk`, 63,140,933 bytes, minSdk 24, targetSdk 36 |
 | v1.0.0 APK SHA-256 | `03c76da2131d234877e68e9c19f47888b5b7e31a8e639e838e7f9851798c94b9` (reproducible) |
-| Release permissions | `POST_NOTIFICATIONS`, `VIBRATE`, `RECEIVE_BOOT_COMPLETED`, app-private `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`. INTERNET, exact-alarm and storage permissions absent |
+| v1.1.0 candidate | `NextRep-v1.1.0-android.apk`, 63,684,809 bytes, minSdk 24, targetSdk 36 |
+| v1.1.0 candidate SHA-256 | `3775470e9b461ca8f151b4698ed2dc4c543ef9acb9c95f03932cf2e6647f00f5` (byte-identical across clean builds, fixed environment) |
+| Release permissions | `POST_NOTIFICATIONS`, `VIBRATE`, `RECEIVE_BOOT_COMPLETED`, app-private `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` (unchanged in v1.1.0). INTERNET, exact-alarm, storage, media, contacts, accounts, camera, microphone and usage-access permissions absent |
 
 The keystore and `android/key.properties` live only on the owner's machine
 and are git-ignored. Key rules:
@@ -129,18 +152,18 @@ and are git-ignored. Key rules:
 
 ## Results
 
-| Gate | Phase 10C branch | Phase 10B | Phase 10A | v1.0.0 |
-|---|---|---|---|---|
-| format / analyze | clean / no issues | clean / no issues | clean / no issues | clean / no issues |
-| `flutter test` | **766 / 766** | 693 / 693 | 635 / 635 | 605 / 605 |
-| Migrations / backup 1+2 | 39 / 76 | 39 / 71 | 39 / 71 | 39 / 70 |
-| APK debug | PASS | PASS | PASS | PASS |
-| APK release | PASS (local; not a release candidate) | PASS (local) | not built | PASS |
-| iOS simulator build | PASS (local) | PASS (local) | not run | PASS |
-| Signed update continuity (physical, `adb install -r`, same key) | n/a | n/a | n/a | **PASS**, data kept |
-| Physical v1.0.0 smoke | n/a | n/a | n/a | **PASS** |
+| Gate | v1.1.0 (Phase 10D) | Phase 10C | Phase 10B | Phase 10A | v1.0.0 |
+|---|---|---|---|---|---|
+| format / analyze | clean / no issues | clean / no issues | clean / no issues | clean / no issues | clean / no issues |
+| `flutter test` | **768 / 768** | 766 / 766 | 693 / 693 | 635 / 635 | 605 / 605 |
+| Migrations / backup 1+2 | 39 / 76 | 39 / 76 | 39 / 71 | 39 / 71 | 39 / 70 |
+| APK debug | PASS | PASS | PASS | PASS | PASS |
+| APK release | **PASS, release key, reproducible** | PASS (local) | PASS (local) | not built | PASS |
+| iOS simulator / no-codesign build | PASS / PASS | PASS (local) | PASS (local) | not run | PASS |
+| Signed update continuity (physical, `adb install -r`, same key) | **PASS** v1.0.0 → v1.1.0, data kept | n/a | n/a | n/a | **PASS**, data kept |
+| Physical smoke | **PASS** (incl. share sheet) | n/a | n/a | n/a | **PASS** |
 
-v1.0.0 coverage was 93.3% of handwritten lib.
+Coverage of handwritten lib: 93.9% at v1.1.0 (93.3% at v1.0.0).
 Earlier results: integration 7 / 7 on emulator-5554 and on the iPhone 17
 simulator (Phase 8); iOS simulator and no-codesign release builds PASS
 (Phase 8).
@@ -154,6 +177,10 @@ simulator (Phase 8); iOS simulator and no-codesign release builds PASS
   - Phase 9 ([evidence](docs/PHASE_9.md#physical-android)): the
     release-key v1.0.0 install, signing switch, signed update continuity
     and smoke.
+  - Phase 10D ([evidence](docs/PHASE_10D.md#physical-android)): the
+    v1.0.0 → v1.1.0 in-place update, data survival, share cards and the
+    system share sheet, backups before and after, 2× text and reduced
+    motion.
 - **TalkBack:** deferred by the owner; not a blocker for direct
   distribution. Onboarding, Arc choice and habit setup were done with
   TalkBack in Phase 8.5; the node tree of every other screen was checked.
@@ -174,9 +201,9 @@ disclosed in [PRIVACY.md](PRIVACY.md).
 
 ## Remaining actions (owner)
 
-1. Independent review of the Phase 10C PR, then merge.
-2. Phase 10D, preparing v1.1.0: version bump, release notes, a Share cards
-   section in PRIVACY.md (it still describes 1.0.0), a signed APK and
-   physical qualification. That includes the share sheet on a real device
-   and the achievement backfill when v1.1 is installed over v1.0 data.
-   Nothing for v1.1 is tagged or published yet.
+1. Independent review of the Phase 10D PR, then merge.
+2. On `main`: `flutter clean`, `tool/release/prepare_android_release.sh`,
+   and confirm the SHA-256 is `3775470e…f00f5`.
+3. Tag `v1.1.0` and publish the GitHub Release from
+   [docs/releases/v1.1.0.md](docs/releases/v1.1.0.md) with the APK and its
+   `.sha256` file. Nothing for v1.1.0 is tagged or published yet.
