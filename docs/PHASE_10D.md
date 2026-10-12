@@ -180,7 +180,7 @@ change touches only the share footer and caption, so it was not repeated.
 | | |
 |---|---|
 | `adb install -r` of the corrected candidate over the earlier 1.1.0 (2) build | **Success**; still 1.1.0 (2), `firstInstallTime` 2026-10-08 22:02:50 unchanged |
-| Installed APK (pulled) | SHA-256 `{NS}`, the candidate above |
+| Installed APK (pulled) | SHA-256 `f6bf2a3a…a2d779`, byte-identical to the corrected candidate |
 | Data | same Arc, Day 9 of 92, 75 XP, Level 1, 0 of 4 today, 3 of 32 achievements; no onboarding, no reset; again after force-stop and relaunch |
 | Today's Progress, My Arc, Achievement (Clean Sweep) previews | "Made with NextRep" only, **no repository or other link**, footer balanced, no clipping |
 | Native chooser (Achievement) | "Share 1 image", caption **`Achievement unlocked: Clean Sweep — NextRep`**: no `github.com`, `http://` or `https://` |
