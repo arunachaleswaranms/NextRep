@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../core/errors/app_failure.dart';
 import '../core/errors/error_reporter.dart';
 import '../domain/winter_arc/current_arc_service.dart';
+import '../features/achievements/achievements_controller.dart';
 import '../features/celebration/celebration_overlay.dart';
 import '../shared/widgets/failure_view.dart';
 import '../shared/widgets/loading_view.dart';
@@ -96,6 +97,9 @@ class _RoutedAppState extends ConsumerState<_RoutedApp> {
     _taps = ref.read(reminderTapsProvider).listen(_openReminder);
     _dayChange.start();
     _syncReminders();
+    // Backfills achievements a newer catalog added, for every started arc,
+    // even when no screen that reconciles (Today, Journey) opens first.
+    unawaited(ref.read(achievementSyncProvider).run());
     WidgetsBinding.instance.addPostFrameCallback((_) => _showNotice());
   }
 
