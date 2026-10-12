@@ -221,8 +221,7 @@ void main() {
     expect(pngSize(gateway.lastFile.bytes), (width: 1080, height: 1350));
     expect(
       gateway.requests.single.text,
-      'Achievement unlocked: Clean Week — NextRep\n'
-      'https://github.com/arunachaleswaranms/NextRep',
+      'Achievement unlocked: Clean Week — NextRep',
     );
     await _tap(tester, find.byTooltip('Close'));
     expect(find.byType(AchievementDetailSheet), findsNothing);

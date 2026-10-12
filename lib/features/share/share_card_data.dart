@@ -11,13 +11,8 @@ import '../../shared/formatting/habit_labels.dart';
 //
 // A card never carries reflection or Journal text, moods, logged clock
 // times (such as last night's bedtime), reminder settings or calendar
-// dates: none of them is read here.
-
-/// The public repository every card promotes.
-const shareProjectUrl = 'https://github.com/arunachaleswaranms/NextRep';
-
-/// [shareProjectUrl] as printed on a card.
-const shareProjectLabel = 'github.com/arunachaleswaranms/NextRep';
+// dates: none of them is read here. Cards and their share text carry the
+// NextRep name only: no link, tracking parameter or referral identifier.
 
 /// What the user chose to show on a Today's Progress card. Not persisted:
 /// every preview starts with everything shown.
@@ -190,10 +185,8 @@ final class TodayShareCardData {
 
   /// Accompanying text: the arc and day only, never habit data.
   String get shareText => switch (dayNumber) {
-    final day? =>
-      'My ${arc.name} · Day $day/${arc.totalDays} — NextRep\n'
-          '$shareProjectUrl',
-    null => 'My ${arc.name} — NextRep\n$shareProjectUrl',
+    final day? => 'My ${arc.name} · Day $day/${arc.totalDays} — NextRep',
+    null => 'My ${arc.name} — NextRep',
   };
 
   /// What the card shows, for screen readers in the preview.
@@ -272,8 +265,8 @@ final class ArcShareCardData {
   String get fileName => 'nextrep-my-arc.png';
 
   String get shareText => arc.seasonal
-      ? 'My Seasonal Winter Arc — NextRep\n$shareProjectUrl'
-      : 'My ${arc.totalDays}-day Winter Arc — NextRep\n$shareProjectUrl';
+      ? 'My Seasonal Winter Arc — NextRep'
+      : 'My ${arc.totalDays}-day Winter Arc — NextRep';
 
   String get semanticsLabel => [
     'My Arc card',
@@ -326,8 +319,7 @@ final class AchievementShareCardData {
 
   String get fileName => 'nextrep-achievement-${shareFileSlug(title)}.png';
 
-  String get shareText =>
-      'Achievement unlocked: $title — NextRep\n$shareProjectUrl';
+  String get shareText => 'Achievement unlocked: $title — NextRep';
 
   String get semanticsLabel => [
     'Achievement card',

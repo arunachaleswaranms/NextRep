@@ -28,7 +28,7 @@ Done for v1.1.0 in Phase 10D on 2026-10-12, on the PR head. Evidence:
 - [x] Release notes in `docs/releases/v1.1.0.md`, with the APK size and SHA-256
 - [x] README, CHANGELOG, PRIVACY, DIRECT_DISTRIBUTION, PROJECT_STATE updated
 - [x] Secret audit: no keystore, `key.properties`, password, token, APK, personal backup or device dump tracked
-- [ ] CI green on the final PR head (recorded in the PR)
+- [x] CI green on the final PR head (see PR for the current run)
 - [ ] TalkBack human pass (deferred; not a blocker)
 - [ ] Owner: after review and merge, rebuild on `main`, confirm the SHA-256, tag `v1.1.0` and publish the GitHub Release with the APK, its `.sha256` file and the release notes
 

@@ -15,6 +15,8 @@ Schema **v5** · backup format **2** (reads 1 and 2)
   each a 1080 × 1350 PNG made on the device and handed to the system share
   sheet when you tap Share. Today's Progress can hide habit names, XP &
   level and the streak. No account, no social graph, no automatic posting.
+  Cards carry subtle NextRep branding only: no repository link in the image
+  or in the share caption.
 - **Six optional habit templates** for Arc setup: Hair Care, Skin Care, Eat
   Fruit, Nuts / Seeds, Stretch / Mobility and Reading. They aren't added to
   an Arc that is already running.

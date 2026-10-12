@@ -69,9 +69,11 @@ Evidence and rules: [docs/PHASE_10C.md](docs/PHASE_10C.md).
   Before). Still 0 XP.
 - **Backfill:** the first achievement sync of an app session (and after a
   restore) reconciles every started Arc against the full catalog, dated
-  when its history earned each one. The home Arc's additions are
-  celebrated together in one card; completed Arcs are filled in silently.
-  Idempotent, with no migration flag. Phase 10A's provisional
+  when its history earned each one. Only the **active** Arc's newly
+  backfilled catalog achievements may be celebrated, together, once, in one
+  card. Completed Arcs are backfilled silently, including the latest
+  completed Arc when it is shown as home. A Summit discovered during an
+  actual close-out keeps its normal close-out celebration. Idempotent, with no migration flag. Phase 10A's provisional
   current-day unlocks hold for all 32.
 - The Achievements screen is grouped under category headings.
 - A v1.1 backup holding a new unlock can't be restored into v1.0, whose

@@ -126,8 +126,8 @@ checksum to detect accidental damage; it isn't a security feature.
 No account, no server, no analytics, telemetry, ads or trackers, and no
 cloud sync. The Android release doesn't request the `INTERNET` permission.
 Nothing is sent automatically. A share card leaves the app only when you
-tap Share and pick an app in the system share sheet, and it never includes
-your Journal or moods. Reminders are local notifications with generic text. Your phone's own
+tap Share and pick an app in the system share sheet. It never includes
+your Journal or moods, and carries no link in the image or its caption. Reminders are local notifications with generic text. Your phone's own
 system backup may include app data if you have it turned on.
 
 Full details: [PRIVACY.md](PRIVACY.md).

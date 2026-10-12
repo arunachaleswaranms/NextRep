@@ -203,11 +203,9 @@ void main() {
       expect(pngSize(file.bytes), (width: 1080, height: 1350));
       expect(gateway.requests.single.origin, isNotNull);
       final text = gateway.requests.single.text;
-      expect(
-        text,
-        'My Winter Arc · Day 1/92 — NextRep\n'
-        'https://github.com/arunachaleswaranms/NextRep',
-      );
+      expect(text, 'My Winter Arc · Day 1/92 — NextRep');
+      expect(text, isNot(contains('github.com')));
+      expect(text, isNot(contains('http')));
       for (final secret in ['Water', 'Workout', privateNote, 'XP', '?']) {
         expect(text, isNot(contains(secret)));
       }
@@ -427,8 +425,7 @@ void main() {
       expect(pngSize(gateway.lastFile.bytes), (width: 1080, height: 1350));
       expect(
         gateway.requests.single.text,
-        'Achievement unlocked: First Rep — NextRep\n'
-        'https://github.com/arunachaleswaranms/NextRep',
+        'Achievement unlocked: First Rep — NextRep',
       );
 
       // Closing the preview also closes the details sheet.

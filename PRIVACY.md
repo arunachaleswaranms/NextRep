@@ -71,8 +71,11 @@ How it works:
 - A card is shared **only when you tap Share**. NextRep then opens the
   operating system's own share sheet, and you pick where it goes. NextRep
   never posts, uploads or sends anything by itself.
-- The image goes with a short caption: your Arc's name, the day, and a link
-  to the NextRep repository.
+- The image carries only the progress, goals or achievement you chose to
+  show, with a subtle NextRep name. It contains no link.
+- The image may go with a short caption describing the card: for example
+  your Arc and challenge day, or the achievement title. The caption contains
+  no repository link, tracking parameter or referral identifier.
 - NextRep keeps **no share history** and doesn't record which app you
   choose. (Android tells the share library which app was picked; NextRep
   only looks at whether the sheet was used or closed, and keeps nothing.)
