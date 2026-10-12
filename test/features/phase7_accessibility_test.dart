@@ -324,7 +324,7 @@ void main() {
       expect(card.label, contains('0 Perfect Days'));
       expect(card.label, contains('1 reflection'));
       expect(card.label, isNot(contains('1 reflections')));
-      expect(card.label, matches(RegExp(r'\d+ of 15 achievements')));
+      expect(card.label, matches(RegExp(r'\d+ of 32 achievements')));
       handle.dispose();
       await _shutDown(tester);
     });

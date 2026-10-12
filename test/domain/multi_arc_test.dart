@@ -170,9 +170,9 @@ void main() {
       expect(rows, hasLength(1 + StarterHabits.all.length));
       expect((await app.achievements.boardFor(next.id)).unlockedCount, isZero);
       expect((await app.reflections.journalFor(next.id)).count, isZero);
-      // First Rep, Clean Sweep, Still Moving, Looking Inward, Midwinter,
-      // Summit.
-      expect((await app.achievements.boardFor(first.id)).unlockedCount, 6);
+      // First Rep, Clean Sweep, Still Moving, Looking Inward, First
+      // Chapter, Midwinter, Aurora, Final Approach, Summit.
+      expect((await app.achievements.boardFor(first.id)).unlockedCount, 9);
     });
 
     test('starting another arc never changes the completed one', () async {

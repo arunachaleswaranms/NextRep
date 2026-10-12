@@ -13,7 +13,8 @@ import '../../shared/widgets/winter_background.dart';
 import 'achievements_controller.dart';
 import 'widgets/achievement_card.dart';
 
-/// The achievement collection: every badge, locked or unlocked. Without
+/// The achievement collection: every badge, locked or unlocked, grouped by
+/// category under a heading each. Without
 /// [sessionId] it shows the active arc's; with one, that arc's from Arc
 /// History, read-only.
 class AchievementsScreen extends ConsumerStatefulWidget {
@@ -76,7 +77,6 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen> {
   Widget _content(BuildContext context, AchievementBoard board) {
     final colors = context.winter;
     final text = Theme.of(context).textTheme;
-    final rows = (board.entries.length + 1) ~/ 2;
     return CustomScrollView(
       slivers: [
         SliverPadding(
@@ -131,43 +131,106 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen> {
             ),
           ),
         ),
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(
-            WinterSpacing.lg,
-            0,
-            WinterSpacing.lg,
-            WinterSpacing.xl,
+        for (final (category, entries) in board.groups) ...[
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(
+              WinterSpacing.lg,
+              WinterSpacing.md,
+              WinterSpacing.lg,
+              WinterSpacing.sm,
+            ),
+            sliver: SliverToBoxAdapter(
+              child: _CategoryHeading(category: category, entries: entries),
+            ),
           ),
-          sliver: SliverList.builder(
-            itemCount: rows,
-            itemBuilder: (context, row) {
-              final left = board.entries[row * 2];
-              final right = row * 2 + 1 < board.entries.length
-                  ? board.entries[row * 2 + 1]
-                  : null;
-              return Padding(
-                padding: const EdgeInsets.only(bottom: WinterSpacing.sm),
-                child: IntrinsicHeight(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Expanded(
-                        child: AchievementCard(status: left, board: board),
-                      ),
-                      const SizedBox(width: WinterSpacing.sm),
-                      Expanded(
-                        child: right == null
-                            ? const SizedBox.shrink()
-                            : AchievementCard(status: right, board: board),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: WinterSpacing.lg),
+            sliver: SliverList.builder(
+              itemCount: (entries.length + 1) ~/ 2,
+              itemBuilder: (context, row) => _CardRow(
+                left: entries[row * 2],
+                right: row * 2 + 1 < entries.length
+                    ? entries[row * 2 + 1]
+                    : null,
+                board: board,
+              ),
+            ),
           ),
-        ),
+        ],
+        const SliverPadding(padding: EdgeInsets.only(bottom: WinterSpacing.xl)),
       ],
     );
   }
+}
+
+/// A category's heading: its name and how much of it is unlocked.
+class _CategoryHeading extends StatelessWidget {
+  const _CategoryHeading({required this.category, required this.entries});
+
+  final AchievementCategory category;
+  final List<AchievementStatus> entries;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.winter;
+    final text = Theme.of(context).textTheme;
+    final unlocked = entries.where((e) => e.unlocked).length;
+    return Semantics(
+      header: true,
+      label: '${category.label}, $unlocked of ${entries.length} unlocked',
+      excludeSemantics: true,
+      child: Wrap(
+        spacing: WinterSpacing.sm,
+        crossAxisAlignment: WrapCrossAlignment.end,
+        children: [
+          Text(
+            category.label.toUpperCase(),
+            style: text.labelLarge?.copyWith(
+              color: colors.accentSecondary,
+              letterSpacing: 2,
+            ),
+          ),
+          Text(
+            '$unlocked / ${entries.length}',
+            style: text.labelMedium?.copyWith(color: colors.textSecondary),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Two cards side by side, equal height.
+class _CardRow extends StatelessWidget {
+  const _CardRow({
+    required this.left,
+    required this.right,
+    required this.board,
+  });
+
+  final AchievementStatus left;
+  final AchievementStatus? right;
+  final AchievementBoard board;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: WinterSpacing.sm),
+    child: IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: AchievementCard(status: left, board: board),
+          ),
+          const SizedBox(width: WinterSpacing.sm),
+          Expanded(
+            child: switch (right) {
+              final right? => AchievementCard(status: right, board: board),
+              null => const SizedBox.shrink(),
+            },
+          ),
+        ],
+      ),
+    ),
+  );
 }

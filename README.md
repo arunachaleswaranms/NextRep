@@ -36,7 +36,7 @@ analytics and no cloud sync. Everything stays on your phone.
   that day.
 - **Journey**: your 92 days on a mountain path in six chapters, with
   milestones.
-- **15 achievements**, with celebrations.
+- **32 achievements** in six categories, with celebrations.
 - **Journal**: a 20-second nightly reflection (mood, one win, one thing to
   improve).
 - **Arc History and summaries**: every finished arc, read-only, with its

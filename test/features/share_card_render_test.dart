@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nextrep/app/theme/winter_theme.dart';
+import 'package:nextrep/app/theme/winter_tokens.dart';
 import 'package:nextrep/domain/achievement/achievement.dart';
 import 'package:nextrep/domain/achievement/achievement_catalog.dart';
+import 'package:nextrep/domain/habit/habit_template_catalog.dart';
 import 'package:nextrep/domain/progress/day_mode.dart';
 import 'package:nextrep/features/share/share_card_capture.dart';
 import 'package:nextrep/features/share/share_card_data.dart';
@@ -56,14 +58,33 @@ void _expect1080x1350(Uint8List png) {
   expect(pngSize(png), (width: 1080, height: 1350));
 }
 
+/// The six Phase 10C templates and six of v1.0: twelve built-in habits.
+final _withNewTemplates = [
+  for (final id in const [
+    'hair_care',
+    'skin_care',
+    'fruit',
+    'nuts_seeds',
+    'mobility',
+    'reading',
+  ])
+    HabitTemplateCatalog.byId(id)!,
+  ...v1Templates.take(6),
+];
+
 Widget _today({
   int count = 7,
   String? customTitle,
+  List<HabitTemplate>? templates,
   DayMode mode = DayMode.normal,
   SharePrivacyOptions privacy = const SharePrivacyOptions(),
   bool seasonal = false,
 }) {
-  final habits = catalogHabits(count: count, customTitle: customTitle);
+  final habits = catalogHabits(
+    count: count,
+    customTitle: customTitle,
+    templates: templates,
+  );
   return TodayShareCard(
     data: TodayShareCardData.fromSummary(
       shareSummary(
@@ -80,16 +101,24 @@ Widget _today({
   );
 }
 
-Widget _arc({int count = 8, String? customTitle, bool seasonal = false}) =>
-    ArcShareCard(
-      data: ArcShareCardData.fromSummary(
-        shareSummary(
-          habits: catalogHabits(count: count, customTitle: customTitle),
-          session: seasonal ? seasonalSession(joinDay: 15) : null,
-          today: seasonal ? 30 : 24,
-        ),
+Widget _arc({
+  int count = 8,
+  String? customTitle,
+  bool seasonal = false,
+  List<HabitTemplate>? templates,
+}) => ArcShareCard(
+  data: ArcShareCardData.fromSummary(
+    shareSummary(
+      habits: catalogHabits(
+        count: count,
+        customTitle: customTitle,
+        templates: templates,
       ),
-    );
+      session: seasonal ? seasonalSession(joinDay: 15) : null,
+      today: seasonal ? 30 : 24,
+    ),
+  ),
+);
 
 void main() {
   final cases = <String, Widget Function()>{
@@ -111,6 +140,10 @@ void main() {
     'My Arc, seasonal joined late': () => _arc(seasonal: true),
     'My Arc, 12 long names': () => _arc(count: 12, customTitle: _longTitle),
     'My Arc, one habit': () => _arc(count: 1),
+    "Today's Progress, 12 habits with the new templates": () =>
+        _today(count: 12, templates: _withNewTemplates),
+    'My Arc, 12 habits with the new templates': () =>
+        _arc(count: 12, templates: _withNewTemplates),
   };
   for (final MapEntry(key: name, value: card) in cases.entries) {
     testWidgets('$name renders a 1080 x 1350 PNG', (tester) async {
@@ -119,6 +152,7 @@ void main() {
   }
 
   testWidgets('every achievement renders a 1080 x 1350 PNG', (tester) async {
+    expect(AchievementCatalog.all, hasLength(32));
     for (final definition in AchievementCatalog.all) {
       final png = await _render(
         tester,
@@ -227,5 +261,47 @@ void main() {
     );
     expect(find.text('COLD FRONT'), findsOneWidget);
     expect(find.text('UNLOCKED · DAY 12'), findsOneWidget);
+  });
+
+  testWidgets('the new templates show with their own names and accents on '
+      "Today's Progress and My Arc", (tester) async {
+    const newKeys = [
+      'hair_care',
+      'skin_care',
+      'fruit',
+      'nuts_seeds',
+      'mobility',
+      'reading',
+    ];
+    final colors = buildWinterTheme().extension<WinterColors>()!;
+    bool painted(Color accent) => find
+        .byWidgetPredicate(
+          (w) =>
+              (w is Container && w.color == accent) ||
+              (w is Icon && w.color == accent),
+        )
+        .evaluate()
+        .isNotEmpty;
+
+    // Today: the first six (the new ones) are done, so they wear their
+    // accent.
+    await _render(tester, _today(count: 12, templates: _withNewTemplates));
+    for (final key in newKeys) {
+      final template = HabitTemplateCatalog.byId(key)!;
+      expect(find.text(template.title), findsOneWidget, reason: key);
+      final accent = WinterHabitAccents.of(key);
+      expect(accent, isNot(colors.accent), reason: '$key has its own accent');
+      expect(painted(accent), isTrue, reason: key);
+    }
+
+    await _render(tester, _arc(count: 12, templates: _withNewTemplates));
+    for (final key in newKeys) {
+      expect(
+        find.text(HabitTemplateCatalog.byId(key)!.title),
+        findsOneWidget,
+        reason: key,
+      );
+      expect(painted(WinterHabitAccents.of(key)), isTrue, reason: key);
+    }
   });
 }

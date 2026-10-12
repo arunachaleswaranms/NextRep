@@ -56,6 +56,13 @@ void main() {
         'sleep_before',
         'meditation',
         'journal',
+        // Phase 10C: optional, never seeded.
+        'hair_care',
+        'skin_care',
+        'fruit',
+        'nuts_seeds',
+        'mobility',
+        'reading',
       ]);
       expect(ids.toSet(), hasLength(ids.length));
       for (final t in HabitTemplateCatalog.all) {

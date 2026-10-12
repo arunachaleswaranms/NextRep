@@ -160,8 +160,9 @@ void main() {
       });
     });
 
-    test('there are 15 achievements, none granting XP', () {
-      expect(AchievementCatalog.all, hasLength(15));
+    test('the catalog has every achievement, none granting XP', () {
+      // 15 since Phase 4, 32 since Phase 10C.
+      expect(AchievementCatalog.all, hasLength(32));
       expect(
         AchievementCatalog.of(AchievementKey.firstReflection).title,
         'Looking Inward',

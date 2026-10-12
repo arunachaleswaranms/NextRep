@@ -151,12 +151,15 @@ void main() {
       final unlocked = await app.achievements.reconcile();
       expect(unlocked.map((u) => u.key), [
         AchievementKey.firstRep,
+        AchievementKey.day14,
         AchievementKey.halfway,
+        AchievementKey.day60,
+        AchievementKey.day75,
         AchievementKey.summit,
       ]);
       expect(unlocked.last.unlockedOn, day92);
       final board = (await app.achievements.board())!;
-      expect(board.unlockedCount, 3);
+      expect(board.unlockedCount, 6);
     });
 
     test('still loads its summary', () async {

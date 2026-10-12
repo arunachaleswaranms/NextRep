@@ -15,6 +15,11 @@ export 'habit_template.dart';
 /// either: earlier arcs keep it exactly as it was, and Reuse Last Setup
 /// copies it as it is. `sleep_before` is a new id because it is a
 /// different habit type, and one id must never mean two types across arcs.
+///
+/// Phase 10C adds six optional templates after the Phase 6 set:
+/// `hair_care`, `skin_care`, `fruit`, `nuts_seeds`, `mobility` and
+/// `reading`. They aren't starters: an arc only has one once it's added in
+/// setup, so no existing arc gains a habit.
 abstract final class HabitTemplateCatalog {
   static final List<HabitTemplate> all = [
     const HabitTemplate(
@@ -110,6 +115,68 @@ abstract final class HabitTemplateCatalog {
       iconKey: 'journal',
       enabledByDefault: true,
       description: 'Write a few lines about your day.',
+    ),
+    const HabitTemplate(
+      id: 'hair_care',
+      title: 'Hair Care',
+      type: HabitType.binary,
+      target: 1,
+      minimumTarget: 1,
+      iconKey: 'hair_care',
+      enabledByDefault: false,
+      description: 'Complete your daily hair-care routine.',
+    ),
+    const HabitTemplate(
+      id: 'skin_care',
+      title: 'Skin Care',
+      type: HabitType.binary,
+      target: 1,
+      minimumTarget: 1,
+      iconKey: 'skin_care',
+      enabledByDefault: false,
+      description: 'Complete your daily skin-care routine.',
+    ),
+    const HabitTemplate(
+      id: 'fruit',
+      title: 'Eat Fruit',
+      type: HabitType.binary,
+      target: 1,
+      minimumTarget: 1,
+      iconKey: 'fruit',
+      enabledByDefault: false,
+      description: 'Include fruit in your day.',
+    ),
+    const HabitTemplate(
+      id: 'nuts_seeds',
+      title: 'Nuts / Seeds',
+      type: HabitType.binary,
+      target: 1,
+      minimumTarget: 1,
+      iconKey: 'nuts_seeds',
+      enabledByDefault: false,
+      description: 'Include nuts or seeds in your day.',
+    ),
+    const HabitTemplate(
+      id: 'mobility',
+      title: 'Stretch / Mobility',
+      type: HabitType.duration,
+      target: 10,
+      minimumTarget: 5,
+      unit: 'min',
+      iconKey: 'mobility',
+      enabledByDefault: false,
+      description: 'Make time for stretching or mobility work.',
+    ),
+    const HabitTemplate(
+      id: 'reading',
+      title: 'Reading',
+      type: HabitType.duration,
+      target: 15,
+      minimumTarget: 5,
+      unit: 'min',
+      iconKey: 'reading',
+      enabledByDefault: false,
+      description: 'Spend a few focused minutes reading.',
     ),
   ];
 

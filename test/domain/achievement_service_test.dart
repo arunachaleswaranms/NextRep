@@ -56,7 +56,7 @@ void main() {
 
     expect(await app.achievements.reconcile(), isEmpty);
     final board = (await app.achievements.board())!;
-    expect(board.total, 15);
+    expect(board.total, 32);
     expect(board.unlockedCount, 0);
   });
 

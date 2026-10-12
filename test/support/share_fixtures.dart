@@ -22,14 +22,34 @@ final loggedBedtime = NightTime(22, 47);
 /// A private reflection-like string that must never reach a card.
 const privateNote = 'PRIVATE-JOURNAL-TEXT';
 
-/// The catalogue's eight templates plus custom habits up to [count] (at
-/// most 12), in display order. Custom ones get [customTitle] if given.
-List<Habit> catalogHabits({int count = 8, String? customTitle}) {
+/// The eight templates of v1.0, in catalogue order.
+final v1Templates = [
+  for (final id in const [
+    'workout',
+    'water',
+    'learning',
+    'english',
+    'no_junk_food',
+    'sleep_before',
+    'meditation',
+    'journal',
+  ])
+    HabitTemplateCatalog.byId(id)!,
+];
+
+/// [templates] (default: [v1Templates]) plus custom habits up to [count]
+/// (at most 12), in display order. Custom ones get [customTitle] if given.
+List<Habit> catalogHabits({
+  int count = 8,
+  String? customTitle,
+  List<HabitTemplate>? templates,
+}) {
   final created = DateTime(2026, 10, 1);
+  final bundled = (templates ?? v1Templates).take(count).toList();
   return [
-    for (final (i, template) in HabitTemplateCatalog.all.take(count).indexed)
+    for (final (i, template) in bundled.indexed)
       template.toHabit(sortOrder: i, createdAt: created, enabled: true),
-    for (var i = HabitTemplateCatalog.all.length; i < count; i++)
+    for (var i = bundled.length; i < count; i++)
       Habit(
         id: 'custom_$i',
         title: customTitle ?? 'Custom habit $i',

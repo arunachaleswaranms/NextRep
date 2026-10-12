@@ -79,6 +79,13 @@ abstract final class HabitIconKeys {
     'nature',
     'heart',
     'star',
+    // Phase 10C templates.
+    'hair_care',
+    'skin_care',
+    'fruit',
+    'nuts_seeds',
+    'mobility',
+    'reading',
   ];
 
   static const fallback = 'star';

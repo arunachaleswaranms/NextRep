@@ -265,7 +265,8 @@ void main() {
     await clearCelebrations(tester);
     expect(
       await seeded.db.select(seeded.db.achievementUnlocks).get(),
-      hasLength(6 + 1),
+      // Arc 1's nine unlocks (see runFirstArc) plus Looking Inward.
+      hasLength(9 + 1),
     );
     await _shutDown(tester);
   });
@@ -301,7 +302,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(SummaryScreen), findsOneWidget);
     expect(find.bySemanticsLabel('Total XP: 135'), findsOneWidget);
-    expect(find.bySemanticsLabel('Achievements: 6 / 15'), findsOneWidget);
+    expect(find.bySemanticsLabel('Achievements: 9 / 32'), findsOneWidget);
     expect(find.text('Start New Arc'), findsNothing);
     expect(find.byType(BackButton), findsOneWidget);
 
@@ -329,7 +330,7 @@ void main() {
       tester,
       find.widgetWithText(OutlinedButton, 'Achievements'),
     );
-    expect(find.text('6 of 15 unlocked'), findsOneWidget);
+    expect(find.text('9 of 32 unlocked'), findsOneWidget);
     expect(seeded.clock.today().toIsoString(), '2026-10-02');
     // Nothing about Arc 1 changed by browsing it.
     final before = await snapshotOf(seeded.db, arc1.id);

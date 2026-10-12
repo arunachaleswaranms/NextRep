@@ -258,10 +258,28 @@ void main() {
           AchievementKey.summit: _day(92),
         },
       );
-      // Nothing new is earned by this history, so nothing is added.
+      // Phase 10C: the larger catalog backfills the journey milestones this
+      // history already reached, dated when they were reached. Nothing
+      // stored is changed or duplicated.
+      final added = await app.achievements.reconcile();
+      expect(
+        {for (final u in added) u.key: u.unlockedOn},
+        {
+          AchievementKey.day14: _day(14),
+          AchievementKey.day60: _day(60),
+          AchievementKey.day75: _day(75),
+        },
+      );
       expect(await app.achievements.reconcile(), isEmpty);
-      expect(await db.select(db.achievementUnlocks).get(), hasLength(5));
-      expect((await app.achievements.boardFor(1)).total, 15);
+      expect(await db.select(db.achievementUnlocks).get(), hasLength(8));
+      expect(
+        (await app.achievementStore.unlocks(1))
+            .where((u) => u.key == AchievementKey.halfway)
+            .single
+            .unlockedOn,
+        _day(46),
+      );
+      expect((await app.achievements.boardFor(1)).total, 32);
     });
 
     test('starts with no reflections and reminders off', () async {
