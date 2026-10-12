@@ -1,15 +1,16 @@
 # PROJECT_STATE
 
 _Last updated: 2026-10-12. v1.0.0 is released (tag `v1.0.0` on
-`b3f9c5c`, PR #10). Phase 10A is merged (PR #11, `ba72cf0`). Phase 10B
-(Shareable Cards & Meaningful Motion, toward v1.1.0) is complete on its
-branch; its PR is open and not merged._
+`b3f9c5c`, PR #10). Phases 10A (PR #11, `ba72cf0`) and 10B (PR #12,
+`5cb6d90`) are merged. Phase 10C (New Habit Templates & Expanded
+Achievements, toward v1.1.0) is complete on its branch; its PR is open and
+not merged._
 
 | | |
 |---|---|
 | RELEASED | **v1.0.0** (GitHub Release, signed APK) |
-| IN PROGRESS | **v1.1.0**: Phase 10A merged; Phase 10B ready for review; 10C not started |
-| ANDROID PHYSICAL | **PASS** for v1.0.0 (Phase 8.5 / 9). Phases 10A / 10B are not release candidates and have had no physical run |
+| IN PROGRESS | **v1.1.0**: Phases 10A and 10B merged; Phase 10C ready for review; 10D (release qualification) not started |
+| ANDROID PHYSICAL | **PASS** for v1.0.0 (Phase 8.5 / 9). Phases 10A–10C are not release candidates and have had no physical run |
 | STORE SUBMISSION | **NOT APPLICABLE / NOT PLANNED** |
 
 NextRep is distributed as a signed Android APK on GitHub Releases
@@ -21,16 +22,42 @@ planned. TalkBack was deliberately deferred and doesn't block this model.
 ## Repo
 
 - Remote: https://github.com/arunachaleswaranms/NextRep (public, MIT)
-- `main`: `ba72cf0` (squash merge of PR #11, Phase 10A). `v1.0.0` is
-  tagged on `b3f9c5c` (PR #10). PRs #1–#11 are Phases 1–10A.
-- Branch: `phase/10b-sharing-motion`, from `ba72cf0`
-- PR: "Phase 10B: shareable cards and meaningful motion", open for review,
-  not merged. No v1.1 tag or release.
+- `main`: `5cb6d90` (squash merge of PR #12, Phase 10B). `v1.0.0` is
+  tagged on `b3f9c5c` (PR #10). PRs #1–#12 are Phases 1–10B.
+- Branch: `phase/10c-habits-achievements`, from `5cb6d90`
+- PR: "Phase 10C: expand habit templates and achievements", open for
+  review, not merged. No v1.1 tag or release.
 - Author and committer of every commit:
   `Arunachaleswaran M S <arunachaleswaranms@gmail.com>` (repo-local
   config). No AI or co-author trailers.
 
-## Phase 10B (v1.1, in review)
+## Phase 10C (v1.1, in review)
+
+Evidence and rules: [docs/PHASE_10C.md](docs/PHASE_10C.md).
+
+- **Six optional templates**: Hair Care, Skin Care, Eat Fruit, Nuts /
+  Seeds, Stretch / Mobility and Reading. They have stable ids and their
+  own icons and accents. They aren't starters. They're added only during
+  setup, through the existing template path; a running Arc never gains a
+  habit.
+- **32 achievements** (15 before) in six categories: Progress,
+  Consistency, Resilience, Habit Mastery, Reflection and Journey. New:
+  14 / 30 / 50-day streaks, 25 Perfect Days, 7 Minimum Days, 14 / 30
+  reflections, Day 14 / 60 / 75, and activity mastery keyed off built-in
+  habit ids (No Junk Food runs; Workout, Water and Learning totals; Sleep
+  Before). Still 0 XP.
+- **Backfill:** the first achievement sync of an app session (and after a
+  restore) reconciles every started Arc against the full catalog, dated
+  when its history earned each one. The home Arc's additions are
+  celebrated together in one card; completed Arcs are filled in silently.
+  Idempotent, with no migration flag. Phase 10A's provisional
+  current-day unlocks hold for all 32.
+- The Achievements screen is grouped under category headings.
+- A v1.1 backup holding a new unlock can't be restored into v1.0, whose
+  validator rejects unknown keys (an existing rule). v1.0 backups restore
+  on v1.1.
+
+## Phase 10B (v1.1, merged)
 
 Evidence and rules: [docs/PHASE_10B.md](docs/PHASE_10B.md).
 
@@ -66,8 +93,7 @@ Evidence and rules: [docs/PHASE_10A.md](docs/PHASE_10A.md).
 - **Sleep Before Target reads as "Last night's bedtime"**, counted for
   today, with an explanation. Its date semantics are unchanged. Custom
   clock-time habits keep neutral wording.
-- Next: Phase 10C (templates, more achievements). Water / social-media
-  reminders are v1.2 planning.
+- Water / social-media reminders are v1.2 planning.
 
 ## Environment
 
@@ -84,11 +110,11 @@ Evidence and rules: [docs/PHASE_10A.md](docs/PHASE_10A.md).
 
 | | |
 |---|---|
-| Version | `1.0.0+1`: versionName 1.0.0, versionCode 1 (unchanged in Phases 10A / 10B; bumped when v1.1.0 is prepared) |
+| Version | `1.0.0+1`: versionName 1.0.0, versionCode 1 (unchanged in Phases 10A–10C; bumped when v1.1.0 is prepared) |
 | Tag | `v1.0.0` on `b3f9c5c` |
 | Android `applicationId` | `com.nextrep.nextrep` (kept for update continuity) |
-| Database schema | **v5** (unchanged through Phase 10B) |
-| Backup | export `formatVersion` **2**; import reads 1 and 2 (unchanged through Phase 10B) |
+| Database schema | **v5** (unchanged through Phase 10C) |
+| Backup | export `formatVersion` **2**; import reads 1 and 2 (unchanged through Phase 10C) |
 | License | MIT, © 2026 Arunachaleswaran M S |
 | Signing certificate | `CN=Arunachaleswaran M S, OU=NextRep`, RSA 4096, valid 2026-10-08 to 2056-09-30 |
 | Certificate SHA-256 | `65:B7:0C:D0:96:D1:BB:F2:C0:F5:0E:E0:2F:4B:55:97:46:25:CC:4C:DB:EA:D7:39:22:5F:06:75:AF:C8:F0:BA` |
@@ -103,16 +129,16 @@ and are git-ignored. Key rules:
 
 ## Results
 
-| Gate | Phase 10B branch | Phase 10A | v1.0.0 |
-|---|---|---|---|
-| format / analyze | clean / no issues | clean / no issues | clean / no issues |
-| `flutter test` | **693 / 693** | 635 / 635 | 605 / 605 |
-| Migrations / backup 1+2 | 39 / 71 | 39 / 71 | 39 / 70 |
-| APK debug | PASS | PASS | PASS |
-| APK release | PASS (local; not a release candidate) | not built | PASS |
-| iOS simulator build | PASS (local) | not run | PASS |
-| Signed update continuity (physical, `adb install -r`, same key) | n/a | n/a | **PASS**, data kept |
-| Physical v1.0.0 smoke | n/a | n/a | **PASS** |
+| Gate | Phase 10C branch | Phase 10B | Phase 10A | v1.0.0 |
+|---|---|---|---|---|
+| format / analyze | clean / no issues | clean / no issues | clean / no issues | clean / no issues |
+| `flutter test` | **766 / 766** | 693 / 693 | 635 / 635 | 605 / 605 |
+| Migrations / backup 1+2 | 39 / 76 | 39 / 71 | 39 / 71 | 39 / 70 |
+| APK debug | PASS | PASS | PASS | PASS |
+| APK release | PASS (local; not a release candidate) | PASS (local) | not built | PASS |
+| iOS simulator build | PASS (local) | PASS (local) | not run | PASS |
+| Signed update continuity (physical, `adb install -r`, same key) | n/a | n/a | n/a | **PASS**, data kept |
+| Physical v1.0.0 smoke | n/a | n/a | n/a | **PASS** |
 
 v1.0.0 coverage was 93.3% of handwritten lib.
 Earlier results: integration 7 / 7 on emulator-5554 and on the iPhone 17
@@ -148,8 +174,9 @@ disclosed in [PRIVACY.md](PRIVACY.md).
 
 ## Remaining actions (owner)
 
-1. Independent review of the Phase 10B PR, then merge.
-2. Phase 10C, then prepare v1.1.0: version bump, release notes, a Share
-   cards section in PRIVACY.md (it still describes 1.0.0), signed APK and
-   physical qualification, including the share sheet on a real device.
+1. Independent review of the Phase 10C PR, then merge.
+2. Phase 10D, preparing v1.1.0: version bump, release notes, a Share cards
+   section in PRIVACY.md (it still describes 1.0.0), a signed APK and
+   physical qualification. That includes the share sheet on a real device
+   and the achievement backfill when v1.1 is installed over v1.0 data.
    Nothing for v1.1 is tagged or published yet.
