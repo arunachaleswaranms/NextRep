@@ -45,8 +45,10 @@ void main() {
     expect(s.fullDays, 2);
     expect(s.daysElapsed, 92);
     expect(s.consistencyPercent, 2); // 2 of 92 days, rounded down
-    expect(s.achievementsUnlocked, 6);
-    expect(s.achievementsTotal, 15);
+    // First Rep, Clean Sweep, Still Moving, Looking Inward, First Chapter,
+    // Midwinter, Aurora, Final Approach, Summit.
+    expect(s.achievementsUnlocked, 9);
+    expect(s.achievementsTotal, 32);
     expect(card.reflectionCount, 1);
     expect(card.session.startDate, first.startDate);
   });

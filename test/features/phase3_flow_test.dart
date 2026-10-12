@@ -109,14 +109,14 @@ void main() {
     await tester.pumpAndSettle();
     await _onboardAndStart(tester);
     expect(find.byType(CelebrationCard), findsNothing);
-    expect(find.text('0/15'), findsOneWidget);
+    expect(find.text('0/32'), findsOneWidget);
 
     await reveal(tester, find.byTooltip('Complete No Junk Food'));
     await tester.tap(find.byTooltip('Complete No Junk Food'));
     await tester.pumpAndSettle();
     expect(find.text('ACHIEVEMENT UNLOCKED'), findsOneWidget);
     expect(find.text('First Rep'), findsOneWidget);
-    expect(find.text('1/15'), findsOneWidget);
+    expect(find.text('1/32'), findsOneWidget);
 
     // Tapping the card dismisses it.
     await tester.tap(find.byType(CelebrationCard));
@@ -128,12 +128,12 @@ void main() {
     await reveal(tester, find.byTooltip('Undo No Junk Food'));
     await tester.tap(find.byTooltip('Undo No Junk Food'));
     await tester.pumpAndSettle();
-    expect(find.text('0/15'), findsOneWidget);
+    expect(find.text('0/32'), findsOneWidget);
     expect(await db.select(db.achievementUnlocks).get(), isEmpty);
     await tester.tap(find.byTooltip('Complete No Junk Food'));
     await tester.pumpAndSettle();
     expect(find.byType(CelebrationCard), findsNothing);
-    expect(find.text('1/15'), findsOneWidget);
+    expect(find.text('1/32'), findsOneWidget);
     expect(await db.select(db.achievementUnlocks).get(), hasLength(1));
 
     // Nor after a relaunch.
@@ -141,7 +141,7 @@ void main() {
     await tester.pumpWidget(_app(db, clock));
     await tester.pumpAndSettle();
     expect(find.byType(CelebrationCard), findsNothing);
-    expect(find.text('1/15'), findsOneWidget);
+    expect(find.text('1/32'), findsOneWidget);
     await _shutDown(tester);
   });
 
@@ -157,18 +157,20 @@ void main() {
     await clearCelebrations(tester);
 
     expect(
-      find.bySemanticsLabel('Achievements, 1 of 15 unlocked'),
+      find.bySemanticsLabel('Achievements, 1 of 32 unlocked'),
       findsOneWidget,
     );
     await tester.tap(find.byType(TrophyButton));
     await tester.pumpAndSettle();
-    expect(find.text('1 of 15 unlocked'), findsOneWidget);
+    expect(find.text('1 of 32 unlocked'), findsOneWidget);
     expect(
       find.bySemanticsLabel(
         'First Rep. Unlocked, Day 1 · 1 Oct. Complete your first habit.',
       ),
       findsOneWidget,
     );
+    // Snowball sits further down, under Consistency.
+    await tester.scrollUntilVisible(find.text('Snowball'), 200);
     expect(
       find.bySemanticsLabel(
         'Snowball. Locked. Reach a 3-day streak on any habit.',
@@ -254,8 +256,8 @@ void main() {
     expect(find.text('92 days'), findsOneWidget);
     expect(find.bySemanticsLabel('Total XP: 15'), findsOneWidget);
     expect(find.bySemanticsLabel('Habits completed: 1'), findsOneWidget);
-    // First Rep, Midwinter and Summit.
-    expect(find.bySemanticsLabel('Achievements: 3 / 15'), findsOneWidget);
+    // First Rep, the Day 14, 46, 60 and 75 milestones, and Summit.
+    expect(find.bySemanticsLabel('Achievements: 6 / 32'), findsOneWidget);
     expect(find.text('No Junk Food'), findsOneWidget); // strongest habit
     expect(
       (await seeded.sessions.latestSession())!.status,
@@ -284,7 +286,7 @@ void main() {
     );
     await tester.tap(achievements);
     await tester.pumpAndSettle();
-    expect(find.text('3 of 15 unlocked'), findsOneWidget);
+    expect(find.text('6 of 32 unlocked'), findsOneWidget);
     await _shutDown(tester);
   });
 

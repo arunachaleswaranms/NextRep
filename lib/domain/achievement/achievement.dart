@@ -19,7 +19,26 @@ enum AchievementKey {
   reflections7('reflections_7'),
   minimum3('minimum_3'),
   perfect10('perfect_10'),
-  level5('level_5');
+  level5('level_5'),
+
+  // Catalog v3 (Phase 10C).
+  streak14('streak_14'),
+  streak30('streak_30'),
+  streak50('streak_50'),
+  perfect25('perfect_25'),
+  minimum7('minimum_7'),
+  reflections14('reflections_14'),
+  reflections30('reflections_30'),
+  day14('day_14'),
+  day60('day_60'),
+  day75('day_75'),
+  noJunk7('no_junk_7'),
+  noJunk30('no_junk_30'),
+  noJunk50('no_junk_50'),
+  workout30('workout_30'),
+  water30('water_30'),
+  learning30('learning_30'),
+  sleep14('sleep_before_14');
 
   const AchievementKey(this.id);
 
@@ -35,15 +54,32 @@ enum AchievementKey {
   }
 }
 
+/// The theme an achievement belongs to, for grouping the collection.
+/// Display metadata only: never persisted.
+enum AchievementCategory {
+  progress('Progress'),
+  consistency('Consistency'),
+  resilience('Resilience'),
+  habitMastery('Habit Mastery'),
+  reflection('Reflection'),
+  journey('Journey');
+
+  const AchievementCategory(this.label);
+
+  final String label;
+}
+
 /// Display data of an achievement. The criteria live in `AchievementRules`.
 final class AchievementDefinition {
   const AchievementDefinition({
     required this.key,
+    required this.category,
     required this.title,
     required this.description,
   });
 
   final AchievementKey key;
+  final AchievementCategory category;
   final String title;
 
   /// What it takes to earn it, shown whether locked or unlocked.
@@ -107,6 +143,24 @@ final class UnlockChanges {
   bool get isEmpty => unlocked.isEmpty && revoked.isEmpty;
 }
 
+/// What one catalog backfill stored (`AchievementService.backfillCatalog`).
+final class CatalogBackfill {
+  const CatalogBackfill({
+    this.home = const UnlockChanges(),
+    this.historical = const {},
+  });
+
+  /// The home arc's changes, as a normal reconciliation reports them. The
+  /// only ones ever celebrated.
+  final UnlockChanges home;
+
+  /// Unlocks newly stored for other started (completed) arcs, by session
+  /// id. Stored silently.
+  final Map<int, List<AchievementUnlock>> historical;
+
+  bool get isEmpty => home.isEmpty && historical.isEmpty;
+}
+
 /// One catalog entry with its unlock, if any.
 final class AchievementStatus {
   const AchievementStatus({required this.definition, this.unlock});
@@ -127,6 +181,18 @@ final class AchievementBoard {
 
   int get total => entries.length;
   int get unlockedCount => entries.where((e) => e.unlocked).length;
+
+  /// [entries] by category, in category order; empty categories are left
+  /// out. Within a category, entries keep their display order.
+  List<(AchievementCategory, List<AchievementStatus>)> get groups => [
+    for (final category in AchievementCategory.values)
+      if ([
+            for (final e in entries)
+              if (e.definition.category == category) e,
+          ]
+          case final members when members.isNotEmpty)
+        (category, members),
+  ];
 
   /// 1-based challenge day of [date].
   int dayNumberOf(LocalDate date) => startDate.daysUntil(date) + 1;

@@ -47,14 +47,37 @@ final class AchievementContext {
 abstract final class AchievementRules {
   static const int snowballStreak = 3;
   static const int coldFrontStreak = 7;
+  static const int twoWeeksStreak = 14;
+  static const int coldDisciplineStreak = 30;
+  static const int ironWinterStreak = 50;
   static const int perfectDaysForTrio = 3;
   static const int perfectDaysForTen = 10;
+  static const int perfectDaysForQuarterCentury = 25;
   static const int minimumDaysForAdaptable = 3;
+  static const int minimumDaysForBendDontBreak = 7;
   static const int reflectionsForCheckIns = 7;
+  static const int reflectionsForTwoWeeks = 14;
+  static const int reflectionsForKnowYourself = 30;
 
   /// The challenge day that marks the middle of the arc (16 November in a
   /// season).
   static const int midwinterDay = 46;
+  static const int firstChapterDay = 14;
+  static const int auroraDay = 60;
+  static const int finalApproachDay = 75;
+
+  /// Stable ids of the built-in habits that have their own achievements.
+  /// Matched by id only: a renamed built-in habit still counts, a custom
+  /// habit with the same name doesn't, and the legacy `sleep_on_time`
+  /// habit is not `sleep_before`.
+  static const String noJunkFoodId = 'no_junk_food';
+  static const String workoutId = 'workout';
+  static const String waterId = 'water';
+  static const String learningId = 'learning';
+  static const String sleepBeforeId = 'sleep_before';
+
+  static const int habitMasteryDays = 30;
+  static const int restRhythmDays = 14;
 
   /// Every achievement currently earned, in catalog order.
   static List<EarnedAchievement> evaluate(AchievementContext context) {
@@ -83,33 +106,82 @@ abstract final class AchievementRules {
       levelDates.putIfAbsent(LevelRules.levelFor(xp), () => date);
     }
 
+    // Progress.
     earn(AchievementKey.firstRep, firstRep);
-    earn(AchievementKey.firstPerfect, perfectDates.firstOrNull);
-    earn(AchievementKey.streak3, _firstHabitStreak(history, snowballStreak));
-    earn(AchievementKey.streak7, _firstHabitStreak(history, coldFrontStreak));
-    earn(AchievementKey.perfect3, _nth(perfectDates, perfectDaysForTrio));
-    earn(AchievementKey.perfect10, _nth(perfectDates, perfectDaysForTen));
-    earn(AchievementKey.minimumComplete, minimumDates.firstOrNull);
-    earn(AchievementKey.minimum3, _nth(minimumDates, minimumDaysForAdaptable));
     earn(AchievementKey.level2, _firstAtLevel(levelDates, 2));
     earn(AchievementKey.level3, _firstAtLevel(levelDates, 3));
     earn(AchievementKey.level5, _firstAtLevel(levelDates, 5));
+
+    // Consistency.
+    earn(AchievementKey.firstPerfect, perfectDates.firstOrNull);
+    for (final (key, length) in const [
+      (AchievementKey.streak3, snowballStreak),
+      (AchievementKey.streak7, coldFrontStreak),
+      (AchievementKey.streak14, twoWeeksStreak),
+      (AchievementKey.streak30, coldDisciplineStreak),
+      (AchievementKey.streak50, ironWinterStreak),
+    ]) {
+      earn(key, _firstHabitStreak(history, length));
+    }
+    earn(AchievementKey.perfect3, _nth(perfectDates, perfectDaysForTrio));
+    earn(AchievementKey.perfect10, _nth(perfectDates, perfectDaysForTen));
+    earn(
+      AchievementKey.perfect25,
+      _nth(perfectDates, perfectDaysForQuarterCentury),
+    );
+
+    // Resilience.
+    earn(AchievementKey.minimumComplete, minimumDates.firstOrNull);
+    earn(AchievementKey.minimum3, _nth(minimumDates, minimumDaysForAdaptable));
+    earn(
+      AchievementKey.minimum7,
+      _nth(minimumDates, minimumDaysForBendDontBreak),
+    );
+
+    // Habit mastery: runs and totals of one built-in habit, with the same
+    // completion (DayRecord) and streak (ArcHistory.habitMarks) semantics
+    // as everywhere else.
+    for (final (key, length) in const [
+      (AchievementKey.noJunk7, coldFrontStreak),
+      (AchievementKey.noJunk30, coldDisciplineStreak),
+      (AchievementKey.noJunk50, ironWinterStreak),
+    ]) {
+      earn(key, _firstStreakOf(history, noJunkFoodId, length));
+    }
+    for (final (key, habitId, days) in const [
+      (AchievementKey.workout30, workoutId, habitMasteryDays),
+      (AchievementKey.water30, waterId, habitMasteryDays),
+      (AchievementKey.learning30, learningId, habitMasteryDays),
+      (AchievementKey.sleep14, sleepBeforeId, restRhythmDays),
+    ]) {
+      earn(key, _nthCompletedDay(history, habitId, days));
+    }
+
+    // Reflection: only which dates have a reflection, never what it says.
     final reflections = context.reflectionDates;
     earn(AchievementKey.firstReflection, reflections.firstOrNull);
     earn(
       AchievementKey.reflections7,
       _nth(reflections, reflectionsForCheckIns),
     );
-    // Midwinter is earned on Day 46 itself, and only if the user took part
-    // that day: joining a season later never awards it retroactively.
-    final midwinter = history.session.startDate.addDays(midwinterDay - 1);
     earn(
-      AchievementKey.halfway,
-      history.session.isParticipatingOn(midwinter) &&
-              !midwinter.isAfter(history.today)
-          ? midwinter
-          : null,
+      AchievementKey.reflections14,
+      _nth(reflections, reflectionsForTwoWeeks),
     );
+    earn(
+      AchievementKey.reflections30,
+      _nth(reflections, reflectionsForKnowYourself),
+    );
+
+    // Journey.
+    for (final (key, day) in const [
+      (AchievementKey.day14, firstChapterDay),
+      (AchievementKey.halfway, midwinterDay),
+      (AchievementKey.day60, auroraDay),
+      (AchievementKey.day75, finalApproachDay),
+    ]) {
+      earn(key, _participatedMilestone(history, day));
+    }
     // Summit: the arc ran to its close. A seasonal arc joined late earns it
     // too: it was completed through 31 December.
     earn(
@@ -132,15 +204,50 @@ abstract final class AchievementRules {
   static LocalDate? _firstHabitStreak(ArcHistory history, int length) {
     LocalDate? first;
     for (final habit in history.records.habits.habits) {
-      final index = StreakRules.firstReaching(
-        history.habitMarks(habit.id),
-        length,
-      );
-      if (index == null) continue;
-      final date = history.elapsedDates[index];
-      if (first == null || date.isBefore(first)) first = date;
+      final date = _firstStreakOf(history, habit.id, length);
+      if (date != null && (first == null || date.isBefore(first))) {
+        first = date;
+      }
     }
     return first;
+  }
+
+  /// The date on which a run of habit [habitId] first reached [length]
+  /// days, or null (also when the arc has no such habit).
+  static LocalDate? _firstStreakOf(
+    ArcHistory history,
+    String habitId,
+    int length,
+  ) {
+    final index = StreakRules.firstReaching(
+      history.habitMarks(habitId),
+      length,
+    );
+    return index == null ? null : history.elapsedDates[index];
+  }
+
+  /// The [n]th date on which habit [habitId] was complete. Days on which it
+  /// wasn't enabled don't apply; the day's record decides completion
+  /// (effective target, Minimum Day, goal changes).
+  static LocalDate? _nthCompletedDay(
+    ArcHistory history,
+    String habitId,
+    int n,
+  ) => _nth([
+    for (final date in history.elapsedDates)
+      if (history.recordOn(date).entryFor(habitId)?.progress.completed ?? false)
+        date,
+  ], n);
+
+  /// Challenge day [dayNumber] itself, once it has started, and only if
+  /// the user took part that day: joining a season later never awards a
+  /// milestone retroactively.
+  static LocalDate? _participatedMilestone(ArcHistory history, int dayNumber) {
+    final date = history.session.startDate.addDays(dayNumber - 1);
+    return history.session.isParticipatingOn(date) &&
+            !date.isAfter(history.today)
+        ? date
+        : null;
   }
 
   /// The first date on which the running XP total reached [level] or more.

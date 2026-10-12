@@ -23,23 +23,58 @@ extension AchievementVisuals on AchievementKey {
     AchievementKey.minimum3 => Icons.spa_rounded,
     AchievementKey.perfect10 => Icons.workspace_premium_rounded,
     AchievementKey.level5 => Icons.rocket_launch_rounded,
+    AchievementKey.streak14 => Icons.cloudy_snowing,
+    AchievementKey.streak30 => Icons.severe_cold_rounded,
+    AchievementKey.streak50 => Icons.shield_rounded,
+    AchievementKey.perfect25 => Icons.military_tech_rounded,
+    AchievementKey.minimum7 => Icons.forest_rounded,
+    AchievementKey.reflections14 => Icons.auto_stories_rounded,
+    AchievementKey.reflections30 => Icons.psychology_rounded,
+    AchievementKey.day14 => Icons.flag_rounded,
+    AchievementKey.day60 => Icons.flare_rounded,
+    AchievementKey.day75 => Icons.hiking_rounded,
+    AchievementKey.noJunk7 => Icons.no_food_rounded,
+    AchievementKey.noJunk30 => Icons.eco_rounded,
+    AchievementKey.noJunk50 => Icons.verified_rounded,
+    AchievementKey.workout30 => Icons.fitness_center_rounded,
+    AchievementKey.water30 => Icons.water_drop_rounded,
+    AchievementKey.learning30 => Icons.school_rounded,
+    AchievementKey.sleep14 => Icons.bedtime_rounded,
   };
 
   Color accent(WinterColors colors) => switch (this) {
-    AchievementKey.firstRep => colors.accentSecondary,
+    AchievementKey.firstRep ||
+    AchievementKey.workout30 => colors.accentSecondary,
     AchievementKey.firstPerfect ||
     AchievementKey.perfect3 ||
-    AchievementKey.perfect10 => colors.celebration,
-    AchievementKey.streak3 || AchievementKey.level2 => colors.accent,
+    AchievementKey.perfect10 ||
+    AchievementKey.perfect25 => colors.celebration,
+    AchievementKey.streak3 ||
+    AchievementKey.streak14 ||
+    AchievementKey.level2 ||
+    AchievementKey.water30 => colors.accent,
     AchievementKey.streak7 ||
+    AchievementKey.streak30 ||
     AchievementKey.firstReflection ||
-    AchievementKey.reflections7 => colors.auroraViolet,
+    AchievementKey.reflections7 ||
+    AchievementKey.reflections14 ||
+    AchievementKey.reflections30 ||
+    AchievementKey.learning30 ||
+    AchievementKey.sleep14 => colors.auroraViolet,
     AchievementKey.minimumComplete ||
-    AchievementKey.minimum3 => colors.recovery,
+    AchievementKey.minimum3 ||
+    AchievementKey.minimum7 => colors.recovery,
     AchievementKey.level3 ||
     AchievementKey.level5 ||
+    AchievementKey.day75 ||
     AchievementKey.summit => colors.warmLight,
-    AchievementKey.halfway => colors.auroraGreen,
+    AchievementKey.streak50 ||
+    AchievementKey.halfway ||
+    AchievementKey.day14 ||
+    AchievementKey.day60 ||
+    AchievementKey.noJunk7 ||
+    AchievementKey.noJunk30 ||
+    AchievementKey.noJunk50 => colors.auroraGreen,
   };
 }
 

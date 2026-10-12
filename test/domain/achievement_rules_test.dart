@@ -180,12 +180,13 @@ void main() {
     final earned = _evaluate(
       arcOf(today: 3, done: _allDone([1, 2, 3]), xp: {1: 90, 2: 90, 3: 90}),
     );
+    // Catalog (category) order: Progress first, then Consistency.
     expect(earned.map((e) => e.key), [
       AchievementKey.firstRep,
+      AchievementKey.level2,
       AchievementKey.firstPerfect,
       AchievementKey.streak3,
       AchievementKey.perfect3,
-      AchievementKey.level2,
     ]);
     final order = AchievementCatalog.all.map((d) => d.key).toList();
     final indexes = earned.map((e) => order.indexOf(e.key)).toList();
@@ -193,8 +194,8 @@ void main() {
   });
 
   test('the catalog has stable, unique keys', () {
-    expect(AchievementCatalog.all, hasLength(15));
-    expect(AchievementCatalog.all.map((d) => d.key).toSet(), hasLength(15));
+    expect(AchievementCatalog.all, hasLength(32));
+    expect(AchievementCatalog.all.map((d) => d.key).toSet(), hasLength(32));
     expect(AchievementKey.values.map((k) => k.id), [
       // Phase 3: stored ids that must never change.
       'first_rep',
@@ -213,6 +214,24 @@ void main() {
       'minimum_3',
       'perfect_10',
       'level_5',
+      // Phase 10C additions.
+      'streak_14',
+      'streak_30',
+      'streak_50',
+      'perfect_25',
+      'minimum_7',
+      'reflections_14',
+      'reflections_30',
+      'day_14',
+      'day_60',
+      'day_75',
+      'no_junk_7',
+      'no_junk_30',
+      'no_junk_50',
+      'workout_30',
+      'water_30',
+      'learning_30',
+      'sleep_before_14',
     ]);
     expect(AchievementKey.fromId('streak_7'), AchievementKey.streak7);
     expect(AchievementKey.fromId('nope'), isNull);
