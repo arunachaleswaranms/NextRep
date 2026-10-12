@@ -76,24 +76,40 @@ class HabitProgressTile extends StatelessWidget {
                     children: [
                       Text(_habit.title, style: text.titleMedium),
                       const SizedBox(height: 2),
-                      Wrap(
-                        spacing: WinterSpacing.sm,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          Text(
-                            progressLabel(
-                              _habit,
-                              progress.currentValue,
-                              target: entry.target,
-                              completed: completed,
+                      // Switching between Normal and Minimum changes the
+                      // target (8 glasses → 3): the label eases over to the
+                      // new target instead of snapping. Keyed to the target
+                      // and mode only, so an ordinary + / − updates it in
+                      // place without replaying the transition.
+                      AnimatedSwitcher(
+                        duration: context.motion.standard,
+                        switchInCurve: Curves.easeOutCubic,
+                        switchOutCurve: Curves.easeInCubic,
+                        transitionBuilder: _targetTransition,
+                        layoutBuilder: (current, previous) => Stack(
+                          alignment: AlignmentDirectional.centerStart,
+                          children: [...previous, ?current],
+                        ),
+                        child: Wrap(
+                          key: ValueKey((entry.target, minimum)),
+                          spacing: WinterSpacing.sm,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Text(
+                              progressLabel(
+                                _habit,
+                                progress.currentValue,
+                                target: entry.target,
+                                completed: completed,
+                              ),
+                              style: text.bodyMedium?.copyWith(
+                                color: completed ? colors.textPrimary : null,
+                                fontWeight: completed ? FontWeight.w600 : null,
+                              ),
                             ),
-                            style: text.bodyMedium?.copyWith(
-                              color: completed ? colors.textPrimary : null,
-                              fontWeight: completed ? FontWeight.w600 : null,
-                            ),
-                          ),
-                          if (minimum) const _MinimumChip(),
-                        ],
+                            if (minimum) const _MinimumChip(),
+                          ],
+                        ),
                       ),
                       if (streak > 0) ...[
                         const SizedBox(height: WinterSpacing.xs),
@@ -140,6 +156,19 @@ class HabitProgressTile extends StatelessWidget {
       ),
     );
   }
+
+  /// A short fade with a slight rise, for a change of target.
+  static Widget _targetTransition(Widget child, Animation<double> animation) =>
+      FadeTransition(
+        opacity: animation,
+        child: SlideTransition(
+          position: Tween(
+            begin: const Offset(0, 0.25),
+            end: Offset.zero,
+          ).animate(animation),
+          child: child,
+        ),
+      );
 
   Widget _check(BuildContext context, Color accent) {
     final colors = context.winter;

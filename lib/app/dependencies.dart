@@ -12,6 +12,7 @@ import '../data/drift_progress_repository.dart';
 import '../data/drift_reflection_repository.dart';
 import '../data/drift_reminder_preferences_repository.dart';
 import '../data/drift_winter_arc_repository.dart';
+import '../data/share_gateway.dart';
 import '../domain/achievement/achievement_repository.dart';
 import '../domain/achievement/achievement_service.dart';
 import '../domain/backup/backup_service.dart';
@@ -196,4 +197,10 @@ final backupServiceProvider = Provider<BackupService>(
 /// with an in-memory fake; nothing here touches the network.
 final backupFilesProvider = Provider<BackupFiles>(
   (ref) => const SystemBackupFiles(),
+);
+
+/// The system share sheet for share cards. Tests override it with a fake;
+/// sharing never touches the network or the database.
+final shareGatewayProvider = Provider<ShareGateway>(
+  (ref) => const SystemShareGateway(),
 );

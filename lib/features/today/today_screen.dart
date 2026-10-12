@@ -22,6 +22,8 @@ import '../../shared/widgets/loading_view.dart';
 import '../../shared/widgets/winter_background.dart';
 import '../achievements/widgets/trophy_button.dart';
 import '../celebration/celebration_queue.dart';
+import '../share/share_choice_sheet.dart';
+import '../share/share_preview_screen.dart';
 import 'today_controller.dart';
 import 'widgets/habit_progress_tile.dart';
 import 'widgets/minimum_day.dart';
@@ -191,6 +193,17 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     }
   }
 
+  /// Asks which card to share, then previews it from the summary on
+  /// screen. Nothing is shared until the user taps Share in the preview.
+  Future<void> _share(DaySummary summary) async {
+    final choice = await ShareChoiceSheet.show(context);
+    if (choice == null || !mounted) return;
+    await switch (choice) {
+      ShareChoice.todayProgress => SharePreviewScreen.today(context, summary),
+      ShareChoice.myArc => SharePreviewScreen.arc(context, summary),
+    };
+  }
+
   // Today re-reads after edits through the arcRefresh listener in build, so
   // an edit still being saved when the editor closes is not missed.
   Future<void> _editHabits() => context.push(AppRoutes.habits);
@@ -257,6 +270,11 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                     letterSpacing: 3,
                   ),
                 ),
+              ),
+              IconButton(
+                tooltip: 'Share progress',
+                onPressed: () => _share(summary),
+                icon: const Icon(Icons.ios_share_rounded),
               ),
               IconButton(
                 tooltip: 'Reminders',
