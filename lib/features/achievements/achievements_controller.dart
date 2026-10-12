@@ -54,9 +54,11 @@ final achievementSyncProvider = Provider<AchievementSync>((ref) {
 ///
 /// The first successful run of an app session (and after a restore) is a
 /// catalog backfill over every started arc: achievements a newer catalog
-/// added are derived from history already lived. Only the home arc's new
-/// unlocks are celebrated, together in one card; a completed arc's are
-/// stored silently. Later runs reconcile the home arc only. Skipping the
+/// added are derived from history already lived. Only the active arc's new
+/// unlocks are celebrated, together in one card; every completed arc's,
+/// including the latest one that the home shows, are stored silently (only
+/// the Summit its close-out earns is celebrated, as by a normal run). Later
+/// runs reconcile the home arc only. Skipping the
 /// backfill would only delay it: it is idempotent, and [run] heals the home
 /// arc every time anyway.
 ///
@@ -86,7 +88,7 @@ final class AchievementSync {
       } else {
         final backfill = await service.backfillCatalog();
         _backfilled = true;
-        changes = backfill.home;
+        changes = backfill.celebratable;
         stored = backfill.historical.isNotEmpty;
       }
       if (!changes.isEmpty || stored) {

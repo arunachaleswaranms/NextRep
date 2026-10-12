@@ -8,6 +8,7 @@ import 'package:nextrep/domain/achievement/achievement.dart';
 import 'package:nextrep/domain/habit/habit_edit.dart';
 import 'package:nextrep/domain/progress/habit_progress_rules.dart';
 import 'package:nextrep/domain/reflection/daily_reflection.dart';
+import 'package:nextrep/domain/winter_arc/current_arc_service.dart';
 import 'package:nextrep/domain/winter_arc/winter_arc_service.dart';
 import 'package:nextrep/domain/winter_arc/winter_arc_session.dart';
 import 'package:nextrep/features/achievements/achievements_controller.dart';
@@ -172,10 +173,10 @@ void main() {
 
       final backfill = await app.achievements.backfillCatalog();
       expect(backfill.historical, isEmpty);
-      expect(backfill.home.revoked, isEmpty);
-      expect(_byKey(backfill.home.unlocked), expectedFor(arc));
+      expect(backfill.celebratable.revoked, isEmpty);
+      expect(_byKey(backfill.celebratable.unlocked), expectedFor(arc));
       // Persisted now, dated in the past.
-      expect(backfill.home.unlocked.map((u) => u.unlockedAt).toSet(), {
+      expect(backfill.celebratable.unlocked.map((u) => u.unlockedAt).toSet(), {
         DateTime(2026, 12, 3, 10, 30),
       });
 
@@ -217,7 +218,7 @@ void main() {
     });
   });
 
-  test('C. the home arc celebrates its backfill once, as one card', () async {
+  test('C. the active arc celebrates its backfill once, as one card', () async {
     final arc = await upgradedActiveArc();
     final container = _container(app);
     final sync = container.read(achievementSyncProvider);
@@ -299,6 +300,99 @@ void main() {
       expect(await _rows(app.db, second.id), secondBefore);
     });
 
+    test('D2. latest completed Arc is backfilled silently when there is no '
+        'active Arc', () async {
+      final first = await firstArc();
+      // v1.0 left no Phase 10C unlocks; some newer version left one of its
+      // own.
+      await _forgetNewUnlocks(app.db);
+      await app.db
+          .into(app.db.achievementUnlocks)
+          .insert(
+            AchievementUnlocksCompanion.insert(
+              sessionId: first.id,
+              achievementKey: 'from_the_future',
+              unlockedOn: _on(first, 40),
+              unlockedAt: DateTime(2026, 8, 9, 7),
+            ),
+          );
+      // Months later: nothing unfinished, so the home is the completed arc.
+      app.clock.current = DateTime(2026, 12, 3, 10, 30);
+      expect(await app.sessions.currentSession(), isNull);
+      expect((await app.sessions.latestCompletedSession())?.id, first.id);
+      expect(
+        (await CurrentArcService(app.sessions).resolve()).home?.id,
+        first.id,
+      );
+      final before = await _rows(app.db, first.id);
+      expect(before.map((r) => r.achievementKey), contains('summit'));
+
+      final container = _container(app);
+      final sync = container.read(achievementSyncProvider);
+      expect(await sync.run(), isEmpty);
+
+      final after = await _rows(app.db, first.id);
+      for (final old in before) {
+        expect(after, contains(old), reason: old.achievementKey);
+      }
+      final expected = {
+        for (final r in before) r.achievementKey: r.unlockedOn,
+        for (final MapEntry(:key, :value) in expectedFor(first).entries)
+          key.id: value,
+        'day_75': _on(first, 75),
+      };
+      expect(await _stored(app.db, first.id), expected);
+      expect(expected['from_the_future'], _on(first, 40));
+      expect(container.read(celebrationQueueProvider), isEmpty);
+
+      // Again, in this app session and in the next one.
+      expect(await sync.run(), isEmpty);
+      final next = _container(app);
+      expect(await next.read(achievementSyncProvider).run(), isEmpty);
+      expect((await app.achievements.backfillCatalog()).isEmpty, isTrue);
+      expect(await _rows(app.db, first.id), after);
+      expect(container.read(celebrationQueueProvider), isEmpty);
+      expect(next.read(celebrationQueueProvider), isEmpty);
+    });
+
+    test('D3. the Summit a close-out earns is still celebrated, alone; the '
+        "arc's backfill stays silent", () async {
+      app.clock.current = DateTime(2026, 7, 1, 9);
+      await app.winterArc.beginSetup();
+      final arc = await app.winterArc.startWinterArc();
+      await _live(
+        app,
+        arc,
+        1,
+        34,
+        reflectOn: {for (var d = 1; d <= 18; d++) d},
+      );
+      // Last opened on Day 92; the next launch closes the arc out.
+      _goTo(app, arc, 92);
+      await app.achievements.reconcile();
+      await _forgetNewUnlocks(app.db);
+      _goTo(app, arc, 93);
+      await app.lifecycle.reconcile();
+      expect(await app.sessions.currentSession(), isNull);
+
+      final container = _container(app);
+      final sync = container.read(achievementSyncProvider);
+      expect(_byKey(await sync.run()), {AchievementKey.summit: _on(arc, 92)});
+      final celebrations = _celebrations(container);
+      expect(celebrations, hasLength(1));
+      expect(_byKey(celebrations.single.unlocks), {
+        AchievementKey.summit: _on(arc, 92),
+      });
+      final stored = await _stored(app.db, arc.id);
+      for (final MapEntry(:key, :value) in expectedFor(arc).entries) {
+        expect(stored[key.id], value, reason: key.id);
+      }
+      expect(stored['day_75'], _on(arc, 75));
+
+      expect(await sync.run(), isEmpty);
+      expect(container.read(celebrationQueueProvider), hasLength(1));
+    });
+
     test(
       'E. several completed arcs each earn from their own history only',
       () async {
@@ -315,7 +409,7 @@ void main() {
         await _forgetNewUnlocks(app.db);
 
         final backfill = await app.achievements.backfillCatalog();
-        expect(backfill.home.isEmpty, isTrue);
+        expect(backfill.celebratable.isEmpty, isTrue);
         expect(
           backfill.historical.keys,
           unorderedEquals([first.id, second.id]),

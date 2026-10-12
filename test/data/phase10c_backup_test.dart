@@ -54,7 +54,7 @@ void main() {
       expect(after, contains(row), reason: row.achievementKey);
     }
     final added = [
-      ...backfill.home.unlocked,
+      ...backfill.celebratable.unlocked,
       for (final list in backfill.historical.values) ...list,
     ];
     expect(after, hasLength(before.length + added.length));

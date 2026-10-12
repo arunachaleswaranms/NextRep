@@ -146,19 +146,21 @@ final class UnlockChanges {
 /// What one catalog backfill stored (`AchievementService.backfillCatalog`).
 final class CatalogBackfill {
   const CatalogBackfill({
-    this.home = const UnlockChanges(),
+    this.celebratable = const UnlockChanges(),
     this.historical = const {},
   });
 
-  /// The home arc's changes, as a normal reconciliation reports them. The
-  /// only ones ever celebrated.
-  final UnlockChanges home;
+  /// The only changes ever celebrated: the active arc's, as a normal
+  /// reconciliation reports them, or, with nothing unfinished, the Summit
+  /// that the latest completed arc's close-out stored. Empty while a new
+  /// arc is in setup. Never another unlock of a completed arc.
+  final UnlockChanges celebratable;
 
-  /// Unlocks newly stored for other started (completed) arcs, by session
-  /// id. Stored silently.
+  /// Unlocks newly stored for completed arcs, by session id. Stored
+  /// silently.
   final Map<int, List<AchievementUnlock>> historical;
 
-  bool get isEmpty => home.isEmpty && historical.isEmpty;
+  bool get isEmpty => celebratable.isEmpty && historical.isEmpty;
 }
 
 /// One catalog entry with its unlock, if any.

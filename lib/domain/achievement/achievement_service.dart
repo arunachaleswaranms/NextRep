@@ -70,38 +70,60 @@ final class AchievementService {
   /// stored too, each dated on the challenge date its history first earned
   /// it (not the day this runs).
   ///
-  /// The home arc is reconciled exactly as by [sync]. Every other started
-  /// arc is completed history: its days all lie before today, so it can
-  /// only gain unlocks, never lose one. Arcs in setup have no history and
+  /// Only the active arc's new unlocks may be celebrated: it is reconciled
+  /// exactly as by [sync]. Every completed arc, including the latest one
+  /// that the home shows when nothing is unfinished, is history and is
+  /// backfilled silently: its days all lie before today, so it can only
+  /// gain unlocks, never lose one. The one exception is that home arc's
+  /// Summit, which the close-out earns rather than the lived days: it is
+  /// left to the close-out reconciliation, as by [sync], so the Summit is
+  /// celebrated when an arc completes. Arcs in setup have no history and
   /// are skipped. Stored unlocks, including keys this version doesn't
   /// know, are never rewritten, and running it again changes nothing.
   Future<CatalogBackfill> backfillCatalog() => _queue.run(() async {
-    final home = (await _arcs.resolve()).home;
+    final arcs = await _arcs.resolve();
+    final active = arcs.active;
+    final home = arcs.home;
     final today = _clock.today();
     final historical = <int, List<AchievementUnlock>>{};
     for (final session in await _sessions.listSessions()) {
-      if (session.status == WinterArcStatus.setup || session.id == home?.id) {
+      if (session.status == WinterArcStatus.setup || session.id == active?.id) {
         continue;
       }
-      final changes = await _reconcile(session, today);
+      final changes = await _reconcile(
+        session,
+        today,
+        withSummit: session.id != home?.id,
+      );
       if (changes.unlocked.isNotEmpty) {
         historical[session.id] = changes.unlocked;
       }
     }
     return CatalogBackfill(
-      home: home == null
+      // The active arc's changes or, for a completed home arc, whatever its
+      // close-out still adds (the Summit): the rest of it is stored above.
+      celebratable: home == null
           ? const UnlockChanges()
           : await _reconcile(home, today),
       historical: historical,
     );
   });
 
+  /// Reconciles [session]'s unlocks with what its history earns. Without
+  /// [withSummit], the Summit is not stored (a stored one is kept: it is
+  /// dated on the arc's last day, never today).
   Future<UnlockChanges> _reconcile(
     WinterArcSession session,
-    LocalDate today,
-  ) async => _achievements.reconcileUnlocks(
+    LocalDate today, {
+    bool withSummit = true,
+  }) async => _achievements.reconcileUnlocks(
     session.id,
-    AchievementRules.evaluate(await _contextOf(session, today)),
+    [
+      for (final e in AchievementRules.evaluate(
+        await _contextOf(session, today),
+      ))
+        if (withSummit || e.key != AchievementKey.summit) e,
+    ],
     today: today,
     at: _clock.now(),
   );

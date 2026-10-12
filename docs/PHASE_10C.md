@@ -197,15 +197,29 @@ those unlocks from that history. The user doesn't have to earn them again.
 
 ### Algorithm: `AchievementService.backfillCatalog()`
 
-1. Resolve the home Arc: the active Arc or, with nothing unfinished, the
-   latest completed Arc.
+1. Resolve the arcs (`CurrentArcService.resolve()`): the **active** Arc,
+   if any, and the home Arc (`ArcResolution.home`, unchanged: the active
+   Arc or, with nothing unfinished, the latest completed Arc).
 2. For every started session (`listSessions()`, skipping `setup`), other
-   than the home Arc: evaluate the full catalog against its stored history
-   and reconcile its unlocks. These Arcs are completed history: every one
-   of their days is before today, so they can only gain unlocks, never
-   lose one.
-3. Reconcile the home Arc exactly as `sync()` does.
-4. Return `CatalogBackfill(home: UnlockChanges, historical: {sessionId: [unlocks]})`.
+   than the active Arc: evaluate the full catalog against its stored
+   history and reconcile its unlocks, **silently**. These Arcs are
+   completed history: every one of their days is before today, so they can
+   only gain unlocks, never lose one. This includes the latest completed
+   Arc when it is the home Arc; for that Arc only, the Summit is left to
+   step 3 (it is earned by the close-out, not by the lived days, and is
+   dated on the Arc's last day, so leaving it out never revokes it).
+3. Reconcile the home Arc exactly as `sync()` does. For the active Arc that
+   is its whole reconciliation. For a completed home Arc, step 2 already
+   stored everything else, so this adds at most its Summit: the close-out
+   celebration the app has had since Phase 3.
+4. Return `CatalogBackfill(celebratable: UnlockChanges, historical: {sessionId: [unlocks]})`.
+
+**Invariant.** Only the active Arc may surface newly backfilled
+achievements as a combined celebration. Every completed Arc, including the
+latest completed Arc shown as home when no current Arc exists, is
+backfilled silently. The only unlock of a completed Arc that can be
+celebrated is the Summit its close-out earns, exactly as `sync()` does
+when the close-out is first seen.
 
 It uses the existing `AchievementRepository.reconcileUnlocks`, unchanged:
 
@@ -226,11 +240,15 @@ reconcile the home Arc only. The app also starts one run at launch, so
 completed Arcs are backfilled even when the first screen isn't Today (for
 example while a new Arc is in setup).
 
-- The home Arc's new unlocks go out as **one** `AchievementCelebration`.
-  Several unlocks show as "N ACHIEVEMENTS UNLOCKED" with the existing
-  "+N more", never as one overlay after another.
-- Completed Arcs are backfilled **silently**: nothing is celebrated for an
-  Arc from months ago.
+- **Active Arc:** newly backfilled unlocks are celebrated once, as **one**
+  combined `AchievementCelebration`. Several unlocks show as "N
+  ACHIEVEMENTS UNLOCKED" with the existing "+N more", never as one overlay
+  after another.
+- **Completed Arcs:** always backfilled **silently**, including the latest
+  completed Arc that the home shows when no Arc is unfinished. Nothing is
+  celebrated for an Arc from months ago. The Summit of an Arc whose
+  close-out this run is the first to see is still celebrated, on its own,
+  as before Phase 10C.
 - The guard is a convenience. Correctness doesn't depend on it: the home
   Arc is reconciled on every run, and the backfill is idempotent.
 - The board and summary of a completed Arc re-read when the backfill stores
@@ -330,13 +348,13 @@ phase doesn't change. `android/`, `ios/`, `pubspec.yaml` and
 
 ## Tests
 
-New in this phase (73):
+New in this phase (75):
 
 | File | Tests | Covers |
 |---|---|---|
 | `test/domain/phase10c_achievement_rules_test.dart` | 33 | below / exact / later / today-undone for every new rule; disabled days, misses and Minimum Days; seasonal participation (joined Day 15, joined Day 61); stable-id vs title (renamed counts, custom lookalike and legacy `sleep_on_time` don't); Water target-agnostic; Sleep by completion only; titles and icons never change the result |
 | `test/domain/phase10c_catalog_test.dart` | 20 | the six templates field by field; no medical wording; icon and accent for every key; starter set unchanged; setup add, enabled, duplicate rejected, 12-habit limit, not seeded, a running Arc gains nothing; catalog of 32 with each key once; old ids identical, new ids unique snake_case; deterministic order; category sizes 4 / 9 / 3 / 7 / 4 / 5; titles; 32 distinct glyphs and palette accents |
-| `test/domain/phase10c_backfill_test.dart` | 7 | A: an upgraded active Arc gets exactly its 11 earned unlocks with historical dates, old and unknown rows untouched, no XP; B: idempotent; C: one combined celebration; D: a completed Arc backfilled silently; E: several completed Arcs, no cross-session contamination, setup skipped; F: new achievements reached today are revoked and restored once (14-day streak, Perfect Day 25, Day 30 totals and run); Water honours a raised goal and Minimum Days |
+| `test/domain/phase10c_backfill_test.dart` | 9 | A: an upgraded active Arc gets exactly its 11 earned unlocks with historical dates, old and unknown rows untouched, no XP; B: idempotent; C: the active Arc's one combined celebration; D: a completed Arc backfilled silently beside a newer active Arc; D2: the latest completed Arc with no current Arc (so it is home) is backfilled silently with historical dates, old and unknown rows untouched, zero celebrations, idempotent in the same and the next app session; D3: a close-out first seen by the backfill celebrates the Summit alone while the Arc's new unlocks are stored silently; E: several completed Arcs, no cross-session contamination, setup skipped; F: new achievements reached today are revoked and restored once (14-day streak, Perfect Day 25, Day 30 totals and run); Water honours a raised goal and Minimum Days |
 | `test/data/phase10c_backup_test.dart` | 5 | schema v5, format 2; a v1.0-era format-1 backup restores and backfills from its own history; a format-2 restore needs no further backfill; new template and achievement ids round-trip; unknown keys follow the existing rule |
 | `test/features/phase10c_flow_test.dart` | 5 | six headings in order, each of the 32 cards under its category, header semantics, locked / unlocked labels; a new achievement opens details and shares a 1080 × 1350 PNG writing nothing, a locked one can't; 2× text; the upgrade celebration as one card; the picker shows the six templates with their goals and icons, Hair Care is added once |
 | `test/features/share_card_render_test.dart` | +3 | Today's Progress and My Arc with 12 habits including the six new templates (no overflow, 1080 × 1350, own accents); every one of the 32 achievement cards renders |
@@ -353,13 +371,13 @@ with no duplicates.
 |---|---|
 | `dart format --output=none --set-exit-if-changed .` | clean |
 | `flutter analyze` | no issues |
-| `flutter test` | **766 / 766** (693 before) |
+| `flutter test` | **768 / 768** (693 before) |
 | Migrations | 39 / 39 |
 | Backup (format 1 + 2, incl. Phase 10C) | 76 / 76 |
 | Phase 10A (flow + reconciliation) | 21 / 21 |
 | Phase 10B (flow + card data + render) | 61 / 61 |
 | Phase 7 lifecycle + accessibility | 30 / 30 |
-| Phase 10C new | 70 / 70 (+3 in the render test) |
+| Phase 10C new | 72 / 72 (+3 in the render test) |
 | `flutter build apk --debug` | PASS |
 | `flutter build apk --release` | PASS (local; not a release candidate, not staged) |
 | `flutter build ios --simulator` | PASS |
