@@ -17,6 +17,11 @@ final class LocalNotificationScheduler implements ReminderScheduler {
 
   final FlutterLocalNotificationsPlugin _plugin;
 
+  /// What this process last scheduled, by id. Null until the first
+  /// complete replacement, and after any failure, so the next [schedule]
+  /// starts from a clean slate. Only kept in memory.
+  Map<int, PlannedReminder>? _scheduled;
+
   /// Sets up the plugin and returns the payload of the notification that
   /// launched the app, if the app was cold-started from one. [onTap]
   /// receives the payload of a notification tapped while the app is
@@ -66,11 +71,43 @@ final class LocalNotificationScheduler implements ReminderScheduler {
     return false;
   }
 
+  /// Makes the pending notifications exactly [reminders].
+  ///
+  /// The first call in a process replaces everything pending. Later calls
+  /// cancel only pending ids that left the plan and (re)schedule only
+  /// reminders that are new or changed, so logging Water doesn't reschedule
+  /// every daily and reflection reminder. Notifications already shown are
+  /// never removed.
   @override
   Future<void> schedule(List<PlannedReminder> reminders) async {
-    await _plugin.cancelAllPendingNotifications();
-    for (final reminder in reminders) {
-      await _plugin.zonedSchedule(
+    final known = _scheduled;
+    _scheduled = null;
+    if (known == null) {
+      await _plugin.cancelAllPendingNotifications();
+      for (final reminder in reminders) {
+        await _zonedSchedule(reminder);
+      }
+    } else {
+      final changes = ReminderChanges.between(
+        pending: {
+          for (final request in await _plugin.pendingNotificationRequests())
+            request.id,
+        },
+        known: known,
+        next: reminders,
+      );
+      for (final id in changes.cancel) {
+        await _plugin.cancel(id: id);
+      }
+      for (final reminder in changes.schedule) {
+        await _zonedSchedule(reminder);
+      }
+    }
+    _scheduled = {for (final reminder in reminders) reminder.id: reminder};
+  }
+
+  Future<void> _zonedSchedule(PlannedReminder reminder) =>
+      _plugin.zonedSchedule(
         id: reminder.id,
         title: reminder.title,
         body: reminder.body,
@@ -81,11 +118,13 @@ final class LocalNotificationScheduler implements ReminderScheduler {
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
         payload: reminder.payload,
       );
-    }
-  }
 
   @override
-  Future<void> cancelAll() => _plugin.cancelAllPendingNotifications();
+  Future<void> cancelAll() async {
+    _scheduled = null;
+    await _plugin.cancelAllPendingNotifications();
+    _scheduled = const {};
+  }
 
   static NotificationDetails _details(ReminderKind kind) => NotificationDetails(
     // One channel per kind, so either can be silenced in system settings.
@@ -100,6 +139,14 @@ final class LocalNotificationScheduler implements ReminderScheduler {
         'reflection_reminder',
         'Evening reflection',
         channelDescription: 'An evening prompt to reflect on the day.',
+        category: AndroidNotificationCategory.reminder,
+      ),
+      ReminderKind.hydration => const AndroidNotificationDetails(
+        'hydration_coach',
+        'Hydration Coach',
+        channelDescription:
+            "A nudge when today's Water is behind pace, during your active "
+            'hours.',
         category: AndroidNotificationCategory.reminder,
       ),
     },
