@@ -18,22 +18,30 @@ import '../xp/xp.dart';
 /// * Format 2 (Phase 6): each arc also states its kind (`rolling92` or
 ///   `seasonalWinter`) and its participation start; habits may be
 ///   clock-time (`timeBefore`) habits.
+/// * Format 3 (v1.2, Phase 11B): the reminder settings also hold Hydration
+///   Coach's active hours and mode, and the data holds Focus Guard's
+///   configuration (daily budget and selected app package names). Arcs
+///   are laid out as in format 2.
 ///
-/// The app writes format 2 only and reads both. A format-1 file keeps its
-/// meaning: its checksum and structure are checked by format-1 rules, and
-/// only then is each arc read as a rolling arc joined on its start date.
+/// The app writes format 3 only and reads all three. An older file keeps
+/// its meaning: its checksum and structure are checked by its own
+/// format's rules, and only then is it read into the current model (a
+/// format-1 arc as a rolling arc joined on its start date; Hydration Coach
+/// and Focus Guard at their defaults). NextRep 1.1 and earlier read only
+/// formats 1 and 2, so they reject a format-3 file as made by a newer
+/// version, changing nothing.
 abstract final class BackupFormat {
   /// The `product` field of every NextRep backup.
   static const product = 'NextRep';
 
   /// The format this app writes.
-  static const formatVersion = 2;
+  static const formatVersion = 3;
 
   /// The formats this app reads. Anything else, including a newer format,
   /// is rejected before any of it is interpreted.
-  static const readableVersions = {1, 2};
+  static const readableVersions = {1, 2, 3};
 
-  /// The checksum algorithm of formats 1 and 2.
+  /// The checksum algorithm of formats 1 to 3.
   static const checksumAlgorithm = 'sha256';
 
   /// File extension, without the dot.
@@ -109,26 +117,53 @@ final class BackupArc {
   final List<DailyReflection> reflections;
 }
 
-/// The reminder times. Whether reminders are on is deliberately not part
-/// of a backup: after a restore both are off until the user turns them on
-/// again, so restoring never starts notifications by surprise.
+/// The reminder settings: times, and Hydration Coach's active hours and
+/// mode. Whether any reminder is on is deliberately not part of a backup:
+/// after a restore the daily reminder, the evening reflection and
+/// Hydration Coach are all off until the user turns them on again, so
+/// restoring never starts notifications by surprise.
+///
+/// Formats 1 and 2 have no hydration settings; they read as the defaults.
 final class BackupReminderTimes {
-  const BackupReminderTimes({required this.daily, required this.reflection});
+  const BackupReminderTimes({
+    required this.daily,
+    required this.reflection,
+    this.hydrationWindow = HydrationWindow.defaults,
+    this.hydrationMode = HydrationMode.balanced,
+  });
 
   final ReminderTime daily;
   final ReminderTime reflection;
+  final HydrationWindow hydrationWindow;
+  final HydrationMode hydrationMode;
 }
 
-/// Everything a backup restores: every arc, and the reminder times if any
-/// were ever saved.
+/// Focus Guard's configuration as a backup keeps it (format 3): the daily
+/// budget and the selected apps' package names, in the user's order.
+///
+/// Never whether it is on, when it last nudged, or any app usage: after a
+/// restore Focus Guard is off until the user turns it on again.
+final class BackupFocusGuard {
+  const BackupFocusGuard({
+    required this.dailyBudgetMinutes,
+    required this.selectedPackages,
+  });
+
+  final int dailyBudgetMinutes;
+  final List<String> selectedPackages;
+}
+
+/// Everything a backup restores: every arc, and the reminder settings and
+/// Focus Guard configuration if they were ever saved.
 final class BackupData {
-  const BackupData({required this.arcs, this.reminders});
+  const BackupData({required this.arcs, this.reminders, this.focusGuard});
 
   static const empty = BackupData(arcs: []);
 
   /// Every arc, oldest first.
   final List<BackupArc> arcs;
   final BackupReminderTimes? reminders;
+  final BackupFocusGuard? focusGuard;
 
   bool get isEmpty => arcs.isEmpty;
 }

@@ -20,6 +20,11 @@ typedef Json = Map<String, dynamic>;
 Uint8List _v1Fixture() =>
     File('test/fixtures/phase5_backup_v1.nextrep').readAsBytesSync();
 
+/// A genuine format-2 file, written by the v1.1 encoder (`main` at
+/// 1846611) from [seasonalSource]'s synthetic data.
+Uint8List _v2Fixture() =>
+    File('test/fixtures/v1_1_backup_v2.nextrep').readAsBytesSync();
+
 Json _json(Uint8List bytes) => jsonDecode(utf8.decode(bytes)) as Json;
 
 Uint8List _resign(Json json) {
@@ -48,18 +53,20 @@ Matcher _rejectedAs(BackupProblem problem) =>
 
 void main() {
   late Uint8List v2;
+  late Uint8List v3;
 
   setUpAll(() async {
+    v2 = _v2Fixture();
     final app = await seasonalSource();
-    v2 = (await app.backup.export()).bytes;
+    v3 = (await app.backup.export()).bytes;
     await app.db.close();
   });
 
   group('format 2', () {
-    test('exports formatVersion 2 with arc kinds and participation', () {
+    test('a v1.1 file is format 2, with arc kinds and participation', () {
       final json = _json(v2);
       expect(json['formatVersion'], 2);
-      expect(BackupFormat.formatVersion, 2);
+      expect(BackupFormat.readableVersions, contains(2));
       final rolling = _arc(json, 0);
       final seasonal = _arc(json, 1);
       expect(rolling['kind'], 'rolling92');
@@ -111,14 +118,28 @@ void main() {
       });
     });
 
-    test('encoding is deterministic, checksum included', () {
-      final again = BackupCodec.encode(BackupCodec.decode(v2));
-      expect(again, v2);
+    test('its checksum is SHA-256 of the canonical body', () {
       final body = _json(v2)..remove('checksum');
       expect(
         (_json(v2)['checksum'] as Json)['value'],
         BackupCodec.checksumOf(body),
       );
+    });
+
+    test('it reads as the same arcs as today\'s format-3 export of the same '
+        'data', () {
+      final fromV2 = BackupCodec.encode(BackupCodec.decode(v2));
+      final fromV3 = BackupCodec.encode(BackupCodec.decode(v3));
+      expect(_json(fromV2)['formatVersion'], 3);
+      expect(
+        ((_json(fromV2)['data'] as Json)['arcs'] as List),
+        ((_json(fromV3)['data'] as Json)['arcs'] as List),
+      );
+    });
+
+    test('encoding is deterministic, checksum included', () {
+      final again = BackupCodec.encode(BackupCodec.decode(v3));
+      expect(again, v3);
     });
   });
 
@@ -199,8 +220,13 @@ void main() {
       expect(() => _read(missing), _rejectedAs(BackupProblem.invalidData));
     });
 
+    test('a format-2 body is not silently read as format 3', () {
+      final relabelled = _mutate(v2, (json) => json['formatVersion'] = 3);
+      expect(() => _read(relabelled), _rejectedAs(BackupProblem.invalidData));
+    });
+
     test('a future version is rejected', () {
-      for (final version in [3, 4, 100]) {
+      for (final version in [4, 100]) {
         final future = _mutate(v2, (json) => json['formatVersion'] = version);
         expect(
           () => _read(future),

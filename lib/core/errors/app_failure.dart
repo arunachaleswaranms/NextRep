@@ -86,6 +86,10 @@ enum DomainRule {
   /// A session would break the arc invariants (dates, kind,
   /// participation).
   invalidArc,
+
+  /// Hydration Coach's active hours aren't a same-day window of 8 to 18
+  /// hours.
+  invalidHydrationWindow,
 }
 
 /// A domain rule rejected the requested action. Nothing was persisted.

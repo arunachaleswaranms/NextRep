@@ -19,6 +19,8 @@ abstract interface class BackupStore {
   ///
   /// Arc ids are shifted past every id this database has used, so no
   /// restored arc reuses one (a fresh install keeps the backup's ids).
-  /// Reminder times are restored with both reminders off.
+  /// Reminder settings are restored with every reminder off, Hydration
+  /// Coach included; Focus Guard's budget and apps are restored with Focus
+  /// Guard off and no nudge on record.
   Future<void> replaceAll(ValidatedBackup backup);
 }

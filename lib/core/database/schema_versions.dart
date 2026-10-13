@@ -1214,11 +1214,390 @@ i1.GeneratedColumn<String> _column_45(String aliasedName) =>
       type: i1.DriftSqlType.string,
       $customConstraints: 'NULL',
     );
+
+final class Schema6 extends i0.VersionedSchema {
+  Schema6({required super.database}) : super(version: 6);
+  @override
+  late final List<i1.DatabaseSchemaEntity> entities = [
+    winterArcSessions,
+    habits,
+    dailyHabitProgressEntries,
+    xpTransactions,
+    habitRevisions,
+    dayModes,
+    achievementUnlocks,
+    dailyReflections,
+    reminderPreferences,
+    focusGuardPreferences,
+    focusGuardSelectedApps,
+    singleOpenSession,
+  ];
+  late final Shape9 winterArcSessions = Shape9(
+    source: i0.VersionedTable(
+      entityName: 'winter_arc_sessions',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: [],
+      columns: [
+        _column_0,
+        _column_1,
+        _column_2,
+        _column_3,
+        _column_4,
+        _column_5,
+        _column_44,
+        _column_45,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape1 habits = Shape1(
+    source: i0.VersionedTable(
+      entityName: 'habits',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(session_id, id)'],
+      columns: [
+        _column_6,
+        _column_7,
+        _column_8,
+        _column_9,
+        _column_10,
+        _column_11,
+        _column_12,
+        _column_13,
+        _column_14,
+        _column_4,
+        _column_15,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape2 dailyHabitProgressEntries = Shape2(
+    source: i0.VersionedTable(
+      entityName: 'daily_habit_progress_entries',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: [
+        'PRIMARY KEY(session_id, habit_id, date)',
+        'FOREIGN KEY(session_id, habit_id)REFERENCES habits(session_id, id)ON DELETE CASCADE',
+      ],
+      columns: [
+        _column_16,
+        _column_17,
+        _column_18,
+        _column_19,
+        _column_20,
+        _column_21,
+        _column_22,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape3 xpTransactions = Shape3(
+    source: i0.VersionedTable(
+      entityName: 'xp_transactions',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['UNIQUE(session_id, source_key)'],
+      columns: [
+        _column_0,
+        _column_6,
+        _column_23,
+        _column_24,
+        _column_25,
+        _column_26,
+        _column_18,
+        _column_4,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape4 habitRevisions = Shape4(
+    source: i0.VersionedTable(
+      entityName: 'habit_revisions',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: [
+        'PRIMARY KEY(session_id, habit_id, effective_from)',
+        'FOREIGN KEY(session_id, habit_id)REFERENCES habits(session_id, id)ON DELETE CASCADE',
+      ],
+      columns: [
+        _column_16,
+        _column_17,
+        _column_27,
+        _column_10,
+        _column_28,
+        _column_13,
+        _column_4,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape5 dayModes = Shape5(
+    source: i0.VersionedTable(
+      entityName: 'day_modes',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(session_id, date)'],
+      columns: [_column_6, _column_18, _column_29, _column_30],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape6 achievementUnlocks = Shape6(
+    source: i0.VersionedTable(
+      entityName: 'achievement_unlocks',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(session_id, achievement_key)'],
+      columns: [_column_6, _column_31, _column_32, _column_33],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape7 dailyReflections = Shape7(
+    source: i0.VersionedTable(
+      entityName: 'daily_reflections',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(session_id, date)'],
+      columns: [
+        _column_6,
+        _column_18,
+        _column_34,
+        _column_35,
+        _column_36,
+        _column_4,
+        _column_22,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape10 reminderPreferences = Shape10(
+    source: i0.VersionedTable(
+      entityName: 'reminder_preferences',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(id)'],
+      columns: [
+        _column_37,
+        _column_38,
+        _column_39,
+        _column_40,
+        _column_41,
+        _column_42,
+        _column_43,
+        _column_22,
+        _column_46,
+        _column_47,
+        _column_48,
+        _column_49,
+        _column_50,
+        _column_51,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape11 focusGuardPreferences = Shape11(
+    source: i0.VersionedTable(
+      entityName: 'focus_guard_preferences',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(id)'],
+      columns: [_column_37, _column_13, _column_52, _column_53, _column_22],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape12 focusGuardSelectedApps = Shape12(
+    source: i0.VersionedTable(
+      entityName: 'focus_guard_selected_apps',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(package_name)', 'UNIQUE(sort_order)'],
+      columns: [_column_54, _column_55, _column_56],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  final i1.Index singleOpenSession = i1.Index(
+    'single_open_session',
+    'CREATE UNIQUE INDEX single_open_session ON winter_arc_sessions ((status IN (\'setup\', \'active\'))) WHERE status IN (\'setup\', \'active\')',
+  );
+}
+
+class Shape10 extends i0.VersionedTable {
+  Shape10({required super.source, required super.alias}) : super.aliased();
+  i1.GeneratedColumn<int> get id =>
+      columnsByName['id']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get dailyEnabled =>
+      columnsByName['daily_enabled']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get dailyHour =>
+      columnsByName['daily_hour']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get dailyMinute =>
+      columnsByName['daily_minute']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get reflectionEnabled =>
+      columnsByName['reflection_enabled']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get reflectionHour =>
+      columnsByName['reflection_hour']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get reflectionMinute =>
+      columnsByName['reflection_minute']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get updatedAt =>
+      columnsByName['updated_at']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get hydrationEnabled =>
+      columnsByName['hydration_enabled']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get hydrationStartHour =>
+      columnsByName['hydration_start_hour']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get hydrationStartMinute =>
+      columnsByName['hydration_start_minute']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get hydrationEndHour =>
+      columnsByName['hydration_end_hour']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get hydrationEndMinute =>
+      columnsByName['hydration_end_minute']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get hydrationMode =>
+      columnsByName['hydration_mode']! as i1.GeneratedColumn<String>;
+}
+
+i1.GeneratedColumn<int> _column_46(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'hydration_enabled',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.int,
+      $customConstraints:
+          'NOT NULL DEFAULT 0 CHECK (hydration_enabled IN (0, 1))',
+      defaultValue: const i1.CustomExpression('0'),
+    );
+i1.GeneratedColumn<int> _column_47(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'hydration_start_hour',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.int,
+      $customConstraints:
+          'NOT NULL DEFAULT 8 CHECK (hydration_start_hour BETWEEN 0 AND 23)',
+      defaultValue: const i1.CustomExpression('8'),
+    );
+i1.GeneratedColumn<int> _column_48(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'hydration_start_minute',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.int,
+      $customConstraints:
+          'NOT NULL DEFAULT 0 CHECK (hydration_start_minute BETWEEN 0 AND 59)',
+      defaultValue: const i1.CustomExpression('0'),
+    );
+i1.GeneratedColumn<int> _column_49(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'hydration_end_hour',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.int,
+      $customConstraints:
+          'NOT NULL DEFAULT 20 CHECK (hydration_end_hour BETWEEN 0 AND 23)',
+      defaultValue: const i1.CustomExpression('20'),
+    );
+i1.GeneratedColumn<int> _column_50(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'hydration_end_minute',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NOT NULL DEFAULT 0 CHECK (hydration_end_minute BETWEEN 0 AND 59 AND((hydration_end_hour * 60 + hydration_end_minute)- hydration_start_hour * 60)- hydration_start_minute BETWEEN 480 AND 1080)',
+      defaultValue: const i1.CustomExpression('0'),
+    );
+i1.GeneratedColumn<String> _column_51(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'hydration_mode',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL DEFAULT \'balanced\' CHECK (hydration_mode IN (\'gentle\', \'balanced\', \'supportive\'))',
+      defaultValue: const i1.CustomExpression('\'balanced\''),
+    );
+
+class Shape11 extends i0.VersionedTable {
+  Shape11({required super.source, required super.alias}) : super.aliased();
+  i1.GeneratedColumn<int> get id =>
+      columnsByName['id']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get enabled =>
+      columnsByName['enabled']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get dailyBudgetMinutes =>
+      columnsByName['daily_budget_minutes']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get lastNudgedOn =>
+      columnsByName['last_nudged_on']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get updatedAt =>
+      columnsByName['updated_at']! as i1.GeneratedColumn<int>;
+}
+
+i1.GeneratedColumn<int> _column_52(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'daily_budget_minutes',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.int,
+      $customConstraints:
+          'NOT NULL CHECK (daily_budget_minutes BETWEEN 1 AND 1440)',
+    );
+i1.GeneratedColumn<String> _column_53(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'last_nudged_on',
+      aliasedName,
+      true,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NULL',
+    );
+
+class Shape12 extends i0.VersionedTable {
+  Shape12({required super.source, required super.alias}) : super.aliased();
+  i1.GeneratedColumn<String> get packageName =>
+      columnsByName['package_name']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get sortOrder =>
+      columnsByName['sort_order']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get selectedAt =>
+      columnsByName['selected_at']! as i1.GeneratedColumn<int>;
+}
+
+i1.GeneratedColumn<String> _column_54(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'package_name',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints:
+          'NOT NULL CHECK (LENGTH(package_name) BETWEEN 3 AND 255)',
+    );
+i1.GeneratedColumn<int> _column_55(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'sort_order',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NOT NULL CHECK (sort_order >= 0)',
+    );
+i1.GeneratedColumn<int> _column_56(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'selected_at',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NOT NULL',
+    );
 i0.MigrationStepWithVersion migrationSteps({
   required Future<void> Function(i1.Migrator m, Schema2 schema) from1To2,
   required Future<void> Function(i1.Migrator m, Schema3 schema) from2To3,
   required Future<void> Function(i1.Migrator m, Schema4 schema) from3To4,
   required Future<void> Function(i1.Migrator m, Schema5 schema) from4To5,
+  required Future<void> Function(i1.Migrator m, Schema6 schema) from5To6,
 }) {
   return (currentVersion, database) async {
     switch (currentVersion) {
@@ -1242,6 +1621,11 @@ i0.MigrationStepWithVersion migrationSteps({
         final migrator = i1.Migrator(database, schema);
         await from4To5(migrator, schema);
         return 5;
+      case 5:
+        final schema = Schema6(database: database);
+        final migrator = i1.Migrator(database, schema);
+        await from5To6(migrator, schema);
+        return 6;
       default:
         throw ArgumentError.value('Unknown migration from $currentVersion');
     }
@@ -1253,11 +1637,13 @@ i1.OnUpgrade stepByStep({
   required Future<void> Function(i1.Migrator m, Schema3 schema) from2To3,
   required Future<void> Function(i1.Migrator m, Schema4 schema) from3To4,
   required Future<void> Function(i1.Migrator m, Schema5 schema) from4To5,
+  required Future<void> Function(i1.Migrator m, Schema6 schema) from5To6,
 }) => i0.VersionedSchema.stepByStepHelper(
   step: migrationSteps(
     from1To2: from1To2,
     from2To3: from2To3,
     from3To4: from3To4,
     from4To5: from4To5,
+    from5To6: from5To6,
   ),
 );

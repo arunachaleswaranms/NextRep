@@ -6,6 +6,7 @@ import 'package:crypto/crypto.dart';
 import '../../core/errors/app_failure.dart';
 import '../../core/time/local_date.dart';
 import '../achievement/achievement.dart';
+import '../focus_guard/focus_guard_settings.dart';
 import '../habit/habit.dart';
 import '../habit/habit_config.dart';
 import '../progress/daily_habit_progress.dart';
@@ -47,9 +48,17 @@ final class _Layout {
     habitTypes: [HabitType.binary, HabitType.count, HabitType.duration],
   );
 
-  /// Phase 6.
+  /// Phase 6. Frozen: never change it.
   static const v2 = _Layout._(
     version: 2,
+    arcFields: {..._sharedArcFields, 'kind', 'participationStartDate'},
+    habitTypes: HabitType.values,
+  );
+
+  /// v1.2 (Phase 11B): arcs as in format 2, plus hydration settings and
+  /// Focus Guard.
+  static const v3 = _Layout._(
+    version: 3,
     arcFields: {..._sharedArcFields, 'kind', 'participationStartDate'},
     habitTypes: HabitType.values,
   );
@@ -57,6 +66,7 @@ final class _Layout {
   static _Layout? of(int version) => switch (version) {
     1 => v1,
     2 => v2,
+    3 => v3,
     _ => null,
   };
 
@@ -65,9 +75,12 @@ final class _Layout {
   final List<HabitType> habitTypes;
 
   bool get hasArcKinds => version >= 2;
+
+  /// Hydration settings in `reminders`, and a `focusGuard` object.
+  bool get hasV12Settings => version >= 3;
 }
 
-/// Reads the NextRep backup file formats 1 and 2, and writes format 2.
+/// Reads the NextRep backup file formats 1, 2 and 3, and writes format 3.
 ///
 /// A backup is a UTF-8 JSON object:
 ///
@@ -75,9 +88,13 @@ final class _Layout {
 /// {
 ///   "appVersion": "1.0.0",
 ///   "checksum": {"algorithm": "sha256", "value": "<64 hex digits>"},
-///   "data": {"arcs": [...], "reminders": {...} | null},
+///   "data": {
+///     "arcs": [...],
+///     "reminders": {...} | null,
+///     "focusGuard": {...} | null
+///   },
 ///   "exportedAt": "2026-10-04T09:00:00.000Z",
-///   "formatVersion": 2,
+///   "formatVersion": 3,
 ///   "product": "NextRep"
 /// }
 /// ```
@@ -86,6 +103,14 @@ final class _Layout {
 /// `seasonalWinter`) and `participationStartDate` (a date, or null while
 /// the arc is in setup), and allows the `timeBefore` habit type. Format 1
 /// has neither field and only the binary, count and duration types.
+///
+/// Format 3 keeps the format-2 arcs and adds `hydrationStart`,
+/// `hydrationEnd` (`HH:MM`, a valid Hydration Coach window) and
+/// `hydrationMode` (`gentle`, `balanced` or `supportive`) to `reminders`,
+/// and `data.focusGuard`: `{"dailyBudgetMinutes": 60, "selectedApps":
+/// ["<package name>", ...]}` or null. No enabled state is written for any
+/// of them. Formats 1 and 2 have no `focusGuard` field and no hydration
+/// settings, and stay exactly as they were.
 ///
 /// **Version dispatch.** [decode] reads `formatVersion` first and refuses
 /// any version it doesn't know (a future format is never partially read).
@@ -291,6 +316,16 @@ abstract final class BackupCodec {
         final r => {
           'dailyTime': _time(r.daily),
           'reflectionTime': _time(r.reflection),
+          'hydrationStart': _time(r.hydrationWindow.start),
+          'hydrationEnd': _time(r.hydrationWindow.end),
+          'hydrationMode': r.hydrationMode.name,
+        },
+      },
+      'focusGuard': switch (d.data.focusGuard) {
+        null => null,
+        final f => {
+          'dailyBudgetMinutes': f.dailyBudgetMinutes,
+          'selectedApps': [...f.selectedPackages],
         },
       },
     },
@@ -395,19 +430,69 @@ abstract final class BackupCodec {
   // Reading
 
   static BackupData _dataFromJson(_Obj data, _Layout layout) {
-    data.only(const {'arcs', 'reminders'});
+    final v12 = layout.hasV12Settings;
+    data.only({'arcs', 'reminders', if (v12) 'focusGuard'});
     return BackupData(
       arcs: [for (final arc in data.objects('arcs')) _arcFromJson(arc, layout)],
       reminders: switch (data.optObject('reminders')) {
         null => null,
-        final r => () {
-          r.only(const {'dailyTime', 'reflectionTime'});
-          return BackupReminderTimes(
-            daily: r.time('dailyTime'),
-            reflection: r.time('reflectionTime'),
+        final r => _remindersFromJson(r, layout),
+      },
+      focusGuard: switch (v12 ? data.optObject('focusGuard') : null) {
+        null => null,
+        final f => () {
+          f.only(const {'dailyBudgetMinutes', 'selectedApps'});
+          return BackupFocusGuard(
+            dailyBudgetMinutes: f.integer(
+              'dailyBudgetMinutes',
+              min: FocusGuardRules.minDailyBudgetMinutes,
+              max: FocusGuardRules.maxDailyBudgetMinutes,
+            ),
+            // Well-formed, unique and few enough: checked by the validator.
+            selectedPackages: f.strings(
+              'selectedApps',
+              maxLength: FocusGuardRules.maxPackageNameLength,
+            ),
           );
         }(),
       },
+    );
+  }
+
+  static BackupReminderTimes _remindersFromJson(_Obj r, _Layout layout) {
+    if (!layout.hasV12Settings) {
+      r.only(const {'dailyTime', 'reflectionTime'});
+      return BackupReminderTimes(
+        daily: r.time('dailyTime'),
+        reflection: r.time('reflectionTime'),
+      );
+    }
+    r.only(const {
+      'dailyTime',
+      'reflectionTime',
+      'hydrationStart',
+      'hydrationEnd',
+      'hydrationMode',
+    });
+    final window = HydrationWindow.tryCreate(
+      r.time('hydrationStart'),
+      r.time('hydrationEnd'),
+    );
+    if (window == null) {
+      throw BackupFailure(
+        BackupProblem.invalidData,
+        '${r.path}.hydrationEnd: not a valid Hydration Coach window',
+      );
+    }
+    return BackupReminderTimes(
+      daily: r.time('dailyTime'),
+      reflection: r.time('reflectionTime'),
+      hydrationWindow: window,
+      hydrationMode: r.choice(
+        'hydrationMode',
+        HydrationMode.values,
+        (v) => v.name,
+      ),
     );
   }
 
@@ -740,6 +825,19 @@ final class _Obj {
     if (v == null) return null;
     if (v is! Map<String, Object?>) _fail(key, 'expected an object');
     return _Obj(v, '$path.$key');
+  }
+
+  /// A list of non-empty strings of at most [maxLength] UTF-16 units.
+  List<String> strings(String key, {required int maxLength}) {
+    final v = _value(key);
+    if (v is! List<Object?>) _fail(key, 'expected a list');
+    return [
+      for (final (i, item) in v.indexed)
+        if (item is String && item.isNotEmpty && item.length <= maxLength)
+          item
+        else
+          _fail('$key[$i]', 'expected non-empty text'),
+    ];
   }
 
   List<_Obj> objects(String key) {

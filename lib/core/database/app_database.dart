@@ -1,8 +1,10 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 
+import '../../domain/focus_guard/focus_guard_settings.dart';
 import '../../domain/habit/habit.dart';
 import '../../domain/progress/day_mode.dart';
+import '../../domain/reminder/reminder_preferences.dart';
 import '../../domain/winter_arc/winter_arc_session.dart';
 import '../../domain/xp/xp.dart';
 import '../time/local_date.dart';
@@ -27,6 +29,8 @@ part 'app_database.g.dart';
     AchievementUnlocks,
     DailyReflections,
     ReminderPrefs,
+    FocusGuardPrefs,
+    FocusGuardSelectedApps,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -36,7 +40,7 @@ class AppDatabase extends _$AppDatabase {
   factory AppDatabase.open() => AppDatabase(driftDatabase(name: 'nextrep'));
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -48,6 +52,7 @@ class AppDatabase extends _$AppDatabase {
       from2To3: _from2To3,
       from3To4: _from3To4,
       from4To5: _from4To5,
+      from5To6: _from5To6,
     ),
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
@@ -142,5 +147,29 @@ class AppDatabase extends _$AppDatabase {
       UPDATE winter_arc_sessions SET participation_start_date = start_date
       WHERE status IN ('active', 'completed')
     ''');
+  }
+
+  /// v5 → v6: Hydration Coach preferences and Focus Guard's tables (the
+  /// one schema change of v1.2).
+  ///
+  /// Additive only: six new columns on `reminder_preferences` and two new,
+  /// empty tables; no row is rewritten. An existing preferences row gets
+  /// the column defaults (Hydration Coach off, 08:00 – 20:00, balanced) and
+  /// keeps every v5 value. Focus Guard stays empty until Phase 11C.
+  static Future<void> _from5To6(Migrator m, Schema6 schema) async {
+    final prefs = schema.reminderPreferences;
+    // In this order: the end-minute check reads the other window columns.
+    for (final column in [
+      prefs.hydrationEnabled,
+      prefs.hydrationStartHour,
+      prefs.hydrationStartMinute,
+      prefs.hydrationEndHour,
+      prefs.hydrationEndMinute,
+      prefs.hydrationMode,
+    ]) {
+      await m.addColumn(prefs, column);
+    }
+    await m.createTable(schema.focusGuardPreferences);
+    await m.createTable(schema.focusGuardSelectedApps);
   }
 }

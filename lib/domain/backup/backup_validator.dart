@@ -2,6 +2,7 @@ import 'package:characters/characters.dart';
 
 import '../../core/errors/app_failure.dart';
 import '../../core/time/local_date.dart';
+import '../focus_guard/focus_guard_settings.dart';
 import '../habit/habit.dart';
 import '../habit/habit_config.dart';
 import '../habit/habit_edit.dart';
@@ -54,6 +55,8 @@ final class ValidatedBackup {
 /// * reflections follow the Journal's rules (trimmed, not empty, at most
 ///   240 characters per answer)
 /// * an arc still in setup has no history yet
+/// * Focus Guard (format 3): at most [FocusGuardRules.maxSelectedApps]
+///   selected apps, each a well-formed package name, none twice
 ///
 /// Error messages carry positions (`arcs[1].progress[4]`) and rule names
 /// only, never values from the file.
@@ -79,7 +82,23 @@ abstract final class BackupValidator {
       if (unfinished > 1) _fail(at, 'more than one unfinished arc');
       _checkArc(arc, at, latest);
     }
+    if (data.focusGuard case final focusGuard?) _checkFocusGuard(focusGuard);
     return ValidatedBackup._(document);
+  }
+
+  static void _checkFocusGuard(BackupFocusGuard focusGuard) {
+    const at = 'focusGuard.selectedApps';
+    final packages = focusGuard.selectedPackages;
+    if (packages.length > FocusGuardRules.maxSelectedApps) {
+      _fail(at, 'too many apps');
+    }
+    final seen = <String>{};
+    for (final (i, packageName) in packages.indexed) {
+      if (!FocusGuardRules.isValidPackage(packageName)) {
+        _fail('$at[$i]', 'not a package name');
+      }
+      if (!seen.add(packageName)) _fail('$at[$i]', 'duplicate app');
+    }
   }
 
   static void _checkArc(BackupArc arc, String at, LocalDate latest) {
