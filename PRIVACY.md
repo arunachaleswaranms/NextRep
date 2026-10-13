@@ -29,7 +29,7 @@ your device:
 | Arcs | Rolling or Seasonal, start, end and join dates, status |
 | XP and achievements | the XP ledger and the date each achievement was unlocked |
 | Journal reflections | mood, "one win", "one thing to improve", per day |
-| Reminder settings | whether each reminder is on, and its time |
+| Reminder settings | whether each reminder is on, its time, and Hydration Coach's active hours and style |
 
 Streaks, levels, Perfect Days, the Journey, summaries and Insights are
 worked out on the device from that data. They are not stored separately and
@@ -124,7 +124,8 @@ that app, and the people you send it to, to see.
   The checksum is not a security feature: it doesn't make the file secure,
   private or tamper-proof.
 - Restoring reads only the file you pick. It replaces the data on the device
-  after you confirm twice, and reminders come back turned off.
+  after you confirm twice, and reminders (Hydration Coach included) come
+  back turned off.
 
 ## Your device's own backups
 
@@ -145,7 +146,10 @@ can turn them off in system settings.
 - They are local notifications, scheduled on your device. There is no push
   service and no Firebase.
 - Notification text is generic ("Your Winter Arc is waiting.", "How did
-  today go?"). It never includes your habits or reflections.
+  today go?", "Hydration check"). It never includes your habits, amounts,
+  goals or reflections.
+- Hydration Coach reads your Water progress on the device to decide whether
+  to nudge you. Nothing about it leaves the device.
 - If you turn notifications off in system settings, NextRep keeps your
   reminder setting, tells you notifications are off and doesn't ask again.
 

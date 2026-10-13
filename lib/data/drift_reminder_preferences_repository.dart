@@ -5,7 +5,7 @@ import '../domain/reminder/reminder_preferences.dart';
 import 'persistence_guard.dart';
 
 /// The single `reminder_preferences` row (id 1). No row means the defaults:
-/// both reminders off.
+/// every reminder off.
 final class DriftReminderPreferencesRepository
     implements ReminderPreferencesRepository {
   const DriftReminderPreferencesRepository(this._db);
@@ -27,6 +27,13 @@ final class DriftReminderPreferencesRepository
         dailyTime: ReminderTime(row.dailyHour, row.dailyMinute),
         reflectionEnabled: row.reflectionEnabled,
         reflectionTime: ReminderTime(row.reflectionHour, row.reflectionMinute),
+        hydrationEnabled: row.hydrationEnabled,
+        // The table's CHECK only admits valid windows.
+        hydrationWindow: HydrationWindow(
+          ReminderTime(row.hydrationStartHour, row.hydrationStartMinute),
+          ReminderTime(row.hydrationEndHour, row.hydrationEndMinute),
+        ),
+        hydrationMode: row.hydrationMode,
       );
     },
   );
@@ -34,6 +41,7 @@ final class DriftReminderPreferencesRepository
   @override
   Future<void> save(ReminderPreferences preferences, {required DateTime at}) =>
       guardPersistence('save reminder preferences', () async {
+        final window = preferences.hydrationWindow;
         await _db
             .into(_db.reminderPrefs)
             .insertOnConflictUpdate(
@@ -46,6 +54,12 @@ final class DriftReminderPreferencesRepository
                 reflectionHour: preferences.reflectionTime.hour,
                 reflectionMinute: preferences.reflectionTime.minute,
                 updatedAt: at,
+                hydrationEnabled: Value(preferences.hydrationEnabled),
+                hydrationStartHour: Value(window.start.hour),
+                hydrationStartMinute: Value(window.start.minute),
+                hydrationEndHour: Value(window.end.hour),
+                hydrationEndMinute: Value(window.end.minute),
+                hydrationMode: Value(preferences.hydrationMode),
               ),
             );
       });

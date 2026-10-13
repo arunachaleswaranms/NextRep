@@ -3941,6 +3941,91 @@ class $ReminderPrefsTable extends ReminderPrefs
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _hydrationEnabledMeta = const VerificationMeta(
+    'hydrationEnabled',
+  );
+  @override
+  late final GeneratedColumn<bool> hydrationEnabled = GeneratedColumn<bool>(
+    'hydration_enabled',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("hydration_enabled" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _hydrationStartHourMeta =
+      const VerificationMeta('hydrationStartHour');
+  @override
+  late final GeneratedColumn<int> hydrationStartHour = GeneratedColumn<int>(
+    'hydration_start_hour',
+    aliasedName,
+    false,
+    check: () => ComparableExpr(hydrationStartHour).isBetweenValues(0, 23),
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(8),
+  );
+  static const VerificationMeta _hydrationStartMinuteMeta =
+      const VerificationMeta('hydrationStartMinute');
+  @override
+  late final GeneratedColumn<int> hydrationStartMinute = GeneratedColumn<int>(
+    'hydration_start_minute',
+    aliasedName,
+    false,
+    check: () => ComparableExpr(hydrationStartMinute).isBetweenValues(0, 59),
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _hydrationEndHourMeta = const VerificationMeta(
+    'hydrationEndHour',
+  );
+  @override
+  late final GeneratedColumn<int> hydrationEndHour = GeneratedColumn<int>(
+    'hydration_end_hour',
+    aliasedName,
+    false,
+    check: () => ComparableExpr(hydrationEndHour).isBetweenValues(0, 23),
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(20),
+  );
+  static const VerificationMeta _hydrationEndMinuteMeta =
+      const VerificationMeta('hydrationEndMinute');
+  @override
+  late final GeneratedColumn<int> hydrationEndMinute = GeneratedColumn<int>(
+    'hydration_end_minute',
+    aliasedName,
+    false,
+    check: () =>
+        ComparableExpr(hydrationEndMinute).isBetweenValues(0, 59) &
+        ComparableExpr(
+          (hydrationEndHour * const Constant(60) +
+              hydrationEndMinute -
+              hydrationStartHour * const Constant(60) -
+              hydrationStartMinute),
+        ).isBetweenValues(
+          HydrationWindow.minMinutes,
+          HydrationWindow.maxMinutes,
+        ),
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<HydrationMode, String>
+  hydrationMode = GeneratedColumn<String>(
+    'hydration_mode',
+    aliasedName,
+    false,
+    check: () => hydrationMode.isIn(['gentle', 'balanced', 'supportive']),
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: Constant(HydrationMode.balanced.name),
+  ).withConverter<HydrationMode>($ReminderPrefsTable.$converterhydrationMode);
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -3951,6 +4036,12 @@ class $ReminderPrefsTable extends ReminderPrefs
     reflectionHour,
     reflectionMinute,
     updatedAt,
+    hydrationEnabled,
+    hydrationStartHour,
+    hydrationStartMinute,
+    hydrationEndHour,
+    hydrationEndMinute,
+    hydrationMode,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -4038,6 +4129,51 @@ class $ReminderPrefsTable extends ReminderPrefs
     } else if (isInserting) {
       context.missing(_updatedAtMeta);
     }
+    if (data.containsKey('hydration_enabled')) {
+      context.handle(
+        _hydrationEnabledMeta,
+        hydrationEnabled.isAcceptableOrUnknown(
+          data['hydration_enabled']!,
+          _hydrationEnabledMeta,
+        ),
+      );
+    }
+    if (data.containsKey('hydration_start_hour')) {
+      context.handle(
+        _hydrationStartHourMeta,
+        hydrationStartHour.isAcceptableOrUnknown(
+          data['hydration_start_hour']!,
+          _hydrationStartHourMeta,
+        ),
+      );
+    }
+    if (data.containsKey('hydration_start_minute')) {
+      context.handle(
+        _hydrationStartMinuteMeta,
+        hydrationStartMinute.isAcceptableOrUnknown(
+          data['hydration_start_minute']!,
+          _hydrationStartMinuteMeta,
+        ),
+      );
+    }
+    if (data.containsKey('hydration_end_hour')) {
+      context.handle(
+        _hydrationEndHourMeta,
+        hydrationEndHour.isAcceptableOrUnknown(
+          data['hydration_end_hour']!,
+          _hydrationEndHourMeta,
+        ),
+      );
+    }
+    if (data.containsKey('hydration_end_minute')) {
+      context.handle(
+        _hydrationEndMinuteMeta,
+        hydrationEndMinute.isAcceptableOrUnknown(
+          data['hydration_end_minute']!,
+          _hydrationEndMinuteMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -4079,6 +4215,32 @@ class $ReminderPrefsTable extends ReminderPrefs
         DriftSqlType.dateTime,
         data['${effectivePrefix}updated_at'],
       )!,
+      hydrationEnabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}hydration_enabled'],
+      )!,
+      hydrationStartHour: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}hydration_start_hour'],
+      )!,
+      hydrationStartMinute: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}hydration_start_minute'],
+      )!,
+      hydrationEndHour: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}hydration_end_hour'],
+      )!,
+      hydrationEndMinute: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}hydration_end_minute'],
+      )!,
+      hydrationMode: $ReminderPrefsTable.$converterhydrationMode.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}hydration_mode'],
+        )!,
+      ),
     );
   }
 
@@ -4086,6 +4248,11 @@ class $ReminderPrefsTable extends ReminderPrefs
   $ReminderPrefsTable createAlias(String alias) {
     return $ReminderPrefsTable(attachedDatabase, alias);
   }
+
+  static JsonTypeConverter2<HydrationMode, String, String>
+  $converterhydrationMode = const EnumNameConverter<HydrationMode>(
+    HydrationMode.values,
+  );
 }
 
 class ReminderPreferencesRow extends DataClass
@@ -4098,6 +4265,15 @@ class ReminderPreferencesRow extends DataClass
   final int reflectionHour;
   final int reflectionMinute;
   final DateTime updatedAt;
+  final bool hydrationEnabled;
+  final int hydrationStartHour;
+  final int hydrationStartMinute;
+  final int hydrationEndHour;
+
+  /// Also checks the whole window, as `HydrationWindow` does: a same-day
+  /// window of 8 to 18 hours (480 to 1080 minutes).
+  final int hydrationEndMinute;
+  final HydrationMode hydrationMode;
   const ReminderPreferencesRow({
     required this.id,
     required this.dailyEnabled,
@@ -4107,6 +4283,12 @@ class ReminderPreferencesRow extends DataClass
     required this.reflectionHour,
     required this.reflectionMinute,
     required this.updatedAt,
+    required this.hydrationEnabled,
+    required this.hydrationStartHour,
+    required this.hydrationStartMinute,
+    required this.hydrationEndHour,
+    required this.hydrationEndMinute,
+    required this.hydrationMode,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -4119,6 +4301,16 @@ class ReminderPreferencesRow extends DataClass
     map['reflection_hour'] = Variable<int>(reflectionHour);
     map['reflection_minute'] = Variable<int>(reflectionMinute);
     map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['hydration_enabled'] = Variable<bool>(hydrationEnabled);
+    map['hydration_start_hour'] = Variable<int>(hydrationStartHour);
+    map['hydration_start_minute'] = Variable<int>(hydrationStartMinute);
+    map['hydration_end_hour'] = Variable<int>(hydrationEndHour);
+    map['hydration_end_minute'] = Variable<int>(hydrationEndMinute);
+    {
+      map['hydration_mode'] = Variable<String>(
+        $ReminderPrefsTable.$converterhydrationMode.toSql(hydrationMode),
+      );
+    }
     return map;
   }
 
@@ -4132,6 +4324,12 @@ class ReminderPreferencesRow extends DataClass
       reflectionHour: Value(reflectionHour),
       reflectionMinute: Value(reflectionMinute),
       updatedAt: Value(updatedAt),
+      hydrationEnabled: Value(hydrationEnabled),
+      hydrationStartHour: Value(hydrationStartHour),
+      hydrationStartMinute: Value(hydrationStartMinute),
+      hydrationEndHour: Value(hydrationEndHour),
+      hydrationEndMinute: Value(hydrationEndMinute),
+      hydrationMode: Value(hydrationMode),
     );
   }
 
@@ -4149,6 +4347,16 @@ class ReminderPreferencesRow extends DataClass
       reflectionHour: serializer.fromJson<int>(json['reflectionHour']),
       reflectionMinute: serializer.fromJson<int>(json['reflectionMinute']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      hydrationEnabled: serializer.fromJson<bool>(json['hydrationEnabled']),
+      hydrationStartHour: serializer.fromJson<int>(json['hydrationStartHour']),
+      hydrationStartMinute: serializer.fromJson<int>(
+        json['hydrationStartMinute'],
+      ),
+      hydrationEndHour: serializer.fromJson<int>(json['hydrationEndHour']),
+      hydrationEndMinute: serializer.fromJson<int>(json['hydrationEndMinute']),
+      hydrationMode: $ReminderPrefsTable.$converterhydrationMode.fromJson(
+        serializer.fromJson<String>(json['hydrationMode']),
+      ),
     );
   }
   @override
@@ -4163,6 +4371,14 @@ class ReminderPreferencesRow extends DataClass
       'reflectionHour': serializer.toJson<int>(reflectionHour),
       'reflectionMinute': serializer.toJson<int>(reflectionMinute),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'hydrationEnabled': serializer.toJson<bool>(hydrationEnabled),
+      'hydrationStartHour': serializer.toJson<int>(hydrationStartHour),
+      'hydrationStartMinute': serializer.toJson<int>(hydrationStartMinute),
+      'hydrationEndHour': serializer.toJson<int>(hydrationEndHour),
+      'hydrationEndMinute': serializer.toJson<int>(hydrationEndMinute),
+      'hydrationMode': serializer.toJson<String>(
+        $ReminderPrefsTable.$converterhydrationMode.toJson(hydrationMode),
+      ),
     };
   }
 
@@ -4175,6 +4391,12 @@ class ReminderPreferencesRow extends DataClass
     int? reflectionHour,
     int? reflectionMinute,
     DateTime? updatedAt,
+    bool? hydrationEnabled,
+    int? hydrationStartHour,
+    int? hydrationStartMinute,
+    int? hydrationEndHour,
+    int? hydrationEndMinute,
+    HydrationMode? hydrationMode,
   }) => ReminderPreferencesRow(
     id: id ?? this.id,
     dailyEnabled: dailyEnabled ?? this.dailyEnabled,
@@ -4184,6 +4406,12 @@ class ReminderPreferencesRow extends DataClass
     reflectionHour: reflectionHour ?? this.reflectionHour,
     reflectionMinute: reflectionMinute ?? this.reflectionMinute,
     updatedAt: updatedAt ?? this.updatedAt,
+    hydrationEnabled: hydrationEnabled ?? this.hydrationEnabled,
+    hydrationStartHour: hydrationStartHour ?? this.hydrationStartHour,
+    hydrationStartMinute: hydrationStartMinute ?? this.hydrationStartMinute,
+    hydrationEndHour: hydrationEndHour ?? this.hydrationEndHour,
+    hydrationEndMinute: hydrationEndMinute ?? this.hydrationEndMinute,
+    hydrationMode: hydrationMode ?? this.hydrationMode,
   );
   ReminderPreferencesRow copyWithCompanion(ReminderPrefsCompanion data) {
     return ReminderPreferencesRow(
@@ -4205,6 +4433,24 @@ class ReminderPreferencesRow extends DataClass
           ? data.reflectionMinute.value
           : this.reflectionMinute,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      hydrationEnabled: data.hydrationEnabled.present
+          ? data.hydrationEnabled.value
+          : this.hydrationEnabled,
+      hydrationStartHour: data.hydrationStartHour.present
+          ? data.hydrationStartHour.value
+          : this.hydrationStartHour,
+      hydrationStartMinute: data.hydrationStartMinute.present
+          ? data.hydrationStartMinute.value
+          : this.hydrationStartMinute,
+      hydrationEndHour: data.hydrationEndHour.present
+          ? data.hydrationEndHour.value
+          : this.hydrationEndHour,
+      hydrationEndMinute: data.hydrationEndMinute.present
+          ? data.hydrationEndMinute.value
+          : this.hydrationEndMinute,
+      hydrationMode: data.hydrationMode.present
+          ? data.hydrationMode.value
+          : this.hydrationMode,
     );
   }
 
@@ -4218,7 +4464,13 @@ class ReminderPreferencesRow extends DataClass
           ..write('reflectionEnabled: $reflectionEnabled, ')
           ..write('reflectionHour: $reflectionHour, ')
           ..write('reflectionMinute: $reflectionMinute, ')
-          ..write('updatedAt: $updatedAt')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('hydrationEnabled: $hydrationEnabled, ')
+          ..write('hydrationStartHour: $hydrationStartHour, ')
+          ..write('hydrationStartMinute: $hydrationStartMinute, ')
+          ..write('hydrationEndHour: $hydrationEndHour, ')
+          ..write('hydrationEndMinute: $hydrationEndMinute, ')
+          ..write('hydrationMode: $hydrationMode')
           ..write(')'))
         .toString();
   }
@@ -4233,6 +4485,12 @@ class ReminderPreferencesRow extends DataClass
     reflectionHour,
     reflectionMinute,
     updatedAt,
+    hydrationEnabled,
+    hydrationStartHour,
+    hydrationStartMinute,
+    hydrationEndHour,
+    hydrationEndMinute,
+    hydrationMode,
   );
   @override
   bool operator ==(Object other) =>
@@ -4245,7 +4503,13 @@ class ReminderPreferencesRow extends DataClass
           other.reflectionEnabled == this.reflectionEnabled &&
           other.reflectionHour == this.reflectionHour &&
           other.reflectionMinute == this.reflectionMinute &&
-          other.updatedAt == this.updatedAt);
+          other.updatedAt == this.updatedAt &&
+          other.hydrationEnabled == this.hydrationEnabled &&
+          other.hydrationStartHour == this.hydrationStartHour &&
+          other.hydrationStartMinute == this.hydrationStartMinute &&
+          other.hydrationEndHour == this.hydrationEndHour &&
+          other.hydrationEndMinute == this.hydrationEndMinute &&
+          other.hydrationMode == this.hydrationMode);
 }
 
 class ReminderPrefsCompanion extends UpdateCompanion<ReminderPreferencesRow> {
@@ -4257,6 +4521,12 @@ class ReminderPrefsCompanion extends UpdateCompanion<ReminderPreferencesRow> {
   final Value<int> reflectionHour;
   final Value<int> reflectionMinute;
   final Value<DateTime> updatedAt;
+  final Value<bool> hydrationEnabled;
+  final Value<int> hydrationStartHour;
+  final Value<int> hydrationStartMinute;
+  final Value<int> hydrationEndHour;
+  final Value<int> hydrationEndMinute;
+  final Value<HydrationMode> hydrationMode;
   const ReminderPrefsCompanion({
     this.id = const Value.absent(),
     this.dailyEnabled = const Value.absent(),
@@ -4266,6 +4536,12 @@ class ReminderPrefsCompanion extends UpdateCompanion<ReminderPreferencesRow> {
     this.reflectionHour = const Value.absent(),
     this.reflectionMinute = const Value.absent(),
     this.updatedAt = const Value.absent(),
+    this.hydrationEnabled = const Value.absent(),
+    this.hydrationStartHour = const Value.absent(),
+    this.hydrationStartMinute = const Value.absent(),
+    this.hydrationEndHour = const Value.absent(),
+    this.hydrationEndMinute = const Value.absent(),
+    this.hydrationMode = const Value.absent(),
   });
   ReminderPrefsCompanion.insert({
     this.id = const Value.absent(),
@@ -4276,6 +4552,12 @@ class ReminderPrefsCompanion extends UpdateCompanion<ReminderPreferencesRow> {
     required int reflectionHour,
     required int reflectionMinute,
     required DateTime updatedAt,
+    this.hydrationEnabled = const Value.absent(),
+    this.hydrationStartHour = const Value.absent(),
+    this.hydrationStartMinute = const Value.absent(),
+    this.hydrationEndHour = const Value.absent(),
+    this.hydrationEndMinute = const Value.absent(),
+    this.hydrationMode = const Value.absent(),
   }) : dailyEnabled = Value(dailyEnabled),
        dailyHour = Value(dailyHour),
        dailyMinute = Value(dailyMinute),
@@ -4292,6 +4574,12 @@ class ReminderPrefsCompanion extends UpdateCompanion<ReminderPreferencesRow> {
     Expression<int>? reflectionHour,
     Expression<int>? reflectionMinute,
     Expression<DateTime>? updatedAt,
+    Expression<bool>? hydrationEnabled,
+    Expression<int>? hydrationStartHour,
+    Expression<int>? hydrationStartMinute,
+    Expression<int>? hydrationEndHour,
+    Expression<int>? hydrationEndMinute,
+    Expression<String>? hydrationMode,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -4302,6 +4590,15 @@ class ReminderPrefsCompanion extends UpdateCompanion<ReminderPreferencesRow> {
       if (reflectionHour != null) 'reflection_hour': reflectionHour,
       if (reflectionMinute != null) 'reflection_minute': reflectionMinute,
       if (updatedAt != null) 'updated_at': updatedAt,
+      if (hydrationEnabled != null) 'hydration_enabled': hydrationEnabled,
+      if (hydrationStartHour != null)
+        'hydration_start_hour': hydrationStartHour,
+      if (hydrationStartMinute != null)
+        'hydration_start_minute': hydrationStartMinute,
+      if (hydrationEndHour != null) 'hydration_end_hour': hydrationEndHour,
+      if (hydrationEndMinute != null)
+        'hydration_end_minute': hydrationEndMinute,
+      if (hydrationMode != null) 'hydration_mode': hydrationMode,
     });
   }
 
@@ -4314,6 +4611,12 @@ class ReminderPrefsCompanion extends UpdateCompanion<ReminderPreferencesRow> {
     Value<int>? reflectionHour,
     Value<int>? reflectionMinute,
     Value<DateTime>? updatedAt,
+    Value<bool>? hydrationEnabled,
+    Value<int>? hydrationStartHour,
+    Value<int>? hydrationStartMinute,
+    Value<int>? hydrationEndHour,
+    Value<int>? hydrationEndMinute,
+    Value<HydrationMode>? hydrationMode,
   }) {
     return ReminderPrefsCompanion(
       id: id ?? this.id,
@@ -4324,6 +4627,12 @@ class ReminderPrefsCompanion extends UpdateCompanion<ReminderPreferencesRow> {
       reflectionHour: reflectionHour ?? this.reflectionHour,
       reflectionMinute: reflectionMinute ?? this.reflectionMinute,
       updatedAt: updatedAt ?? this.updatedAt,
+      hydrationEnabled: hydrationEnabled ?? this.hydrationEnabled,
+      hydrationStartHour: hydrationStartHour ?? this.hydrationStartHour,
+      hydrationStartMinute: hydrationStartMinute ?? this.hydrationStartMinute,
+      hydrationEndHour: hydrationEndHour ?? this.hydrationEndHour,
+      hydrationEndMinute: hydrationEndMinute ?? this.hydrationEndMinute,
+      hydrationMode: hydrationMode ?? this.hydrationMode,
     );
   }
 
@@ -4354,6 +4663,26 @@ class ReminderPrefsCompanion extends UpdateCompanion<ReminderPreferencesRow> {
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
     }
+    if (hydrationEnabled.present) {
+      map['hydration_enabled'] = Variable<bool>(hydrationEnabled.value);
+    }
+    if (hydrationStartHour.present) {
+      map['hydration_start_hour'] = Variable<int>(hydrationStartHour.value);
+    }
+    if (hydrationStartMinute.present) {
+      map['hydration_start_minute'] = Variable<int>(hydrationStartMinute.value);
+    }
+    if (hydrationEndHour.present) {
+      map['hydration_end_hour'] = Variable<int>(hydrationEndHour.value);
+    }
+    if (hydrationEndMinute.present) {
+      map['hydration_end_minute'] = Variable<int>(hydrationEndMinute.value);
+    }
+    if (hydrationMode.present) {
+      map['hydration_mode'] = Variable<String>(
+        $ReminderPrefsTable.$converterhydrationMode.toSql(hydrationMode.value),
+      );
+    }
     return map;
   }
 
@@ -4367,7 +4696,684 @@ class ReminderPrefsCompanion extends UpdateCompanion<ReminderPreferencesRow> {
           ..write('reflectionEnabled: $reflectionEnabled, ')
           ..write('reflectionHour: $reflectionHour, ')
           ..write('reflectionMinute: $reflectionMinute, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('hydrationEnabled: $hydrationEnabled, ')
+          ..write('hydrationStartHour: $hydrationStartHour, ')
+          ..write('hydrationStartMinute: $hydrationStartMinute, ')
+          ..write('hydrationEndHour: $hydrationEndHour, ')
+          ..write('hydrationEndMinute: $hydrationEndMinute, ')
+          ..write('hydrationMode: $hydrationMode')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $FocusGuardPrefsTable extends FocusGuardPrefs
+    with TableInfo<$FocusGuardPrefsTable, FocusGuardPreferencesRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $FocusGuardPrefsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    check: () => id.equals(1),
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _enabledMeta = const VerificationMeta(
+    'enabled',
+  );
+  @override
+  late final GeneratedColumn<bool> enabled = GeneratedColumn<bool>(
+    'enabled',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("enabled" IN (0, 1))',
+    ),
+  );
+  static const VerificationMeta _dailyBudgetMinutesMeta =
+      const VerificationMeta('dailyBudgetMinutes');
+  @override
+  late final GeneratedColumn<int> dailyBudgetMinutes = GeneratedColumn<int>(
+    'daily_budget_minutes',
+    aliasedName,
+    false,
+    check: () => ComparableExpr(dailyBudgetMinutes).isBetweenValues(
+      FocusGuardRules.minDailyBudgetMinutes,
+      FocusGuardRules.maxDailyBudgetMinutes,
+    ),
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<LocalDate?, String> lastNudgedOn =
+      GeneratedColumn<String>(
+        'last_nudged_on',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<LocalDate?>(
+        $FocusGuardPrefsTable.$converterlastNudgedOnn,
+      );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    enabled,
+    dailyBudgetMinutes,
+    lastNudgedOn,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'focus_guard_preferences';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<FocusGuardPreferencesRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('enabled')) {
+      context.handle(
+        _enabledMeta,
+        enabled.isAcceptableOrUnknown(data['enabled']!, _enabledMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_enabledMeta);
+    }
+    if (data.containsKey('daily_budget_minutes')) {
+      context.handle(
+        _dailyBudgetMinutesMeta,
+        dailyBudgetMinutes.isAcceptableOrUnknown(
+          data['daily_budget_minutes']!,
+          _dailyBudgetMinutesMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_dailyBudgetMinutesMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  FocusGuardPreferencesRow map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return FocusGuardPreferencesRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      enabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}enabled'],
+      )!,
+      dailyBudgetMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}daily_budget_minutes'],
+      )!,
+      lastNudgedOn: $FocusGuardPrefsTable.$converterlastNudgedOnn.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}last_nudged_on'],
+        ),
+      ),
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $FocusGuardPrefsTable createAlias(String alias) {
+    return $FocusGuardPrefsTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<LocalDate, String> $converterlastNudgedOn =
+      const LocalDateConverter();
+  static TypeConverter<LocalDate?, String?> $converterlastNudgedOnn =
+      NullAwareTypeConverter.wrap($converterlastNudgedOn);
+}
+
+class FocusGuardPreferencesRow extends DataClass
+    implements Insertable<FocusGuardPreferencesRow> {
+  final int id;
+  final bool enabled;
+
+  /// One combined budget across the selected apps.
+  final int dailyBudgetMinutes;
+
+  /// The local date of the day's one nudge, if one was sent: a date, never
+  /// an amount.
+  final LocalDate? lastNudgedOn;
+  final DateTime updatedAt;
+  const FocusGuardPreferencesRow({
+    required this.id,
+    required this.enabled,
+    required this.dailyBudgetMinutes,
+    this.lastNudgedOn,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['enabled'] = Variable<bool>(enabled);
+    map['daily_budget_minutes'] = Variable<int>(dailyBudgetMinutes);
+    if (!nullToAbsent || lastNudgedOn != null) {
+      map['last_nudged_on'] = Variable<String>(
+        $FocusGuardPrefsTable.$converterlastNudgedOnn.toSql(lastNudgedOn),
+      );
+    }
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  FocusGuardPrefsCompanion toCompanion(bool nullToAbsent) {
+    return FocusGuardPrefsCompanion(
+      id: Value(id),
+      enabled: Value(enabled),
+      dailyBudgetMinutes: Value(dailyBudgetMinutes),
+      lastNudgedOn: lastNudgedOn == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastNudgedOn),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory FocusGuardPreferencesRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return FocusGuardPreferencesRow(
+      id: serializer.fromJson<int>(json['id']),
+      enabled: serializer.fromJson<bool>(json['enabled']),
+      dailyBudgetMinutes: serializer.fromJson<int>(json['dailyBudgetMinutes']),
+      lastNudgedOn: serializer.fromJson<LocalDate?>(json['lastNudgedOn']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'enabled': serializer.toJson<bool>(enabled),
+      'dailyBudgetMinutes': serializer.toJson<int>(dailyBudgetMinutes),
+      'lastNudgedOn': serializer.toJson<LocalDate?>(lastNudgedOn),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  FocusGuardPreferencesRow copyWith({
+    int? id,
+    bool? enabled,
+    int? dailyBudgetMinutes,
+    Value<LocalDate?> lastNudgedOn = const Value.absent(),
+    DateTime? updatedAt,
+  }) => FocusGuardPreferencesRow(
+    id: id ?? this.id,
+    enabled: enabled ?? this.enabled,
+    dailyBudgetMinutes: dailyBudgetMinutes ?? this.dailyBudgetMinutes,
+    lastNudgedOn: lastNudgedOn.present ? lastNudgedOn.value : this.lastNudgedOn,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  FocusGuardPreferencesRow copyWithCompanion(FocusGuardPrefsCompanion data) {
+    return FocusGuardPreferencesRow(
+      id: data.id.present ? data.id.value : this.id,
+      enabled: data.enabled.present ? data.enabled.value : this.enabled,
+      dailyBudgetMinutes: data.dailyBudgetMinutes.present
+          ? data.dailyBudgetMinutes.value
+          : this.dailyBudgetMinutes,
+      lastNudgedOn: data.lastNudgedOn.present
+          ? data.lastNudgedOn.value
+          : this.lastNudgedOn,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FocusGuardPreferencesRow(')
+          ..write('id: $id, ')
+          ..write('enabled: $enabled, ')
+          ..write('dailyBudgetMinutes: $dailyBudgetMinutes, ')
+          ..write('lastNudgedOn: $lastNudgedOn, ')
           ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, enabled, dailyBudgetMinutes, lastNudgedOn, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is FocusGuardPreferencesRow &&
+          other.id == this.id &&
+          other.enabled == this.enabled &&
+          other.dailyBudgetMinutes == this.dailyBudgetMinutes &&
+          other.lastNudgedOn == this.lastNudgedOn &&
+          other.updatedAt == this.updatedAt);
+}
+
+class FocusGuardPrefsCompanion
+    extends UpdateCompanion<FocusGuardPreferencesRow> {
+  final Value<int> id;
+  final Value<bool> enabled;
+  final Value<int> dailyBudgetMinutes;
+  final Value<LocalDate?> lastNudgedOn;
+  final Value<DateTime> updatedAt;
+  const FocusGuardPrefsCompanion({
+    this.id = const Value.absent(),
+    this.enabled = const Value.absent(),
+    this.dailyBudgetMinutes = const Value.absent(),
+    this.lastNudgedOn = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  });
+  FocusGuardPrefsCompanion.insert({
+    this.id = const Value.absent(),
+    required bool enabled,
+    required int dailyBudgetMinutes,
+    this.lastNudgedOn = const Value.absent(),
+    required DateTime updatedAt,
+  }) : enabled = Value(enabled),
+       dailyBudgetMinutes = Value(dailyBudgetMinutes),
+       updatedAt = Value(updatedAt);
+  static Insertable<FocusGuardPreferencesRow> custom({
+    Expression<int>? id,
+    Expression<bool>? enabled,
+    Expression<int>? dailyBudgetMinutes,
+    Expression<String>? lastNudgedOn,
+    Expression<DateTime>? updatedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (enabled != null) 'enabled': enabled,
+      if (dailyBudgetMinutes != null)
+        'daily_budget_minutes': dailyBudgetMinutes,
+      if (lastNudgedOn != null) 'last_nudged_on': lastNudgedOn,
+      if (updatedAt != null) 'updated_at': updatedAt,
+    });
+  }
+
+  FocusGuardPrefsCompanion copyWith({
+    Value<int>? id,
+    Value<bool>? enabled,
+    Value<int>? dailyBudgetMinutes,
+    Value<LocalDate?>? lastNudgedOn,
+    Value<DateTime>? updatedAt,
+  }) {
+    return FocusGuardPrefsCompanion(
+      id: id ?? this.id,
+      enabled: enabled ?? this.enabled,
+      dailyBudgetMinutes: dailyBudgetMinutes ?? this.dailyBudgetMinutes,
+      lastNudgedOn: lastNudgedOn ?? this.lastNudgedOn,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (enabled.present) {
+      map['enabled'] = Variable<bool>(enabled.value);
+    }
+    if (dailyBudgetMinutes.present) {
+      map['daily_budget_minutes'] = Variable<int>(dailyBudgetMinutes.value);
+    }
+    if (lastNudgedOn.present) {
+      map['last_nudged_on'] = Variable<String>(
+        $FocusGuardPrefsTable.$converterlastNudgedOnn.toSql(lastNudgedOn.value),
+      );
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FocusGuardPrefsCompanion(')
+          ..write('id: $id, ')
+          ..write('enabled: $enabled, ')
+          ..write('dailyBudgetMinutes: $dailyBudgetMinutes, ')
+          ..write('lastNudgedOn: $lastNudgedOn, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $FocusGuardSelectedAppsTable extends FocusGuardSelectedApps
+    with TableInfo<$FocusGuardSelectedAppsTable, FocusGuardSelectedAppRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $FocusGuardSelectedAppsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _packageNameMeta = const VerificationMeta(
+    'packageName',
+  );
+  @override
+  late final GeneratedColumn<String> packageName = GeneratedColumn<String>(
+    'package_name',
+    aliasedName,
+    false,
+    check: () =>
+        ComparableExpr(packageName.length)
+            .isBetweenValues(3, FocusGuardRules.maxPackageNameLength),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sortOrderMeta = const VerificationMeta(
+    'sortOrder',
+  );
+  @override
+  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
+    'sort_order',
+    aliasedName,
+    false,
+    check: () => ComparableExpr(sortOrder).isBiggerOrEqualValue(0),
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _selectedAtMeta = const VerificationMeta(
+    'selectedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> selectedAt = GeneratedColumn<DateTime>(
+    'selected_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [packageName, sortOrder, selectedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'focus_guard_selected_apps';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<FocusGuardSelectedAppRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('package_name')) {
+      context.handle(
+        _packageNameMeta,
+        packageName.isAcceptableOrUnknown(
+          data['package_name']!,
+          _packageNameMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_packageNameMeta);
+    }
+    if (data.containsKey('sort_order')) {
+      context.handle(
+        _sortOrderMeta,
+        sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sortOrderMeta);
+    }
+    if (data.containsKey('selected_at')) {
+      context.handle(
+        _selectedAtMeta,
+        selectedAt.isAcceptableOrUnknown(data['selected_at']!, _selectedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_selectedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {packageName};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {sortOrder},
+  ];
+  @override
+  FocusGuardSelectedAppRow map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return FocusGuardSelectedAppRow(
+      packageName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}package_name'],
+      )!,
+      sortOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sort_order'],
+      )!,
+      selectedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}selected_at'],
+      )!,
+    );
+  }
+
+  @override
+  $FocusGuardSelectedAppsTable createAlias(String alias) {
+    return $FocusGuardSelectedAppsTable(attachedDatabase, alias);
+  }
+}
+
+class FocusGuardSelectedAppRow extends DataClass
+    implements Insertable<FocusGuardSelectedAppRow> {
+  final String packageName;
+  final int sortOrder;
+  final DateTime selectedAt;
+  const FocusGuardSelectedAppRow({
+    required this.packageName,
+    required this.sortOrder,
+    required this.selectedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['package_name'] = Variable<String>(packageName);
+    map['sort_order'] = Variable<int>(sortOrder);
+    map['selected_at'] = Variable<DateTime>(selectedAt);
+    return map;
+  }
+
+  FocusGuardSelectedAppsCompanion toCompanion(bool nullToAbsent) {
+    return FocusGuardSelectedAppsCompanion(
+      packageName: Value(packageName),
+      sortOrder: Value(sortOrder),
+      selectedAt: Value(selectedAt),
+    );
+  }
+
+  factory FocusGuardSelectedAppRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return FocusGuardSelectedAppRow(
+      packageName: serializer.fromJson<String>(json['packageName']),
+      sortOrder: serializer.fromJson<int>(json['sortOrder']),
+      selectedAt: serializer.fromJson<DateTime>(json['selectedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'packageName': serializer.toJson<String>(packageName),
+      'sortOrder': serializer.toJson<int>(sortOrder),
+      'selectedAt': serializer.toJson<DateTime>(selectedAt),
+    };
+  }
+
+  FocusGuardSelectedAppRow copyWith({
+    String? packageName,
+    int? sortOrder,
+    DateTime? selectedAt,
+  }) => FocusGuardSelectedAppRow(
+    packageName: packageName ?? this.packageName,
+    sortOrder: sortOrder ?? this.sortOrder,
+    selectedAt: selectedAt ?? this.selectedAt,
+  );
+  FocusGuardSelectedAppRow copyWithCompanion(
+    FocusGuardSelectedAppsCompanion data,
+  ) {
+    return FocusGuardSelectedAppRow(
+      packageName: data.packageName.present
+          ? data.packageName.value
+          : this.packageName,
+      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
+      selectedAt: data.selectedAt.present
+          ? data.selectedAt.value
+          : this.selectedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FocusGuardSelectedAppRow(')
+          ..write('packageName: $packageName, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('selectedAt: $selectedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(packageName, sortOrder, selectedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is FocusGuardSelectedAppRow &&
+          other.packageName == this.packageName &&
+          other.sortOrder == this.sortOrder &&
+          other.selectedAt == this.selectedAt);
+}
+
+class FocusGuardSelectedAppsCompanion
+    extends UpdateCompanion<FocusGuardSelectedAppRow> {
+  final Value<String> packageName;
+  final Value<int> sortOrder;
+  final Value<DateTime> selectedAt;
+  final Value<int> rowid;
+  const FocusGuardSelectedAppsCompanion({
+    this.packageName = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    this.selectedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  FocusGuardSelectedAppsCompanion.insert({
+    required String packageName,
+    required int sortOrder,
+    required DateTime selectedAt,
+    this.rowid = const Value.absent(),
+  }) : packageName = Value(packageName),
+       sortOrder = Value(sortOrder),
+       selectedAt = Value(selectedAt);
+  static Insertable<FocusGuardSelectedAppRow> custom({
+    Expression<String>? packageName,
+    Expression<int>? sortOrder,
+    Expression<DateTime>? selectedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (packageName != null) 'package_name': packageName,
+      if (sortOrder != null) 'sort_order': sortOrder,
+      if (selectedAt != null) 'selected_at': selectedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  FocusGuardSelectedAppsCompanion copyWith({
+    Value<String>? packageName,
+    Value<int>? sortOrder,
+    Value<DateTime>? selectedAt,
+    Value<int>? rowid,
+  }) {
+    return FocusGuardSelectedAppsCompanion(
+      packageName: packageName ?? this.packageName,
+      sortOrder: sortOrder ?? this.sortOrder,
+      selectedAt: selectedAt ?? this.selectedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (packageName.present) {
+      map['package_name'] = Variable<String>(packageName.value);
+    }
+    if (sortOrder.present) {
+      map['sort_order'] = Variable<int>(sortOrder.value);
+    }
+    if (selectedAt.present) {
+      map['selected_at'] = Variable<DateTime>(selectedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FocusGuardSelectedAppsCompanion(')
+          ..write('packageName: $packageName, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('selectedAt: $selectedAt, ')
+          ..write('rowid: $rowid')
           ..write(')'))
         .toString();
   }
@@ -4390,6 +5396,11 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     this,
   );
   late final $ReminderPrefsTable reminderPrefs = $ReminderPrefsTable(this);
+  late final $FocusGuardPrefsTable focusGuardPrefs = $FocusGuardPrefsTable(
+    this,
+  );
+  late final $FocusGuardSelectedAppsTable focusGuardSelectedApps =
+      $FocusGuardSelectedAppsTable(this);
   late final Index singleOpenSession = Index(
     'single_open_session',
     'CREATE UNIQUE INDEX single_open_session ON winter_arc_sessions ((status IN (\'setup\', \'active\'))) WHERE status IN (\'setup\', \'active\')',
@@ -4408,6 +5419,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     achievementUnlocks,
     dailyReflections,
     reminderPrefs,
+    focusGuardPrefs,
+    focusGuardSelectedApps,
     singleOpenSession,
   ];
   @override
@@ -7549,6 +8562,12 @@ typedef $$ReminderPrefsTableCreateCompanionBuilder =
       required int reflectionHour,
       required int reflectionMinute,
       required DateTime updatedAt,
+      Value<bool> hydrationEnabled,
+      Value<int> hydrationStartHour,
+      Value<int> hydrationStartMinute,
+      Value<int> hydrationEndHour,
+      Value<int> hydrationEndMinute,
+      Value<HydrationMode> hydrationMode,
     });
 typedef $$ReminderPrefsTableUpdateCompanionBuilder =
     ReminderPrefsCompanion Function({
@@ -7560,6 +8579,12 @@ typedef $$ReminderPrefsTableUpdateCompanionBuilder =
       Value<int> reflectionHour,
       Value<int> reflectionMinute,
       Value<DateTime> updatedAt,
+      Value<bool> hydrationEnabled,
+      Value<int> hydrationStartHour,
+      Value<int> hydrationStartMinute,
+      Value<int> hydrationEndHour,
+      Value<int> hydrationEndMinute,
+      Value<HydrationMode> hydrationMode,
     });
 
 class $$ReminderPrefsTableFilterComposer
@@ -7609,6 +8634,37 @@ class $$ReminderPrefsTableFilterComposer
   ColumnFilters<DateTime> get updatedAt => $composableBuilder(
     column: $table.updatedAt,
     builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get hydrationEnabled => $composableBuilder(
+    column: $table.hydrationEnabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get hydrationStartHour => $composableBuilder(
+    column: $table.hydrationStartHour,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get hydrationStartMinute => $composableBuilder(
+    column: $table.hydrationStartMinute,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get hydrationEndHour => $composableBuilder(
+    column: $table.hydrationEndHour,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get hydrationEndMinute => $composableBuilder(
+    column: $table.hydrationEndMinute,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<HydrationMode, HydrationMode, String>
+  get hydrationMode => $composableBuilder(
+    column: $table.hydrationMode,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
   );
 }
 
@@ -7660,6 +8716,36 @@ class $$ReminderPrefsTableOrderingComposer
     column: $table.updatedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get hydrationEnabled => $composableBuilder(
+    column: $table.hydrationEnabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get hydrationStartHour => $composableBuilder(
+    column: $table.hydrationStartHour,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get hydrationStartMinute => $composableBuilder(
+    column: $table.hydrationStartMinute,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get hydrationEndHour => $composableBuilder(
+    column: $table.hydrationEndHour,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get hydrationEndMinute => $composableBuilder(
+    column: $table.hydrationEndMinute,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get hydrationMode => $composableBuilder(
+    column: $table.hydrationMode,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ReminderPrefsTableAnnotationComposer
@@ -7704,6 +8790,37 @@ class $$ReminderPrefsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get hydrationEnabled => $composableBuilder(
+    column: $table.hydrationEnabled,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get hydrationStartHour => $composableBuilder(
+    column: $table.hydrationStartHour,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get hydrationStartMinute => $composableBuilder(
+    column: $table.hydrationStartMinute,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get hydrationEndHour => $composableBuilder(
+    column: $table.hydrationEndHour,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get hydrationEndMinute => $composableBuilder(
+    column: $table.hydrationEndMinute,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<HydrationMode, String> get hydrationMode =>
+      $composableBuilder(
+        column: $table.hydrationMode,
+        builder: (column) => column,
+      );
 }
 
 class $$ReminderPrefsTableTableManager
@@ -7749,6 +8866,12 @@ class $$ReminderPrefsTableTableManager
                 Value<int> reflectionHour = const Value.absent(),
                 Value<int> reflectionMinute = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
+                Value<bool> hydrationEnabled = const Value.absent(),
+                Value<int> hydrationStartHour = const Value.absent(),
+                Value<int> hydrationStartMinute = const Value.absent(),
+                Value<int> hydrationEndHour = const Value.absent(),
+                Value<int> hydrationEndMinute = const Value.absent(),
+                Value<HydrationMode> hydrationMode = const Value.absent(),
               }) => ReminderPrefsCompanion(
                 id: id,
                 dailyEnabled: dailyEnabled,
@@ -7758,6 +8881,12 @@ class $$ReminderPrefsTableTableManager
                 reflectionHour: reflectionHour,
                 reflectionMinute: reflectionMinute,
                 updatedAt: updatedAt,
+                hydrationEnabled: hydrationEnabled,
+                hydrationStartHour: hydrationStartHour,
+                hydrationStartMinute: hydrationStartMinute,
+                hydrationEndHour: hydrationEndHour,
+                hydrationEndMinute: hydrationEndMinute,
+                hydrationMode: hydrationMode,
               ),
           createCompanionCallback:
               ({
@@ -7769,6 +8898,12 @@ class $$ReminderPrefsTableTableManager
                 required int reflectionHour,
                 required int reflectionMinute,
                 required DateTime updatedAt,
+                Value<bool> hydrationEnabled = const Value.absent(),
+                Value<int> hydrationStartHour = const Value.absent(),
+                Value<int> hydrationStartMinute = const Value.absent(),
+                Value<int> hydrationEndHour = const Value.absent(),
+                Value<int> hydrationEndMinute = const Value.absent(),
+                Value<HydrationMode> hydrationMode = const Value.absent(),
               }) => ReminderPrefsCompanion.insert(
                 id: id,
                 dailyEnabled: dailyEnabled,
@@ -7778,6 +8913,12 @@ class $$ReminderPrefsTableTableManager
                 reflectionHour: reflectionHour,
                 reflectionMinute: reflectionMinute,
                 updatedAt: updatedAt,
+                hydrationEnabled: hydrationEnabled,
+                hydrationStartHour: hydrationStartHour,
+                hydrationStartMinute: hydrationStartMinute,
+                hydrationEndHour: hydrationEndHour,
+                hydrationEndMinute: hydrationEndMinute,
+                hydrationMode: hydrationMode,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -7819,6 +8960,424 @@ typedef $$ReminderPrefsTableProcessedTableManager =
       ReminderPreferencesRow,
       PrefetchHooks Function()
     >;
+typedef $$FocusGuardPrefsTableCreateCompanionBuilder =
+    FocusGuardPrefsCompanion Function({
+      Value<int> id,
+      required bool enabled,
+      required int dailyBudgetMinutes,
+      Value<LocalDate?> lastNudgedOn,
+      required DateTime updatedAt,
+    });
+typedef $$FocusGuardPrefsTableUpdateCompanionBuilder =
+    FocusGuardPrefsCompanion Function({
+      Value<int> id,
+      Value<bool> enabled,
+      Value<int> dailyBudgetMinutes,
+      Value<LocalDate?> lastNudgedOn,
+      Value<DateTime> updatedAt,
+    });
+
+class $$FocusGuardPrefsTableFilterComposer
+    extends Composer<_$AppDatabase, $FocusGuardPrefsTable> {
+  $$FocusGuardPrefsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get enabled => $composableBuilder(
+    column: $table.enabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get dailyBudgetMinutes => $composableBuilder(
+    column: $table.dailyBudgetMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<LocalDate?, LocalDate, String>
+  get lastNudgedOn => $composableBuilder(
+    column: $table.lastNudgedOn,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$FocusGuardPrefsTableOrderingComposer
+    extends Composer<_$AppDatabase, $FocusGuardPrefsTable> {
+  $$FocusGuardPrefsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get enabled => $composableBuilder(
+    column: $table.enabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get dailyBudgetMinutes => $composableBuilder(
+    column: $table.dailyBudgetMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get lastNudgedOn => $composableBuilder(
+    column: $table.lastNudgedOn,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$FocusGuardPrefsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $FocusGuardPrefsTable> {
+  $$FocusGuardPrefsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<bool> get enabled =>
+      $composableBuilder(column: $table.enabled, builder: (column) => column);
+
+  GeneratedColumn<int> get dailyBudgetMinutes => $composableBuilder(
+    column: $table.dailyBudgetMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<LocalDate?, String> get lastNudgedOn =>
+      $composableBuilder(
+        column: $table.lastNudgedOn,
+        builder: (column) => column,
+      );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$FocusGuardPrefsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $FocusGuardPrefsTable,
+          FocusGuardPreferencesRow,
+          $$FocusGuardPrefsTableFilterComposer,
+          $$FocusGuardPrefsTableOrderingComposer,
+          $$FocusGuardPrefsTableAnnotationComposer,
+          $$FocusGuardPrefsTableCreateCompanionBuilder,
+          $$FocusGuardPrefsTableUpdateCompanionBuilder,
+          (
+            FocusGuardPreferencesRow,
+            BaseReferences<
+              _$AppDatabase,
+              $FocusGuardPrefsTable,
+              FocusGuardPreferencesRow
+            >,
+          ),
+          FocusGuardPreferencesRow,
+          PrefetchHooks Function()
+        > {
+  $$FocusGuardPrefsTableTableManager(
+    _$AppDatabase db,
+    $FocusGuardPrefsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$FocusGuardPrefsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$FocusGuardPrefsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$FocusGuardPrefsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<bool> enabled = const Value.absent(),
+                Value<int> dailyBudgetMinutes = const Value.absent(),
+                Value<LocalDate?> lastNudgedOn = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+              }) => FocusGuardPrefsCompanion(
+                id: id,
+                enabled: enabled,
+                dailyBudgetMinutes: dailyBudgetMinutes,
+                lastNudgedOn: lastNudgedOn,
+                updatedAt: updatedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required bool enabled,
+                required int dailyBudgetMinutes,
+                Value<LocalDate?> lastNudgedOn = const Value.absent(),
+                required DateTime updatedAt,
+              }) => FocusGuardPrefsCompanion.insert(
+                id: id,
+                enabled: enabled,
+                dailyBudgetMinutes: dailyBudgetMinutes,
+                lastNudgedOn: lastNudgedOn,
+                updatedAt: updatedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$FocusGuardPrefsTable, FocusGuardPreferencesRow>(
+                    table,
+                  ),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $FocusGuardPrefsTable,
+                    FocusGuardPreferencesRow
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$FocusGuardPrefsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $FocusGuardPrefsTable,
+      FocusGuardPreferencesRow,
+      $$FocusGuardPrefsTableFilterComposer,
+      $$FocusGuardPrefsTableOrderingComposer,
+      $$FocusGuardPrefsTableAnnotationComposer,
+      $$FocusGuardPrefsTableCreateCompanionBuilder,
+      $$FocusGuardPrefsTableUpdateCompanionBuilder,
+      (
+        FocusGuardPreferencesRow,
+        BaseReferences<
+          _$AppDatabase,
+          $FocusGuardPrefsTable,
+          FocusGuardPreferencesRow
+        >,
+      ),
+      FocusGuardPreferencesRow,
+      PrefetchHooks Function()
+    >;
+typedef $$FocusGuardSelectedAppsTableCreateCompanionBuilder =
+    FocusGuardSelectedAppsCompanion Function({
+      required String packageName,
+      required int sortOrder,
+      required DateTime selectedAt,
+      Value<int> rowid,
+    });
+typedef $$FocusGuardSelectedAppsTableUpdateCompanionBuilder =
+    FocusGuardSelectedAppsCompanion Function({
+      Value<String> packageName,
+      Value<int> sortOrder,
+      Value<DateTime> selectedAt,
+      Value<int> rowid,
+    });
+
+class $$FocusGuardSelectedAppsTableFilterComposer
+    extends Composer<_$AppDatabase, $FocusGuardSelectedAppsTable> {
+  $$FocusGuardSelectedAppsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get packageName => $composableBuilder(
+    column: $table.packageName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get selectedAt => $composableBuilder(
+    column: $table.selectedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$FocusGuardSelectedAppsTableOrderingComposer
+    extends Composer<_$AppDatabase, $FocusGuardSelectedAppsTable> {
+  $$FocusGuardSelectedAppsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get packageName => $composableBuilder(
+    column: $table.packageName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get selectedAt => $composableBuilder(
+    column: $table.selectedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$FocusGuardSelectedAppsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $FocusGuardSelectedAppsTable> {
+  $$FocusGuardSelectedAppsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get packageName => $composableBuilder(
+    column: $table.packageName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get sortOrder =>
+      $composableBuilder(column: $table.sortOrder, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get selectedAt => $composableBuilder(
+    column: $table.selectedAt,
+    builder: (column) => column,
+  );
+}
+
+class $$FocusGuardSelectedAppsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $FocusGuardSelectedAppsTable,
+          FocusGuardSelectedAppRow,
+          $$FocusGuardSelectedAppsTableFilterComposer,
+          $$FocusGuardSelectedAppsTableOrderingComposer,
+          $$FocusGuardSelectedAppsTableAnnotationComposer,
+          $$FocusGuardSelectedAppsTableCreateCompanionBuilder,
+          $$FocusGuardSelectedAppsTableUpdateCompanionBuilder,
+          (
+            FocusGuardSelectedAppRow,
+            BaseReferences<
+              _$AppDatabase,
+              $FocusGuardSelectedAppsTable,
+              FocusGuardSelectedAppRow
+            >,
+          ),
+          FocusGuardSelectedAppRow,
+          PrefetchHooks Function()
+        > {
+  $$FocusGuardSelectedAppsTableTableManager(
+    _$AppDatabase db,
+    $FocusGuardSelectedAppsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$FocusGuardSelectedAppsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$FocusGuardSelectedAppsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$FocusGuardSelectedAppsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> packageName = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
+                Value<DateTime> selectedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => FocusGuardSelectedAppsCompanion(
+                packageName: packageName,
+                sortOrder: sortOrder,
+                selectedAt: selectedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String packageName,
+                required int sortOrder,
+                required DateTime selectedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => FocusGuardSelectedAppsCompanion.insert(
+                packageName: packageName,
+                sortOrder: sortOrder,
+                selectedAt: selectedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<
+                    $FocusGuardSelectedAppsTable,
+                    FocusGuardSelectedAppRow
+                  >(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $FocusGuardSelectedAppsTable,
+                    FocusGuardSelectedAppRow
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$FocusGuardSelectedAppsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $FocusGuardSelectedAppsTable,
+      FocusGuardSelectedAppRow,
+      $$FocusGuardSelectedAppsTableFilterComposer,
+      $$FocusGuardSelectedAppsTableOrderingComposer,
+      $$FocusGuardSelectedAppsTableAnnotationComposer,
+      $$FocusGuardSelectedAppsTableCreateCompanionBuilder,
+      $$FocusGuardSelectedAppsTableUpdateCompanionBuilder,
+      (
+        FocusGuardSelectedAppRow,
+        BaseReferences<
+          _$AppDatabase,
+          $FocusGuardSelectedAppsTable,
+          FocusGuardSelectedAppRow
+        >,
+      ),
+      FocusGuardSelectedAppRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -7844,4 +9403,11 @@ class $AppDatabaseManager {
       $$DailyReflectionsTableTableManager(_db, _db.dailyReflections);
   $$ReminderPrefsTableTableManager get reminderPrefs =>
       $$ReminderPrefsTableTableManager(_db, _db.reminderPrefs);
+  $$FocusGuardPrefsTableTableManager get focusGuardPrefs =>
+      $$FocusGuardPrefsTableTableManager(_db, _db.focusGuardPrefs);
+  $$FocusGuardSelectedAppsTableTableManager get focusGuardSelectedApps =>
+      $$FocusGuardSelectedAppsTableTableManager(
+        _db,
+        _db.focusGuardSelectedApps,
+      );
 }

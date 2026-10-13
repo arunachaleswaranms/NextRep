@@ -50,6 +50,14 @@ abstract interface class ProgressRepository {
   /// Progress rows recorded for [date]. Habits with no row have no progress.
   Future<List<DailyHabitProgress>> progressOn(int sessionId, LocalDate date);
 
+  /// When [habitId]'s progress on [date] was last written, or null if it
+  /// has none.
+  Future<DateTime?> progressUpdatedAt(
+    int sessionId,
+    String habitId,
+    LocalDate date,
+  );
+
   /// Sum of all XP ledger entries for [sessionId].
   Future<int> totalXp(int sessionId);
 }

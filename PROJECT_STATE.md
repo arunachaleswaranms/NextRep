@@ -2,14 +2,14 @@
 
 _Last updated: 2026-10-13. v1.1.0 is released (tag `v1.1.0` on
 `7e563e2`, PR #14); v1.0.0 before it (tag on `b3f9c5c`, PR #10). v1.2 is in
-progress: Phase 11A (foundation and Focus Guard feasibility) is complete on
-its branch; its PR is open and not merged. Nothing for v1.2 is tagged or
-published._
+progress: Phase 11A is merged (PR #15); Phase 11B (Smart Hydration, schema
+v6, backup format 3) is complete on its branch, its PR open and not merged.
+Nothing for v1.2 is tagged or published._
 
 | | |
 |---|---|
 | RELEASED | **v1.1.0 (2)** (GitHub Release, signed APK `f6bf2a3a…a2d779`); v1.0.0 before it |
-| IN PROGRESS | **v1.2**: Phase 11A complete (Focus Guard **GO**), in review |
+| IN PROGRESS | **v1.2**: 11A merged (Focus Guard **GO**); 11B Smart Hydration complete, in review |
 | ANDROID PHYSICAL | **PASS** for v1.1.0: v1.0.0 → v1.1.0 in-place update on the OnePlus CPH2707 (Phase 10D) |
 | STORE SUBMISSION | **NOT APPLICABLE / NOT PLANNED** |
 
@@ -22,16 +22,40 @@ planned. TalkBack was deliberately deferred and doesn't block this model.
 ## Repo
 
 - Remote: https://github.com/arunachaleswaranms/NextRep (public, MIT)
-- `main`: `7e563e2` (squash merge of PR #14, Phase 10D). Tags `v1.0.0`
-  (`b3f9c5c`) and `v1.1.0` (`7e563e2`). PRs #1–#14 are Phases 1–10D.
-- Branch: `phase/11a-v1.2-foundation-feasibility`, from `7e563e2`
-- PR: "Phase 11A: establish v1.2 foundation and Focus Guard feasibility",
-  open for review, not merged.
+- `main`: `1846611` (squash merge of PR #15, Phase 11A). Tags `v1.0.0`
+  (`b3f9c5c`) and `v1.1.0` (`7e563e2`). PRs #1–#15 are Phases 1–11A.
+- Branch: `phase/11b-smart-hydration`, from `1846611`
+- PR: "Phase 11B: implement Smart Hydration", open for review, not merged.
 - Author and committer of every commit:
   `Arunachaleswaran M S <arunachaleswaranms@gmail.com>` (repo-local
   config). No AI or co-author trailers.
 
-## Phase 11A (v1.2 foundation and Focus Guard feasibility, in review)
+## Phase 11B (Smart Hydration and v1.2 persistence, in review)
+
+Contracts, algorithm and evidence: [docs/PHASE_11B.md](docs/PHASE_11B.md).
+
+- **Hydration Coach**, off by default, in Reminders: Gentle / Balanced
+  (default) / Supportive = up to 3 / 4 / 5 nudges a day; active hours
+  08:00 – 20:00 by default, a same-day window of 8 to 18 hours.
+- Paces against the Arc's **built-in Water habit** (stable id `water`, any
+  title; a custom "Water" never counts) and its effective target per date
+  via `DayRules`: revisions, enabled state, Minimum Day. No separate goal.
+- Checkpoints `min(mode, target)` from 15 % to 90 % of the window, each
+  expecting its share; ±15 min deterministic FNV-1a variation; nudges only
+  when behind pace, still ahead and not within 45 min of a Water log.
+- One reconciliation plans daily + reflection + hydration; re-run after
+  every change to the active Arc. Hydration horizon 7 days: **≤ 63**
+  pending. Payload `hydration` → Today; channel `hydration_coach`.
+- **Schema v6** (additive v5 → v6) and **backup format 3** (write 3, read
+  1 + 2 + 3). Restore turns every reminder, Hydration Coach and Focus Guard
+  off. Focus Guard tables and backup shape exist; the feature is Phase 11C.
+- Version **1.1.0+2**; release permissions and manifest identical to
+  v1.1.0. `flutter test` 902 / 902.
+- API 36 emulator: official v1.1.0 updated in place (live v5 → v6), a real
+  hydration nudge delivered on time and opening Today, re-planning after
+  logs, Minimum Day and Undo as specified. No physical device used.
+
+## Phase 11A (v1.2 foundation and Focus Guard feasibility, merged)
 
 Evidence, contracts and designs: [docs/PHASE_11A.md](docs/PHASE_11A.md).
 No product feature, screen, setting, notification or permission.

@@ -1,7 +1,9 @@
 import 'package:drift/drift.dart';
 
+import '../../domain/focus_guard/focus_guard_settings.dart';
 import '../../domain/habit/habit.dart';
 import '../../domain/progress/day_mode.dart';
+import '../../domain/reminder/reminder_preferences.dart';
 import '../../domain/winter_arc/winter_arc_session.dart';
 import '../../domain/xp/xp.dart';
 import 'converters.dart';
@@ -211,7 +213,10 @@ class DailyReflections extends Table {
 
 /// The app's reminder preferences (schema v4): a single row with id 1,
 /// absent until the user first changes a reminder. They belong to the app,
-/// not to an arc. Both reminders are off unless stored as on.
+/// not to an arc. Every reminder is off unless stored as on.
+///
+/// Schema v6 adds Hydration Coach: on / off, the active hours and the mode.
+/// Its target is never stored here; it is always the arc's Water target.
 @DataClassName('ReminderPreferencesRow')
 class ReminderPrefs extends Table {
   @override
@@ -235,6 +240,102 @@ class ReminderPrefs extends Table {
       integer().check(reflectionMinute.isBetweenValues(0, 59))();
   DateTimeColumn get updatedAt => dateTime()();
 
+  // Schema v6 (appended, as `ALTER TABLE ADD COLUMN` does). The defaults
+  // let the columns be added to an existing row: off, 08:00 – 20:00,
+  // balanced.
+  BoolColumn get hydrationEnabled =>
+      boolean().withDefault(const Constant(false))();
+  IntColumn get hydrationStartHour => integer()
+      .withDefault(const Constant(8))
+      // ignore: recursive_getters
+      .check(hydrationStartHour.isBetweenValues(0, 23))();
+  IntColumn get hydrationStartMinute => integer()
+      .withDefault(const Constant(0))
+      // ignore: recursive_getters
+      .check(hydrationStartMinute.isBetweenValues(0, 59))();
+  IntColumn get hydrationEndHour => integer()
+      .withDefault(const Constant(20))
+      // ignore: recursive_getters
+      .check(hydrationEndHour.isBetweenValues(0, 23))();
+
+  /// Also checks the whole window, as `HydrationWindow` does: a same-day
+  /// window of 8 to 18 hours (480 to 1080 minutes).
+  IntColumn get hydrationEndMinute => integer()
+      .withDefault(const Constant(0))
+      .check(
+        // ignore: recursive_getters
+        hydrationEndMinute.isBetweenValues(0, 59) &
+            (hydrationEndHour * const Constant(60) +
+                    // ignore: recursive_getters
+                    hydrationEndMinute -
+                    hydrationStartHour * const Constant(60) -
+                    hydrationStartMinute)
+                .isBetweenValues(
+                  HydrationWindow.minMinutes,
+                  HydrationWindow.maxMinutes,
+                ),
+      )();
+  TextColumn get hydrationMode => textEnum<HydrationMode>()
+      .withDefault(Constant(HydrationMode.balanced.name))
+      // ignore: recursive_getters
+      .check(hydrationMode.isIn(['gentle', 'balanced', 'supportive']))();
+
   @override
   Set<Column> get primaryKey => {id};
+}
+
+/// Focus Guard's settings (schema v6): a single row with id 1, absent
+/// until the user first changes one. App-level, not Arc-owned.
+///
+/// Reserved for Phase 11C; nothing reads or writes it in the app yet
+/// except backup and restore. It holds configuration the user chose and
+/// the date of the last nudge, never an amount of app usage.
+@DataClassName('FocusGuardPreferencesRow')
+class FocusGuardPrefs extends Table {
+  @override
+  String get tableName => 'focus_guard_preferences';
+
+  // ignore: recursive_getters
+  IntColumn get id => integer().check(id.equals(1))();
+  BoolColumn get enabled => boolean()();
+
+  /// One combined budget across the selected apps.
+  IntColumn get dailyBudgetMinutes => integer().check(
+    // ignore: recursive_getters
+    dailyBudgetMinutes.isBetweenValues(
+      FocusGuardRules.minDailyBudgetMinutes,
+      FocusGuardRules.maxDailyBudgetMinutes,
+    ),
+  )();
+
+  /// The local date of the day's one nudge, if one was sent: a date, never
+  /// an amount.
+  TextColumn get lastNudgedOn =>
+      text().map(const LocalDateConverter()).nullable()();
+  DateTimeColumn get updatedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// The apps the user picked for Focus Guard (schema v6), in the user's
+/// order. Package names only: no labels, icons or usage.
+@DataClassName('FocusGuardSelectedAppRow')
+class FocusGuardSelectedApps extends Table {
+  TextColumn get packageName => text().check(
+    // ignore: recursive_getters
+    packageName.length.isBetweenValues(3, FocusGuardRules.maxPackageNameLength),
+  )();
+  IntColumn get sortOrder =>
+      // ignore: recursive_getters
+      integer().check(sortOrder.isBiggerOrEqualValue(0))();
+  DateTimeColumn get selectedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {packageName};
+
+  @override
+  List<Set<Column>> get uniqueKeys => [
+    {sortOrder},
+  ];
 }

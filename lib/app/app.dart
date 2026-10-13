@@ -52,9 +52,11 @@ class NextRepApp extends ConsumerWidget {
 /// reminders.
 ///
 /// It also keeps the pending reminders in line with the arcs: after launch,
-/// on resume, and whenever the active arc changes (started, closed, or a
-/// new one). While the app is in the foreground it moves every screen to
-/// the new day at local midnight.
+/// on resume, whenever the active arc changes (started, closed, or a new
+/// one) and after every persisted change to it (Water logged or undone,
+/// Minimum Day on or off, a habit edit), which is what Hydration Coach
+/// paces against. While the app is in the foreground it moves every screen
+/// to the new day at local midnight.
 class _RoutedApp extends ConsumerStatefulWidget {
   const _RoutedApp({super.key, required this.initialLocation});
 
@@ -87,6 +89,7 @@ class _RoutedAppState extends ConsumerState<_RoutedApp> {
       _resolution.value = next;
       if (previous?.active?.id != next?.active?.id) _syncReminders();
     });
+    ref.listenManual(arcRefreshProvider, (_, _) => _syncReminders());
     _lifecycle = AppLifecycleListener(
       onResume: () {
         _dayChange.start();

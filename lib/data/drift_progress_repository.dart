@@ -92,6 +92,23 @@ final class DriftProgressRepository implements ProgressRepository {
       });
 
   @override
+  Future<DateTime?> progressUpdatedAt(
+    int sessionId,
+    String habitId,
+    LocalDate date,
+  ) => guardPersistence('load progress time for $date', () async {
+    final row =
+        await (_db.select(_db.dailyHabitProgressEntries)..where(
+              (p) =>
+                  p.sessionId.equals(sessionId) &
+                  p.habitId.equals(habitId) &
+                  p.date.equalsValue(date),
+            ))
+            .getSingleOrNull();
+    return row?.updatedAt;
+  });
+
+  @override
   Future<int> totalXp(int sessionId) =>
       guardPersistence('load total XP', () => _totalXp(sessionId));
 

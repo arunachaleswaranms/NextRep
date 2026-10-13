@@ -25,12 +25,14 @@ readonly APPLICATION_ID="com.nextrep.nextrep"
 readonly NEXTREP_CERT_SHA256="65b70cd096d1bbf2c0f50ee02f4b55974625cc4cdbead739225f0675afc8f0ba"
 readonly EXPECTED_CERT="${EXPECTED_CERT_SHA256:-$NEXTREP_CERT_SHA256}"
 # Network, exact alarms, storage and media, contacts and accounts, camera,
-# microphone and usage access. Share cards go through the system share sheet
-# and need none of them.
+# microphone, usage access, every-package visibility, overlays, installing
+# packages and foreground services. Share cards go through the system share
+# sheet and need none of them.
 readonly FORBIDDEN_PERMISSIONS="INTERNET SCHEDULE_EXACT_ALARM USE_EXACT_ALARM \
 MANAGE_EXTERNAL_STORAGE READ_EXTERNAL_STORAGE WRITE_EXTERNAL_STORAGE \
 READ_MEDIA_IMAGES READ_MEDIA_VIDEO READ_MEDIA_AUDIO READ_MEDIA_VISUAL_USER_SELECTED \
-READ_CONTACTS WRITE_CONTACTS GET_ACCOUNTS CAMERA RECORD_AUDIO PACKAGE_USAGE_STATS"
+READ_CONTACTS WRITE_CONTACTS GET_ACCOUNTS CAMERA RECORD_AUDIO PACKAGE_USAGE_STATS \
+QUERY_ALL_PACKAGES SYSTEM_ALERT_WINDOW REQUEST_INSTALL_PACKAGES FOREGROUND_SERVICE"
 readonly BUILT_APK="build/app/outputs/flutter-apk/app-release.apk"
 readonly STAGING_DIR="build/release-candidate"
 

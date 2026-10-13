@@ -45,6 +45,15 @@ void main() {
       expect(AppRoutes.forReminder('journal', active), AppRoutes.journal);
     });
 
+    test('a Hydration Coach nudge opens Today of the active arc', () {
+      expect(AppRoutes.forReminder('hydration', active), AppRoutes.today);
+      expect(AppRoutes.forReminder('hydration', completed), AppRoutes.arc(1));
+      expect(
+        AppRoutes.forReminder('hydration', setupOnly),
+        AppRoutes.habitSetup,
+      );
+    });
+
     test('an unknown payload falls back to Today', () {
       expect(AppRoutes.forReminder('nope', active), AppRoutes.today);
       expect(AppRoutes.forReminder(null, active), AppRoutes.today);

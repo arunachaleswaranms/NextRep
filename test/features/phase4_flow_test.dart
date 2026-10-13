@@ -399,8 +399,9 @@ void main() {
     await tester.tap(find.byTooltip('Reminders'));
     await tester.pumpAndSettle();
     expect(find.byType(ReminderSettingsScreen), findsOneWidget);
+    // Daily, evening reflection, then Hydration Coach (Phase 11B), below.
     final switches = find.byType(Switch);
-    expect(tester.widgetList<Switch>(switches).map((s) => s.value), [
+    expect(tester.widgetList<Switch>(switches).take(2).map((s) => s.value), [
       false,
       false,
     ]);
@@ -409,7 +410,7 @@ void main() {
     await tester.tap(find.text('Evening reflection'));
     await tester.pumpAndSettle();
     expect(scheduler.permissionRequests, 1);
-    expect(tester.widgetList<Switch>(switches).last.value, isTrue);
+    expect(tester.widgetList<Switch>(switches).elementAt(1).value, isTrue);
     expect(scheduler.pending.map((r) => r.kind).toSet(), {
       ReminderKind.reflection,
     });
@@ -419,7 +420,7 @@ void main() {
     );
     expect(time.label, isNot(contains('How did today go')));
     expect(
-      tester.getSemantics(find.byType(Switch).last).label,
+      tester.getSemantics(find.byType(Switch).at(1)).label,
       isNot(contains('time')),
     );
 

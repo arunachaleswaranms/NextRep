@@ -34,11 +34,12 @@ Map<String, dynamic> _json(Uint8List bytes) =>
     jsonDecode(utf8.decode(bytes)) as Map<String, dynamic>;
 
 void main() {
-  test('schema and backup format are unchanged', () async {
+  test('v1.1 data still reads on schema v6 and backup format 3', () async {
     final db = memoryDatabase();
     addTearDown(db.close);
-    expect(db.schemaVersion, 5);
-    expect(BackupFormat.formatVersion, 2);
+    expect(db.schemaVersion, 6);
+    expect(BackupFormat.formatVersion, 3);
+    expect(BackupFormat.readableVersions, containsAll([1, 2]));
   });
 
   test('a v1.0-era format-1 backup restores, keeps its unlocks, and is then '
@@ -103,9 +104,9 @@ void main() {
       bytes = (await source.backup.export()).bytes;
     });
 
-    test('exports format 2 carrying the new ids', () {
+    test('exports the current format carrying the new ids', () {
       final json = _json(bytes);
-      expect(json['formatVersion'], 2);
+      expect(json['formatVersion'], 3);
       final arc = ((json['data'] as Map)['arcs'] as List).single as Map;
       final habitIds = [for (final h in arc['habits'] as List) h['id']];
       expect(habitIds, containsAll(['hair_care', 'reading']));

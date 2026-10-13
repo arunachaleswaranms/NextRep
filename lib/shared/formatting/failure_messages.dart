@@ -54,6 +54,9 @@ String userMessageFor(AppFailure failure) => switch (failure) {
       'An Arc can have up to 12 habits. Remove one to add another.',
     DomainRule.duplicateHabit =>
       'That habit, or one with the same name, is already in your Arc.',
+    DomainRule.invalidHydrationWindow =>
+      'Active hours must start before they end, within one day, and last '
+          'between 8 and 18 hours.',
     DomainRule.sessionNotFound ||
     DomainRule.noSession ||
     DomainRule.sessionNotInSetup ||

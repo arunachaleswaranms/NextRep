@@ -83,12 +83,13 @@ abstract final class AppRoutes {
 
   /// Where a tapped reminder leads. Reminders only ever point at the active
   /// arc; a stale one (the arc has since completed, or a new one is in
-  /// setup) falls back to [home] instead of a writable screen.
+  /// setup) falls back to [home] instead of a writable screen. A hydration
+  /// nudge opens Today, where Water is logged; an unknown payload does too.
   static String forReminder(String? payload, ArcResolution resolution) {
     if (resolution.active == null) return home(resolution);
     return switch (ReminderKind.fromPayload(payload)) {
       ReminderKind.reflection => journal,
-      ReminderKind.daily || null => today,
+      ReminderKind.daily || ReminderKind.hydration || null => today,
     };
   }
 

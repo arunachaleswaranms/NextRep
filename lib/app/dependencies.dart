@@ -154,6 +154,7 @@ final reminderPreferencesRepositoryProvider =
 final reminderServiceProvider = Provider<ReminderService>(
   (ref) => ReminderService(
     sessions: ref.watch(winterArcRepositoryProvider),
+    progress: ref.watch(progressRepositoryProvider),
     preferences: ref.watch(reminderPreferencesRepositoryProvider),
     scheduler: ref.watch(reminderSchedulerProvider),
     clock: ref.watch(clockProvider),

@@ -1,7 +1,11 @@
 import '../../core/time/clock.dart';
+import '../../core/time/local_date.dart';
 import '../../core/utils/serial_queue.dart';
+import '../progress/progress_repository.dart';
 import '../winter_arc/current_arc_service.dart';
 import '../winter_arc/winter_arc_repository.dart';
+import '../winter_arc/winter_arc_session.dart';
+import 'hydration_planner.dart';
 import 'reminder_plan.dart';
 import 'reminder_preferences.dart';
 import 'reminder_scheduler.dart';
@@ -20,16 +24,33 @@ enum ReminderUpdate {
   savedNotScheduled,
 }
 
+/// Whether Hydration Coach can run for the arc as it is now.
+enum HydrationAvailability {
+  /// The active arc has the built-in Water habit.
+  available,
+
+  /// No arc is running.
+  noActiveArc,
+
+  /// The active arc has no built-in Water habit (a custom habit named
+  /// "Water" doesn't count).
+  noBuiltInWater,
+}
+
 /// Reminder use cases: the user's preferences and the reminders they imply
 /// for the active arc.
 ///
 /// [reconcile] makes the scheduler's pending reminders exactly what
-/// [ReminderPlanner] says they should be. It is idempotent and safe to call
-/// any time: at launch, on resume, after a preference change, and when the
-/// arc starts or closes (no active arc means nothing pending).
+/// [ReminderPlanner] says they should be: daily, reflection and hydration
+/// in one complete plan. It is idempotent and safe to call any time: at
+/// launch, on resume, at local midnight, after a preference change, after
+/// any change to the active arc's day (Water logged or undone, Minimum Day
+/// on or off, a habit edit), when the arc starts or closes (no active arc
+/// means nothing pending) and after a restore.
 final class ReminderService {
   ReminderService({
     required WinterArcRepository sessions,
+    required this._progress,
     required this._preferences,
     required this._scheduler,
     required this._clock,
@@ -37,6 +58,7 @@ final class ReminderService {
   }) : _arcs = CurrentArcService(sessions);
 
   final CurrentArcService _arcs;
+  final ProgressRepository _progress;
   final ReminderPreferencesRepository _preferences;
   final ReminderScheduler _scheduler;
   final Clock _clock;
@@ -50,6 +72,17 @@ final class ReminderService {
 
   /// Whether notifications may currently be shown. Never prompts.
   Future<bool> permissionGranted() => _scheduler.permissionGranted();
+
+  /// Whether Hydration Coach can run: the active arc has the built-in Water
+  /// habit, found by its stable id whatever its title.
+  Future<HydrationAvailability> hydrationAvailability() async {
+    final active = (await _arcs.resolve()).active;
+    if (active == null) return HydrationAvailability.noActiveArc;
+    final records = await _progress.loadArc(active.id);
+    return records.habits.habit(builtInWaterHabitId) == null
+        ? HydrationAvailability.noBuiltInWater
+        : HydrationAvailability.available;
+  }
 
   /// Applies [change] to the stored preferences, saves the result and
   /// reconciles. The change is applied inside the queue to whatever is
@@ -67,7 +100,8 @@ final class ReminderService {
     final next = change(previous);
     final turningOn =
         (next.dailyEnabled && !previous.dailyEnabled) ||
-        (next.reflectionEnabled && !previous.reflectionEnabled);
+        (next.reflectionEnabled && !previous.reflectionEnabled) ||
+        (next.hydrationEnabled && !previous.hydrationEnabled);
     if (turningOn &&
         !await _scheduler.permissionGranted() &&
         !await _scheduler.requestPermission()) {
@@ -90,10 +124,16 @@ final class ReminderService {
   Future<List<PlannedReminder>> reconcile() => _queue.run(_reconcile);
 
   Future<List<PlannedReminder>> _reconcile() async {
+    final preferences = await _preferences.load();
+    final active = (await _arcs.resolve()).active;
+    final now = _clock.now();
     final plan = ReminderPlanner.plan(
-      preferences: await _preferences.load(),
-      active: (await _arcs.resolve()).active,
-      now: _clock.now(),
+      preferences: preferences,
+      active: active,
+      now: now,
+      hydration: preferences.hydrationEnabled && active != null
+          ? await _hydrationDays(active, now)
+          : const [],
     );
     if (plan.isEmpty) {
       await _scheduler.cancelAll();
@@ -101,5 +141,30 @@ final class ReminderService {
       await _scheduler.schedule(plan);
     }
     return plan;
+  }
+
+  /// The stored state of the hydration horizon, today first: the arc's
+  /// habit history, day modes and progress, and when today's Water was last
+  /// logged.
+  Future<List<HydrationDay>> _hydrationDays(
+    WinterArcSession arc,
+    DateTime now,
+  ) async {
+    final today = LocalDate.fromDateTime(now);
+    final records = await _progress.loadArc(arc.id);
+    final lastLogged = await _progress.progressUpdatedAt(
+      arc.id,
+      builtInWaterHabitId,
+      today,
+    );
+    return [
+      for (var offset = 0; offset < HydrationPlanner.horizonDays; offset++)
+        HydrationDay.of(
+          arc: arc,
+          records: records,
+          date: today.addDays(offset),
+          lastLoggedAt: offset == 0 ? lastLogged : null,
+        ),
+    ];
   }
 }

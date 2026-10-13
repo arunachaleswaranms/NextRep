@@ -5,6 +5,7 @@ import '../domain/achievement/achievement.dart';
 import '../domain/backup/backup_document.dart';
 import '../domain/backup/backup_store.dart';
 import '../domain/backup/backup_validator.dart';
+import '../domain/focus_guard/focus_guard_settings.dart';
 import '../domain/habit/habit_config.dart';
 import '../domain/progress/daily_habit_progress.dart';
 import '../domain/reflection/daily_reflection.dart';
@@ -25,6 +26,7 @@ final class DriftBackupStore implements BackupStore {
   final AppDatabase _db;
 
   static const _reminderId = 1;
+  static const _focusGuardId = 1;
 
   @override
   Future<BackupData> read() => guardPrivatePersistence(
@@ -88,6 +90,12 @@ final class DriftBackupStore implements BackupStore {
       final reminders = await (_db.select(
         _db.reminderPrefs,
       )..where((r) => r.id.equals(_reminderId))).getSingleOrNull();
+      final focusGuard = await (_db.select(
+        _db.focusGuardPrefs,
+      )..where((f) => f.id.equals(_focusGuardId))).getSingleOrNull();
+      final selectedApps = await (_db.select(
+        _db.focusGuardSelectedApps,
+      )..orderBy([(a) => OrderingTerm.asc(a.sortOrder)])).get();
 
       return BackupData(
         arcs: [
@@ -182,6 +190,29 @@ final class DriftBackupStore implements BackupStore {
                   reminders.reflectionHour,
                   reminders.reflectionMinute,
                 ),
+                // The table's CHECK only admits valid windows.
+                hydrationWindow: HydrationWindow(
+                  ReminderTime(
+                    reminders.hydrationStartHour,
+                    reminders.hydrationStartMinute,
+                  ),
+                  ReminderTime(
+                    reminders.hydrationEndHour,
+                    reminders.hydrationEndMinute,
+                  ),
+                ),
+                hydrationMode: reminders.hydrationMode,
+              ),
+        // Configuration only: never the enabled state or the last nudge.
+        focusGuard: focusGuard == null && selectedApps.isEmpty
+            ? null
+            : BackupFocusGuard(
+                dailyBudgetMinutes:
+                    focusGuard?.dailyBudgetMinutes ??
+                    FocusGuardRules.defaultDailyBudgetMinutes,
+                selectedPackages: [
+                  for (final app in selectedApps) app.packageName,
+                ],
               ),
       );
     }),
@@ -204,6 +235,8 @@ final class DriftBackupStore implements BackupStore {
       await _db.delete(_db.habits).go();
       await _db.delete(_db.winterArcSessions).go();
       await _db.delete(_db.reminderPrefs).go();
+      await _db.delete(_db.focusGuardSelectedApps).go();
+      await _db.delete(_db.focusGuardPrefs).go();
 
       await _db.batch((batch) {
         for (final arc in data.arcs) {
@@ -294,8 +327,10 @@ final class DriftBackupStore implements BackupStore {
             ]);
         }
         if (data.reminders case final times?) {
-          // Times only: both reminders stay off until the user turns them
-          // on again.
+          // Settings only: the daily reminder, the evening reflection and
+          // Hydration Coach all stay off until the user turns them on
+          // again.
+          final window = times.hydrationWindow;
           batch.insert(
             _db.reminderPrefs,
             ReminderPrefsCompanion.insert(
@@ -307,8 +342,38 @@ final class DriftBackupStore implements BackupStore {
               reflectionHour: times.reflection.hour,
               reflectionMinute: times.reflection.minute,
               updatedAt: backup.document.exportedAt,
+              hydrationEnabled: const Value(false),
+              hydrationStartHour: Value(window.start.hour),
+              hydrationStartMinute: Value(window.start.minute),
+              hydrationEndHour: Value(window.end.hour),
+              hydrationEndMinute: Value(window.end.minute),
+              hydrationMode: Value(times.hydrationMode),
             ),
           );
+        }
+        if (data.focusGuard case final focusGuard?) {
+          // Budget and apps only: Focus Guard stays off, with no nudge on
+          // record, until the user turns it on again.
+          batch
+            ..insert(
+              _db.focusGuardPrefs,
+              FocusGuardPrefsCompanion.insert(
+                id: const Value(_focusGuardId),
+                enabled: false,
+                dailyBudgetMinutes: focusGuard.dailyBudgetMinutes,
+                lastNudgedOn: const Value(null),
+                updatedAt: backup.document.exportedAt,
+              ),
+            )
+            ..insertAll(_db.focusGuardSelectedApps, [
+              for (final (i, packageName)
+                  in focusGuard.selectedPackages.indexed)
+                FocusGuardSelectedAppsCompanion.insert(
+                  packageName: packageName,
+                  sortOrder: i,
+                  selectedAt: backup.document.exportedAt,
+                ),
+            ]);
         }
       });
 
@@ -356,6 +421,8 @@ final class DriftBackupStore implements BackupStore {
       _db.achievementUnlocks: total((a) => a.achievements.length),
       _db.dailyReflections: total((a) => a.reflections.length),
       _db.reminderPrefs: data.reminders == null ? 0 : 1,
+      _db.focusGuardPrefs: data.focusGuard == null ? 0 : 1,
+      _db.focusGuardSelectedApps: data.focusGuard?.selectedPackages.length ?? 0,
     };
     for (final MapEntry(key: table, value: count) in expected.entries) {
       final stored = await _db

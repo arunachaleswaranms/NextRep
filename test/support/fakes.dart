@@ -213,6 +213,7 @@ final class TestApp {
     );
     reminders = ReminderService(
       sessions: sessions,
+      progress: progress,
       preferences: reminderStore,
       scheduler: this.scheduler,
       clock: clock,

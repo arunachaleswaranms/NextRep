@@ -15,6 +15,7 @@ final class ReminderSettingsView {
     required this.preferences,
     required this.permissionGranted,
     required this.arcActive,
+    this.hydration = HydrationAvailability.available,
   });
 
   final ReminderPreferences preferences;
@@ -24,6 +25,9 @@ final class ReminderSettingsView {
 
   /// Reminders only arrive while an arc is running.
   final bool arcActive;
+
+  /// Whether Hydration Coach can run for the active arc.
+  final HydrationAvailability hydration;
 }
 
 final reminderSettingsProvider =
@@ -45,7 +49,24 @@ class ReminderSettingsController extends AsyncNotifier<ReminderSettingsView> {
       preferences: await service.preferences(),
       permissionGranted: await _permissionGranted(service),
       arcActive: active,
+      hydration: await _hydrationAvailability(service),
     );
+  }
+
+  /// Like [_permissionGranted], a failing check doesn't take the screen
+  /// down: it reads as available, so no explanation is shown wrongly.
+  static Future<HydrationAvailability> _hydrationAvailability(
+    ReminderService service,
+  ) async {
+    try {
+      return await service.hydrationAvailability();
+    } catch (error, stackTrace) {
+      ErrorReporter.report(
+        toAppFailure(error, stackTrace),
+        context: 'reminders',
+      );
+      return HydrationAvailability.available;
+    }
   }
 
   /// A failing permission check must not take the whole screen down (the

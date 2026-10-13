@@ -210,6 +210,13 @@ final class _FailingWrites implements ProgressRepository {
       _inner.progressOn(sessionId, date);
 
   @override
+  Future<DateTime?> progressUpdatedAt(
+    int sessionId,
+    String habitId,
+    LocalDate date,
+  ) => _inner.progressUpdatedAt(sessionId, habitId, date);
+
+  @override
   Future<int> totalXp(int sessionId) => _inner.totalXp(sessionId);
 
   @override
