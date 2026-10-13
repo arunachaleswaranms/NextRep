@@ -39,21 +39,23 @@ jobs:
       - name: Analyze
         run: flutter analyze
 
-      - name: Migration tests (schema v1 -> v2 -> v3 -> v4 -> v5)
+      - name: Migration tests (schema v1 -> v2 -> v3 -> v4 -> v5 -> v6)
         run: >-
           flutter test
           test/data/migration_test.dart
           test/data/migration_v3_test.dart
           test/data/migration_v4_test.dart
           test/data/migration_v5_test.dart
+          test/data/migration_v6_test.dart
 
-      - name: Backup format tests (v1 compatibility and v2)
+      - name: Backup format tests (write 3; read 1, 2 and 3)
         run: >-
           flutter test
           test/domain/backup_format_test.dart
           test/domain/backup_v2_test.dart
           test/data/backup_restore_test.dart
           test/data/backup_v2_restore_test.dart
+          test/data/backup_v3_test.dart
 
       - name: Release qualification tests (lifecycle, accessibility, dates)
         run: >-
@@ -104,9 +106,18 @@ jobs:
           for forbidden in INTERNET SCHEDULE_EXACT_ALARM USE_EXACT_ALARM \
             MANAGE_EXTERNAL_STORAGE READ_EXTERNAL_STORAGE WRITE_EXTERNAL_STORAGE \
             READ_MEDIA_IMAGES READ_MEDIA_VIDEO READ_MEDIA_AUDIO READ_MEDIA_VISUAL_USER_SELECTED \
-            READ_CONTACTS WRITE_CONTACTS GET_ACCOUNTS CAMERA RECORD_AUDIO PACKAGE_USAGE_STATS; do
+            READ_CONTACTS WRITE_CONTACTS GET_ACCOUNTS CAMERA RECORD_AUDIO PACKAGE_USAGE_STATS \
+            QUERY_ALL_PACKAGES SYSTEM_ALERT_WINDOW REQUEST_INSTALL_PACKAGES FOREGROUND_SERVICE; do
             if grep -q "android.permission.$forbidden'" permissions.txt; then
               echo "::error::Release APK requests android.permission.$forbidden"
+              exit 1
+            fi
+          done
+          # No Accessibility or VPN service may be declared at all.
+          "$AAPT2" dump xmltree --file AndroidManifest.xml build/app/outputs/flutter-apk/app-release.apk > manifest.txt
+          for bind in BIND_ACCESSIBILITY_SERVICE BIND_VPN_SERVICE; do
+            if grep -q "android.permission.$bind" manifest.txt; then
+              echo "::error::Release APK declares a service guarded by $bind"
               exit 1
             fi
           done
