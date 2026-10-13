@@ -42,6 +42,16 @@ Uint8List _mutate(Uint8List bytes, void Function(Json json) change) {
   return _resign(json);
 }
 
+/// [value] without its instants (the `...At` timestamps).
+Object? _withoutInstants(Object? value) => switch (value) {
+  Map<String, dynamic>() => {
+    for (final MapEntry(:key, value: v) in value.entries)
+      if (!key.endsWith('At')) key: _withoutInstants(v),
+  },
+  List<dynamic>() => [for (final v in value) _withoutInstants(v)],
+  _ => value,
+};
+
 Json _arc(Json json, int index) =>
     ((json['data'] as Json)['arcs'] as List)[index] as Json;
 
@@ -131,9 +141,11 @@ void main() {
       final fromV2 = BackupCodec.encode(BackupCodec.decode(v2));
       final fromV3 = BackupCodec.encode(BackupCodec.decode(v3));
       expect(_json(fromV2)['formatVersion'], 3);
+      // The fixture's instants were recorded in the zone it was made in;
+      // calendar dates and everything else don't depend on the zone.
       expect(
-        ((_json(fromV2)['data'] as Json)['arcs'] as List),
-        ((_json(fromV3)['data'] as Json)['arcs'] as List),
+        _withoutInstants((_json(fromV2)['data'] as Json)['arcs']),
+        _withoutInstants((_json(fromV3)['data'] as Json)['arcs']),
       );
     });
 
