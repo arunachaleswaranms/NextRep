@@ -69,11 +69,6 @@ android {
     }
 
     buildTypes {
-        // PHASE 11A FEASIBILITY PROBE (temporary): a separate package, so the
-        // probe never replaces an installed NextRep.
-        debug {
-            applicationIdSuffix = ".feasibility"
-        }
         release {
             signingConfig = if (hasReleaseSigning) {
                 signingConfigs.getByName("release")
@@ -96,6 +91,4 @@ flutter {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
-    // PHASE 11A FEASIBILITY PROBE (temporary, debug only).
-    debugImplementation("androidx.work:work-runtime:2.10.1")
 }
