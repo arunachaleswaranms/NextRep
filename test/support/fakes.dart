@@ -14,6 +14,8 @@ import 'package:nextrep/data/drift_reminder_preferences_repository.dart';
 import 'package:nextrep/data/drift_winter_arc_repository.dart';
 import 'package:nextrep/domain/achievement/achievement_service.dart';
 import 'package:nextrep/domain/backup/backup_service.dart';
+import 'package:nextrep/domain/focus_guard/focus_guard_background.dart';
+import 'package:nextrep/domain/focus_guard/focus_guard_platform.dart';
 import 'package:nextrep/domain/history/arc_history_service.dart';
 import 'package:nextrep/domain/insights/insight_service.dart';
 import 'package:nextrep/domain/progress/habit_tracking_service.dart';
@@ -89,6 +91,82 @@ final class FakeReminderScheduler implements ReminderScheduler {
   Future<void> cancelAll() async {
     cancelCalls++;
     pending = const [];
+  }
+}
+
+/// Usage Access and app usage as a test sets them. Access can change
+/// between calls, as when the user revokes it in system settings.
+final class FakeFocusGuardPlatform implements FocusGuardPlatform {
+  FakeFocusGuardPlatform({
+    this.access = UsageAccess.notGranted,
+    this.apps = const [],
+    this.usage = const {},
+  });
+
+  UsageAccess access;
+  List<LaunchableAppCandidate> apps;
+
+  /// What a usage query returns, before the fake limits it to the
+  /// requested packages.
+  Map<String, Duration> usage;
+
+  /// Called during a usage query, after it was asked for (e.g. to revoke
+  /// access mid-query).
+  void Function()? duringQuery;
+  bool failAccessCheck = false;
+  bool failQuery = false;
+  int settingsOpened = 0;
+  int accessChecks = 0;
+  final queries = <({Set<String> packages, DateTime from, DateTime to})>[];
+
+  @override
+  Future<UsageAccess> usageAccess() async {
+    accessChecks++;
+    if (failAccessCheck) throw StateError('access check failed');
+    return access;
+  }
+
+  @override
+  Future<void> openUsageAccessSettings() async => settingsOpened++;
+
+  @override
+  Future<List<LaunchableAppCandidate>> launchableApps() async => apps;
+
+  @override
+  Future<Map<String, Duration>> foregroundTime(
+    Set<String> packages, {
+    required DateTime from,
+    required DateTime to,
+  }) async {
+    queries.add((packages: packages, from: from, to: to));
+    duringQuery?.call();
+    if (failQuery) throw StateError('usage query failed');
+    // Android answers without access with no data, not an error.
+    if (access != UsageAccess.granted) return const {};
+    return {
+      for (final MapEntry(:key, :value) in usage.entries)
+        if (packages.contains(key)) key: value,
+    };
+  }
+}
+
+/// Records whether the periodic Focus Guard check is scheduled.
+final class FakeFocusGuardBackgroundScheduler
+    implements FocusGuardBackgroundScheduler {
+  bool scheduled = false;
+  int scheduleCalls = 0;
+  int cancelCalls = 0;
+
+  @override
+  Future<void> ensureScheduled() async {
+    scheduleCalls++;
+    scheduled = true;
+  }
+
+  @override
+  Future<void> cancel() async {
+    cancelCalls++;
+    scheduled = false;
   }
 }
 

@@ -1,15 +1,15 @@
 # PROJECT_STATE
 
-_Last updated: 2026-10-12. v1.0.0 is released (tag `v1.0.0` on
-`b3f9c5c`, PR #10). Phases 10A (PR #11), 10B (PR #12) and 10C (PR #13,
-`901caca`) are merged. Phase 10D (v1.1.0 release qualification) is
-complete on its branch; its PR is open and not merged. v1.1.0 is not
-tagged or published._
+_Last updated: 2026-10-13. v1.1.0 is released (tag `v1.1.0` on
+`7e563e2`, PR #14); v1.0.0 before it (tag on `b3f9c5c`, PR #10). v1.2 is in
+progress: Phase 11A (foundation and Focus Guard feasibility) is complete on
+its branch; its PR is open and not merged. Nothing for v1.2 is tagged or
+published._
 
 | | |
 |---|---|
-| RELEASED | **v1.0.0** (GitHub Release, signed APK) |
-| RELEASE CANDIDATE | **v1.1.0 (2)**: qualified in Phase 10D, signed APK `f6bf2a3a…a2d779`, pending review, merge and publication |
+| RELEASED | **v1.1.0 (2)** (GitHub Release, signed APK `f6bf2a3a…a2d779`); v1.0.0 before it |
+| IN PROGRESS | **v1.2**: Phase 11A complete (Focus Guard **GO**), in review |
 | ANDROID PHYSICAL | **PASS** for v1.1.0: v1.0.0 → v1.1.0 in-place update on the OnePlus CPH2707 (Phase 10D) |
 | STORE SUBMISSION | **NOT APPLICABLE / NOT PLANNED** |
 
@@ -22,16 +22,44 @@ planned. TalkBack was deliberately deferred and doesn't block this model.
 ## Repo
 
 - Remote: https://github.com/arunachaleswaranms/NextRep (public, MIT)
-- `main`: `901caca` (squash merge of PR #13, Phase 10C). `v1.0.0` is
-  tagged on `b3f9c5c` (PR #10). PRs #1–#13 are Phases 1–10C.
-- Branch: `phase/10d-v1.1-release-qualification`, from `901caca`
-- PR: "Phase 10D: qualify NextRep v1.1.0 release", open for review, not
-  merged. No v1.1.0 tag or release.
+- `main`: `7e563e2` (squash merge of PR #14, Phase 10D). Tags `v1.0.0`
+  (`b3f9c5c`) and `v1.1.0` (`7e563e2`). PRs #1–#14 are Phases 1–10D.
+- Branch: `phase/11a-v1.2-foundation-feasibility`, from `7e563e2`
+- PR: "Phase 11A: establish v1.2 foundation and Focus Guard feasibility",
+  open for review, not merged.
 - Author and committer of every commit:
   `Arunachaleswaran M S <arunachaleswaranms@gmail.com>` (repo-local
   config). No AI or co-author trailers.
 
-## Phase 10D (v1.1.0 release qualification, in review)
+## Phase 11A (v1.2 foundation and Focus Guard feasibility, in review)
+
+Evidence, contracts and designs: [docs/PHASE_11A.md](docs/PHASE_11A.md).
+No product feature, screen, setting, notification or permission.
+
+- **v1.2 scope locked:** Smart Hydration (11B) and About + manual Check for
+  updates (11D) guaranteed; Focus Guard (11C) was conditional.
+- **FOCUS GUARD: GO.** On the API 36 emulator and the OnePlus (Android 16):
+  Usage Access detected, granted and revoked through the real system
+  switch; today's usage from UsageStats events (+62 s for a 60 s session,
+  live, never backwards); a picker list equal to every launchable app
+  (122 / 122) with a narrow `MAIN/LAUNCHER` `<queries>`, without
+  `QUERY_ALL_PACKAGES`; WorkManager periodic checks every ~15 minutes
+  with no foreground service, exact alarm or battery exemption (31
+  overnight runs on the emulator); safe no-op after revocation; reboot
+  restores the job; force-stop suspends it until NextRep is opened.
+- Android answers usage queries without access with empty data, and
+  revocation doesn't restart the app: access is re-checked around every
+  query and nothing is cached.
+- Platform-neutral foundation in `lib/domain/focus_guard/` and
+  `lib/data/focus_guard_codec.dart`, tested with fakes (31 tests); not wired
+  into the app, nothing persisted.
+- The debug-only probe (separate `.feasibility` package) is in the branch
+  history (`2013edd`) and removed (`7120e16`). Release manifest identical to
+  v1.1.0.
+- Version **1.1.0+2**, schema **v5**, backup write 2 / read 1 + 2: all
+  unchanged. Schema v6 and backup format 3 are designed, not built.
+
+## Phase 10D (v1.1.0 release qualification, released)
 
 Evidence: [docs/PHASE_10D.md](docs/PHASE_10D.md). No product feature; one
 review correction removed the repository link from share cards and their
@@ -139,7 +167,7 @@ Evidence and rules: [docs/PHASE_10A.md](docs/PHASE_10A.md).
 | | |
 |---|---|
 | Version | `1.1.0+2`: versionName 1.1.0, versionCode 2 (Phase 10D). Released: 1.0.0 (1) |
-| Tag | `v1.0.0` on `b3f9c5c`; `v1.1.0` planned, not created |
+| Tag | `v1.0.0` on `b3f9c5c`; `v1.1.0` on `7e563e2`; no v1.2 tag |
 | Android `applicationId` | `com.nextrep.nextrep` (kept for update continuity) |
 | Database schema | **v5** (unchanged through v1.1.0) |
 | Backup | export `formatVersion` **2**; import reads 1 and 2 (unchanged through v1.1.0) |
@@ -159,16 +187,16 @@ and are git-ignored. Key rules:
 
 ## Results
 
-| Gate | v1.1.0 (Phase 10D) | Phase 10C | Phase 10B | Phase 10A | v1.0.0 |
-|---|---|---|---|---|---|
-| format / analyze | clean / no issues | clean / no issues | clean / no issues | clean / no issues | clean / no issues |
-| `flutter test` | **769 / 769** | 766 / 766 | 693 / 693 | 635 / 635 | 605 / 605 |
-| Migrations / backup 1+2 | 39 / 76 | 39 / 76 | 39 / 71 | 39 / 71 | 39 / 70 |
-| APK debug | PASS | PASS | PASS | PASS | PASS |
-| APK release | **PASS, release key, reproducible** | PASS (local) | PASS (local) | not built | PASS |
-| iOS simulator / no-codesign build | PASS / PASS | PASS (local) | PASS (local) | not run | PASS |
-| Signed update continuity (physical, `adb install -r`, same key) | **PASS** v1.0.0 → v1.1.0, data kept | n/a | n/a | n/a | **PASS**, data kept |
-| Physical smoke | **PASS** (incl. share sheet) | n/a | n/a | n/a | **PASS** |
+| Gate | Phase 11A | v1.1.0 (Phase 10D) | Phase 10C | Phase 10B | Phase 10A | v1.0.0 |
+|---|---|---|---|---|---|---|
+| format / analyze | clean / no issues | clean / no issues | clean / no issues | clean / no issues | clean / no issues | clean / no issues |
+| `flutter test` | **800 / 800** | **769 / 769** | 766 / 766 | 693 / 693 | 635 / 635 | 605 / 605 |
+| Migrations / backup 1+2 | 39 / 76 | 39 / 76 | 39 / 76 | 39 / 71 | 39 / 71 | 39 / 70 |
+| APK debug | PASS | PASS | PASS | PASS | PASS | PASS |
+| APK release | PASS, permissions = v1.1.0 | **PASS, release key, reproducible** | PASS (local) | PASS (local) | not built | PASS |
+| iOS simulator / no-codesign build | PASS / PASS | PASS / PASS | PASS (local) | PASS (local) | not run | PASS |
+| Signed update continuity (physical, `adb install -r`, same key) | n/a | **PASS** v1.0.0 → v1.1.0, data kept | n/a | n/a | n/a | **PASS**, data kept |
+| Physical smoke | feasibility only (probe package) | **PASS** (incl. share sheet) | n/a | n/a | n/a | **PASS** |
 
 Coverage of handwritten lib: 93.8% at v1.1.0 (93.3% at v1.0.0).
 Earlier results: integration 7 / 7 on emulator-5554 and on the iPhone 17
@@ -208,9 +236,5 @@ disclosed in [PRIVACY.md](PRIVACY.md).
 
 ## Remaining actions (owner)
 
-1. Independent review of the Phase 10D PR, then merge.
-2. On `main`: `flutter clean`, `tool/release/prepare_android_release.sh`,
-   and confirm the SHA-256 is `f6bf2a3a…a2d779`.
-3. Tag `v1.1.0` and publish the GitHub Release from
-   [docs/releases/v1.1.0.md](docs/releases/v1.1.0.md) with the APK and its
-   `.sha256` file. Nothing for v1.1.0 is tagged or published yet.
+1. Independent review of the Phase 11A PR, then merge.
+2. Phase 11B (Smart Hydration) starts only after that review.
