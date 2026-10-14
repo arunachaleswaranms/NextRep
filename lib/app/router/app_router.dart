@@ -3,11 +3,14 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../domain/focus_guard/focus_guard_service.dart';
 import '../../domain/reminder/reminder_plan.dart';
 import '../../domain/winter_arc/current_arc_service.dart';
 import '../../domain/winter_arc/winter_arc_session.dart';
 import '../../features/achievements/achievements_screen.dart';
 import '../../features/backup/data_backup_screen.dart';
+import '../../features/focus_guard/focus_guard_app_picker_screen.dart';
+import '../../features/focus_guard/focus_guard_settings_screen.dart';
 import '../../features/habit_setup/habit_setup_screen.dart';
 import '../../features/habits/habits_screen.dart';
 import '../../features/history/arc_history_screen.dart';
@@ -48,6 +51,11 @@ abstract final class AppRoutes {
   /// before the first arc (to restore on a new device).
   static const dataBackup = '/settings/data';
 
+  /// Focus Guard (Android): application-level settings, reachable in every
+  /// state, and its app picker.
+  static const focusGuard = '/settings/focus-guard';
+  static const focusGuardApps = '/settings/focus-guard/apps';
+
   /// On-device insights across every started arc.
   static const insights = '/insights';
 
@@ -85,8 +93,11 @@ abstract final class AppRoutes {
   /// arc; a stale one (the arc has since completed, or a new one is in
   /// setup) falls back to [home] instead of a writable screen. A hydration
   /// nudge opens Today, where Water is logged; an unknown payload does too.
+  /// Focus Guard's nudge ([focusGuardTapPayload]) opens Today as well, or
+  /// [home] without an active arc.
   static String forReminder(String? payload, ArcResolution resolution) {
     if (resolution.active == null) return home(resolution);
+    if (payload == focusGuardTapPayload) return today;
     return switch (ReminderKind.fromPayload(payload)) {
       ReminderKind.reflection => journal,
       ReminderKind.daily || ReminderKind.hydration || null => today,
@@ -210,6 +221,16 @@ GoRouter buildAppRouter({
       GoRoute(
         path: AppRoutes.dataBackup,
         builder: (context, state) => const DataBackupScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.focusGuard,
+        builder: (context, state) => const FocusGuardSettingsScreen(),
+        routes: [
+          GoRoute(
+            path: 'apps',
+            builder: (context, state) => const FocusGuardAppPickerScreen(),
+          ),
+        ],
       ),
       GoRoute(
         path: AppRoutes.insights,

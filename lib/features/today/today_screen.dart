@@ -22,6 +22,7 @@ import '../../shared/widgets/loading_view.dart';
 import '../../shared/widgets/winter_background.dart';
 import '../achievements/widgets/trophy_button.dart';
 import '../celebration/celebration_queue.dart';
+import '../focus_guard/focus_guard_card.dart';
 import '../share/share_choice_sheet.dart';
 import '../share/share_preview_screen.dart';
 import 'today_controller.dart';
@@ -336,6 +337,12 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
             const SizedBox(height: WinterSpacing.sm),
             RoughDayCard(onTap: () => _openMinimumDay(summary)),
           ],
+          // Focus Guard is app-level and visual only: it never affects the
+          // day's habits, XP or streaks. Omitted where unsupported.
+          const Padding(
+            padding: EdgeInsets.only(top: WinterSpacing.sm),
+            child: FocusGuardCard(),
+          ),
           const SizedBox(height: WinterSpacing.sm),
           Center(
             child: TextButton.icon(
