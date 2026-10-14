@@ -9,7 +9,9 @@ import 'app/dependencies.dart';
 import 'core/database/app_database.dart';
 import 'core/errors/app_failure.dart';
 import 'core/errors/error_reporter.dart';
+import 'data/android_focus_guard.dart';
 import 'data/local_notification_scheduler.dart';
+import 'domain/focus_guard/focus_guard_service.dart';
 import 'domain/reminder/reminder_scheduler.dart';
 import 'shared/widgets/release_error_panel.dart';
 
@@ -51,6 +53,24 @@ Future<void> main() async {
     ErrorReporter.report(toAppFailure(error, stackTrace), context: 'reminders');
   }
 
+  // Focus Guard is Android only. Its nudge is posted natively; a tap on it
+  // opens Today through the same routing as a reminder.
+  final android = defaultTargetPlatform == TargetPlatform.android;
+  if (android) {
+    try {
+      final focusGuardTaps = AndroidFocusGuardTaps();
+      focusGuardTaps.taps.listen((_) => taps.add(focusGuardTapPayload));
+      if (launchPayload == null && await focusGuardTaps.takeLaunchTap()) {
+        launchPayload = focusGuardTapPayload;
+      }
+    } catch (error, stackTrace) {
+      ErrorReporter.report(
+        toAppFailure(error, stackTrace),
+        context: 'focus_guard',
+      );
+    }
+  }
+
   runApp(
     ProviderScope(
       overrides: [
@@ -58,6 +78,14 @@ Future<void> main() async {
         reminderSchedulerProvider.overrideWithValue(scheduler),
         reminderLaunchPayloadProvider.overrideWithValue(launchPayload),
         reminderTapsProvider.overrideWithValue(taps.stream),
+        if (android) ...[
+          focusGuardPlatformProvider.overrideWithValue(
+            const AndroidFocusGuardPlatform(),
+          ),
+          focusGuardSchedulerProvider.overrideWithValue(
+            const AndroidFocusGuardBackgroundScheduler(),
+          ),
+        ],
       ],
       // Failures are surfaced to the user with an explicit retry instead of
       // being retried silently in the background.

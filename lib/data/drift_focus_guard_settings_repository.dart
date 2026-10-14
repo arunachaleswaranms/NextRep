@@ -8,7 +8,13 @@ import 'persistence_guard.dart';
 /// and the `focus_guard_selected_apps` rows. No preferences row means the
 /// defaults: off, nothing selected.
 ///
-/// Persistence only, reserved for Phase 11C; the app doesn't use it yet.
+/// The same rows are read by the native background check, which also
+/// claims `last_nudged_on` when it nudges (`FocusGuardStore.kt`). So [save]
+/// never overwrites a stored `last_nudged_on`: settings loaded before the
+/// worker nudged and saved afterwards keep the worker's date.
+///
+/// Package names are private configuration, so storage errors keep no
+/// details that could quote them ([guardPrivatePersistence]).
 final class DriftFocusGuardSettingsRepository
     implements FocusGuardSettingsRepository {
   const DriftFocusGuardSettingsRepository(this._db);
@@ -18,7 +24,7 @@ final class DriftFocusGuardSettingsRepository
   static const _id = 1;
 
   @override
-  Future<FocusGuardSettings> load() => guardPersistence(
+  Future<FocusGuardSettings> load() => guardPrivatePersistence(
     'load Focus Guard settings',
     () => _db.transaction(() async {
       final row = await (_db.select(
@@ -52,18 +58,28 @@ final class DriftFocusGuardSettingsRepository
         !packages.every(FocusGuardRules.isValidPackage)) {
       throw ArgumentError('Invalid selected apps');
     }
-    return guardPersistence(
+    return guardPrivatePersistence(
       'save Focus Guard settings',
       () => _db.transaction(() async {
+        // One upsert: an existing row keeps its last_nudged_on, whatever
+        // [settings] holds (it may predate the worker's nudge). Only a new
+        // row takes it, as there is no stored date to keep then.
         await _db
             .into(_db.focusGuardPrefs)
-            .insertOnConflictUpdate(
+            .insert(
               FocusGuardPrefsCompanion.insert(
                 id: const Value(_id),
                 enabled: settings.enabled,
                 dailyBudgetMinutes: settings.dailyBudgetMinutes,
                 lastNudgedOn: Value(settings.lastNudgedOn),
                 updatedAt: at,
+              ),
+              onConflict: DoUpdate(
+                (_) => FocusGuardPrefsCompanion(
+                  enabled: Value(settings.enabled),
+                  dailyBudgetMinutes: Value(settings.dailyBudgetMinutes),
+                  updatedAt: Value(at),
+                ),
               ),
             );
         // An app that stays selected keeps when it was first chosen.

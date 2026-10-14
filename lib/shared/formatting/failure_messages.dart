@@ -57,6 +57,9 @@ String userMessageFor(AppFailure failure) => switch (failure) {
     DomainRule.invalidHydrationWindow =>
       'Active hours must start before they end, within one day, and last '
           'between 8 and 18 hours.',
+    DomainRule.invalidFocusGuardBudget =>
+      'Choose a daily budget between 1 minute and 24 hours.',
+    DomainRule.invalidFocusGuardApps => 'Focus Guard can watch up to 100 apps.',
     DomainRule.sessionNotFound ||
     DomainRule.noSession ||
     DomainRule.sessionNotInSetup ||

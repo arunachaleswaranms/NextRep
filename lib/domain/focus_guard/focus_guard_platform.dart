@@ -59,6 +59,11 @@ abstract interface class FocusGuardPlatform {
   /// or revokes it. Called only from an explicit user action.
   Future<void> openUsageAccessSettings();
 
+  /// Whether Focus Guard's nudge could appear now: notifications are on for
+  /// NextRep and its Focus Guard channel isn't blocked. The background
+  /// check asks the same question before it nudges. Never prompts.
+  Future<bool> nudgesAllowed();
+
   /// Apps with a launcher entry for the current user, as the platform
   /// reports them (possibly with duplicates and NextRep itself). Needs no
   /// broad package visibility.
@@ -87,6 +92,9 @@ final class UnsupportedFocusGuardPlatform implements FocusGuardPlatform {
 
   @override
   Future<void> openUsageAccessSettings() async {}
+
+  @override
+  Future<bool> nudgesAllowed() async => false;
 
   @override
   Future<List<LaunchableAppCandidate>> launchableApps() async => const [];

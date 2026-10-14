@@ -26,9 +26,8 @@ abstract final class FocusGuardRules {
 
 /// Focus Guard's persisted configuration (schema v6).
 ///
-/// Reserved for Phase 11C, which adds the feature itself. Only what the
-/// user chose is kept, plus the date of the day's single nudge: never any
-/// amount of app usage, today's or historical.
+/// Only what the user chose is kept, plus the date of the day's single
+/// nudge: never any amount of app usage, today's or historical.
 final class FocusGuardSettings {
   const FocusGuardSettings({
     required this.enabled,
@@ -50,8 +49,21 @@ final class FocusGuardSettings {
   /// Package names, in the user's order, without duplicates.
   final List<String> selectedPackages;
 
-  /// The local date Focus Guard last nudged on, if ever.
+  /// The local date Focus Guard last nudged on, if ever. Written by the
+  /// background check when it nudges (and cleared by a restore); saving
+  /// settings never changes a stored date.
   final LocalDate? lastNudgedOn;
+
+  FocusGuardSettings copyWith({
+    bool? enabled,
+    int? dailyBudgetMinutes,
+    List<String>? selectedPackages,
+  }) => FocusGuardSettings(
+    enabled: enabled ?? this.enabled,
+    dailyBudgetMinutes: dailyBudgetMinutes ?? this.dailyBudgetMinutes,
+    selectedPackages: selectedPackages ?? this.selectedPackages,
+    lastNudgedOn: lastNudgedOn,
+  );
 }
 
 /// Persistence boundary for [FocusGuardSettings].
@@ -62,7 +74,10 @@ abstract interface class FocusGuardSettingsRepository {
   /// ever saved.
   Future<FocusGuardSettings> load();
 
-  /// Replaces the stored settings. Throws [ArgumentError] for a budget or
-  /// package list outside [FocusGuardRules], writing nothing.
+  /// Stores the user's configuration: enabled, budget and apps. A stored
+  /// [FocusGuardSettings.lastNudgedOn] is kept, whatever [settings] holds,
+  /// so a stale copy can never undo the day's nudge. Throws [ArgumentError]
+  /// for a budget or package list outside [FocusGuardRules], writing
+  /// nothing.
   Future<void> save(FocusGuardSettings settings, {required DateTime at});
 }

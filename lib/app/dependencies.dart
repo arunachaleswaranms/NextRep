@@ -7,6 +7,7 @@ import '../core/time/clock.dart';
 import '../data/backup_files.dart';
 import '../data/drift_achievement_repository.dart';
 import '../data/drift_backup_store.dart';
+import '../data/drift_focus_guard_settings_repository.dart';
 import '../data/drift_habit_repository.dart';
 import '../data/drift_progress_repository.dart';
 import '../data/drift_reflection_repository.dart';
@@ -17,6 +18,10 @@ import '../domain/achievement/achievement_repository.dart';
 import '../domain/achievement/achievement_service.dart';
 import '../domain/backup/backup_service.dart';
 import '../domain/backup/backup_store.dart';
+import '../domain/focus_guard/focus_guard_background.dart';
+import '../domain/focus_guard/focus_guard_platform.dart';
+import '../domain/focus_guard/focus_guard_service.dart';
+import '../domain/focus_guard/focus_guard_settings.dart';
 import '../domain/habit/habit_repository.dart';
 import '../domain/habit/setup_habit_rules.dart';
 import '../domain/history/arc_history_service.dart';
@@ -189,8 +194,36 @@ final backupServiceProvider = Provider<BackupService>(
   (ref) => BackupService(
     store: ref.watch(backupStoreProvider),
     scheduler: ref.watch(reminderSchedulerProvider),
+    focusGuard: ref.watch(focusGuardSchedulerProvider),
     clock: ref.watch(clockProvider),
     appVersion: appVersion,
+  ),
+);
+
+/// Android's app-usage facilities. `main.dart` overrides it on Android;
+/// elsewhere (iOS, tests) Focus Guard is unsupported and omitted.
+final focusGuardPlatformProvider = Provider<FocusGuardPlatform>(
+  (ref) => const UnsupportedFocusGuardPlatform(),
+);
+
+/// Focus Guard's periodic background check. `main.dart` overrides it on
+/// Android; elsewhere nothing is ever scheduled.
+final focusGuardSchedulerProvider = Provider<FocusGuardBackgroundScheduler>(
+  (ref) => const DisabledFocusGuardBackgroundScheduler(),
+);
+
+final focusGuardSettingsRepositoryProvider =
+    Provider<FocusGuardSettingsRepository>(
+      (ref) => DriftFocusGuardSettingsRepository(_database(ref)),
+    );
+
+final focusGuardServiceProvider = Provider<FocusGuardService>(
+  (ref) => FocusGuardService(
+    settings: ref.watch(focusGuardSettingsRepositoryProvider),
+    platform: ref.watch(focusGuardPlatformProvider),
+    background: ref.watch(focusGuardSchedulerProvider),
+    notifications: ref.watch(reminderSchedulerProvider),
+    clock: ref.watch(clockProvider),
   ),
 );
 

@@ -83,6 +83,12 @@ enum DomainRule {
   /// The habit (same template, or same name) is already in the arc.
   duplicateHabit,
 
+  /// A Focus Guard daily budget outside 1 minute to 24 hours.
+  invalidFocusGuardBudget,
+
+  /// A Focus Guard app selection with too many apps or a malformed name.
+  invalidFocusGuardApps,
+
   /// A session would break the arc invariants (dates, kind,
   /// participation).
   invalidArc,

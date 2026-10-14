@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import '../../core/time/clock.dart';
 import '../../core/utils/serial_queue.dart';
+import '../focus_guard/focus_guard_background.dart';
 import '../reminder/reminder_scheduler.dart';
 import 'backup_codec.dart';
 import 'backup_document.dart';
@@ -45,16 +46,20 @@ final class RestoreOutcome {
 ///   [inspect] can produce: nothing unvalidated reaches storage. Restore is
 ///   a full replacement, never a merge. Reminders end up off and pending
 ///   notifications are cancelled, so a restore never schedules anything.
+///   Focus Guard is stored off and its background check is cancelled, so a
+///   restore never starts monitoring or a nudge.
 final class BackupService {
   BackupService({
     required this._store,
     required this._scheduler,
     required this._clock,
     required this._appVersion,
+    this._focusGuard = const DisabledFocusGuardBackgroundScheduler(),
   });
 
   final BackupStore _store;
   final ReminderScheduler _scheduler;
+  final FocusGuardBackgroundScheduler _focusGuard;
   final Clock _clock;
   final String _appVersion;
   final _queue = SerialQueue();
@@ -95,6 +100,12 @@ final class BackupService {
       } catch (_) {
         cleared = false;
       }
+      // Already harmless (the restored settings are off, and the check
+      // reads them each run); cancelling also stops the job itself. The
+      // app's next Focus Guard reconciliation cancels it if this fails.
+      try {
+        await _focusGuard.cancel();
+      } catch (_) {}
       return RestoreOutcome(summary: backup.summary, remindersCleared: cleared);
     },
   );
