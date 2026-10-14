@@ -1,15 +1,16 @@
 # PROJECT_STATE
 
-_Last updated: 2026-10-13. v1.1.0 is released (tag `v1.1.0` on
+_Last updated: 2026-10-14. v1.1.0 is released (tag `v1.1.0` on
 `7e563e2`, PR #14); v1.0.0 before it (tag on `b3f9c5c`, PR #10). v1.2 is in
-progress: Phase 11A is merged (PR #15); Phase 11B (Smart Hydration, schema
-v6, backup format 3) is complete on its branch, its PR open and not merged.
-Nothing for v1.2 is tagged or published._
+progress and unreleased: Phase 11A is merged (PR #15), Phase 11B (Smart
+Hydration, schema v6, backup format 3) is merged (PR #16), and Phase 11C
+(Focus Guard) is implemented on its branch, its PR open for review and not
+merged. Nothing for v1.2 is tagged or published._
 
 | | |
 |---|---|
 | RELEASED | **v1.1.0 (2)** (GitHub Release, signed APK `f6bf2a3a…a2d779`); v1.0.0 before it |
-| IN PROGRESS | **v1.2**: 11A merged (Focus Guard **GO**); 11B Smart Hydration complete, in review |
+| IN PROGRESS | **v1.2** (unreleased): 11A merged (Focus Guard **GO**); 11B Smart Hydration merged; 11C Focus Guard implemented, in review |
 | ANDROID PHYSICAL | **PASS** for v1.1.0: v1.0.0 → v1.1.0 in-place update on the OnePlus CPH2707 (Phase 10D) |
 | STORE SUBMISSION | **NOT APPLICABLE / NOT PLANNED** |
 
@@ -22,15 +23,58 @@ planned. TalkBack was deliberately deferred and doesn't block this model.
 ## Repo
 
 - Remote: https://github.com/arunachaleswaranms/NextRep (public, MIT)
-- `main`: `1846611` (squash merge of PR #15, Phase 11A). Tags `v1.0.0`
-  (`b3f9c5c`) and `v1.1.0` (`7e563e2`). PRs #1–#15 are Phases 1–11A.
-- Branch: `phase/11b-smart-hydration`, from `1846611`
-- PR: "Phase 11B: implement Smart Hydration", open for review, not merged.
+- `main`: `1c7c9cc` (squash merge of PR #16, Phase 11B). Tags `v1.0.0`
+  (`b3f9c5c`) and `v1.1.0` (`7e563e2`). PRs #1–#16 are Phases 1–11B.
+- Branch: `phase/11c-focus-guard`, from `1c7c9cc`
+- PR: "Phase 11C: implement Focus Guard", open for review, not merged.
 - Author and committer of every commit:
   `Arunachaleswaran M S <arunachaleswaranms@gmail.com>` (repo-local
   config). No AI or co-author trailers.
 
-## Phase 11B (Smart Hydration and v1.2 persistence, in review)
+## Phase 11C (Focus Guard, in review)
+
+Contracts, architecture and evidence: [docs/PHASE_11C.md](docs/PHASE_11C.md).
+
+- **Focus Guard** (Android), off by default: the user picks apps from a
+  launcher-only picker (`MAIN/LAUNCHER` `<queries>`, no
+  `QUERY_ALL_PACKAGES`) and sets **one combined daily budget** (default
+  60 min). It never blocks apps. Settings at `/settings/focus-guard`; a
+  Today card shows `38 / 60 min`, remaining time and Shield strong / Near
+  today's limit (≥ 80 %) / Budget reached. Visual only: no XP, streak,
+  achievement or Perfect Day effect.
+- Usage Access (AppOps) and notifications are separate and both shown.
+  Settings are opened only from the user's tap. Today's usage comes from
+  `UsageStatsManager.queryEvents` (local midnight → now), access checked
+  before and after; unavailable is shown as such, never "0 min". No usage
+  is stored.
+- **Native WorkManager** job (`focus_guard_check`, unique, periodic
+  15 min, KEEP) → a non-exported provider in a separate `:focus_guard`
+  process reads Drift's own `nextrep.sqlite` (schema v6) with Android's
+  SQLite; the main process never opens the DB natively.
+- **One nudge per local day**: an atomic compare-and-set on
+  `focus_guard_preferences.last_nudged_on` before posting; settings saves
+  never overwrite it; denied notifications don't consume the day. Channel
+  `focus_guard`; tap payload `focus_guard` → Today (home without an
+  active Arc).
+- Restore keeps apps and budget, leaves Focus Guard off and cancels the
+  job. Schema **v6**, backup format **3**, version **1.1.0+2**: unchanged.
+- Settings also reachable from Arc History, and from onboarding while it
+  is on, so it can always be turned off without an active Arc.
+- Qualifying the minified build found a startup crash (R8 full mode
+  stripped Room's `WorkDatabase_Impl` constructor); fixed with
+  `android/app/proguard-rules.pro`, and CI and the release script now
+  check the release dex for it.
+- API 36 emulator: 26-step matrix PASS on an isolated `.qualification`
+  package (official v1.1.0 untouched), including a natural periodic run,
+  one real nudge per day, revocation, reboot, kill, force-stop and day
+  rollover. Physical device: deferred (not connected). iOS builds PASS.
+- `flutter test` 975 / 975; native JVM tests 55 / 55.
+- Release permissions: v1.1.0's plus `PACKAGE_USAGE_STATS` and
+  `WAKE_LOCK`; WorkManager's `FOREGROUND_SERVICE`, `ACCESS_NETWORK_STATE`
+  and `SystemForegroundService` removed. CI and the release script now
+  audit an exact permission allowlist and the merged components.
+
+## Phase 11B (Smart Hydration and v1.2 persistence, merged)
 
 Contracts, algorithm and evidence: [docs/PHASE_11B.md](docs/PHASE_11B.md).
 
@@ -193,8 +237,8 @@ Evidence and rules: [docs/PHASE_10A.md](docs/PHASE_10A.md).
 | Version | `1.1.0+2`: versionName 1.1.0, versionCode 2 (Phase 10D). Released: 1.0.0 (1) |
 | Tag | `v1.0.0` on `b3f9c5c`; `v1.1.0` on `7e563e2`; no v1.2 tag |
 | Android `applicationId` | `com.nextrep.nextrep` (kept for update continuity) |
-| Database schema | **v5** (unchanged through v1.1.0) |
-| Backup | export `formatVersion` **2**; import reads 1 and 2 (unchanged through v1.1.0) |
+| Database schema | **v5** in v1.1.0; **v6** on `main` since Phase 11B (unreleased) |
+| Backup | export `formatVersion` **2** in v1.1.0; on `main` since Phase 11B: writes **3**, reads 1, 2 and 3 (unreleased) |
 | License | MIT, © 2026 Arunachaleswaran M S |
 | Signing certificate | `CN=Arunachaleswaran M S, OU=NextRep`, RSA 4096, valid 2026-10-08 to 2056-09-30 |
 | Certificate SHA-256 | `65:B7:0C:D0:96:D1:BB:F2:C0:F5:0E:E0:2F:4B:55:97:46:25:CC:4C:DB:EA:D7:39:22:5F:06:75:AF:C8:F0:BA` |
@@ -211,16 +255,16 @@ and are git-ignored. Key rules:
 
 ## Results
 
-| Gate | Phase 11A | v1.1.0 (Phase 10D) | Phase 10C | Phase 10B | Phase 10A | v1.0.0 |
-|---|---|---|---|---|---|---|
-| format / analyze | clean / no issues | clean / no issues | clean / no issues | clean / no issues | clean / no issues | clean / no issues |
-| `flutter test` | **800 / 800** | **769 / 769** | 766 / 766 | 693 / 693 | 635 / 635 | 605 / 605 |
-| Migrations / backup 1+2 | 39 / 76 | 39 / 76 | 39 / 76 | 39 / 71 | 39 / 71 | 39 / 70 |
-| APK debug | PASS | PASS | PASS | PASS | PASS | PASS |
-| APK release | PASS, permissions = v1.1.0 | **PASS, release key, reproducible** | PASS (local) | PASS (local) | not built | PASS |
-| iOS simulator / no-codesign build | PASS / PASS | PASS / PASS | PASS (local) | PASS (local) | not run | PASS |
-| Signed update continuity (physical, `adb install -r`, same key) | n/a | **PASS** v1.0.0 → v1.1.0, data kept | n/a | n/a | n/a | **PASS**, data kept |
-| Physical smoke | feasibility only (probe package) | **PASS** (incl. share sheet) | n/a | n/a | n/a | **PASS** |
+| Gate | Phase 11C | Phase 11B | Phase 11A | v1.1.0 (Phase 10D) | Phase 10C | Phase 10B | Phase 10A | v1.0.0 |
+|---|---|---|---|---|---|---|---|---|
+| format / analyze | clean / no issues | clean / no issues | clean / no issues | clean / no issues | clean / no issues | clean / no issues | clean / no issues | clean / no issues |
+| `flutter test` | **975 / 975** (+ 55 native JVM) | 902 / 902 | **800 / 800** | **769 / 769** | 766 / 766 | 693 / 693 | 635 / 635 | 605 / 605 |
+| Migrations / backup | 52 / 90 (v6; 1+2+3) | 52 / 90 (v6; 1+2+3) | 39 / 76 | 39 / 76 | 39 / 76 | 39 / 71 | 39 / 71 | 39 / 70 |
+| APK debug | PASS | PASS | PASS | PASS | PASS | PASS | PASS | PASS |
+| APK release | PASS, v1.1.0 + `PACKAGE_USAGE_STATS`, `WAKE_LOCK` | PASS, permissions = v1.1.0 | PASS, permissions = v1.1.0 | **PASS, release key, reproducible** | PASS (local) | PASS (local) | not built | PASS |
+| iOS simulator / no-codesign build | PASS / PASS | PASS / PASS | PASS / PASS | PASS / PASS | PASS (local) | PASS (local) | not run | PASS |
+| Signed update continuity (physical, `adb install -r`, same key) | n/a (11F) | n/a | n/a | **PASS** v1.0.0 → v1.1.0, data kept | n/a | n/a | n/a | **PASS**, data kept |
+| Physical smoke | deferred (not connected) | not run | feasibility only (probe package) | **PASS** (incl. share sheet) | n/a | n/a | n/a | **PASS** |
 
 Coverage of handwritten lib: 93.8% at v1.1.0 (93.3% at v1.0.0).
 Earlier results: integration 7 / 7 on emulator-5554 and on the iPhone 17
@@ -260,5 +304,7 @@ disclosed in [PRIVACY.md](PRIVACY.md).
 
 ## Remaining actions (owner)
 
-1. Independent review of the Phase 11A PR, then merge.
-2. Phase 11B (Smart Hydration) starts only after that review.
+1. Independent review of the Phase 11C PR, then merge.
+2. Phase 11D (About and manual Check for updates) starts only after that
+   review; then 11E (integration and polish) and 11F (v1.2 release
+   qualification, the `1.2.0+3` version bump, tag and publication).
