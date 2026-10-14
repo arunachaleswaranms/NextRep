@@ -91,4 +91,11 @@ flutter {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+    // Focus Guard's periodic background check (qualified in Phase 11A).
+    implementation("androidx.work:work-runtime:2.10.1")
+
+    // JVM tests of Focus Guard's native logic (android/app/src/test): the
+    // usage calculation, the check, and its SQL against a real SQLite.
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.xerial:sqlite-jdbc:3.41.2.2")
 }

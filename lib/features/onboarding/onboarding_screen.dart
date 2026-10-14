@@ -6,6 +6,7 @@ import '../../app/theme/winter_tokens.dart';
 import '../../domain/winter_arc/winter_arc_session.dart';
 import '../../shared/widgets/primary_button.dart';
 import '../../shared/widgets/winter_background.dart';
+import '../focus_guard/focus_guard_entry.dart';
 
 /// First launch: what Winter Arc is, in one screen. "Let's Begin" leads to
 /// choosing an Arc (Rolling or Seasonal); nothing is stored until one is
@@ -118,6 +119,7 @@ class OnboardingScreen extends StatelessWidget {
                     label: const Text('Restore from a backup'),
                   ),
                 ),
+                const FocusGuardOnLink(),
               ],
             ),
           ),

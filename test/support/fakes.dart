@@ -106,6 +106,9 @@ final class FakeFocusGuardPlatform implements FocusGuardPlatform {
   UsageAccess access;
   List<LaunchableAppCandidate> apps;
 
+  /// Whether a nudge could appear (notifications on, channel not blocked).
+  bool nudges = true;
+
   /// What a usage query returns, before the fake limits it to the
   /// requested packages.
   Map<String, Duration> usage;
@@ -128,6 +131,9 @@ final class FakeFocusGuardPlatform implements FocusGuardPlatform {
 
   @override
   Future<void> openUsageAccessSettings() async => settingsOpened++;
+
+  @override
+  Future<bool> nudgesAllowed() async => nudges;
 
   @override
   Future<List<LaunchableAppCandidate>> launchableApps() async => apps;

@@ -57,6 +57,11 @@ class NextRepApp extends ConsumerWidget {
 /// Minimum Day on or off, a habit edit), which is what Hydration Coach
 /// paces against. While the app is in the foreground it moves every screen
 /// to the new day at local midnight.
+///
+/// Focus Guard's background check is reconciled after launch (including
+/// the relaunch after a restore) and on resume, when Usage Access may have
+/// been granted or revoked in system settings. Settings changes reconcile
+/// it themselves.
 class _RoutedApp extends ConsumerStatefulWidget {
   const _RoutedApp({super.key, required this.initialLocation});
 
@@ -100,6 +105,7 @@ class _RoutedAppState extends ConsumerState<_RoutedApp> {
     _taps = ref.read(reminderTapsProvider).listen(_openReminder);
     _dayChange.start();
     _syncReminders();
+    _syncFocusGuard();
     // Backfills achievements a newer catalog added, for every started arc,
     // even when no screen that reconciles (Today, Journey) opens first.
     unawaited(ref.read(achievementSyncProvider).run());
@@ -135,6 +141,7 @@ class _RoutedAppState extends ConsumerState<_RoutedApp> {
       ErrorReporter.report(toAppFailure(error, stackTrace), context: 'resume');
     }
     if (mounted) await _syncReminders();
+    if (mounted) await _syncFocusGuard();
   }
 
   /// Local midnight passed with the app open: close out an arc that has
@@ -173,6 +180,19 @@ class _RoutedAppState extends ConsumerState<_RoutedApp> {
       ErrorReporter.report(
         toAppFailure(error, stackTrace),
         context: 'reminders',
+      );
+    }
+  }
+
+  /// Best effort, like reminders: never prompts or opens settings, and the
+  /// background check re-reads everything on each run anyway.
+  Future<void> _syncFocusGuard() async {
+    try {
+      await ref.read(focusGuardServiceProvider).reconcile();
+    } catch (error, stackTrace) {
+      ErrorReporter.report(
+        toAppFailure(error, stackTrace),
+        context: 'focus_guard',
       );
     }
   }

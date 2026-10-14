@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
+import 'package:sqlite3/common.dart' show CommonDatabase;
 
 import '../../domain/focus_guard/focus_guard_settings.dart';
 import '../../domain/habit/habit.dart';
@@ -36,8 +37,28 @@ part 'app_database.g.dart';
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
-  /// Opens the on-device database file.
-  factory AppDatabase.open() => AppDatabase(driftDatabase(name: 'nextrep'));
+  /// Opens the on-device database file, `nextrep.sqlite` in the app's
+  /// documents directory. Focus Guard's native background check reads the
+  /// same file from another process (`FocusGuardDatabase.kt`), holding it
+  /// for milliseconds; [busyTimeout] lets a write here wait that out
+  /// instead of failing.
+  factory AppDatabase.open() => AppDatabase(
+    driftDatabase(
+      name: fileName,
+      native: const DriftNativeOptions(setup: configureConnection),
+    ),
+  );
+
+  /// The database's name: the file is `$fileName.sqlite`.
+  static const fileName = 'nextrep';
+
+  /// How long a statement waits for another process's lock.
+  static const busyTimeout = Duration(seconds: 3);
+
+  /// Applied to every native connection. Connection settings only: the
+  /// schema and the file's journal mode are unchanged.
+  static void configureConnection(CommonDatabase db) =>
+      db.execute('PRAGMA busy_timeout = ${busyTimeout.inMilliseconds}');
 
   @override
   int get schemaVersion => 6;

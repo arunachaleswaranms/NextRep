@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:nextrep/domain/focus_guard/focus_guard_service.dart';
 import 'package:nextrep/app/dependencies.dart';
 import 'package:nextrep/app/router/app_router.dart';
 import 'package:nextrep/core/time/local_date.dart';
@@ -52,6 +53,33 @@ void main() {
         AppRoutes.forReminder('hydration', setupOnly),
         AppRoutes.habitSetup,
       );
+    });
+
+    test('a Focus Guard nudge opens Today, or home without an active arc; '
+        'Focus Guard settings are reachable in every state', () {
+      expect(
+        AppRoutes.forReminder(focusGuardTapPayload, active),
+        AppRoutes.today,
+      );
+      expect(
+        AppRoutes.forReminder(focusGuardTapPayload, completed),
+        AppRoutes.arc(1),
+      );
+      expect(
+        AppRoutes.forReminder(focusGuardTapPayload, setupOnly),
+        AppRoutes.habitSetup,
+      );
+      expect(
+        AppRoutes.forReminder(focusGuardTapPayload, none),
+        AppRoutes.onboarding,
+      );
+      for (final resolution in [active, completed, setupOnly, none]) {
+        expect(AppRoutes.redirect(resolution, AppRoutes.focusGuard), isNull);
+        expect(
+          AppRoutes.redirect(resolution, AppRoutes.focusGuardApps),
+          isNull,
+        );
+      }
     });
 
     test('an unknown payload falls back to Today', () {
