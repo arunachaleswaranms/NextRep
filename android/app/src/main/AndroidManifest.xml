@@ -1,8 +1,24 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <!-- Local reminders (flutter_local_notifications, which itself adds
          POST_NOTIFICATIONS and VIBRATE): restore scheduled reminders after
          a reboot. No network and no exact-alarm permission. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <!-- Focus Guard (optional, off by default): today's foreground time of
+         the apps the user picked, through Android's Usage Access, which the
+         user grants on a system settings page. -->
+    <uses-permission
+        android:name="android.permission.PACKAGE_USAGE_STATS"
+        tools:ignore="ProtectedPermissions" />
+    <!-- WorkManager (Focus Guard's periodic check) declares these, but runs
+         plain Workers without them (qualified in Phase 11A). No foreground
+         service and no network. WAKE_LOCK stays: WorkManager needs it. -->
+    <uses-permission
+        android:name="android.permission.FOREGROUND_SERVICE"
+        tools:node="remove" />
+    <uses-permission
+        android:name="android.permission.ACCESS_NETWORK_STATE"
+        tools:node="remove" />
     <application
         android:label="NextRep"
         android:name="${applicationName}"
@@ -45,6 +61,17 @@
                 <action android:name="com.htc.intent.action.QUICKBOOT_POWERON"/>
             </intent-filter>
         </receiver>
+        <!-- Focus Guard's background check. Runs in its own process, the only
+             one that opens NextRep's database outside Flutter (see
+             FocusGuardDatabase.kt). Not exported. -->
+        <provider
+            android:name=".focusguard.FocusGuardCheckProvider"
+            android:authorities="${applicationId}.focusguard"
+            android:exported="false"
+            android:process=":focus_guard" />
+        <service
+            android:name="androidx.work.impl.foreground.SystemForegroundService"
+            tools:node="remove" />
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data
@@ -60,6 +87,12 @@
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
+        </intent>
+        <!-- Focus Guard's app picker: only apps with a launcher entry are
+             visible (never QUERY_ALL_PACKAGES). -->
+        <intent>
+            <action android:name="android.intent.action.MAIN"/>
+            <category android:name="android.intent.category.LAUNCHER"/>
         </intent>
     </queries>
 </manifest>
