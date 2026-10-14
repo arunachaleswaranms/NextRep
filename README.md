@@ -282,15 +282,21 @@ e.g. `JAVA_HOME=$(/usr/libexec/java_home -v 21) flutter build apk --debug`.
 every pull request and push to `main`:
 
 - format check and analyze
-- migration tests (v1 → v5) and backup format tests (v1 and v2)
+- migration tests (v1 → v6), backup format tests (formats 1, 2 and 3) and
+  Focus Guard tests
 - the release qualification tests, then all tests
 - Android debug and release builds. The CI release APK is debug-signed (CI
   holds no signing secrets). It is a compile and permission check only and
   is never distributed. Official APKs are built and signed on the
   maintainer's machine ([docs/ANDROID_SIGNING.md](docs/ANDROID_SIGNING.md)).
-- a release permission audit that fails on `INTERNET`, exact-alarm,
-  storage, media, contacts, accounts, camera, microphone or usage-access
-  permissions
+- native Android (JVM) tests of Focus Guard's background check
+- a release permission audit: the APK must request exactly the expected
+  permissions (notifications, vibrate, boot, Usage Access for Focus Guard,
+  WorkManager's wake lock, an app-private receiver permission) and fails on
+  `INTERNET`, exact-alarm, storage, media, contacts, accounts, camera,
+  microphone, every-package visibility, overlay, install, network-state or
+  foreground-service permissions, and on any Accessibility, VPN or
+  notification-listener service
 
 ## Explicitly deferred
 

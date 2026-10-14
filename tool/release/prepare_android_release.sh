@@ -24,15 +24,27 @@ set -euo pipefail
 readonly APPLICATION_ID="com.nextrep.nextrep"
 readonly NEXTREP_CERT_SHA256="65b70cd096d1bbf2c0f50ee02f4b55974625cc4cdbead739225f0675afc8f0ba"
 readonly EXPECTED_CERT="${EXPECTED_CERT_SHA256:-$NEXTREP_CERT_SHA256}"
-# Network, exact alarms, storage and media, contacts and accounts, camera,
-# microphone, usage access, every-package visibility, overlays, installing
-# packages and foreground services. Share cards go through the system share
-# sheet and need none of them.
+# Exactly these permissions, nothing else: local reminders (boot, vibrate,
+# notifications, the app-private receiver permission), Focus Guard's Usage
+# Access (PACKAGE_USAGE_STATS, which the user grants in system settings) and
+# WorkManager's WAKE_LOCK for its periodic check.
+readonly EXPECTED_PERMISSIONS="android.permission.RECEIVE_BOOT_COMPLETED \
+android.permission.VIBRATE android.permission.POST_NOTIFICATIONS \
+android.permission.PACKAGE_USAGE_STATS android.permission.WAKE_LOCK \
+${APPLICATION_ID}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+# Named as well, so a failure says why: network, exact alarms, storage and
+# media, contacts and accounts, camera, microphone, every-package
+# visibility, overlays, installing packages, foreground services and
+# network state (WorkManager's, removed in the manifest).
 readonly FORBIDDEN_PERMISSIONS="INTERNET SCHEDULE_EXACT_ALARM USE_EXACT_ALARM \
 MANAGE_EXTERNAL_STORAGE READ_EXTERNAL_STORAGE WRITE_EXTERNAL_STORAGE \
 READ_MEDIA_IMAGES READ_MEDIA_VIDEO READ_MEDIA_AUDIO READ_MEDIA_VISUAL_USER_SELECTED \
-READ_CONTACTS WRITE_CONTACTS GET_ACCOUNTS CAMERA RECORD_AUDIO PACKAGE_USAGE_STATS \
-QUERY_ALL_PACKAGES SYSTEM_ALERT_WINDOW REQUEST_INSTALL_PACKAGES FOREGROUND_SERVICE"
+READ_CONTACTS WRITE_CONTACTS GET_ACCOUNTS CAMERA RECORD_AUDIO \
+QUERY_ALL_PACKAGES SYSTEM_ALERT_WINDOW REQUEST_INSTALL_PACKAGES FOREGROUND_SERVICE \
+ACCESS_NETWORK_STATE"
+# No service bound by these may be declared at all.
+readonly FORBIDDEN_BINDS="BIND_ACCESSIBILITY_SERVICE BIND_VPN_SERVICE \
+BIND_NOTIFICATION_LISTENER_SERVICE"
 readonly BUILT_APK="build/app/outputs/flutter-apk/app-release.apk"
 readonly STAGING_DIR="build/release-candidate"
 
@@ -60,6 +72,8 @@ build_tools="$(ls -d "$sdk"/build-tools/*/ 2>/dev/null | sort -V | tail -1)"
 [[ -n "$build_tools" ]] || fail "no Android build-tools under $sdk"
 readonly APKSIGNER="${build_tools}apksigner"
 readonly AAPT2="${build_tools}aapt2"
+readonly APKANALYZER="${sdk}/cmdline-tools/latest/bin/apkanalyzer"
+[[ -x "$APKANALYZER" ]] || fail "apkanalyzer not found under $sdk/cmdline-tools/latest"
 
 echo "== NextRep v${version_name} (${version_code}) at $(git rev-parse --short HEAD)"
 
@@ -73,9 +87,10 @@ fi
 echo "== Build"
 flutter build apk --release
 
-# Verifies one APK file: signer, identity, version and permissions.
+# Verifies one APK file: signer, identity, version, permissions and
+# declared components.
 verify_apk() {
-  local apk="$1" certs badging permissions forbidden
+  local apk="$1" certs badging permissions forbidden declared expected manifest bind
   echo "== Verify $apk"
 
   certs="$("$APKSIGNER" verify --print-certs "$apk" 2>/dev/null)" ||
@@ -97,6 +112,31 @@ verify_apk() {
   for forbidden in $FORBIDDEN_PERMISSIONS; do
     grep -q "android.permission.${forbidden}'" <<<"$permissions" &&
       fail "$apk requests android.permission.${forbidden}"
+  done
+  declared="$(sed -nE "s/^uses-permission(-sdk-23)?: name='([^']*)'.*/\2/p" <<<"$permissions" | sort -u)"
+  expected="$(tr ' ' '\n' <<<"$EXPECTED_PERMISSIONS" | sed '/^$/d' | sort -u)"
+  [[ "$declared" == "$expected" ]] ||
+    fail "$apk permissions differ from the expected set:"$'\n'"$(diff <(echo "$expected") <(echo "$declared"))"
+
+  manifest="$("$AAPT2" dump xmltree --file AndroidManifest.xml "$apk")"
+  for bind in $FORBIDDEN_BINDS; do
+    grep -q "android.permission.${bind}" <<<"$manifest" &&
+      fail "$apk declares a service guarded by ${bind}"
+  done
+  grep -qE "SystemForegroundService|foregroundServiceType" <<<"$manifest" &&
+    fail "$apk declares a foreground service"
+  grep -q "FocusGuardCheckProvider" <<<"$manifest" ||
+    fail "$apk lacks Focus Guard's background check"
+  awk '/E: /{p=0} /FocusGuardCheckProvider/{p=1} p && /exported/' <<<"$manifest" |
+    grep -q "=true" && fail "$apk exports Focus Guard's provider"
+
+  # R8 must keep what WorkManager creates by reflection, or every release
+  # process crashes at startup (android/app/proguard-rules.pro).
+  dex="$("$APKANALYZER" dex packages --defined-only "$apk")"
+  for kept in 'androidx.work.impl.WorkDatabase_Impl <init>()' \
+    'com.nextrep.nextrep.focusguard.FocusGuardWorker <init>(android.content.Context,androidx.work.WorkerParameters)' \
+    'com.nextrep.nextrep.focusguard.FocusGuardCheckProvider <init>()'; do
+    grep -qF "$kept" <<<"$dex" || fail "$apk lost $kept to shrinking"
   done
   return 0
 }

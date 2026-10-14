@@ -57,6 +57,15 @@ jobs:
           test/data/backup_v2_restore_test.dart
           test/data/backup_v3_test.dart
 
+      - name: Focus Guard tests (settings, usage, one nudge a day, restore)
+        run: >-
+          flutter test
+          test/domain/focus_guard_test.dart
+          test/domain/focus_guard_service_test.dart
+          test/data/focus_guard_codec_test.dart
+          test/data/focus_guard_persistence_test.dart
+          test/features/phase11c_focus_guard_flow_test.dart
+
       - name: Release qualification tests (lifecycle, accessibility, dates)
         run: >-
           flutter test
@@ -99,25 +108,76 @@ jobs:
       - name: Build release APK
         run: flutter build apk --release
 
+      # Focus Guard's native logic on the JVM: the UsageStats event
+      # calculation, the background check, and its SQL against a real
+      # SQLite with Drift's schema (claims, concurrency, restore).
+      - name: Native Android tests
+        working-directory: android
+        run: ./gradlew :app:testDebugUnitTest --console=plain
+
       - name: Release permission audit
         run: |
           AAPT2="$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)aapt2"
-          "$AAPT2" dump permissions build/app/outputs/flutter-apk/app-release.apk | tee permissions.txt
+          APK=build/app/outputs/flutter-apk/app-release.apk
+          "$AAPT2" dump permissions "$APK" | tee permissions.txt
           for forbidden in INTERNET SCHEDULE_EXACT_ALARM USE_EXACT_ALARM \
             MANAGE_EXTERNAL_STORAGE READ_EXTERNAL_STORAGE WRITE_EXTERNAL_STORAGE \
             READ_MEDIA_IMAGES READ_MEDIA_VIDEO READ_MEDIA_AUDIO READ_MEDIA_VISUAL_USER_SELECTED \
-            READ_CONTACTS WRITE_CONTACTS GET_ACCOUNTS CAMERA RECORD_AUDIO PACKAGE_USAGE_STATS \
-            QUERY_ALL_PACKAGES SYSTEM_ALERT_WINDOW REQUEST_INSTALL_PACKAGES FOREGROUND_SERVICE; do
+            READ_CONTACTS WRITE_CONTACTS GET_ACCOUNTS CAMERA RECORD_AUDIO \
+            QUERY_ALL_PACKAGES SYSTEM_ALERT_WINDOW REQUEST_INSTALL_PACKAGES FOREGROUND_SERVICE \
+            ACCESS_NETWORK_STATE; do
             if grep -q "android.permission.$forbidden'" permissions.txt; then
               echo "::error::Release APK requests android.permission.$forbidden"
               exit 1
             fi
           done
-          # No Accessibility or VPN service may be declared at all.
-          "$AAPT2" dump xmltree --file AndroidManifest.xml build/app/outputs/flutter-apk/app-release.apk > manifest.txt
-          for bind in BIND_ACCESSIBILITY_SERVICE BIND_VPN_SERVICE; do
+          # Exactly the expected set: reminders (boot, vibrate, notifications,
+          # the app-private receiver permission), Focus Guard's Usage Access
+          # and WorkManager's WAKE_LOCK. Anything else fails.
+          sed -nE "s/^uses-permission(-sdk-23)?: name='([^']*)'.*/\2/p" permissions.txt | sort -u > declared.txt
+          printf '%s\n' \
+            android.permission.RECEIVE_BOOT_COMPLETED \
+            android.permission.VIBRATE \
+            android.permission.POST_NOTIFICATIONS \
+            android.permission.PACKAGE_USAGE_STATS \
+            android.permission.WAKE_LOCK \
+            com.nextrep.nextrep.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION | sort -u > expected.txt
+          if ! diff expected.txt declared.txt; then
+            echo "::error::Release APK permissions differ from the expected set"
+            exit 1
+          fi
+          # No Accessibility, VPN or notification listener service, and no
+          # foreground service, may be declared at all.
+          "$AAPT2" dump xmltree --file AndroidManifest.xml "$APK" > manifest.txt
+          for bind in BIND_ACCESSIBILITY_SERVICE BIND_VPN_SERVICE BIND_NOTIFICATION_LISTENER_SERVICE; do
             if grep -q "android.permission.$bind" manifest.txt; then
               echo "::error::Release APK declares a service guarded by $bind"
+              exit 1
+            fi
+          done
+          if grep -qE "SystemForegroundService|foregroundServiceType" manifest.txt; then
+            echo "::error::Release APK declares a foreground service"
+            exit 1
+          fi
+          # Focus Guard's background check is there and private.
+          if ! grep -q "FocusGuardCheckProvider" manifest.txt; then
+            echo "::error::Release APK lacks Focus Guard's background check"
+            exit 1
+          fi
+          if awk '/E: /{p=0} /FocusGuardCheckProvider/{p=1} p && /exported/' manifest.txt | grep -q "=true"; then
+            echo "::error::Release APK exports Focus Guard's provider"
+            exit 1
+          fi
+          # R8 must keep what WorkManager creates by reflection, or every
+          # release process crashes at startup (android/app/proguard-rules.pro).
+          APKANALYZER="$ANDROID_HOME/cmdline-tools/latest/bin/apkanalyzer"
+          "$APKANALYZER" dex packages --defined-only "$APK" > dex.txt
+          for kept in \
+            'androidx.work.impl.WorkDatabase_Impl <init>()' \
+            'com.nextrep.nextrep.focusguard.FocusGuardWorker <init>(android.content.Context,androidx.work.WorkerParameters)' \
+            'com.nextrep.nextrep.focusguard.FocusGuardCheckProvider <init>()'; do
+            if ! grep -qF "$kept" dex.txt; then
+              echo "::error::Release APK lost $kept to shrinking"
               exit 1
             fi
           done
