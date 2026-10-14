@@ -44,8 +44,12 @@ object FocusGuardNotifier {
         "You've reached today's $budgetMinutes-minute Focus Guard budget. " +
             "Time to come back to your Arc?"
 
-    /** Throws if the notification can't be posted. */
-    fun post(context: Context, budgetMinutes: Int) {
+    /**
+     * Prepares the nudge: the notification service, the channel and the
+     * notification itself. Throws if any of it fails, before Android has seen
+     * the notification. The returned [PreparedNudge] only calls `notify`.
+     */
+    fun prepare(context: Context, budgetMinutes: Int): PreparedNudge {
         val manager = context.getSystemService(NotificationManager::class.java)
             ?: throw IllegalStateException("NotificationManager unavailable")
         val builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -84,7 +88,7 @@ object FocusGuardNotifier {
             .setAutoCancel(true)
             .setShowWhen(true)
             .build()
-        manager.notify(NOTIFICATION_TAG, NOTIFICATION_ID, notification)
+        return PreparedNudge { manager.notify(NOTIFICATION_TAG, NOTIFICATION_ID, notification) }
     }
 
     /** Whether [intent] is a tap on the nudge (not a relaunch from Recents). */

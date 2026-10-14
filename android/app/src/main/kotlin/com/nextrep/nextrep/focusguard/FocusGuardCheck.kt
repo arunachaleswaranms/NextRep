@@ -20,9 +20,27 @@ enum class CheckOutcome {
     DAY_CHANGED,
     /** The claim matched nothing: another check nudged, or settings changed. */
     CLAIM_LOST,
+    /**
+     * The notification couldn't be prepared (no notification service, the
+     * channel or the notification couldn't be built). Android never saw it,
+     * so nothing was claimed; the next check tries again.
+     */
+    NUDGE_NOT_READY,
     NUDGED,
-    /** Posting threw; the claim was given back if possible. */
-    POST_FAILED,
+    /**
+     * `notify` threw after the day was claimed. Android may still have shown
+     * the notification, so the claim is kept: no other nudge that day.
+     */
+    POST_UNCONFIRMED,
+}
+
+/**
+ * A nudge ready to post. Everything that can fail before Android sees the
+ * notification happened while preparing it; [post] only hands it to the
+ * system, so a failure there can't prove it wasn't shown.
+ */
+fun interface PreparedNudge {
+    fun post()
 }
 
 /** The device facilities a check uses; faked in JVM tests. */
@@ -40,8 +58,11 @@ interface CheckPlatform {
     /** Notifications on for NextRep and the Focus Guard channel not blocked. */
     fun nudgesAllowed(): Boolean
 
-    /** Throws if the notification could not be posted. */
-    fun postNudge(budgetMinutes: Int)
+    /**
+     * Builds the day's nudge without showing it. Throws if it can't be
+     * prepared; Android has then not seen it.
+     */
+    fun prepareNudge(budgetMinutes: Int): PreparedNudge
 }
 
 /**
@@ -49,9 +70,18 @@ interface CheckPlatform {
  *
  * Exits as early as possible, re-checks Usage Access around the query (an
  * empty answer without access means nothing), and nudges at most once per
- * local day: the day is claimed in the database first, atomically, and only
- * then is the notification posted. A crash between the two loses that day's
- * nudge rather than ever sending a second one. Nothing about usage is stored.
+ * local day:
+ *
+ * 1. the notification is prepared first, so a failure that proves it was
+ *    never shown happens before anything is claimed;
+ * 2. the day is claimed in the database, atomically ([FocusGuardStore.claim]);
+ * 3. only the check whose claim succeeded hands the notification to Android.
+ *
+ * A claim is never given back. If `notify` throws, Android may have shown the
+ * notification anyway, so the day stays claimed; a crash between claim and
+ * post also loses that day's nudge. At most once wins over at least once, and
+ * no check, current or stale, can undo another's claim. Nothing about usage
+ * is stored.
  */
 class FocusGuardCheck(private val store: FocusGuardStore, private val platform: CheckPlatform) {
     fun run(): CheckOutcome {
@@ -67,7 +97,9 @@ class FocusGuardCheck(private val store: FocusGuardStore, private val platform: 
         val now = platform.nowMillis()
         val today = Instant.ofEpochMilli(now).atZone(zone).toLocalDate()
         val todayText = today.toString()
-        if (config.lastNudgedOn == todayText) return CheckOutcome.ALREADY_NUDGED
+        if (FocusGuardStore.alreadyNudged(config.lastNudgedOn, today)) {
+            return CheckOutcome.ALREADY_NUDGED
+        }
 
         if (!platform.usageAccessGranted()) return CheckOutcome.NO_USAGE_ACCESS
         val packages = config.packages.toSet()
@@ -94,19 +126,21 @@ class FocusGuardCheck(private val store: FocusGuardStore, private val platform: 
         val stillToday = Instant.ofEpochMilli(platform.nowMillis()).atZone(zone).toLocalDate()
         if (stillToday != today) return CheckOutcome.DAY_CHANGED
 
+        val nudge = try {
+            platform.prepareNudge(config.dailyBudgetMinutes)
+        } catch (e: Exception) {
+            return CheckOutcome.NUDGE_NOT_READY
+        }
+
         if (!store.claim(todayText, config.dailyBudgetMinutes, packages)) {
             return CheckOutcome.CLAIM_LOST
         }
         return try {
-            platform.postNudge(config.dailyBudgetMinutes)
+            nudge.post()
             CheckOutcome.NUDGED
         } catch (e: Exception) {
-            try {
-                store.release(todayText, config.lastNudgedOn)
-            } catch (ignored: Exception) {
-                // The day stays claimed: at most one nudge, never two.
-            }
-            CheckOutcome.POST_FAILED
+            // Ambiguous: the claim stays, so this day can't nudge again.
+            CheckOutcome.POST_UNCONFIRMED
         }
     }
 }

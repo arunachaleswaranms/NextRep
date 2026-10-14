@@ -51,6 +51,7 @@ Future<bool> _workerClaim(
       Variable.withString(today),
       Variable.withInt(budget),
       Variable.withString(today),
+      Variable.withString(LocalDate.parse(today).addDays(1).toIsoString()),
       Variable.withInt(packages.length),
       for (final p in packages) Variable.withString(p),
     ],
@@ -345,6 +346,42 @@ void main() {
         expect(await _workerClaim(device.app.db, '2026-10-14'), isFalse);
       },
     );
+
+    test('the documented exception: after a full restore, a user who turns '
+        'Focus Guard on again may get a new nudge that local day', () async {
+      final device = await monitoring();
+      expect(
+        (await DriftFocusGuardSettingsRepository(
+          device.app.db,
+        ).load()).lastNudgedOn,
+        LocalDate(2026, 10, 14),
+      );
+      final bytes = (await device.backup.export()).bytes;
+      await device.backup.restore(
+        BackupValidator.validate(BackupCodec.decode(bytes)),
+      );
+      // The format-3 restore contract: off, no nudge on record, apps and
+      // budget kept.
+      final restored = await DriftFocusGuardSettingsRepository(device.app.db)
+          .load();
+      expect(restored.enabled, isFalse);
+      expect(restored.lastNudgedOn, isNull);
+      expect(restored.selectedPackages, _apps);
+      expect(restored.dailyBudgetMinutes, 60);
+      // Nothing can nudge until the user turns it on again.
+      expect(await _workerClaim(device.app.db, '2026-10-14'), isFalse);
+      final service = FocusGuardService(
+        settings: DriftFocusGuardSettingsRepository(device.app.db),
+        platform: FakeFocusGuardPlatform(access: UsageAccess.granted),
+        background: device.background,
+        notifications: device.app.scheduler,
+        clock: device.app.clock,
+      );
+      await service.setEnabled(true);
+      // Then that day's nudge is available again, once.
+      expect(await _workerClaim(device.app.db, '2026-10-14'), isTrue);
+      expect(await _workerClaim(device.app.db, '2026-10-14'), isFalse);
+    });
 
     test(
       'a backup never carries the enabled state, the nudge or usage',

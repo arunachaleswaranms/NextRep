@@ -1,5 +1,7 @@
 package com.nextrep.nextrep.focusguard
 
+import java.time.LocalDate
+
 /**
  * Runs SQL against NextRep's database. Android uses SQLiteDatabase
  * ([AndroidSqlRunner]); JVM tests use a JDBC SQLite driver with the same SQL.
@@ -38,8 +40,9 @@ class UnreadableConfigException(message: String) : Exception(message)
  * - `focus_guard_selected_apps`: `package_name` TEXT, `sort_order` INTEGER,
  *   `selected_at` INTEGER Unix seconds.
  *
- * The only write is to `last_nudged_on` ([claim], [release]); the schema and
- * every other value are left alone. No usage amount is ever written.
+ * The only write is [claim], to `last_nudged_on`; the schema and every other
+ * value are left alone. No usage amount is ever written. A claim is never
+ * reverted from here: only a restore (which turns Focus Guard off) clears it.
  */
 class FocusGuardStore(private val sql: SqlRunner) {
     /** Drift's `PRAGMA user_version`: the schema the rows follow. */
@@ -81,42 +84,48 @@ class FocusGuardStore(private val sql: SqlRunner) {
      * Records [today] as the day's nudge, atomically, and returns whether this
      * call did it. One UPDATE that only matches while Focus Guard is still on
      * with the same budget and exactly the same apps that were measured, and
-     * hasn't nudged on [today]. A concurrent or repeated check, a restore
-     * (which turns Focus Guard off) or a settings change in between makes it
-     * match nothing.
+     * no nudge is recorded for [today] or later. A concurrent or repeated
+     * check, a restore (which turns Focus Guard off) or a settings change in
+     * between makes it match nothing.
+     *
+     * Claims only move forward: a stale check (one that measured an earlier
+     * day) can never replace a newer date and so make that day eligible
+     * again. A stored date more than a day ahead can only come from a clock
+     * that was wrong when it was written, and is replaced, so a corrected
+     * clock never blocks Focus Guard.
      */
     fun claim(today: String, budgetMinutes: Int, packages: Set<String>): Boolean {
         require(ISO_DATE.matches(today))
         require(packages.isNotEmpty())
+        val tomorrow = LocalDate.parse(today).plusDays(1).toString()
         val placeholders = packages.joinToString(",") { "?" }
         val changed = sql.update(
             """
             UPDATE focus_guard_preferences SET last_nudged_on = ?
             WHERE id = 1 AND enabled = 1 AND daily_budget_minutes = ?
-              AND (last_nudged_on IS NULL OR last_nudged_on <> ?)
+              AND (last_nudged_on IS NULL OR last_nudged_on < ? OR last_nudged_on > ?)
               AND (SELECT COUNT(*) FROM focus_guard_selected_apps) = ?
               AND NOT EXISTS (
                 SELECT 1 FROM focus_guard_selected_apps
                 WHERE package_name NOT IN ($placeholders))
             """.trimIndent(),
-            listOf<Any?>(today, budgetMinutes.toLong(), today, packages.size.toLong()) +
+            listOf<Any?>(today, budgetMinutes.toLong(), today, tomorrow, packages.size.toLong()) +
                 packages.toList(),
         )
         return changed == 1
     }
 
-    /**
-     * Gives back a claim whose notification could not be posted: restores
-     * [previous] only if [today] is still the recorded nudge.
-     */
-    fun release(today: String, previous: String?): Boolean =
-        sql.update(
-            "UPDATE focus_guard_preferences SET last_nudged_on = ? " +
-                "WHERE id = 1 AND last_nudged_on = ?",
-            listOf(previous, today),
-        ) == 1
-
     companion object {
+        /**
+         * Whether [lastNudgedOn] already covers [today]: today, or tomorrow (a
+         * nudge recorded before a westward time-zone change). The same rule
+         * as [claim], which never claims such a day.
+         */
+        fun alreadyNudged(lastNudgedOn: String?, today: LocalDate): Boolean =
+            lastNudgedOn != null &&
+                lastNudgedOn >= today.toString() &&
+                lastNudgedOn <= today.plusDays(1).toString()
+
         /** The Drift schema these statements are written for. */
         const val SCHEMA_VERSION = 6L
 

@@ -84,5 +84,6 @@ private class AndroidCheckPlatform(private val context: Context) : CheckPlatform
 
     override fun nudgesAllowed(): Boolean = FocusGuardNotifier.nudgesAllowed(context)
 
-    override fun postNudge(budgetMinutes: Int) = FocusGuardNotifier.post(context, budgetMinutes)
+    override fun prepareNudge(budgetMinutes: Int): PreparedNudge =
+        FocusGuardNotifier.prepare(context, budgetMinutes)
 }

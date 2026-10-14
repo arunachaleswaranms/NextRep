@@ -27,8 +27,20 @@ class FocusGuardCheckTest {
         var usage: Map<String, Long> = emptyMap()
         var queryFails = false
         var nudges = true
-        var postFails = false
+
+        /** Preparing fails: Android never sees the notification. */
+        var prepareFails = false
+
+        /** `notify` throws without showing anything (indistinguishable). */
+        var notifyThrows = false
+
+        /** `notify` shows the notification, then throws anyway. */
+        var notifyShowsThenThrows = false
+        var duringQuery: (() -> Unit)? = null
+
+        /** Notifications Android actually showed. */
         val posted = AtomicInteger()
+        val postAttempts = AtomicInteger()
         val queries = AtomicInteger()
         var lastWindow: Pair<Long, Long>? = null
 
@@ -40,15 +52,21 @@ class FocusGuardCheckTest {
             queries.incrementAndGet()
             lastWindow = windowStart to windowEnd
             accessAfterQuery?.let { access = it }
+            duringQuery?.invoke()
             if (queryFails) throw IllegalStateException("query failed")
             return usage
         }
 
         override fun nudgesAllowed() = nudges
 
-        override fun postNudge(budgetMinutes: Int) {
-            if (postFails) throw IllegalStateException("post failed")
-            posted.incrementAndGet()
+        override fun prepareNudge(budgetMinutes: Int): PreparedNudge {
+            if (prepareFails) throw IllegalStateException("no notification service")
+            return PreparedNudge {
+                postAttempts.incrementAndGet()
+                if (notifyThrows) throw IllegalStateException("notify failed")
+                posted.incrementAndGet()
+                if (notifyShowsThenThrows) throw RuntimeException("binder died after posting")
+            }
         }
     }
 
@@ -185,15 +203,157 @@ class FocusGuardCheckTest {
     }
 
     @Test
-    fun aFailedPostGivesTheDayBack() {
-        db.save(enabled = true, budget = 60, packages = apps, lastNudgedOnForNewRow = "2026-10-10")
+    fun aFailureBeforeDeliveryClaimsNothingAndTheNextCheckNudges() {
+        on()
         usage(90)
-        platform.postFails = true
-        assertEquals(CheckOutcome.POST_FAILED, check())
-        assertEquals("2026-10-10", db.lastNudgedOn())
-        platform.postFails = false
+        platform.prepareFails = true
+        assertEquals(CheckOutcome.NUDGE_NOT_READY, check())
+        assertEquals(null, db.lastNudgedOn())
+        assertEquals(0, platform.postAttempts.get())
+        platform.prepareFails = false
         assertEquals(CheckOutcome.NUDGED, check())
         assertEquals(1, platform.posted.get())
+    }
+
+    @Test
+    fun anAmbiguousFailureAfterAndroidAcceptedTheNotificationKeepsTheDay() {
+        on()
+        usage(90)
+        platform.notifyShowsThenThrows = true
+        assertEquals(CheckOutcome.POST_UNCONFIRMED, check())
+        assertEquals("2026-10-14", db.lastNudgedOn())
+        assertEquals(1, platform.posted.get())
+    }
+
+    @Test
+    fun aThrowingNotifyIsTreatedAsShown() {
+        // Nothing distinguishes "not shown" from "shown, then failed": the
+        // day stays claimed either way.
+        on()
+        usage(90)
+        platform.notifyThrows = true
+        assertEquals(CheckOutcome.POST_UNCONFIRMED, check())
+        assertEquals("2026-10-14", db.lastNudgedOn())
+        platform.notifyThrows = false
+        platform.now += 15 * min
+        assertEquals(CheckOutcome.ALREADY_NUDGED, check())
+        assertEquals(1, platform.postAttempts.get())
+        // The next local day is eligible again.
+        platform.now = at(2026, 10, 15, 18, 0)
+        assertEquals(CheckOutcome.NUDGED, check())
+    }
+
+    @Test
+    fun repeatedChecksAfterAnAmbiguousFailureNeverNudgeAgain() {
+        on()
+        usage(90)
+        platform.notifyShowsThenThrows = true
+        check()
+        platform.notifyShowsThenThrows = false
+        repeat(5) {
+            platform.now += 15 * min
+            assertEquals(CheckOutcome.ALREADY_NUDGED, check())
+        }
+        // A new process with nothing in memory.
+        val fresh = FakePlatform().apply { now = platform.now; usage = platform.usage }
+        assertEquals(CheckOutcome.ALREADY_NUDGED, db.withStore { FocusGuardCheck(it, fresh).run() })
+        assertEquals(1, platform.posted.get() + fresh.posted.get())
+        assertEquals(1, platform.postAttempts.get() + fresh.postAttempts.get())
+    }
+
+    @Test
+    fun concurrentChecksWhoseNotifyThrowsStillShowAtMostOne() {
+        on()
+        usage(90)
+        platform.notifyShowsThenThrows = true
+        val threads = 12
+        val pool = Executors.newFixedThreadPool(threads)
+        val start = CountDownLatch(1)
+        val outcomes = java.util.concurrent.ConcurrentLinkedQueue<CheckOutcome>()
+        repeat(threads) {
+            pool.execute {
+                start.await()
+                outcomes.add(db.withStore { FocusGuardCheck(it, platform).run() })
+            }
+        }
+        start.countDown()
+        pool.shutdown()
+        assertTrue(pool.awaitTermination(30, TimeUnit.SECONDS))
+        assertEquals(1, platform.postAttempts.get())
+        assertEquals(1, outcomes.count { it == CheckOutcome.POST_UNCONFIRMED })
+        assertEquals("2026-10-14", db.lastNudgedOn())
+    }
+
+    @Test
+    fun aCheckMadeStaleByARestoreClaimsNothing() {
+        on()
+        usage(90)
+        // The restore lands while the check is measuring.
+        platform.duringQuery = { db.restore(budget = 60, packages = apps) }
+        assertEquals(CheckOutcome.CLAIM_LOST, check())
+        assertEquals(0, platform.postAttempts.get())
+        assertEquals(null, db.lastNudgedOn())
+    }
+
+    @Test
+    fun aCheckMadeStaleByAReconfigurationClaimsNothing() {
+        on(budget = 60)
+        usage(90)
+        platform.duringQuery = { db.save(enabled = true, budget = 120, packages = apps) }
+        assertEquals(CheckOutcome.CLAIM_LOST, check())
+        on(budget = 60)
+        platform.duringQuery = { db.save(enabled = true, budget = 60, packages = listOf(apps[0])) }
+        assertEquals(CheckOutcome.CLAIM_LOST, check())
+        assertEquals(0, platform.postAttempts.get())
+        assertEquals(null, db.lastNudgedOn())
+    }
+
+    @Test
+    fun aStaleCheckCannotUndoANewerClaim() {
+        on()
+        usage(90)
+        // While this check measures, the user restores, turns Focus Guard
+        // back on, and another check nudges for today.
+        val other = FakePlatform().apply { now = platform.now; usage = platform.usage }
+        platform.duringQuery = {
+            db.restore(budget = 60, packages = apps)
+            db.save(enabled = true, budget = 60, packages = apps)
+            assertEquals(CheckOutcome.NUDGED, db.withStore { FocusGuardCheck(it, other).run() })
+        }
+        assertEquals(CheckOutcome.CLAIM_LOST, check())
+        assertEquals("2026-10-14", db.lastNudgedOn())
+        assertEquals(0, platform.postAttempts.get())
+        assertEquals(1, other.posted.get())
+    }
+
+    @Test
+    fun aCheckThatMeasuredYesterdayCannotReplaceTodaysClaim() {
+        on()
+        usage(90)
+        // Measured just before midnight; the store meanwhile holds today's
+        // nudge (made by another check after midnight).
+        platform.now = at(2026, 10, 14, 23, 59)
+        platform.duringQuery = { db.exec("UPDATE focus_guard_preferences SET last_nudged_on = '2026-10-15'") }
+        assertEquals(CheckOutcome.CLAIM_LOST, check())
+        assertEquals("2026-10-15", db.lastNudgedOn())
+        assertEquals(0, platform.postAttempts.get())
+    }
+
+    @Test
+    fun aNudgeRecordedForTomorrowCountsAsToday() {
+        // Recorded before a westward time-zone change: no second nudge.
+        db.save(enabled = true, budget = 60, packages = apps, lastNudgedOnForNewRow = "2026-10-15")
+        usage(90)
+        assertEquals(CheckOutcome.ALREADY_NUDGED, check())
+        assertEquals(0, platform.queries.get())
+    }
+
+    @Test
+    fun aDateFarAheadFromAWrongClockDoesNotBlockFocusGuard() {
+        db.save(enabled = true, budget = 60, packages = apps, lastNudgedOnForNewRow = "2030-01-01")
+        usage(90)
+        assertEquals(CheckOutcome.NUDGED, check())
+        assertEquals("2026-10-14", db.lastNudgedOn())
     }
 
     @Test

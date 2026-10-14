@@ -97,13 +97,39 @@ class FocusGuardStoreTest {
     }
 
     @Test
-    fun releaseGivesBackOnlyItsOwnClaim() {
-        db.save(enabled = true, budget = 60, packages = apps, lastNudgedOnForNewRow = "2026-10-13")
-        db.withStore { it.claim("2026-10-14", 60, apps.toSet()) }
-        assertTrue(db.withStore { it.release("2026-10-14", "2026-10-13") })
-        assertEquals("2026-10-13", db.lastNudgedOn())
-        assertFalse(db.withStore { it.release("2026-10-14", null) })
-        assertEquals("2026-10-13", db.lastNudgedOn())
+    fun claimsOnlyMoveForward() {
+        db.save(enabled = true, budget = 60, packages = apps, lastNudgedOnForNewRow = "2026-10-15")
+        // An earlier day (a stale check) can't replace a later one.
+        assertFalse(db.withStore { it.claim("2026-10-14", 60, apps.toSet()) })
+        assertFalse(db.withStore { it.claim("2026-10-15", 60, apps.toSet()) })
+        assertEquals("2026-10-15", db.lastNudgedOn())
+        assertTrue(db.withStore { it.claim("2026-10-16", 60, apps.toSet()) })
+        assertEquals("2026-10-16", db.lastNudgedOn())
+    }
+
+    @Test
+    fun aDateMoreThanADayAheadIsReplaced() {
+        // Written while the clock was wrong; a corrected clock still works.
+        db.save(enabled = true, budget = 60, packages = apps, lastNudgedOnForNewRow = "2030-01-01")
+        assertTrue(db.withStore { it.claim("2026-10-14", 60, apps.toSet()) })
+        assertEquals("2026-10-14", db.lastNudgedOn())
+    }
+
+    @Test
+    fun alreadyNudgedMatchesWhatClaimRefuses() {
+        val today = java.time.LocalDate.of(2026, 10, 14)
+        for ((stored, covered) in listOf(
+            null to false,
+            "2026-10-13" to false,
+            "2026-10-14" to true,
+            "2026-10-15" to true,
+            "2026-10-16" to false,
+        )) {
+            assertEquals(stored, covered, FocusGuardStore.alreadyNudged(stored, today))
+            val fixture = DriftFixture.create()
+            fixture.save(enabled = true, budget = 60, packages = apps, lastNudgedOnForNewRow = stored)
+            assertEquals(stored, !covered, fixture.withStore { it.claim("2026-10-14", 60, apps.toSet()) })
+        }
     }
 
     @Test
