@@ -177,7 +177,9 @@ budget you set. **It does not block apps.**
   after you confirm twice, and reminders (Hydration Coach included) come
   back turned off. Focus Guard keeps the restored apps and budget but is
   **off**, with its background check cancelled, until you turn it on again.
-  A restore never asks for Usage Access or notification permission.
+  A restore never asks for Usage Access or notification permission. If
+  you turn Focus Guard on again the same day, it may send that day's
+  reminder again, even if it already did before the restore.
 
 ## Your device's own backups
 

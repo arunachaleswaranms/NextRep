@@ -80,7 +80,7 @@ FocusGuardChannel.kt ──────────────┘   app_flutter
 |---|---|
 | `UsageEventsCalculator.kt` | pure event pairing (JVM-tested) |
 | `FocusGuardUsage.kt` | AppOps Usage Access, settings intent, LauncherApps, `queryEvents` |
-| `FocusGuardStore.kt` | the worker's SQL over Drift's tables: load, atomic claim, release (JVM-tested on a real SQLite) |
+| `FocusGuardStore.kt` | the worker's SQL over Drift's tables: load and the atomic, forward-only claim (JVM-tested on a real SQLite) |
 | `FocusGuardCheck.kt` | one background check's decisions (JVM-tested) |
 | `FocusGuardDatabase.kt` | opens Drift's file safely in the `:focus_guard` process |
 | `FocusGuardCheckProvider.kt` | runs the check in that process |
@@ -138,7 +138,8 @@ The claim is one statement, executed **before** posting:
 ```sql
 UPDATE focus_guard_preferences SET last_nudged_on = :today
 WHERE id = 1 AND enabled = 1 AND daily_budget_minutes = :budget
-  AND (last_nudged_on IS NULL OR last_nudged_on <> :today)
+  AND (last_nudged_on IS NULL OR last_nudged_on < :today
+       OR last_nudged_on > :tomorrow)
   AND (SELECT COUNT(*) FROM focus_guard_selected_apps) = :count
   AND NOT EXISTS (SELECT 1 FROM focus_guard_selected_apps
                   WHERE package_name NOT IN (:measured packages))
@@ -148,6 +149,17 @@ Only the call that changes the row posts. It matches nothing if another
 check already claimed today, Focus Guard was turned off, a restore
 replaced the settings, or the budget or the app set changed since the
 measurement.
+
+Claims only move **forward**. A stale check that measured an earlier day
+(just before midnight) can't replace a newer date, which would make that
+newer day eligible again. A date recorded for tomorrow (a nudge before a
+westward time-zone change) also counts as already nudged. Only a date more
+than a day ahead, which can only come from a clock that was wrong when it
+was written, is replaced, so a corrected clock never blocks Focus Guard.
+The worker's early "already nudged" exit uses the same rule
+(`FocusGuardStore.alreadyNudged`). Nothing ever moves a claim back: there
+is no release statement, so no check, current or stale, can undo another's
+claim. Only a restore clears it (below).
 
 Order of one check (`FocusGuardCheck.run`):
 
@@ -159,13 +171,20 @@ Order of one check (`FocusGuardCheck.run`):
 5. Notifications off for NextRep or the `focus_guard` channel blocked →
    exit **without claiming**: the day is not used up.
 6. Local date changed during the check → exit.
-7. Claim; lost → exit. Post. If posting throws, give the claim back
-   (`UPDATE … SET last_nudged_on = :previous WHERE last_nudged_on =
-   :today`); if that fails too, the day stays claimed.
+7. **Prepare** the notification: the notification service, the channel,
+   the notification and its tap intent. If any of it fails, Android has
+   never seen the notification: exit **without claiming**
+   (`NUDGE_NOT_READY`), and a later check tries again.
+8. **Claim**; lost → exit (`CLAIM_LOST`).
+9. **Post**: only `NotificationManager.notify`. If it throws, the result is
+   ambiguous (Android may already have accepted and shown it), so the
+   claim is **kept** (`POST_UNCONFIRMED`) and no other nudge follows that
+   day.
 
-**At most once wins over at least once**: a crash between claim and post
-loses that day's nudge; nothing can produce a second one. The worker
-always returns `success()`, so no failure becomes a retry loop.
+**At most once wins over at least once**: an ambiguous `notify` failure or
+a crash between claim and post loses that day's nudge; nothing can produce
+a second one. The worker always returns `success()`, so no failure becomes
+a retry loop.
 
 | Scenario | Result |
 |---|---|
@@ -176,7 +195,12 @@ always returns `success()`, so no failure becomes a retry loop.
 | next local day | eligible again |
 | notifications denied | no post, day not consumed; posts once allowed |
 | Usage Access revoked (before or during the query) | no post |
-| posting throws | claim given back |
+| preparing the notification fails (before Android sees it) | no claim; a later check nudges once |
+| `notify` throws (shown or not: unknowable) | claim kept; no further nudge that day; next day eligible |
+| 12 concurrent checks whose `notify` throws | exactly one `notify` call |
+| restore or reconfiguration while a check measures | that check claims nothing |
+| a stale check after a newer claim (restore, re-enable, another check nudged) | can't undo it; one notification |
+| a check that measured yesterday, after today's claim | can't replace it |
 
 ### Concurrency with the UI
 
@@ -374,10 +398,10 @@ Flutter 3.47.5 / Dart 3.13.4, Android build-tools 36.0.0, Xcode 27.
 | Migration tests (v1 → v6, CI set) | 52 / 52 |
 | Backup format tests (1, 2, 3, CI set) | 90 / 90 |
 | Release qualification tests | 39 / 39 |
-| Focus Guard tests (CI set: 11A foundation + new) | 103 / 103 |
+| Focus Guard tests (CI set: 11A foundation + new) | 104 / 104 |
 | Hydration and reminder tests (incl. the ≤ 63 pending test) | 82 / 82 |
-| `flutter test` | **975 / 975** (902 before + 73) |
-| Native JVM tests (`./gradlew :app:testDebugUnitTest`) | **55 / 55**: event calculation 23, store SQL on a real SQLite 12, check 20 |
+| `flutter test` | **976 / 976** (902 before + 74) |
+| Native JVM tests (`./gradlew :app:testDebugUnitTest`) | **67 / 67**: event calculation 23, store SQL on a real SQLite 14, check 30 |
 | `flutter build apk --debug` / `--release` | PASS / PASS (64.8 MB, `com.nextrep.nextrep` 1.1.0 (2), debug-signed) |
 | Release permission and component audit (script logic on the APK) | PASS; negative checks fail as intended |
 | `flutter build ios --simulator` / `--release --no-codesign` | PASS / PASS (21.7 MB) |
@@ -395,7 +419,7 @@ card, taps while running, cold start and without an Arc, entry points
 without an Arc, restore at launch) and routing cases in
 `test/app/app_routes_test.dart`. Native: `android/app/src/test/…/focusguard/`
 (synthetic `org.example.*` packages, SQL run against Drift's captured DDL,
-16 concurrent claims → exactly one).
+16 concurrent claims → exactly one; prepare failures, ambiguous `notify` failures, stale checks after restore and reconfiguration).
 
 ## Android API 36 emulator qualification
 
@@ -479,13 +503,14 @@ platform: no card, no entry, reconcile only calls the disabled scheduler).
   (Doze, standby buckets, job batching, Android 16 flexibility), so the
   nudge can be late; after a force-stop nothing runs until NextRep is
   opened. The copy promises neither real time nor exact timing.
-- **Restore clears the day's nudge record** (`last_nudged_on = NULL`), as
-  the Phase 11B restore contract specifies. If, on the same day, a nudge
-  was sent, a backup is restored, and the user turns Focus Guard on again
-  while still over budget, a second nudge can follow. It needs three
-  deliberate user actions on one day; keeping the device's date across a
-  restore would contradict the stated restore contract, so the contract
-  was kept and this is left to review.
+- **Restore exception (by design).** The format-3 restore contract is
+  kept: Focus Guard **off**, `last_nudged_on = NULL`, selected apps and
+  budget preserved. Nothing can nudge after a restore until the user turns
+  Focus Guard on again. The one narrow exception to "at most one nudge per
+  local day": **a user who explicitly re-enables Focus Guard after a full
+  restore may receive a new nudge on that local day**, even if one was sent
+  before the restore. Tested (`focus_guard_persistence_test.dart`). No
+  schema or backup change.
 - SQLite's busy handler doesn't cover one lock pattern: a Drift
   transaction that read first and then writes, at the exact moment the
   worker's one-row claim holds its write lock (milliseconds, at most once

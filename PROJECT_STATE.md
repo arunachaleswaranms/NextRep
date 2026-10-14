@@ -51,9 +51,13 @@ Contracts, architecture and evidence: [docs/PHASE_11C.md](docs/PHASE_11C.md).
   15 min, KEEP) → a non-exported provider in a separate `:focus_guard`
   process reads Drift's own `nextrep.sqlite` (schema v6) with Android's
   SQLite; the main process never opens the DB natively.
-- **One nudge per local day**: an atomic compare-and-set on
-  `focus_guard_preferences.last_nudged_on` before posting; settings saves
-  never overwrite it; denied notifications don't consume the day. Channel
+- **One nudge per local day**: the notification is prepared, then the
+  day claimed by an atomic, forward-only compare-and-set on
+  `focus_guard_preferences.last_nudged_on`, then posted. A claim is never
+  given back (an ambiguous `notify` failure keeps it); settings saves
+  never overwrite it; denied notifications don't consume the day. Only
+  exception: after a full restore, a user who turns Focus Guard on again
+  may get a new nudge that day. Channel
   `focus_guard`; tap payload `focus_guard` → Today (home without an
   active Arc).
 - Restore keeps apps and budget, leaves Focus Guard off and cancels the
@@ -68,7 +72,7 @@ Contracts, architecture and evidence: [docs/PHASE_11C.md](docs/PHASE_11C.md).
   package (official v1.1.0 untouched), including a natural periodic run,
   one real nudge per day, revocation, reboot, kill, force-stop and day
   rollover. Physical device: deferred (not connected). iOS builds PASS.
-- `flutter test` 975 / 975; native JVM tests 55 / 55.
+- `flutter test` 976 / 976; native JVM tests 67 / 67.
 - Release permissions: v1.1.0's plus `PACKAGE_USAGE_STATS` and
   `WAKE_LOCK`; WorkManager's `FOREGROUND_SERVICE`, `ACCESS_NETWORK_STATE`
   and `SystemForegroundService` removed. CI and the release script now
@@ -258,7 +262,7 @@ and are git-ignored. Key rules:
 | Gate | Phase 11C | Phase 11B | Phase 11A | v1.1.0 (Phase 10D) | Phase 10C | Phase 10B | Phase 10A | v1.0.0 |
 |---|---|---|---|---|---|---|---|---|
 | format / analyze | clean / no issues | clean / no issues | clean / no issues | clean / no issues | clean / no issues | clean / no issues | clean / no issues | clean / no issues |
-| `flutter test` | **975 / 975** (+ 55 native JVM) | 902 / 902 | **800 / 800** | **769 / 769** | 766 / 766 | 693 / 693 | 635 / 635 | 605 / 605 |
+| `flutter test` | **976 / 976** (+ 67 native JVM) | 902 / 902 | **800 / 800** | **769 / 769** | 766 / 766 | 693 / 693 | 635 / 635 | 605 / 605 |
 | Migrations / backup | 52 / 90 (v6; 1+2+3) | 52 / 90 (v6; 1+2+3) | 39 / 76 | 39 / 76 | 39 / 76 | 39 / 71 | 39 / 71 | 39 / 70 |
 | APK debug | PASS | PASS | PASS | PASS | PASS | PASS | PASS | PASS |
 | APK release | PASS, v1.1.0 + `PACKAGE_USAGE_STATS`, `WAKE_LOCK` | PASS, permissions = v1.1.0 | PASS, permissions = v1.1.0 | **PASS, release key, reproducible** | PASS (local) | PASS (local) | not built | PASS |
