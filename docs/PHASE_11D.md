@@ -394,4 +394,7 @@ all.
 
 ## PR
 
-«TBD»
+[#18](https://github.com/arunachaleswaranms/NextRep/pull/18), "Phase 11D:
+add About screen and manual update checking", from
+`phase/11d-about-manual-updates` into `main`. Open for independent review;
+not merged. The final head's CI run is recorded in the PR.
