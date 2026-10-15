@@ -24,19 +24,22 @@ set -euo pipefail
 readonly APPLICATION_ID="com.nextrep.nextrep"
 readonly NEXTREP_CERT_SHA256="65b70cd096d1bbf2c0f50ee02f4b55974625cc4cdbead739225f0675afc8f0ba"
 readonly EXPECTED_CERT="${EXPECTED_CERT_SHA256:-$NEXTREP_CERT_SHA256}"
-# Exactly these permissions, nothing else: local reminders (boot, vibrate,
-# notifications, the app-private receiver permission), Focus Guard's Usage
-# Access (PACKAGE_USAGE_STATS, which the user grants in system settings) and
-# WorkManager's WAKE_LOCK for its periodic check.
-readonly EXPECTED_PERMISSIONS="android.permission.RECEIVE_BOOT_COMPLETED \
+# Exactly these permissions, nothing else: INTERNET for the manual update
+# check (About; one request to GitHub, only when the user taps), local
+# reminders (boot, vibrate, notifications, the app-private receiver
+# permission), Focus Guard's Usage Access (PACKAGE_USAGE_STATS, which the
+# user grants in system settings) and WorkManager's WAKE_LOCK for its
+# periodic check.
+readonly EXPECTED_PERMISSIONS="android.permission.INTERNET \
+android.permission.RECEIVE_BOOT_COMPLETED \
 android.permission.VIBRATE android.permission.POST_NOTIFICATIONS \
 android.permission.PACKAGE_USAGE_STATS android.permission.WAKE_LOCK \
 ${APPLICATION_ID}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
-# Named as well, so a failure says why: network, exact alarms, storage and
-# media, contacts and accounts, camera, microphone, every-package
-# visibility, overlays, installing packages, foreground services and
-# network state (WorkManager's, removed in the manifest).
-readonly FORBIDDEN_PERMISSIONS="INTERNET SCHEDULE_EXACT_ALARM USE_EXACT_ALARM \
+# Named as well, so a failure says why: exact alarms, storage and media,
+# contacts and accounts, camera, microphone, every-package visibility,
+# overlays, installing packages, foreground services and network state
+# (WorkManager's, removed in the manifest).
+readonly FORBIDDEN_PERMISSIONS="SCHEDULE_EXACT_ALARM USE_EXACT_ALARM \
 MANAGE_EXTERNAL_STORAGE READ_EXTERNAL_STORAGE WRITE_EXTERNAL_STORAGE \
 READ_MEDIA_IMAGES READ_MEDIA_VIDEO READ_MEDIA_AUDIO READ_MEDIA_VISUAL_USER_SELECTED \
 READ_CONTACTS WRITE_CONTACTS GET_ACCOUNTS CAMERA RECORD_AUDIO \
@@ -125,6 +128,8 @@ verify_apk() {
   done
   grep -qE "SystemForegroundService|foregroundServiceType" <<<"$manifest" &&
     fail "$apk declares a foreground service"
+  grep -q "WebViewActivity" <<<"$manifest" &&
+    fail "$apk declares an in-app WebView activity"
   grep -q "FocusGuardCheckProvider" <<<"$manifest" ||
     fail "$apk lacks Focus Guard's background check"
   awk '/E: /{p=0} /FocusGuardCheckProvider/{p=1} p && /exported/' <<<"$manifest" |

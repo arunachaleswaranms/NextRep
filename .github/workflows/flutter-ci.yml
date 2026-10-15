@@ -66,6 +66,16 @@ jobs:
           test/data/focus_guard_persistence_test.dart
           test/features/phase11c_focus_guard_flow_test.dart
 
+      - name: Manual update check tests (versions, release validation, manual-only network)
+        run: >-
+          flutter test
+          test/domain/release_version_test.dart
+          test/domain/update_checker_test.dart
+          test/data/github_release_feed_test.dart
+          test/features/phase11d_about_flow_test.dart
+          test/app/network_boundary_test.dart
+          test/app/app_routes_test.dart
+
       - name: Release qualification tests (lifecycle, accessibility, dates)
         run: >-
           flutter test
@@ -120,7 +130,8 @@ jobs:
           AAPT2="$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)aapt2"
           APK=build/app/outputs/flutter-apk/app-release.apk
           "$AAPT2" dump permissions "$APK" | tee permissions.txt
-          for forbidden in INTERNET SCHEDULE_EXACT_ALARM USE_EXACT_ALARM \
+          # INTERNET is expected (below): only the manual update check uses it.
+          for forbidden in SCHEDULE_EXACT_ALARM USE_EXACT_ALARM \
             MANAGE_EXTERNAL_STORAGE READ_EXTERNAL_STORAGE WRITE_EXTERNAL_STORAGE \
             READ_MEDIA_IMAGES READ_MEDIA_VIDEO READ_MEDIA_AUDIO READ_MEDIA_VISUAL_USER_SELECTED \
             READ_CONTACTS WRITE_CONTACTS GET_ACCOUNTS CAMERA RECORD_AUDIO \
@@ -131,11 +142,13 @@ jobs:
               exit 1
             fi
           done
-          # Exactly the expected set: reminders (boot, vibrate, notifications,
-          # the app-private receiver permission), Focus Guard's Usage Access
-          # and WorkManager's WAKE_LOCK. Anything else fails.
+          # Exactly the expected set: the manual update check's INTERNET,
+          # reminders (boot, vibrate, notifications, the app-private receiver
+          # permission), Focus Guard's Usage Access and WorkManager's
+          # WAKE_LOCK. Anything else fails.
           sed -nE "s/^uses-permission(-sdk-23)?: name='([^']*)'.*/\2/p" permissions.txt | sort -u > declared.txt
           printf '%s\n' \
+            android.permission.INTERNET \
             android.permission.RECEIVE_BOOT_COMPLETED \
             android.permission.VIBRATE \
             android.permission.POST_NOTIFICATIONS \
@@ -157,6 +170,12 @@ jobs:
           done
           if grep -qE "SystemForegroundService|foregroundServiceType" manifest.txt; then
             echo "::error::Release APK declares a foreground service"
+            exit 1
+          fi
+          # Official pages open in the user's browser only: url_launcher's
+          # in-app WebView is removed.
+          if grep -q "WebViewActivity" manifest.txt; then
+            echo "::error::Release APK declares an in-app WebView activity"
             exit 1
           fi
           # Focus Guard's background check is there and private.
