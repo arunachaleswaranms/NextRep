@@ -1,20 +1,30 @@
 # NextRep Privacy
 
-_Last updated: 14 October 2026. Applies to NextRep 1.1.0 (Winter Arc) and
-to builds of the current source, which add Hydration Coach and Focus Guard
-(planned for 1.2, not yet released)._
+_Last updated: 15 October 2026. Applies to NextRep 1.1.0 (Winter Arc) and
+to builds of the current source, which add Hydration Coach, Focus Guard and
+a manual update check (planned for 1.2, not yet released)._
 
-NextRep is a local-first app. Everything you put into it stays on your
-device, in the app's own storage, unless you choose to move it: by
-exporting a backup, or by sharing a progress card. NextRep has no servers,
-no accounts and no network access.
+NextRep is a local-first app that works offline. Everything you put into it
+stays on your device, in the app's own storage, unless you choose to move
+it: by exporting a backup, or by sharing a progress card. NextRep has no
+servers and no accounts.
 
 In short:
 
-- **Automatic transmission: none.** NextRep never sends anything by itself.
+- **Automatic transmission: none.** NextRep never sends anything by itself,
+  and never contacts the internet on its own.
 - **Sharing you start: possible.** You can make a progress, goal or
   achievement image and hand it to another app through your phone's share
   sheet. Nothing leaves NextRep until you tap **Share** and pick an app.
+- **Update checks you start (Android, current source): possible.** When you
+  tap **Check for updates** in About, NextRep makes one HTTPS request to
+  GitHub to read the latest public release information. It sends none of
+  your NextRep data. See [Checking for updates](#checking-for-updates-android).
+
+**Which version has what.** The published NextRep 1.0.0 and 1.1.0 have no
+network access at all: their Android APKs don't request the `INTERNET`
+permission. Builds of the current source (the unreleased 1.2 line) request
+`INTERNET` for the manual update check, and for nothing else.
 
 This page describes what the app actually does, as built. It applies to
 the official Android APKs published on this repository's GitHub Releases
@@ -47,8 +57,11 @@ the device.
 ## What NextRep does not do
 
 - No account or sign-in.
-- No network access. The Android release build doesn't request the
-  `INTERNET` permission, so the app can't send anything anywhere.
+- No automatic network access. NextRep never goes online by itself: not at
+  startup, on resume, on a schedule or in the background. Reminders,
+  Hydration Coach, Focus Guard, backups and restores all work offline. The
+  only request it ever makes is the update check you start yourself
+  ([below](#checking-for-updates-android)).
 - No analytics, telemetry, crash reporting, advertising, tracking or ad
   identifiers.
 - No cloud sync and no NextRep servers.
@@ -144,7 +157,8 @@ budget you set. **It does not block apps.**
   two on the same day. App names and icons are read from Android when shown
   and are not stored.
 - **Nothing is uploaded.** No usage, app list, reminder history or device
-  identifier leaves the device. NextRep still has no `INTERNET` permission.
+  identifier leaves the device. Focus Guard and its background check never
+  use the network.
 - It does not read the content of other apps, your messages, notifications,
   browsing history or websites. It uses no Accessibility service, overlay,
   VPN or notification access, and it can't see apps that have no launcher
@@ -156,6 +170,37 @@ budget you set. **It does not block apps.**
 - Reaching the budget changes nothing else: no XP, streak, achievement or
   Perfect Day is affected, and it never appears on a share card.
 - Focus Guard is not available on iPhone.
+
+## Checking for updates (Android)
+
+NextRep is distributed as signed APKs on its
+[GitHub Releases page](https://github.com/arunachaleswaranms/NextRep/releases),
+not through an app store. In builds of the current source, **About NextRep**
+can tell you whether a newer release has been published.
+
+- **Only when you tap Check for updates.** NextRep never checks by itself:
+  not when it is installed or opened, when you open About, on resume, when
+  the date changes, on a schedule or in the background. Each tap makes
+  exactly one request; nothing is retried automatically.
+- **What is sent:** one HTTPS `GET` to
+  `api.github.com/repos/arunachaleswaranms/NextRep/releases/latest` with
+  three fixed headers (what kind of answer is wanted, an API version, and
+  the name `NextRep-Manual-Updates`). No account, token, cookie or request
+  body, and none of your NextRep data: no habits, progress, XP, streaks,
+  Journal, Hydration or Focus Guard data, backups, device identifiers,
+  advertising identifiers or location.
+- **What GitHub sees.** Like any website, GitHub receives the usual details
+  of a web request, such as your IP address and the time. The request is not
+  anonymous to GitHub, and GitHub's own privacy practices apply to it.
+- **What is kept:** nothing. The result is shown while About is open and
+  forgotten when you leave it. No check time, release information or
+  response is stored, logged or cached.
+- **Opening a release.** "View official release" and "Open on GitHub" open
+  the official GitHub page in your browser, only when you tap them. From
+  then on you are on GitHub's website, under GitHub's privacy practices.
+  NextRep never downloads or installs an APK itself.
+- Whether you ever check for updates changes nothing else in the app.
+- On iPhone, NextRep doesn't check for updates (releases are Android only).
 
 ## Backups you export
 
@@ -215,6 +260,7 @@ can turn them off in system settings.
 
 | Permission | Why |
 |---|---|
+| `INTERNET` | current source only (not in 1.0.0 or 1.1.0): the manual update check, sent only when you tap Check for updates in About |
 | `POST_NOTIFICATIONS` | show the optional reminders (Android 13+, asked when you turn one on) |
 | `VIBRATE` | notification and haptic feedback |
 | `RECEIVE_BOOT_COMPLETED` | re-schedule pending reminders after a restart (and, through Android's WorkManager, Focus Guard's check) |
@@ -227,8 +273,8 @@ network-state, foreground-service, overlay or every-package-visibility
 permission, and declares no Accessibility, VPN or notification-listener
 service. Backups go through the system document picker, and share cards
 through the system share sheet. It requests no exact-alarm permission:
-reminders may arrive a few minutes late. `INTERNET` appears only in debug and profile builds,
-which Flutter's development tools need. It is never in a release build.
+reminders may arrive a few minutes late. It can't install apps (no
+`REQUEST_INSTALL_PACKAGES`). The published 1.0.0 and 1.1.0 releases don't request `INTERNET` at all.
 
 On iOS the app uses only local notification permission, asked when you turn
 a reminder on.

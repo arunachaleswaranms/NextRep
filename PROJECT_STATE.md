@@ -1,16 +1,17 @@
 # PROJECT_STATE
 
-_Last updated: 2026-10-14. v1.1.0 is released (tag `v1.1.0` on
+_Last updated: 2026-10-15. v1.1.0 is released (tag `v1.1.0` on
 `7e563e2`, PR #14); v1.0.0 before it (tag on `b3f9c5c`, PR #10). v1.2 is in
 progress and unreleased: Phase 11A is merged (PR #15), Phase 11B (Smart
-Hydration, schema v6, backup format 3) is merged (PR #16), and Phase 11C
-(Focus Guard) is implemented on its branch, its PR open for review and not
-merged. Nothing for v1.2 is tagged or published._
+Hydration, schema v6, backup format 3) is merged (PR #16), Phase 11C
+(Focus Guard) is merged (PR #17), and Phase 11D (About and manual update
+check) is implemented on its branch and awaiting PR review, not merged.
+Nothing for v1.2 is tagged or published._
 
 | | |
 |---|---|
 | RELEASED | **v1.1.0 (2)** (GitHub Release, signed APK `f6bf2a3a…a2d779`); v1.0.0 before it |
-| IN PROGRESS | **v1.2** (unreleased): 11A merged (Focus Guard **GO**); 11B Smart Hydration merged; 11C Focus Guard implemented, in review |
+| IN PROGRESS | **v1.2** (unreleased): 11A merged (Focus Guard **GO**); 11B Smart Hydration merged; 11C Focus Guard merged; 11D About + manual update check implemented, awaiting PR review |
 | ANDROID PHYSICAL | **PASS** for v1.1.0: v1.0.0 → v1.1.0 in-place update on the OnePlus CPH2707 (Phase 10D) |
 | STORE SUBMISSION | **NOT APPLICABLE / NOT PLANNED** |
 
@@ -23,15 +24,54 @@ planned. TalkBack was deliberately deferred and doesn't block this model.
 ## Repo
 
 - Remote: https://github.com/arunachaleswaranms/NextRep (public, MIT)
-- `main`: `1c7c9cc` (squash merge of PR #16, Phase 11B). Tags `v1.0.0`
-  (`b3f9c5c`) and `v1.1.0` (`7e563e2`). PRs #1–#16 are Phases 1–11B.
-- Branch: `phase/11c-focus-guard`, from `1c7c9cc`
-- PR: "Phase 11C: implement Focus Guard", open for review, not merged.
+- `main`: `32bd3c2` (squash merge of PR #17, Phase 11C). Tags `v1.0.0`
+  (`b3f9c5c`) and `v1.1.0` (`7e563e2`). PRs #1–#17 are Phases 1–11C.
+- Branch: `phase/11d-about-manual-updates`, from `32bd3c2`
+- PR: "Phase 11D: add About screen and manual update checking", open for
+  review, not merged.
 - Author and committer of every commit:
   `Arunachaleswaran M S <arunachaleswaranms@gmail.com>` (repo-local
   config). No AI or co-author trailers.
 
-## Phase 11C (Focus Guard, in review)
+## Phase 11D (About and manual update check, awaiting review)
+
+Contracts and evidence: [docs/PHASE_11D.md](docs/PHASE_11D.md).
+
+- **About NextRep** at `/settings/about`, reachable in every state (History
+  tab and standalone Arc History headers, a completed Arc's summary,
+  onboarding, setup) and never redirected: identity, **Version / Build from
+  the installed package** (`package_info_plus`, not `appVersion`), update
+  guidance, privacy, the official repository, open-source licenses.
+- **Manual-only check (Android):** one HTTPS GET to
+  `api.github.com/repos/arunachaleswaranms/NextRep/releases/latest`, only
+  on the user's tap; never at launch, resume, date change, in the
+  background, from reminders, Hydration Coach, Focus Guard or restore.
+  Single-flight, 10 s total, 256 KiB cap, no redirects, no credentials, no
+  retries, nothing persisted. Tested by counting requests through the real
+  controller and feed.
+- Strict validation: stable `vX.Y.Z` tags only, `draft` / `prerelease`
+  false, official `html_url`; the browser page is built from the validated
+  version and opened externally only on tap. Newer release without
+  `NextRep-vX.Y.Z-android.apk` and `.sha256` uploaded = "not ready yet".
+  Distinct states for up to date, update available, newer build, no
+  release, network, rate limit, GitHub error and invalid release.
+- iOS: no feed is provided; About shows the version and that releases are
+  Android only.
+- Release permissions: 11C's set **plus `INTERNET`** (manual check only);
+  url_launcher's in-app WebView removed. CI and the release script require
+  the exact set and still forbid network state, foreground services,
+  installs, every-package visibility, overlays, exact alarms, storage,
+  media, contacts, accounts, camera and microphone.
+- PRIVACY, README and DIRECT_DISTRIBUTION now describe the opt-in check;
+  published v1.0.0 / v1.1.0 still have no `INTERNET`.
+- Version **1.1.0+2**, schema **v6**, backup format **3**: unchanged.
+- `flutter test` 1144 / 1144; native JVM 67 / 67. API 36 emulator:
+  zero app traffic until a tap, live check "latest published v1.1.0",
+  offline failure and retry, external browser, Focus Guard and Hydration
+  Coach offline (isolated `.qualification` package; official v1.1.0
+  untouched). iOS simulator run PASS. Physical device: not connected.
+
+## Phase 11C (Focus Guard, merged)
 
 Contracts, architecture and evidence: [docs/PHASE_11C.md](docs/PHASE_11C.md).
 
@@ -250,7 +290,8 @@ Evidence and rules: [docs/PHASE_10A.md](docs/PHASE_10A.md).
 | v1.0.0 APK SHA-256 | `03c76da2131d234877e68e9c19f47888b5b7e31a8e639e838e7f9851798c94b9` (reproducible) |
 | v1.1.0 candidate | `NextRep-v1.1.0-android.apk`, 63,684,809 bytes, minSdk 24, targetSdk 36 |
 | v1.1.0 candidate SHA-256 | `f6bf2a3a5f32a1d53c12d54764361a42f5201ac5d3a60bec2907e15ea2a2d779` (byte-identical across clean builds, fixed environment) |
-| Release permissions | `POST_NOTIFICATIONS`, `VIBRATE`, `RECEIVE_BOOT_COMPLETED`, app-private `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` (unchanged in v1.1.0). INTERNET, exact-alarm, storage, media, contacts, accounts, camera, microphone and usage-access permissions absent |
+| Release permissions | v1.1.0: `POST_NOTIFICATIONS`, `VIBRATE`, `RECEIVE_BOOT_COMPLETED`, app-private `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`; INTERNET, exact-alarm, storage, media, contacts, accounts, camera, microphone and usage-access permissions absent |
+| Release permissions (unreleased v1.2 source, Phase 11D branch) | v1.1.0's plus `PACKAGE_USAGE_STATS`, `WAKE_LOCK` (11C) and `INTERNET` (11D, manual update check only) |
 
 The keystore and `android/key.properties` live only on the owner's machine
 and are git-ignored. Key rules:
@@ -259,16 +300,16 @@ and are git-ignored. Key rules:
 
 ## Results
 
-| Gate | Phase 11C | Phase 11B | Phase 11A | v1.1.0 (Phase 10D) | Phase 10C | Phase 10B | Phase 10A | v1.0.0 |
-|---|---|---|---|---|---|---|---|---|
-| format / analyze | clean / no issues | clean / no issues | clean / no issues | clean / no issues | clean / no issues | clean / no issues | clean / no issues | clean / no issues |
-| `flutter test` | **976 / 976** (+ 67 native JVM) | 902 / 902 | **800 / 800** | **769 / 769** | 766 / 766 | 693 / 693 | 635 / 635 | 605 / 605 |
-| Migrations / backup | 52 / 90 (v6; 1+2+3) | 52 / 90 (v6; 1+2+3) | 39 / 76 | 39 / 76 | 39 / 76 | 39 / 71 | 39 / 71 | 39 / 70 |
-| APK debug | PASS | PASS | PASS | PASS | PASS | PASS | PASS | PASS |
-| APK release | PASS, v1.1.0 + `PACKAGE_USAGE_STATS`, `WAKE_LOCK` | PASS, permissions = v1.1.0 | PASS, permissions = v1.1.0 | **PASS, release key, reproducible** | PASS (local) | PASS (local) | not built | PASS |
-| iOS simulator / no-codesign build | PASS / PASS | PASS / PASS | PASS / PASS | PASS / PASS | PASS (local) | PASS (local) | not run | PASS |
-| Signed update continuity (physical, `adb install -r`, same key) | n/a (11F) | n/a | n/a | **PASS** v1.0.0 → v1.1.0, data kept | n/a | n/a | n/a | **PASS**, data kept |
-| Physical smoke | deferred (not connected) | not run | feasibility only (probe package) | **PASS** (incl. share sheet) | n/a | n/a | n/a | **PASS** |
+| Gate | Phase 11D | Phase 11C | Phase 11B | Phase 11A | v1.1.0 (Phase 10D) | Phase 10C | Phase 10B | Phase 10A | v1.0.0 |
+|---|---|---|---|---|---|---|---|---|---|
+| format / analyze | clean / no issues | clean / no issues | clean / no issues | clean / no issues | clean / no issues | clean / no issues | clean / no issues | clean / no issues | clean / no issues |
+| `flutter test` | **1144 / 1144** (+ 67 native JVM) | **976 / 976** (+ 67 native JVM) | 902 / 902 | **800 / 800** | **769 / 769** | 766 / 766 | 693 / 693 | 635 / 635 | 605 / 605 |
+| Migrations / backup | 52 / 90 (v6; 1+2+3) | 52 / 90 (v6; 1+2+3) | 52 / 90 (v6; 1+2+3) | 39 / 76 | 39 / 76 | 39 / 76 | 39 / 71 | 39 / 71 | 39 / 70 |
+| APK debug | PASS | PASS | PASS | PASS | PASS | PASS | PASS | PASS | PASS |
+| APK release | PASS, 11C's + `INTERNET` | PASS, v1.1.0 + `PACKAGE_USAGE_STATS`, `WAKE_LOCK` | PASS, permissions = v1.1.0 | PASS, permissions = v1.1.0 | **PASS, release key, reproducible** | PASS (local) | PASS (local) | not built | PASS |
+| iOS simulator / no-codesign build | PASS / PASS (+ simulator run) | PASS / PASS | PASS / PASS | PASS / PASS | PASS / PASS | PASS (local) | PASS (local) | not run | PASS |
+| Signed update continuity (physical, `adb install -r`, same key) | n/a (11F) | n/a (11F) | n/a | n/a | **PASS** v1.0.0 → v1.1.0, data kept | n/a | n/a | n/a | **PASS**, data kept |
+| Physical smoke | deferred (not connected) | deferred (not connected) | not run | feasibility only (probe package) | **PASS** (incl. share sheet) | n/a | n/a | n/a | **PASS** |
 
 Coverage of handwritten lib: 93.8% at v1.1.0 (93.3% at v1.0.0).
 Earlier results: integration 7 / 7 on emulator-5554 and on the iPhone 17
@@ -308,7 +349,7 @@ disclosed in [PRIVACY.md](PRIVACY.md).
 
 ## Remaining actions (owner)
 
-1. Independent review of the Phase 11C PR, then merge.
-2. Phase 11D (About and manual Check for updates) starts only after that
-   review; then 11E (integration and polish) and 11F (v1.2 release
-   qualification, the `1.2.0+3` version bump, tag and publication).
+1. Independent review of the Phase 11D PR, then merge.
+2. Then 11E (integration and regression qualification) and 11F (v1.2
+   release qualification, the `1.2.0+3` version bump, signed physical
+   upgrade, tag and publication).

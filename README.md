@@ -51,6 +51,10 @@ analytics and no cloud sync. Everything stays on your phone.
 - **Reminders**: an optional daily nudge and an evening reflection prompt,
   scheduled on the device. Off by default.
 - **Backup & restore** to a `.nextrep` file.
+- **About NextRep**: the installed version and build, privacy, the official
+  source, and on Android a manual **Check for updates** that asks GitHub for
+  the latest published release only when you tap it (unreleased; from the
+  1.2 line).
 - A winter scene that respects reduced motion, large-text support and
   screen-reader labels.
 
@@ -61,8 +65,8 @@ Android APKs are published on the
 page as `NextRep-v<version>-android.apk`, each with a `.sha256` checksum
 file.
 
-**Latest release: v1.0.0.** v1.1.0 is a release candidate, pending review
-and publication ([release notes](docs/releases/v1.1.0.md)).
+**Latest release: v1.1.0** ([release notes](docs/releases/v1.1.0.md)).
+The current source is the unreleased 1.2 line.
 
 Only download NextRep from this repository's Releases page. How to check a
 download: [docs/DIRECT_DISTRIBUTION.md](docs/DIRECT_DISTRIBUTION.md).
@@ -88,6 +92,11 @@ You don't need to change any other security setting. Leave Google Play
 Protect on.
 
 ## Updating
+
+From the 1.2 line, **About NextRep → Check for updates** tells you whether a
+newer release is published and opens its page on GitHub when you tap
+**View official release**. It never checks by itself and never downloads
+anything. With v1.1.0 and earlier, check the Releases page.
 
 1. Optional but recommended: **Export Backup** first (below).
 2. Download the newer NextRep APK from the Releases page.
@@ -124,8 +133,11 @@ checksum to detect accidental damage; it isn't a security feature.
 ## Privacy
 
 No account, no server, no analytics, telemetry, ads or trackers, and no
-cloud sync. The Android release doesn't request the `INTERNET` permission.
-Nothing is sent automatically. A share card leaves the app only when you
+cloud sync. NextRep works offline and never goes online by itself. The
+published v1.0.0 and v1.1.0 don't request the `INTERNET` permission. Builds
+of the current source request it for one thing: when you tap **Check for
+updates** in About, one HTTPS request reads GitHub's latest public release
+information, sending none of your NextRep data. A share card leaves the app only when you
 tap Share and pick an app in the system share sheet. It never includes
 your Journal or moods, and carries no link in the image or its caption. Reminders are local notifications with generic text. Your phone's own
 system backup may include app data if you have it turned on.
@@ -202,6 +214,8 @@ lib/
     history/                Arc History read model
     backup/                 backup format (codec, checksum), validator,
                             store interface, export / restore service
+    update/                 release versions, official source, GitHub
+                            release validation, manual update checker
     insights/               pure cross-arc insight rules and service
     xp/                     XP rules, LevelRules
   data/                     Drift repositories, backup store, system file
@@ -209,7 +223,7 @@ lib/
   features/                 UI per feature: controller + screen + widgets
     onboarding/  habit_setup/  new_arc/  shell/  today/  habits/  journey/
     journal/  history/  reminders/  achievements/  celebration/  summary/
-    backup/  insights/
+    backup/  insights/  about/
   shared/                   reusable widgets, formatting, winter_scene/
 ```
 
@@ -238,7 +252,9 @@ XP or achievements.
 
 **Stack:** Flutter 3.47 / Dart 3.13 · Riverpod 3 (state + DI) · Drift 2
 (SQLite) · go_router · intl · flutter_local_notifications (local reminders
-only) · file_picker (system document UI for backups) · crypto (SHA-256).
+only) · file_picker (system document UI for backups) · crypto (SHA-256) ·
+http (the manual update check only) · package_info_plus (installed version)
+· url_launcher (official pages in the browser).
 
 ## Quality gates
 
@@ -283,7 +299,7 @@ every pull request and push to `main`:
 
 - format check and analyze
 - migration tests (v1 → v6), backup format tests (formats 1, 2 and 3) and
-  Focus Guard tests
+  Focus Guard tests, and manual update check tests
 - the release qualification tests, then all tests
 - Android debug and release builds. The CI release APK is debug-signed (CI
   holds no signing secrets). It is a compile and permission check only and
@@ -291,12 +307,13 @@ every pull request and push to `main`:
   maintainer's machine ([docs/ANDROID_SIGNING.md](docs/ANDROID_SIGNING.md)).
 - native Android (JVM) tests of Focus Guard's background check
 - a release permission audit: the APK must request exactly the expected
-  permissions (notifications, vibrate, boot, Usage Access for Focus Guard,
-  WorkManager's wake lock, an app-private receiver permission) and fails on
-  `INTERNET`, exact-alarm, storage, media, contacts, accounts, camera,
-  microphone, every-package visibility, overlay, install, network-state or
-  foreground-service permissions, and on any Accessibility, VPN or
-  notification-listener service
+  permissions (`INTERNET` for the manual update check, notifications,
+  vibrate, boot, Usage Access for Focus Guard, WorkManager's wake lock, an
+  app-private receiver permission) and fails on exact-alarm, storage, media,
+  contacts, accounts, camera, microphone, every-package visibility,
+  overlay, install, network-state or foreground-service permissions, on any
+  Accessibility, VPN or notification-listener service, and on an in-app
+  WebView activity
 
 ## Explicitly deferred
 
@@ -316,7 +333,9 @@ implementation and qualification records:
 [7](docs/PHASE_7.md), [8](docs/PHASE_8.md),
 [8.5](docs/PHASE_8_5_PHYSICAL_ANDROID.md), [9](docs/PHASE_9.md),
 [10A](docs/PHASE_10A.md), [10B](docs/PHASE_10B.md),
-[10C](docs/PHASE_10C.md), [10D](docs/PHASE_10D.md).
+[10C](docs/PHASE_10C.md), [10D](docs/PHASE_10D.md),
+[11A](docs/PHASE_11A.md), [11B](docs/PHASE_11B.md),
+[11C](docs/PHASE_11C.md), [11D](docs/PHASE_11D.md).
 Current status: [PROJECT_STATE.md](PROJECT_STATE.md).
 
 Release documents:

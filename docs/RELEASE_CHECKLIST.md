@@ -6,6 +6,12 @@
 > latest one; never tick an item from an earlier release) plus the Code
 > section. The iOS, TalkBack, VoiceOver and Store items below are Phase 7–8
 > history. Store publication is not planned, so they don't block a release.
+>
+> **From the 1.2 line (Phase 11D):** the release permission set includes
+> `INTERNET`, for the manual update check only; the release script and CI
+> require exactly that set. Publish the GitHub Release as a full release
+> with both assets attached, or the in-app check reports it as not ready
+> ([DIRECT_DISTRIBUTION.md](DIRECT_DISTRIBUTION.md#checking-for-updates-from-the-app)).
 
 ## Direct distribution: v1.1.0 (Phase 10D)
 
