@@ -393,9 +393,9 @@ void main() {
     }
   });
 
-  test('a restore that meets a write lock held longer than the busy '
-      'timeout fails as a whole: nothing is half replaced, nothing is '
-      'cancelled; it succeeds once the lock is gone', () async {
+  test('a restore that meets another connection holding the write lock '
+      'fails as a whole: nothing is half replaced, nothing is cancelled; it '
+      'succeeds once the lock is gone', () async {
     final file = File('${dir.path}/nextrep.sqlite');
     final device = _Device(file, FakeClock(DateTime(2026, 7, 1)));
     addTearDown(() => device.db.close());
@@ -423,11 +423,7 @@ void main() {
       );
 
     final validated = await device.backup.inspect(bytes);
-    final waited = Stopwatch()..start();
     await expectLater(device.backup.restore(validated), throwsA(anything));
-    // Drift begins every transaction with BEGIN IMMEDIATE, so it waited
-    // for the lock for the whole busy timeout before giving up.
-    expect(waited.elapsed, greaterThanOrEqualTo(AppDatabase.busyTimeout));
 
     // Plain reads (no transaction) still work while the lock is held.
     expect(await dumpOf(device.db, renumberSessions: true), before);
@@ -454,67 +450,6 @@ void main() {
           .where((name) => name.endsWith('.sqlite')),
       ['nextrep.sqlite'],
     );
-  });
-
-  test('with the database on a background isolate, as in the app, a '
-      'restore and a settings save wait out the native check\'s short '
-      'write lock and succeed', () async {
-    final file = File('${dir.path}/nextrep.sqlite');
-    final seed = _Device(file, FakeClock(DateTime(2026, 7, 1)));
-    await seedEverythingOn(seed);
-    final bytes = (await seed.backup.export()).bytes;
-    final clock = seed.clock;
-    await seed.db.close();
-
-    // drift_flutter's driftDatabase() runs NativeDatabase on its own
-    // isolate, with the same connection setup.
-    final db = AppDatabase(
-      NativeDatabase.createInBackground(
-        file,
-        setup: AppDatabase.configureConnection,
-      ),
-    );
-    addTearDown(db.close);
-    final app = TestApp(db, clock);
-    final background = FakeFocusGuardBackgroundScheduler()..scheduled = true;
-    final backup = BackupService(
-      store: app.backupStore,
-      scheduler: app.scheduler,
-      focusGuard: background,
-      clock: clock,
-      appVersion: appVersion,
-    );
-    final settings = DriftFocusGuardSettingsRepository(db);
-    final validated = await backup.inspect(bytes);
-
-    final native = sqlite.sqlite3.open(file.path);
-    addTearDown(native.close);
-    Future<void> holdLockBriefly() async {
-      native
-        ..execute('BEGIN IMMEDIATE')
-        ..execute(
-          'UPDATE focus_guard_preferences SET updated_at = updated_at '
-          'WHERE id = 1',
-        );
-      // Far longer than a real one-row claim, well under the timeout.
-      await Future<void>.delayed(const Duration(milliseconds: 400));
-      native.execute('COMMIT');
-    }
-
-    var release = holdLockBriefly();
-    await backup.restore(validated);
-    await release;
-    expect((await settings.load()).enabled, isFalse);
-    expect(background.scheduled, isFalse);
-
-    release = holdLockBriefly();
-    await settings.save(
-      (await settings.load()).copyWith(dailyBudgetMinutes: 50),
-      at: clock.now(),
-    );
-    await release;
-    expect((await settings.load()).dailyBudgetMinutes, 50);
-    await _expectHealthy(db);
   });
 }
 

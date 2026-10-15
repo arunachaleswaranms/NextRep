@@ -137,11 +137,10 @@ executed in this phase unless it says NOT RUN.
 | C6.1 | Migrations v1 → … → v6, v5 → v6 | fixtures | — | data preserved, opt-ins off | Auto migration set | PASS |
 | C6.2 | Formats 1, 2, 3 restore with everything on | all on | restore each | reminders, Hydration, FG off; FG apps/budget only from format 3 | Auto `phase11e_restore_test` | PASS |
 | C6.3 | Cross-feature restore scenario (section 16) | everything on, real file | export, change, restore, relaunch | all data back; opt-ins off; no nudge possible; no HTTP client; healthy file | Auto `phase11e_restore_test` | PASS |
-| C6.4 | Restore under a held write lock | another connection writing | restore | fails whole; nothing replaced or cancelled; succeeds later | Auto `phase11e_restore_test` (real SQLite file) | PASS |
-| C6.5 | Restore / save wait out a short native lock | background isolate | lock 400 ms | both succeed | Auto `phase11e_restore_test` | PASS |
-| C6.6 | Device export (SAF), cancel, restore | device | picker save, cancel, restore | file format 3; cancel silent; restore contract | Device E19 | PASS |
-| C6.7 | One DB file, schema 6, integrity, journal `delete`, no `android_metadata` | after device run | inspect | as stated | Device E29 | PASS |
-| C6.8 | Corrupt, invalid, unsupported files, failed save | — | — | refused, nothing changed | Auto backup set, `phase5_flow_test` | PASS |
+| C6.4 | Restore under a held write lock | another connection writing | restore | fails whole; nothing replaced or cancelled; succeeds later | Auto `phase11e_restore_test` (real SQLite file; macOS and Linux CI) | PASS |
+| C6.5 | Device export (SAF), cancel, restore | device | picker save, cancel, restore | file format 3; cancel silent; restore contract | Device E19 | PASS |
+| C6.6 | One DB file, schema 6, integrity, journal `delete`, no `android_metadata` | after device run | inspect | as stated | Device E29 | PASS |
+| C6.7 | Corrupt, invalid, unsupported files, failed save | — | — | refused, nothing changed | Auto backup set, `phase5_flow_test` | PASS |
 
 ### C7. Privacy, permissions, builds and platforms
 
@@ -158,7 +157,7 @@ executed in this phase unless it says NOT RUN.
 
 ### Counts
 
-81 rows: **79 PASS** (one, C3.22, after fixing D1), **2 NOT RUN** (C7.7
+80 rows: **78 PASS** (one, C3.22, after fixing D1), **2 NOT RUN** (C7.7
 physical device, deferred to Phase 11F; C7.8 human TalkBack / VoiceOver,
 non-blocking), **0 FAIL**, **0 BLOCKED**, 0 NOT APPLICABLE. Device rows
 that were not repeated in this phase (e.g. E15) point to their automated
@@ -170,7 +169,7 @@ New suites in `test/integration/` (all CI, no network or device):
 
 | File | Tests | What crosses subsystem boundaries |
 |---|---|---|
-| `phase11e_restore_test.dart` | 4 | section 16 on a **real SQLite file**: completed + active Arc, Water, XP, achievements, reflection, daily + reflection + Hydration (Supportive), Focus Guard (2 apps, 45 min, today claimed by the **Kotlin claim SQL**) → export format 3 → change everything → restore → every user row identical, opt-ins off with settings kept, `last_nudged_on` NULL, job cancelled, the worker's claim now matches nothing, **no `HttpClient` created** (`HttpOverrides`), relaunch on the same file (`integrity_check`, `foreign_key_check`, `user_version` 6), then the documented re-enable exception; formats 1, 2 and 3 over a device with everything on; restore under a held write lock (fails whole); background-isolate restore and save waiting out a 400 ms lock |
+| `phase11e_restore_test.dart` | 3 | section 16 on a **real SQLite file**: completed + active Arc, Water, XP, achievements, reflection, daily + reflection + Hydration (Supportive), Focus Guard (2 apps, 45 min, today claimed by the **Kotlin claim SQL**) → export format 3 → change everything → restore → every user row identical, opt-ins off with settings kept, `last_nudged_on` NULL, job cancelled, the worker's claim now matches nothing, **no `HttpClient` created** (`HttpOverrides`), relaunch on the same file (`integrity_check`, `foreign_key_check`, `user_version` 6), then the documented re-enable exception; formats 1, 2 and 3 over a device with everything on; restore while another connection holds the write lock (fails whole, nothing cancelled, succeeds afterwards) |
 | `phase11e_notifications_test.dart` | 6 | the **real `LocalNotificationScheduler`** over an emulated Android plugin channel that tracks pending alarms *and* shown notifications by (tag, id): four channels, disjoint ids, ≤ 63; no reconciliation, Minimum Day, settings change, empty plan, restore or new process removes a shown hydration, daily or Focus Guard notification (`cancelAll` never called); idempotent reconcile, same set after a new process; Water / Minimum Day / Focus Guard changes touch only their own; permission denied and regranted; routing table for 6 payloads × 4 Arc states |
 | `phase11e_lifecycle_test.dart` | 7 | whole app with everything on: midnight while open; background day change and process death (one re-plan, one tap handler); Day 92 → 93 (Arc closes, reminders stop, Focus Guard stays on, stale taps → summary, About offline until tapped); clock moved back; restore from the running app (one tap handler, one reconcile per resume); About across midnight; DST / leap-day / month and year ends |
 | `phase11e_combined_flow_test.dart` | 1 | section 19's 34 steps through the real UI on a real file: onboarding → Rolling Arc → habits, XP → reflection → Hydration (Supportive) → Focus Guard (access, two apps, 30 min) → Water re-plan → card `18 / 30 min` → About (1.1.0, 2; one request; synthetic v1.2.0 → official page) → background / resume → export → restore → relaunch; exactly **one** GitHub request overall |
@@ -262,14 +261,18 @@ foreground service.
 - On the device's real file after the whole run: `user_version` 6,
   `journal_mode` delete, `integrity_check` ok, `foreign_key_check` empty, no
   `android_metadata`, one `app_flutter/nextrep.sqlite` and nothing beside it.
-- Multi-process: Drift's own transactions begin with `BEGIN IMMEDIATE`
-  (drift 2.35.1, `lib/src/sqlite3/database.dart`) with the 3 s busy timeout
-  set in Phase 11C. **Finding (documentation):** Phase 11C's known
-  limitation ("a Drift transaction that read first and then writes … fails")
-  does not apply: a Drift transaction takes the write lock first and waits
-  out the worker's millisecond claim (`phase11e_restore_test`, background
-  isolate). Only a lock held longer than 3 s fails, and then the whole
-  transaction rolls back (tested). No code change.
+- Locking: a restore that meets another connection holding the write lock
+  fails as a whole and leaves every row, the pending reminders and the
+  Focus Guard job as they were; it succeeds once the lock is released
+  (`phase11e_restore_test`, real SQLite file, on macOS and on Linux CI).
+- Not established here: whether Drift *waits out* a short lock. Drift's
+  transactions begin with `BEGIN IMMEDIATE` (drift 2.35.1) under the 3 s
+  busy timeout from Phase 11C; an in-process model of the worker's lock
+  waited on macOS but failed at once on Linux CI (the first CI run of this
+  PR), so it says nothing reliable about Android's cross-process case. That
+  test was removed rather than weakened, and Phase 11C's documented locking
+  limitation stands as written. Either way a lost race fails safely and the
+  user can retry.
 - Real v5 → v6 on a production install: Phase 11B on the emulator;
   physical: Phase 11F.
 
@@ -290,9 +293,9 @@ foreground service.
 Automated (deterministic clocks): midnight while open, background day
 change, process death, Day 92 → 93, month and year ends, leap day
 (2028-02-29), clock moved back, DST days. The full suite also ran under
-`TZ=America/New_York` (**1249 / 1249**) and the date-sensitive and Phase 11E
+`TZ=America/New_York` (**1248 / 1248**) and the date-sensitive and Phase 11E
 suites under New York, London, Lord Howe (30-minute DST) and UTC
-(**154 / 154** in each zone).
+(**153 / 153** in each zone).
 
 Device: rollover while open (after re-arming on resume; a wall-clock jump
 made *while* in the foreground is only seen at the next resume, as
@@ -493,7 +496,7 @@ All on the final source, locally (Flutter 3.47.5 / Dart 3.13.4):
 |---|---|
 | `dart format --output=none --set-exit-if-changed .` | 304 files, 0 changed |
 | `flutter analyze` | no issues |
-| `flutter test` | **1249 / 1249** (1144 at baseline + 105 new; none removed, skipped or weakened) |
+| `flutter test` | **1248 / 1248** (1144 at baseline + 104 new; none removed, skipped or weakened) |
 | `./gradlew :app:testDebugUnitTest` | **67 / 67** (unchanged) |
 | Migrations v1 → v6 (CI step) | 52 / 52 |
 | Backup formats (CI step) | 90 / 90 |
@@ -502,9 +505,9 @@ All on the final source, locally (Flutter 3.47.5 / Dart 3.13.4):
 | Release qualification (CI step) | 39 / 39 |
 | Hydration and reminders (planner, service, reminders, 11B flow) | 82 / 82 |
 | Core Arc, habits, XP, achievements, Minimum Day (17 files) | 223 / 223 |
-| Phase 11E integration (`test/integration/`) | 105 / 105 |
-| `TZ=America/New_York flutter test` | 1249 / 1249 |
-| Phase 11E + date suites under New York, London, Lord Howe, UTC | 154 / 154 each |
+| Phase 11E integration (`test/integration/`) | 104 / 104 |
+| `TZ=America/New_York flutter test` | **1248 / 1248** |
+| Phase 11E + date suites under New York, London, Lord Howe, UTC | 153 / 153 each |
 | iOS simulator integration smokes (4) | PASS |
 
 CI adds the Phase 11E suites through its existing "All tests" step.
@@ -567,7 +570,7 @@ Every gate in section 33 passes or is honestly not run:
 
 | Gate | Result |
 |---|---|
-| Format / analyze / full Flutter suite / native JVM | PASS (304 files, 0 changed / no issues / 1249 / 67) |
+| Format / analyze / full Flutter suite / native JVM | PASS (304 files, 0 changed / no issues / 1248 / 67) |
 | Database migrations / backup compatibility | PASS / PASS |
 | Smart Hydration / Focus Guard / manual update check | PASS / PASS / PASS |
 | Core Arc lifecycle / XP and achievements / reminder integration | PASS / PASS / PASS |

@@ -44,9 +44,9 @@ Matrix, evidence and the Phase 11F handoff:
   every notification family at once; migrations, backups and restore;
   dates, midnight, time zones and the Android lifecycle; privacy,
   permissions and builds.
-- New CI suites in `test/integration/` (105 tests): the cross-feature
+- New CI suites in `test/integration/` (104 tests): the cross-feature
   restore on a real SQLite file (worker claim SQL from Kotlin, no HTTP
-  client, restore under a write lock), the real plugin-backed scheduler
+  client, a restore meeting a held write lock fails as a whole), the real plugin-backed scheduler
   never removing a shown notification of any family, lifecycle and dates
   with everything on, the 34-step combined journey, and a layout sweep of
   the integrated screens. iOS simulator smoke
@@ -54,9 +54,7 @@ Matrix, evidence and the Phase 11F handoff:
 - **One defect, fixed (D1, P2):** Focus Guard's budget row at 2× text on a
   phone broke "Combined daily budget" mid-word for budgets like "1 h 30
   min"; the value now moves under the title at large text. No P0 / P1.
-- Documentation finding: Drift transactions begin `IMMEDIATE`, so Phase
-  11C's "read-then-write" lock limitation doesn't occur; a lock longer than
-  3 s fails the whole transaction (tested).
+- `flutter test` 1248 / 1248 (1144 + 104); native JVM 67 / 67.
 - API 36 emulator (isolated `.qualification` package, official v1.1.0
   byte-identical before and after): natural Focus Guard nudge once a day,
   Hydration delivery, four families together, warm and cold taps, restore,
