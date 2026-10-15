@@ -13,6 +13,8 @@ import '../data/drift_progress_repository.dart';
 import '../data/drift_reflection_repository.dart';
 import '../data/drift_reminder_preferences_repository.dart';
 import '../data/drift_winter_arc_repository.dart';
+import '../data/external_links.dart';
+import '../data/platform_app_info.dart';
 import '../data/share_gateway.dart';
 import '../domain/achievement/achievement_repository.dart';
 import '../domain/achievement/achievement_service.dart';
@@ -33,6 +35,8 @@ import '../domain/reflection/reflection_service.dart';
 import '../domain/reminder/reminder_preferences.dart';
 import '../domain/reminder/reminder_scheduler.dart';
 import '../domain/reminder/reminder_service.dart';
+import '../domain/update/installed_app.dart';
+import '../domain/update/release_feed.dart';
 import '../domain/winter_arc/arc_lifecycle_service.dart';
 import '../domain/winter_arc/winter_arc_repository.dart';
 import '../domain/winter_arc/winter_arc_service.dart';
@@ -237,4 +241,25 @@ final backupFilesProvider = Provider<BackupFiles>(
 /// sharing never touches the network or the database.
 final shareGatewayProvider = Provider<ShareGateway>(
   (ref) => const SystemShareGateway(),
+);
+
+/// The installed app's version and build, from the platform. Tests
+/// override it with fixed values.
+final installedAppSourceProvider = Provider<InstalledAppSource>(
+  (ref) => const PlatformInstalledAppSource(),
+);
+
+/// GitHub's latest-release metadata, for the manual update check. Null
+/// where update checks aren't offered: `main.dart` provides it on Android
+/// only (releases are Android APKs), so on iOS, and in tests unless they
+/// supply one, nothing can reach the network.
+///
+/// Read only by the About screen's "Check for updates" action: never at
+/// startup, on resume, on a schedule or in the background.
+final releaseFeedProvider = Provider<ReleaseFeed?>((ref) => null);
+
+/// The device's browser, for official NextRep pages. Tests override it
+/// with a fake.
+final externalLinksProvider = Provider<ExternalLinks>(
+  (ref) => const SystemExternalLinks(),
 );

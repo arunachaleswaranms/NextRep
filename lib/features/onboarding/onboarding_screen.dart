@@ -6,6 +6,7 @@ import '../../app/theme/winter_tokens.dart';
 import '../../domain/winter_arc/winter_arc_session.dart';
 import '../../shared/widgets/primary_button.dart';
 import '../../shared/widgets/winter_background.dart';
+import '../about/about_entry.dart';
 import '../focus_guard/focus_guard_entry.dart';
 
 /// First launch: what Winter Arc is, in one screen. "Let's Begin" leads to
@@ -96,6 +97,7 @@ class OnboardingScreen extends StatelessWidget {
                                   'Everything stays on this device. No '
                                   'account.',
                             ),
+                            const AboutLink(),
                           ],
                         ),
                       ),

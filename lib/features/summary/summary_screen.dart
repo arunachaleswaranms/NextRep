@@ -16,6 +16,7 @@ import '../../shared/widgets/loading_view.dart';
 import '../../shared/widgets/winter_background.dart';
 import '../../shared/winter_scene/scene_progress.dart';
 import '../../shared/winter_scene/winter_scene.dart';
+import '../about/about_entry.dart';
 import 'arc_removal.dart';
 import 'summary_controller.dart';
 
@@ -365,6 +366,7 @@ class SummaryScreen extends ConsumerWidget {
                       icon: const Icon(Icons.history_rounded),
                       label: const Text('Arc History'),
                     ),
+                    const AboutLink(),
                   ],
                   const SizedBox(height: WinterSpacing.md),
                   Text(

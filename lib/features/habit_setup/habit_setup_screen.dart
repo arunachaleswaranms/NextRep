@@ -18,6 +18,7 @@ import '../../shared/widgets/failure_view.dart';
 import '../../shared/widgets/loading_view.dart';
 import '../../shared/widgets/primary_button.dart';
 import '../../shared/widgets/winter_background.dart';
+import '../about/about_entry.dart';
 import '../summary/arc_removal.dart';
 import 'habit_setup_controller.dart';
 import 'widgets/add_habit_sheet.dart';
@@ -274,6 +275,9 @@ class _HabitSetupScreenState extends ConsumerState<HabitSetupScreen> {
                     style: text.bodySmall,
                   ),
                 ),
+              const SizedBox(height: WinterSpacing.md),
+              // Setup is saved as it is edited, so About can open on top.
+              const Center(child: AboutLink()),
             ],
           ),
         ),

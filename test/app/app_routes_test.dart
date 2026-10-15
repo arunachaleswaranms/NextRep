@@ -169,6 +169,22 @@ void main() {
     });
   });
 
+  group('About', () {
+    test('is reachable in every state and never redirected', () {
+      for (final resolution in [
+        none,
+        setupOnly,
+        active,
+        completed,
+        completedPlusSetup,
+      ]) {
+        expect(AppRoutes.redirect(resolution, AppRoutes.about), isNull);
+      }
+      expect(AppRoutes.redirect(null, AppRoutes.about), isNull);
+      expect(AppRoutes.about, '/settings/about');
+    });
+  });
+
   group('cold launch from a reminder', () {
     Future<String> boot(TestApp app, String? payload) async {
       final container = ProviderContainer(

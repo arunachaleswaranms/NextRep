@@ -10,6 +10,7 @@ import 'core/database/app_database.dart';
 import 'core/errors/app_failure.dart';
 import 'core/errors/error_reporter.dart';
 import 'data/android_focus_guard.dart';
+import 'data/github_release_feed.dart';
 import 'data/local_notification_scheduler.dart';
 import 'domain/focus_guard/focus_guard_service.dart';
 import 'domain/reminder/reminder_scheduler.dart';
@@ -85,6 +86,9 @@ Future<void> main() async {
           focusGuardSchedulerProvider.overrideWithValue(
             const AndroidFocusGuardBackgroundScheduler(),
           ),
+          // Manual update checks (About). Constructing it sends nothing;
+          // only "Check for updates" does.
+          releaseFeedProvider.overrideWithValue(GitHubReleaseFeed()),
         ],
       ],
       // Failures are surfaced to the user with an explicit retry instead of

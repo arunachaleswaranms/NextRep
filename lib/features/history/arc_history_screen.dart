@@ -10,6 +10,7 @@ import '../../shared/widgets/empty_state_view.dart';
 import '../../shared/widgets/failure_view.dart';
 import '../../shared/widgets/loading_view.dart';
 import '../../shared/widgets/winter_background.dart';
+import '../about/about_entry.dart';
 import '../focus_guard/focus_guard_entry.dart';
 import 'arc_history_controller.dart';
 import 'widgets/arc_history_tile.dart';
@@ -43,7 +44,11 @@ class ArcHistoryScreen extends ConsumerWidget {
           ? AppBar(
               title: const Text('Arc History'),
               backgroundColor: Colors.transparent,
-              actions: const [FocusGuardButton(), _DataBackupButton()],
+              actions: const [
+                FocusGuardButton(),
+                _DataBackupButton(),
+                AboutButton(),
+              ],
             )
           : null,
       extendBodyBehindAppBar: standalone,
@@ -85,6 +90,7 @@ class ArcHistoryScreen extends ConsumerWidget {
                           ),
                           const FocusGuardButton(),
                           const _DataBackupButton(),
+                          const AboutButton(),
                         ],
                       ),
                     ),

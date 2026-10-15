@@ -1,8 +1,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
+    <!-- The manual update check (About, Android only): one HTTPS request
+         to GitHub's latest-release metadata, sent only when the user taps
+         "Check for updates". Nothing else uses the network: not reminders,
+         Hydration Coach, Focus Guard or its WorkManager check, and never in
+         the background. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <!-- Local reminders (flutter_local_notifications, which itself adds
          POST_NOTIFICATIONS and VIBRATE): restore scheduled reminders after
-         a reboot. No network and no exact-alarm permission. -->
+         a reboot. No exact-alarm permission. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <!-- Focus Guard (optional, off by default): today's foreground time of
          the apps the user picked, through Android's Usage Access, which the
@@ -12,7 +18,8 @@
         tools:ignore="ProtectedPermissions" />
     <!-- WorkManager (Focus Guard's periodic check) declares these, but runs
          plain Workers without them (qualified in Phase 11A). No foreground
-         service and no network. WAKE_LOCK stays: WorkManager needs it. -->
+         service and no network state. WAKE_LOCK stays: WorkManager needs
+         it. -->
     <uses-permission
         android:name="android.permission.FOREGROUND_SERVICE"
         tools:node="remove" />
@@ -71,6 +78,11 @@
             android:process=":focus_guard" />
         <service
             android:name="androidx.work.impl.foreground.SystemForegroundService"
+            tools:node="remove" />
+        <!-- url_launcher's in-app WebView. Official pages open only in the
+             user's own browser; NextRep never renders web content. -->
+        <activity
+            android:name="io.flutter.plugins.urllauncher.WebViewActivity"
             tools:node="remove" />
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->

@@ -7,6 +7,7 @@ import '../../domain/focus_guard/focus_guard_service.dart';
 import '../../domain/reminder/reminder_plan.dart';
 import '../../domain/winter_arc/current_arc_service.dart';
 import '../../domain/winter_arc/winter_arc_session.dart';
+import '../../features/about/about_screen.dart';
 import '../../features/achievements/achievements_screen.dart';
 import '../../features/backup/data_backup_screen.dart';
 import '../../features/focus_guard/focus_guard_app_picker_screen.dart';
@@ -55,6 +56,10 @@ abstract final class AppRoutes {
   /// state, and its app picker.
   static const focusGuard = '/settings/focus-guard';
   static const focusGuardApps = '/settings/focus-guard/apps';
+
+  /// About NextRep, with the manual update check. Reachable in every state;
+  /// opening it contacts nothing.
+  static const about = '/settings/about';
 
   /// On-device insights across every started arc.
   static const insights = '/insights';
@@ -231,6 +236,10 @@ GoRouter buildAppRouter({
             builder: (context, state) => const FocusGuardAppPickerScreen(),
           ),
         ],
+      ),
+      GoRoute(
+        path: AppRoutes.about,
+        builder: (context, state) => const AboutScreen(),
       ),
       GoRoute(
         path: AppRoutes.insights,
