@@ -148,8 +148,8 @@ void main() {
 
     await tap(find.byTooltip('About NextRep'));
     expect(find.byType(AboutScreen), findsOneWidget);
-    expect(find.text('Version 1.1.0'), findsOneWidget);
-    expect(find.text('Build 2'), findsOneWidget);
+    expect(find.text('Version 1.2.0'), findsOneWidget);
+    expect(find.text('Build 3'), findsOneWidget);
     expect(find.text('Check for updates'), findsNothing);
     await tester.pageBack();
     await tester.pumpAndSettle();
@@ -158,7 +158,7 @@ void main() {
     expect(network.clients, 0);
     debugPrint(
       'PHASE11E_SMOKE ${Platform.operatingSystem}: Arc, habits, Hydration '
-      'Coach UI, no Focus Guard, About 1.1.0 (2) without a check, '
+      'Coach UI, no Focus Guard, About 1.2.0 (3) without a check, '
       'backup screen; HTTP clients: ${network.clients}',
     );
   });

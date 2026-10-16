@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:http/http.dart' as http;
 import 'package:nextrep/data/external_links.dart';
@@ -112,6 +113,11 @@ final class FakeGitHubClient extends http.BaseClient {
   void close() => closes++;
 }
 
+/// The installed package, as the platform would report it. By default a
+/// fake installed **v1.1.0 (2)**, the release before the 1.2 line, so that
+/// [releaseJson]'s default v1.2.0 reads as a newer release. This is
+/// deliberate and does not follow `pubspec.yaml`; tests about this build
+/// pass [pubspecVersion].
 final class FakeInstalledAppSource implements InstalledAppSource {
   FakeInstalledAppSource({this.version = '1.1.0', this.buildNumber = '2'});
 
@@ -141,4 +147,14 @@ final class FakeExternalLinks implements ExternalLinks {
     opened.add(page);
     return opens;
   }
+}
+
+/// `pubspec.yaml`'s version name and build number, e.g. `('1.2.0', '3')`:
+/// Android's versionName and versionCode for this source.
+(String, String) pubspecVersion() {
+  final match = RegExp(
+    r'^version:\s*([0-9]+\.[0-9]+\.[0-9]+)\+([0-9]+)\s*$',
+    multiLine: true,
+  ).firstMatch(File('pubspec.yaml').readAsStringSync())!;
+  return (match.group(1)!, match.group(2)!);
 }
