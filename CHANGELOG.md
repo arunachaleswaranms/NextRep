@@ -1,5 +1,53 @@
 # Changelog
 
+## 1.2.0 — release candidate (not yet published)
+
+Installs over 1.1.0 and keeps your data. Release notes:
+[docs/releases/v1.2.0.md](docs/releases/v1.2.0.md). Built in Phases 11A
+(#15), 11B (#16), 11C (#17) and 11D (#18), integration-qualified in Phase
+11E (#19) and release-qualified in Phase 11F
+([docs/PHASE_11F.md](docs/PHASE_11F.md)).
+
+Schema **v6** · backup format **3** (reads 1, 2 and 3)
+
+### Added
+
+- **Hydration Coach**, off by default: up to 3, 4 or 5 nudges a day
+  (Gentle, Balanced, Supportive) within active hours you choose, paced
+  against the Arc's built-in Water habit, only when you're behind. Local
+  notifications; a tap opens Today.
+- **Focus Guard** (Android), off by default: chosen launcher apps share one
+  daily budget (default 60 minutes); Today shows the time used, and a
+  background check sends at most one reminder per day when the budget is
+  reached. Needs Android's Usage Access. Never blocks apps; no XP, streak
+  or achievement effect; no usage history is stored.
+- **About NextRep**: the installed version and build, privacy, the official
+  source and licenses. On Android, a manual **Check for updates** that asks
+  GitHub for the latest published release only when tapped, and opens its
+  page in the browser. It never downloads or installs anything.
+
+### Changed
+
+- The database moves from schema v5 to **v6** on first launch, keeping all
+  existing data; Hydration Coach and Focus Guard start off, and existing
+  reminders are unchanged.
+- Backups are written as **format 3** (Hydration Coach settings, Focus
+  Guard apps and budget). Formats 1 and 2 still restore. A restore turns
+  every reminder, Hydration Coach and Focus Guard off.
+- At large text, Focus Guard's budget shows under its title instead of
+  squeezing it (Phase 11E).
+
+### Privacy / compatibility
+
+- New Android permissions: `INTERNET` (the manual update check only),
+  `PACKAGE_USAGE_STATS` (Focus Guard's Usage Access, granted by the user in
+  system settings) and `WAKE_LOCK` (WorkManager). Still no analytics,
+  account, backend or cloud sync; nothing goes online by itself.
+- Same application id (`com.nextrep.nextrep`) and signing certificate as
+  1.0.0 and 1.1.0, so it updates in place.
+- 1.0.0 and 1.1.0 backups restore into 1.2.0. A 1.2.0 backup (format 3)
+  can't be restored into 1.1.0 or earlier, which refuse it unchanged.
+
 ## 1.1.0 — 2026
 
 Installs over 1.0.0 and keeps your data. Release notes:
