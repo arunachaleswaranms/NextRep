@@ -27,8 +27,9 @@ planned. TalkBack was deliberately deferred and doesn't block this model.
 - `main`: `af0c883` (squash merge of PR #19, Phase 11E). Tags `v1.0.0`
   (`b3f9c5c`) and `v1.1.0` (`7e563e2`). PRs #1–#19 are Phases 1–11E.
 - Branch: `phase/11f-v1.2-release-qualification`, from `af0c883`
-- PR: "Phase 11F: qualify NextRep v1.2.0 release" (see
-  [docs/PHASE_11F.md](docs/PHASE_11F.md#ae-pr-and-ci-evidence)), not merged.
+- PR: [#20](https://github.com/arunachaleswaranms/NextRep/pull/20) "Phase
+  11F: qualify NextRep v1.2.0 release", **draft**, not merged; CI green on
+  `c59a051` (run 38929507633), final head on the PR.
 - Author and committer of every commit:
   `Arunachaleswaran M S <arunachaleswaranms@gmail.com>` (repo-local
   config). No AI or co-author trailers.

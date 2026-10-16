@@ -38,7 +38,7 @@ Signed candidate
 
 - [x] `flutter clean`, then `tool/release/prepare_android_release.sh` on the candidate commit: one signer `65:B7:0C:D0:…:F0:BA` (not `CN=Android Debug`), `com.nextrep.nextrep` 1.2.0 (3), exactly the 7 approved permissions, components, R8 constructors, staged APK and `.sha256`
 - [x] Independent `apksigner` / `aapt2` / `apkanalyzer` audit of the staged APK
-- [ ] Byte-identical across two clean builds of the same commit (SHA-256 recorded), and again on the final PR head
+- [x] Byte-identical across two clean builds of `bc4009f` (`e3847628…de3e2`), and again on the PR head `c59a051` (docs only after it)
 - [x] Size and SHA-256 written into [releases/v1.2.0.md](releases/v1.2.0.md)
 
 Emulator (disposable AVD)

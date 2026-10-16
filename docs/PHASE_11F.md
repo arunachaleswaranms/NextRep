@@ -17,7 +17,7 @@ Approval gates (from the Phase 11F brief):
 |---|---|---|
 | A | Source preparation and automated qualification | done here |
 | B | Permanent-key signed candidate; physical-device qualification with explicit authorization before changing the owner's installation | signed candidate done here; **physical: NOT RUN, no authorization** ([P](#p-physical-oneplus-pre-upgrade-state)) |
-| C | Pull request, independent review, owner merge | PR opened; **not merged** |
+| C | Pull request, independent review, owner merge | draft PR [#20](https://github.com/arunachaleswaranms/NextRep/pull/20) opened, CI green; **not merged** |
 | D | Final build from merged `main` and public release, after separate authorization | **not started; not authorized** |
 
 Results use **PASS**, **FAIL**, **NOT RUN**, **BLOCKED**, **NOT
@@ -81,7 +81,7 @@ keeps the two in step.
 | Branch | `phase/11f-v1.2-release-qualification` from `af0c883` (worktree `~/labs/NextRep-phase11f`, no `key.properties`) |
 | `e02d06c` | chore: bump NextRep to v1.2.0 |
 | `bc4009f` | test: qualify v1.2.0 release version and compatibility (**signed candidate source**) |
-| Later commits | documentation only (Markdown is not packaged); the final head is rebuilt and compared in [AE](#ae-pr-and-ci-evidence) |
+| `39d9dce`, `c59a051`, later | documentation only (Markdown is not packaged); `c59a051` rebuilt signed: byte-identical ([AE](#ae-pr-and-ci-evidence)) |
 
 ## E. Automated qualification
 
@@ -530,8 +530,16 @@ review, merge and publication items stay open.
 
 ## AE. PR and CI evidence
 
-Filled in after the PR is opened: PR URL, final head SHA, CI run and
-conclusion for both jobs, and the final-head signed rebuild's SHA-256.
+| | |
+|---|---|
+| PR | [#20](https://github.com/arunachaleswaranms/NextRep/pull/20) "Phase 11F: qualify NextRep v1.2.0 release", **draft** (physical gate open), against `main`, not merged |
+| CI on `c59a051` | run [38929507633](https://github.com/arunachaleswaranms/NextRep/actions/runs/38929507633): "Format, analyze and test" **success**, "Android builds and permission audit" **success** |
+| Signed rebuild on `c59a051` | `flutter clean` + release script in the signing checkout: SHA-256 `e384762832a8c3fa697e84fc4951c9adfd48fa65c7bce52e66723b4883bde3e2`, `cmp` **byte-identical** to the `bc4009f` candidate (third identical build); this is the file now staged |
+| Commits after `c59a051` | this evidence only (Markdown, not packaged) |
+
+CI's release APK is debug-signed (CI has no key): a compile and permission
+check, never the official artifact. The CI run on the PR's final head
+(after this commit) is recorded on the PR.
 
 ## AF. Post-merge rebuild requirements
 
@@ -622,7 +630,7 @@ authorizes it, on the OnePlus CPH2707 only, by explicit serial:
 | Security and privacy | PASS |
 | **Physical OnePlus: backup, signed in-place update, real v5 → v6, data preservation** | **NOT RUN (authorization absent)** |
 | Physical Hydration Coach / Focus Guard / notifications / update check | **NOT RUN** |
-| CI on the final PR head | see [AE](#ae-pr-and-ci-evidence) |
+| CI on the PR head | PASS on `c59a051` (both jobs); final head on the PR ([AE](#ae-pr-and-ci-evidence)) |
 | Independent review / merge | NOT RUN (owner) |
 | Post-merge rebuild / publication / post-publication checks | NOT RUN (Gate D, not authorized) |
 
