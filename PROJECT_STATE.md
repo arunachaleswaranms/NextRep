@@ -1,17 +1,18 @@
 # PROJECT_STATE
 
-_Last updated: 2026-10-15. v1.1.0 is released (tag `v1.1.0` on
+_Last updated: 2026-10-16. v1.1.0 is released (tag `v1.1.0` on
 `7e563e2`, PR #14); v1.0.0 before it (tag on `b3f9c5c`, PR #10). v1.2 is in
-progress and unreleased: Phase 11A is merged (PR #15), Phase 11B (Smart
-Hydration, schema v6, backup format 3) is merged (PR #16), Phase 11C
-(Focus Guard) is merged (PR #17), and Phase 11D (About and manual update
-check) is implemented on its branch and awaiting PR review, not merged.
-Nothing for v1.2 is tagged or published._
+progress and unreleased: Phases 11A (PR #15), 11B (Smart Hydration, schema
+v6, backup format 3, PR #16), 11C (Focus Guard, PR #17) and 11D (About and
+manual update check, PR #18) are merged. Phase 11E (integration and
+regression qualification) is implemented on its branch and awaiting PR
+review, not merged. Phase 11F (v1.2.0 release) has not started. v1.2.0 is
+not released; nothing for v1.2 is tagged or published._
 
 | | |
 |---|---|
 | RELEASED | **v1.1.0 (2)** (GitHub Release, signed APK `f6bf2a3a…a2d779`); v1.0.0 before it |
-| IN PROGRESS | **v1.2** (unreleased): 11A merged (Focus Guard **GO**); 11B Smart Hydration merged; 11C Focus Guard merged; 11D About + manual update check implemented, awaiting PR review |
+| IN PROGRESS | **v1.2** (unreleased): 11A, 11B, 11C, 11D merged; 11E integration qualification implemented, awaiting PR review; 11F (release) not started |
 | ANDROID PHYSICAL | **PASS** for v1.1.0: v1.0.0 → v1.1.0 in-place update on the OnePlus CPH2707 (Phase 10D) |
 | STORE SUBMISSION | **NOT APPLICABLE / NOT PLANNED** |
 
@@ -24,16 +25,46 @@ planned. TalkBack was deliberately deferred and doesn't block this model.
 ## Repo
 
 - Remote: https://github.com/arunachaleswaranms/NextRep (public, MIT)
-- `main`: `32bd3c2` (squash merge of PR #17, Phase 11C). Tags `v1.0.0`
-  (`b3f9c5c`) and `v1.1.0` (`7e563e2`). PRs #1–#17 are Phases 1–11C.
-- Branch: `phase/11d-about-manual-updates`, from `32bd3c2`
-- PR: "Phase 11D: add About screen and manual update checking", open for
+- `main`: `1eed4f8` (squash merge of PR #18, Phase 11D). Tags `v1.0.0`
+  (`b3f9c5c`) and `v1.1.0` (`7e563e2`). PRs #1–#18 are Phases 1–11D.
+- Branch: `phase/11e-integration-regression`, from `1eed4f8`
+- PR: "Phase 11E: qualify v1.2 integration and regressions", open for
   review, not merged.
 - Author and committer of every commit:
   `Arunachaleswaran M S <arunachaleswaranms@gmail.com>` (repo-local
   config). No AI or co-author trailers.
 
-## Phase 11D (About and manual update check, awaiting review)
+## Phase 11E (integration and regression qualification, awaiting review)
+
+Matrix, evidence and the Phase 11F handoff:
+[docs/PHASE_11E.md](docs/PHASE_11E.md). No feature added.
+
+- Qualified the merged v1.2 source as one app: core Arc, habits, XP and
+  Minimum Day; Smart Hydration; Focus Guard; the manual update check;
+  every notification family at once; migrations, backups and restore;
+  dates, midnight, time zones and the Android lifecycle; privacy,
+  permissions and builds.
+- New CI suites in `test/integration/` (104 tests): the cross-feature
+  restore on a real SQLite file (worker claim SQL from Kotlin, no HTTP
+  client, a restore meeting a held write lock fails as a whole), the real plugin-backed scheduler
+  never removing a shown notification of any family, lifecycle and dates
+  with everything on, the 34-step combined journey, and a layout sweep of
+  the integrated screens. iOS simulator smoke
+  `integration_test/phase11e_ios_smoke_test.dart`.
+- **One defect, fixed (D1, P2):** Focus Guard's budget row at 2× text on a
+  phone broke "Combined daily budget" mid-word for budgets like "1 h 30
+  min"; the value now moves under the title at large text. No P0 / P1.
+- `flutter test` 1248 / 1248 (1144 + 104); native JVM 67 / 67.
+- API 36 emulator (isolated `.qualification` package, official v1.1.0
+  byte-identical before and after): natural Focus Guard nudge once a day,
+  Hydration delivery, four families together, warm and cold taps, restore,
+  reboot, force-stop, revocations, midnight, clock and zone changes, D1
+  before / after, one manual check = the only app traffic. iOS builds and
+  simulator smokes PASS. Physical device: deferred to Phase 11F.
+- Version **1.1.0+2**, schema **v6**, backup format **3**, permissions,
+  package and signer: unchanged.
+
+## Phase 11D (About and manual update check, merged)
 
 Contracts and evidence: [docs/PHASE_11D.md](docs/PHASE_11D.md).
 

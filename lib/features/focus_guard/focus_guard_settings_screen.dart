@@ -450,6 +450,10 @@ class _BudgetCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     final shown = formatBudget(minutes);
+    // With large text, a budget such as "1 h 30 min" beside the title would
+    // squeeze it into broken words, so the value moves under it instead.
+    final stacked = MediaQuery.textScalerOf(context).scale(1) > 1.3;
+    final value = Text(shown, style: text.titleMedium);
     return WinterCard(
       padding: const EdgeInsets.symmetric(vertical: WinterSpacing.xs),
       // Read as one control: "Combined daily budget, 1 h".
@@ -463,8 +467,17 @@ class _BudgetCard extends StatelessWidget {
           onTap: onEdit,
           leading: const Icon(Icons.hourglass_bottom_rounded),
           title: const Text('Combined daily budget'),
-          subtitle: const Text('Shared by all chosen apps.'),
-          trailing: Text(shown, style: text.titleMedium),
+          subtitle: stacked
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Shared by all chosen apps.'),
+                    const SizedBox(height: WinterSpacing.xs),
+                    value,
+                  ],
+                )
+              : const Text('Shared by all chosen apps.'),
+          trailing: stacked ? null : value,
         ),
       ),
     );
