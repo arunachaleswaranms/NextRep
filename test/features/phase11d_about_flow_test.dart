@@ -504,12 +504,20 @@ void main() {
       await _shutDown(tester);
     });
 
-    testWidgets('this build: Version 1.1.0, Build 2', (tester) async {
+    testWidgets('this build: Version 1.2.0, Build 3', (tester) async {
+      // What Android reports for this source: pubspec.yaml's version name
+      // and build number (versionName / versionCode).
+      final (name, build) = pubspecVersion();
       await _setPhoneSize(tester);
-      await tester.pumpWidget(_aboutOnly(github: FakeGitHubClient()));
+      await tester.pumpWidget(
+        _aboutOnly(
+          github: FakeGitHubClient(),
+          installed: FakeInstalledAppSource(version: name, buildNumber: build),
+        ),
+      );
       await tester.pumpAndSettle();
-      expect(find.text('Version 1.1.0'), findsOneWidget);
-      expect(find.text('Build 2'), findsOneWidget);
+      expect(find.text('Version 1.2.0'), findsOneWidget);
+      expect(find.text('Build 3'), findsOneWidget);
       await _shutDown(tester);
     });
 
