@@ -110,7 +110,7 @@ settled.
 |---|---|
 | `beforeJoining` | every date of the week is neutral |
 | `complete` | `dates(w).last.isBefore(T)` |
-| `inProgress` | `T` is in `dates(w)` |
+| `inProgress` | `T` is in `dates(w)` and `s.isParticipatingOn(T)` |
 | `upcoming` | otherwise (the first date is after `T`) |
 
 - **Week start**: local midnight at the start of `dates(w).first`.
@@ -129,12 +129,15 @@ settled.
   and the default review is Week 13. This depends only on the date, not on
   `status`, so it also covers an Arc that is over but not yet closed out
   (close-out runs at entry points, `ArcLifecycleService`).
-- **Before the join day**: if a time-zone change puts `T` before
-  `s.participationStart`, a seasonal Arc joined today has no settled or
-  open day. If the join day is the first day of its week, no week is
-  reviewable at all. In that case the Journey header hides the review
-  button, and a review route shows an empty state: "Your first week review
-  appears once your Arc has started." It never shows an error.
+- **Before the participation start**: if a time-zone or clock change puts
+  `T` before `s.participationStart` (only possible for an Arc started or
+  joined that day), the Arc has no settled or open day. **No week is
+  reviewable**: the join week is `upcoming`, because `T` is either outside
+  its dates or a neutral day in it, and every earlier week is
+  `beforeJoining`. The Journey header hides the review button, and a
+  review route shows an empty state: "Your first week review appears once
+  your Arc has started." It never shows an error. Ledger XP dated on or
+  after the participation start is future-dated for accounting (§ 4.5.1).
 - **Join week**: `weekOf(s.joinDayNumber)`, which is Week 1 for every
   rolling Arc.
 - **Reviewable weeks**: every week whose status is `complete` or
@@ -151,10 +154,11 @@ settled.
 | Seasonal Arc 2026 (1 Oct is a Thursday) | Weeks run Thursday to Wednesday; Week 13 is Thu 24 Dec – Thu 31 Dec (8 days). |
 | Seasonal Arc joined on Day 18 | Weeks 1–2 are `beforeJoining`, shown on the calendar but not reviewable. Week 3 has 3 neutral days (15–17) and 4 participating days (18–21). |
 | Today is the first day of a week, or the join day | The week is `inProgress` with no settled days: the START summary (§ 6) and the Today block only. |
-| Arc completed | Every week from the join week to 13 is `complete`. Nothing changes again (history is read-only; CONFIRMED: writes only reach the active Arc, `CurrentArcService`). |
+| Arc completed (`s.isOverOn(T)`) | Every week from the join week to 13 is `complete`. Nothing changes again (history is read-only; CONFIRMED: writes only reach the active Arc, `CurrentArcService`). |
 | Midnight passes with a review open | The screen re-reads (`dayChangedProvider` / `arcRefreshProvider`, bumped by `lib/app/app.dart` `_onDayChanged`). An `inProgress` week becomes `complete` or gets one more settled day. The screen stays on the week number it opened with. |
 | Midnight after Day 92 with the review open | The Arc closes out. `/journey/...` needs an active Arc, so the router's existing redirect sends the user home (the completed Arc's summary). Nothing is lost. |
-| Time zone change moves `T` back a day | Everything is recomputed from the new `T`. That day becomes `open` again, just as Today allows. Nothing is stored, so nothing goes stale. |
+| Time zone change moves `T` back a day | Everything is recomputed from the new `T`. The new `T` becomes `open` again, just as Today allows. A day after it that already has progress or XP becomes `upcoming`: it's left out of the totals, and its ledger XP is counted only in the future-dated accounting term (§ 4.5.1). Nothing is stored, so nothing goes stale, and no XP is moved or lost. |
+| Completed Arc and the date moves back to or before `endDate` | Week and day classes follow the dates, as Journey's do, so the last days show as open or upcoming until the date returns. The Arc stays completed and read-only. Nothing is reopened or written (§ 4.5.1). |
 | Daylight saving time | No effect: `LocalDate` arithmetic runs on UTC midnights. |
 | Goal edited mid-week | Each day keeps the target in effect that day (§ 4.2). |
 | Habit disabled mid-week | Counted only on the days it was enabled. |
@@ -270,21 +274,141 @@ These rules give the following guarantees, each to be checked by a test:
 
 ### 4.5 Reconciliation (properties for 12B tests)
 
-The weeks split an Arc's participating days, so these identities must hold:
+The weeks split an Arc's participating days. Below, `Σ_w` runs over all 13
+weeks; weeks that can't be opened contribute 0. These identities must hold
+**for every `T`**, including after the local date moves backwards (§ 3.3).
 
-1. `Σ_w N(w) + [today open] = h.elapsedDates.length`.
-2. Over a **completed** Arc, `(100·Σ F(w)) ~/ Σ N(w) = ArcSummary.consistencyPercent`.
-   For an **active** Arc, `(100·(Σ F(w) + [today full])) ~/ (Σ N(w) + 1)`
+1. `Σ_w N(w) + [T open] = h.elapsedDates.length`. Here `[T open]` is 1 when
+   `s.isParticipatingOn(T)`, else 0. Both sides come from the same `T`
+   (`ArcHistory.elapsedDates` = participating dates through
+   `min(T, endDate)`), so a rollback changes both equally.
+2. Once `s.isOverOn(T)`, `(100·Σ F(w)) ~/ Σ N(w) = ArcSummary.consistencyPercent`.
+   While `s.isParticipatingOn(T)`, `(100·(Σ F(w) + [today full])) ~/ (Σ N(w) + 1)`
    equals it. ArcSummary and Insights count today in their denominator,
-   and the review doesn't (§ 4.2).
-3. `Σ_w P(w) + [today is Perfect] = h.perfectDays.total`.
-4. `Σ_w X(w) + xpByDate[T] = h.records.totalXp` (`xpByDate[T]` is 0 for a completed Arc).
+   and the review doesn't (§ 4.2). Both cases follow from identity 1.
+   When `T` is before the participation start, both sides have no days.
+3. `Σ_w P(w) + [T open and Perfect] = h.perfectDays.total`. Both sides are
+   derived from the same elapsed dates.
+4. **The XP ledger split (corrected in review, finding F1).** See § 4.5.1:
+   `Σ_w X(w) + todayXp + futureXp + otherXp = h.records.totalXp`, where
+   `otherXp = 0` for every valid ledger.
 5. For data written by the app (not a hand-made restore),
    `X = 15·C + 30·P` (`XpRules.habitCompletion`,
    `XpRules.perfectDayBonus`, DayRules invariants 2–3). The review never
    relies on this identity: restored backups only have to satisfy key
    formats and amounts 1..1000 (CONFIRMED: `backup_codec.dart`
    `x.integer('amount', min: 1, max: 1000)`), so the ledger wins.
+
+#### 4.5.1 XP ledger split
+
+**The earlier identity was wrong.** It read
+`Σ_w X(w) + xpByDate[T] = h.records.totalXp`, with "`xpByDate[T]` is 0
+for a completed Arc". That is false whenever the local date moves
+backwards past a day that already has XP. For example: 15 XP is earned on
+18 October, and a time-zone change then makes the local date 17 October.
+The 18 October row stays in the ledger, the review rightly treats
+18 October as upcoming, and the old identity would need `0 + 0 = 15`.
+The app is right to keep that row. The identity was the mistake.
+
+**What it rests on (CONFIRMED):**
+
+- `h.records.totalXp` is by construction the sum of the per-date map.
+  `DriftProgressRepository.loadArc` sets
+  `totalXp: xpByDate.values.fold(0, …)` over
+  `xp_transactions` grouped by `date`. So any split of the ledger's
+  **dates** into disjoint groups sums exactly to `totalXp`: no row is
+  missed and none counted twice.
+- `T = Clock.today()` = `LocalDate.fromDateTime(DateTime.now())`, the
+  device's current local date (`lib/core/time/clock.dart`). It can move
+  backwards (time zone, clock change). Nothing persisted depends on it,
+  and nothing ever rewrites a ledger row's date.
+- **Ledger date invariant L:** every ledger row's date is a participating
+  date of its Arc.
+  - App writes: `commitDay` is reached only through
+    `HabitTrackingService._trackableSession`, which requires
+    `date == Clock.today()` and `session.isParticipatingOn(date)`.
+  - The v1 → v2 migration's Perfect Day backfill is limited to
+    `p.date BETWEEN s.start_date AND s.end_date`
+    (`lib/core/database/app_database.dart`), and every pre-v5 Arc is a
+    rolling Arc joined on its start date.
+  - Restores: `BackupValidator`'s `checkDate` rejects any XP row whose
+    date isn't `session.isParticipatingOn` (or is after the export date).
+
+**The split.** For an Arc `s` on local date `T`, each ledger date `D`
+falls into exactly one group. The groups are decided by `D` against `T`
+first, then by participation:
+
+| Group | Dates | Sum | Shown to the user as |
+|---|---|---|---|
+| **A. Settled XP** | `D < T` and `s.isParticipatingOn(D)` | `Σ_w X(w)` | the weekly "XP earned" totals |
+| **B. Today's XP** `todayXp` | `D == T` and `s.isParticipatingOn(T)`; else 0 | `xpByDate[T] ?? 0` when `T` participates | the "Today so far" block, only while `T`'s week is `inProgress` |
+| **C. Future-dated XP** `futureXp` | `D > T` | `Σ_{D > T} xpByDate[D]` | **nothing**: an accounting term, not a metric |
+| **D. Other XP** `otherXp` | `D ≤ T` and not `s.isParticipatingOn(D)` | `Σ` over those dates | nothing. **Always 0** by invariant L |
+
+Why the groups don't overlap and miss nothing: every `D` is `< T`,
+`== T` or `> T`. The `≤ T` cases are then split by participation. Group A
+equals `Σ_w X(w)` because every settled date belongs to exactly one week
+(§ 3.2): a week holding a date `< T` is either `complete` or `inProgress`.
+Hence:
+
+```
+Σ_w X(w) + todayXp + futureXp + otherXp = h.records.totalXp     (always)
+otherXp = 0                                                     (invariant L)
+⇒  Σ_w X(w) + todayXp + futureXp = h.records.totalXp            (every valid ledger)
+```
+
+`otherXp` is kept in the general form for one reason only. 12B tests
+assert that it is 0 (invariant L) rather than assume it. The review never
+displays or relies on it.
+
+**How each case falls out:**
+
+| Situation | Group B (today) | Group C (future) |
+|---|---|---|
+| Active Arc, the date never moved back | `xpByDate[T]` | 0 (every row is dated on the local day it was written, so none is after `T`) |
+| Completed Arc, `s.isOverOn(T)` | 0 (`T` doesn't participate) | 0 |
+| Date rollback inside the Arc | `xpByDate[T]` | the XP of the dates after the new `T` |
+| Rollback across a week boundary | the new `T`'s XP | the later week's XP; the earlier week becomes `inProgress` again |
+| Rollback before the participation start (any Arc started that day, rolling or seasonal) | 0 | the whole ledger; `Σ_w X(w) = 0` |
+| Completed Arc and a rollback to `T ≤ endDate` | `xpByDate[T]` | XP dated after `T`. The closed Arc is never reopened or written; its last days show as open or upcoming until the date returns (the same date rule Journey already uses) |
+| Late seasonal join | pre-join dates have no rows (invariant L), so their XP is 0 | as above |
+| Day 92, then close-out | Day 92's XP is today's XP until midnight, then settled in Week 13 | 0 |
+| Restored backup | as above. Restored rows meet invariant L, and the export date bound keeps them from being after the exporting device's date. On a device whose local date is behind that date, they're group C | as above |
+
+**What this doesn't change:** XP shown to the user stays exactly as in
+§ 4.2: settled participating dates only, today separately, future dates
+never. Future-dated rows stay in the database untouched. They're never
+moved, re-dated, deleted, re-derived from completions or re-awarded.
+Nothing here changes XP keys, levels, streaks, achievements, Perfect Day
+or Minimum Day logic. The app's existing total XP and level
+(`ArcRecords.totalXp`, `LevelRules`) already include every ledger row,
+future-dated or not, and v1.3 leaves that unchanged.
+
+**Worked rollback example (explanatory, not a test result).** An active
+Arc with one ledger row, `2026-10-18 → 15 XP` (a habit completed on
+18 October).
+
+| Local date `T` | Settled `Σ_w X(w)` | Today | Future-dated | Total | Check |
+|---|---|---|---|---|---|
+| 2026-10-17 (rolled back) | 0 | 0 (nothing dated 17 Oct) | 15 | 15 | `0 + 0 + 15 = 15` ✓ |
+| 2026-10-18 (back to normal) | 0 | 15 ("Today so far") | 0 | 15 | `0 + 15 + 0 = 15` ✓ |
+| 2026-10-19 (18 Oct settled) | 15 | 0 | 0 | 15 | `15 + 0 + 0 = 15` ✓ |
+
+**Across a week boundary.** A rolling Arc started Wed 7 Oct 2026, so Week
+1 = 7–13 Oct and Week 2 = 14–20 Oct. Its ledger: 13 Oct (Day 7) 105 XP,
+14 Oct (Day 8) 60 XP; total 525 including 360 XP over Days 1–6. On
+`T` = 14 Oct: `X(1) = 465`, today 60, future 0 → `465 + 60 + 0 = 525` ✓.
+The local date then rolls back to 13 Oct. Week 1 is `inProgress` again
+with `X(1) = 360`, today 105 and future 60 → `360 + 105 + 60 = 525` ✓.
+Week 2 becomes `upcoming` and can't be opened, so its 60 XP is shown
+nowhere until 14 Oct returns, and it isn't lost.
+
+**Before the participation start.** A seasonal Arc joined on 18 Oct 2026
+with 15 XP that day. The date then rolls back to 17 Oct. No week is
+reviewable (§ 3.2, "Before the participation start"): Week 3 holds 17 Oct
+only as a neutral day, so it's `upcoming`. Settled is 0, today is 0
+(17 Oct isn't a participating date) and future is 15 →
+`0 + 0 + 15 = 15` ✓. The same holds for a rolling Arc started that day.
 
 ### 4.6 Worked examples
 
@@ -813,7 +937,9 @@ up as an extra `loadArc` call, which the tests count.
   Arcs, including the 8-day Week 13.
 - R2 Metrics follow § 4.2. Future, neutral and open days are never in the
   totals.
-- R3 The § 4.5 reconciliation identities hold for generated Arcs.
+- R3 The § 4.5 reconciliation identities hold for generated Arcs and for
+  every local date, including after the date moves backwards (the XP
+  ledger split of § 4.5.1).
 - R4 Summaries follow § 6 exactly, are identical across repeated runs, and
   never contradict each other.
 - R5 Opening any review writes nothing: the database (every table) is

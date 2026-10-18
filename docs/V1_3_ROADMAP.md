@@ -114,7 +114,9 @@ and the hardening items move into 12E.
 - Weekly Review, Calendar, Insights, Journey and historic Arcs working
   together: the same numbers everywhere they overlap (the spec § 4.5
   reconciliation against Insights and the Arc summary; exact for completed
-  Arcs, and with today's term for the active Arc).
+  Arcs, and with today's term for the active Arc. XP reconciles with the
+  ledger split of spec § 4.5.1, which also holds after the local date
+  moves backwards).
 - Emulator qualification: TalkBack reading order, 2× / 360 dp on the
   device font, reduced motion, midnight with a screen open, and a
   profile-build timing of the review and calendar (recorded, not gated).

@@ -457,7 +457,7 @@ CI), **J** Android JVM, **E** emulator, **P** physical device,
 | Case | Layer |
 |---|---|
 | `ArcWeeks`: `weekOf` for d = 1, 7, 8, 14, 84, 85, 91, 92; `dates(w)` for rolling (Wed start) and seasonal 2026 (Thu); Week 13 has 8 days | U |
-| Day classes and week status: neutral / upcoming / open / settled precedence; `beforeJoining`, `complete`, `inProgress`, `upcoming` | U |
+| Day classes and week status: neutral / upcoming / open / settled precedence; `beforeJoining`, `complete`, `inProgress` (requires `s.isParticipatingOn(T)`), `upcoming`; a `T` that is a neutral day inside the join week leaves that week `upcoming` | U |
 | Reviewable range: rolling from Week 1; late join Day 18 starts at Week 3; completed Arc 1..13 / join..13 | U |
 | Arc start (Day 1 = today: START), Arc end (Day 92 open; then complete after close-out) | U |
 | Current partial week: totals exclude today; the today block matches `r(T)` | U |
@@ -468,7 +468,8 @@ CI), **J** Android JVM, **E** emulator, **P** physical device,
 | Partial habit progress (count 5/8, duration 20/30) not completed | U |
 | Every `HabitType`, including Sleep Before (a logged time later than the target is not completed) | U |
 | Goal revision mid-week (example 4); disabled habit mid-week | U |
-| XP = ledger sum; reconciliation identities § 4.5 over generated Arcs | U (property) |
+| XP = ledger sum; reconciliation identities § 4.5 over generated Arcs and many `T` (including `T` before the participation start, inside the Arc and after it). The XP ledger split of § 4.5.1 `Σ_w X(w) + todayXp + futureXp = totalXp`, with `otherXp = 0` asserted (invariant L) | U (property) |
+| **XP reconciliation after date rollback** (review finding F1). See the dedicated cases below | U + R |
 | Highlights: thresholds, tie-breaks, single habit, all tied, `N < 3`, `a < 3`, `C = 0` | U |
 | Summary rules: each of the 9 kinds; the first match wins; tense and final-week variants; no contradiction (exhaustive over generated 3-habit weeks); determinism (100 runs identical); forbidden words | U |
 | Midnight rollover with a fake clock: the open week gains a settled day; Week 13 closes out with a redirect | W |
@@ -480,6 +481,50 @@ CI), **J** Android JVM, **E** emulator, **P** physical device,
 | Routes: `/journey/review?week=`, `/arc/:id/review?week=`; malformed week; no active Arc; Back to Journey | W (`test/app/app_routes_test.dart` extension) |
 | Screen states § 5.3 (loading, error with retry, empty, first week, completed Arc) | W |
 | Semantics labels, tap targets, contrast guidelines | W |
+
+**Required 12B test: XP reconciliation after date rollback** (spec § 4.5.1;
+review finding F1). It runs on a real in-memory Drift database (layer R),
+so the ledger rows are inspected directly, with an injected `Clock`. These
+are future 12B tests; nothing is implemented in 12A.
+
+1. Create a valid active Arc history through the app's own write path
+   (`HabitTrackingService` on the injected clock), so invariant L holds.
+2. Persist an XP transaction on date `D` (complete a habit on `D`).
+3. Move the injected `Clock.today()` back to `D − 1`.
+4. Assert that the settled weekly XP (`Σ_w X(w)`) excludes the `D` row.
+5. Assert that today's XP (`D − 1`) excludes it.
+6. Assert that the future-dated ledger XP (`Σ_{date > T}`) includes it.
+7. Assert `Σ_w X(w) + todayXp + futureXp = ArcRecords.totalXp`, and that
+   `otherXp = 0`.
+8. Advance the clock to `D`.
+9. Assert that the row's XP is now today's XP ("Today so far") and that
+   future is 0.
+10. Advance the clock past `D`.
+11. Assert that the row is in the settled XP of `D`'s week.
+12. After every step, assert the `xp_transactions` rows (id, source key,
+    reason, amount, habit, date, created at) are byte-identical to those
+    right after step 2.
+13. Assert no XP is duplicated: each source key once; the groups sum to the
+    total exactly, never more.
+14. Assert no XP is lost: the total is unchanged at every step.
+15. Assert that reading the review at each step awards nothing: no new
+    ledger row, and no unlock or other table change.
+
+Required variants, each with the same assertions:
+
+- **Across an Arc-week boundary:** `D` = Day 8 (the first day of Week 2),
+  rolled back to Day 7. Week 1 becomes `inProgress` again and Week 2
+  `upcoming`; then forward to Day 8 and Day 9 (the spec's week-boundary
+  example, 525 XP).
+- **Before the participation start:** a seasonal Arc joined on `D` (and
+  a rolling Arc started on `D`), rolled back to `D − 1`. No reviewable
+  week, the empty state, settled and today 0, and the whole ledger
+  future-dated.
+- **Completed Arc rolled back to `T ≤ endDate`:** the Arc stays
+  `completed`, nothing is written, and the identity holds.
+- **Restored backup:** restore a format-3 backup exported on a device
+  whose date is ahead of the test clock. Its newest rows are future-dated,
+  and the identity holds.
 
 ### L2. Calendar (12C)
 
@@ -561,6 +606,7 @@ None of these blocks the plan.
 | Clean worktree from the verified commit; primary checkout and other worktrees untouched | PASS |
 | Every source path cited in the three documents exists (script over all `lib/`, `android/`, `test/`, `tool/`, `.github/` paths) | PASS |
 | Relative Markdown links and anchors between the new documents resolve | PASS |
+| Independent PR review, finding **F1** (the weekly XP reconciliation was wrong after a local-date rollback) | **RESOLVED** in a follow-up commit. Spec § 4.5 identity 4 is replaced by the ledger split of § 4.5.1: settled + today + future-dated (+ other = 0 by invariant L) = total. It rests on `loadArc`'s `totalXp = Σ xpByDate`, the today-only write guard (`_trackableSession`), the v1 → v2 backfill bounds and the restore validator's `checkDate`. There's a rollback worked example and the required 12B rollback tests above. No user-visible metric changed. Documentation-only check; no executable test was run |
 | Independent read-only review of every code claim and of the worked-example arithmetic against the source | 9 factual and 11 logic findings, **all corrected** before commit: the Journey marker's today border is 3 dp and its glow is static; Journey dims the whole marker; the review's query count vs Journey's provider; today in the consistency reconciliation; scoping of the no-write check; restored completion flags; the manifest vs merged permission count; the layout list; 48 dp calendar cells; the Room-to-grow tie rule; Minimum Day "Missed" wording; final-week copy; `H = 0` and floored comparisons; the over-but-not-closed and before-join edges; non-text contrast; emulator work placed in 12E. All arithmetic, weekdays and contrast values were confirmed |
 | `git diff --stat` against `28db2af`: only `docs/PHASE_12A.md`, `docs/V1_3_ROADMAP.md`, `docs/ARC_MOMENTUM_SPEC.md`, `PROJECT_STATE.md` | PASS |
 | `git diff --check` (whitespace) | PASS |
