@@ -204,7 +204,7 @@ class _Identity extends StatelessWidget {
   }
 }
 
-/// "Version 1.1.0 · Build 2", as the platform reports the installed app.
+/// "Version 1.2.0 · Build 3", as the platform reports the installed app.
 class _VersionCard extends StatelessWidget {
   const _VersionCard({required this.installed});
 

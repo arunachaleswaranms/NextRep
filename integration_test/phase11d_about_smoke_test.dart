@@ -44,8 +44,8 @@ void main() {
     await tester.tap(find.text('About NextRep'));
     await tester.pumpAndSettle();
     expect(find.byType(AboutScreen), findsOneWidget);
-    expect(find.text('Version 1.1.0'), findsOneWidget);
-    expect(find.text('Build 2'), findsOneWidget);
+    expect(find.text('Version 1.2.0'), findsOneWidget);
+    expect(find.text('Build 3'), findsOneWidget);
     expect(find.text('Check for updates'), findsNothing);
     expect(
       find.text(
@@ -56,7 +56,7 @@ void main() {
     );
     expect(tester.takeException(), isNull);
     debugPrint(
-      'PHASE11D_ABOUT ${Platform.operatingSystem}: Version 1.1.0, Build 2, '
+      'PHASE11D_ABOUT ${Platform.operatingSystem}: Version 1.2.0, Build 3, '
       'no update check offered',
     );
 

@@ -85,10 +85,10 @@ See the README: [Install on Android](../README.md#install-on-android) and
 
 ## Checking for updates from the app
 
-The published v1.0.0 and v1.1.0 can't check for updates: watch the
-Releases page instead. From the 1.2 line (Phase 11D, not yet released),
-**About NextRep** on Android has a **Check for updates** button. It only
-reads release information; it never downloads or installs anything:
+v1.0.0 and v1.1.0 can't check for updates: watch the Releases page
+instead. From v1.2.0, **About NextRep** on Android has a **Check for
+updates** button. It only reads release information; it never downloads or
+installs anything:
 
 - It runs only when tapped: never at startup, on resume or in the
   background. Each tap is one HTTPS request to GitHub's "latest release"
@@ -139,7 +139,7 @@ Release steps, in order:
    else.
 
 Publish the release as a full release (not a draft or prerelease) only once
-both files are attached: from the 1.2 line, the in-app check reads the
+both files are attached: from v1.2.0, the in-app check reads the
 latest published release, and reports a newer one as "not ready yet" until
 its APK and checksum are uploaded. Never rename the assets or the tag
 format: the check matches `v<version>`, `NextRep-v<version>-android.apk`

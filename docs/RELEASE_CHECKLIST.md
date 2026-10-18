@@ -7,11 +7,71 @@
 > section. The iOS, TalkBack, VoiceOver and Store items below are Phase 7–8
 > history. Store publication is not planned, so they don't block a release.
 >
-> **From the 1.2 line (Phase 11D):** the release permission set includes
+> **From v1.2.0 (Phase 11D):** the release permission set includes
 > `INTERNET`, for the manual update check only; the release script and CI
 > require exactly that set. Publish the GitHub Release as a full release
 > with both assets attached, or the in-app check reports it as not ready
 > ([DIRECT_DISTRIBUTION.md](DIRECT_DISTRIBUTION.md#checking-for-updates-from-the-app)).
+
+## Direct distribution: v1.2.0 (Phase 11F)
+
+A fresh record for v1.2.0, started in Phase 11F on 2026-10-16. Nothing is
+carried over from v1.1.0. Tick an item only with evidence in
+[PHASE_11F.md](PHASE_11F.md) for **this** release's source.
+
+Source and identity
+
+- [x] `pubspec.yaml` `1.2.0+3`; `appVersion` `1.2.0`; planned tag `v1.2.0` (not created)
+- [x] `applicationId` `com.nextrep.nextrep`, minSdk 24; no temporary suffix in the source
+- [x] Schema **v6**, backup write **3** / read 1, 2, 3; 32 achievements; no new feature, permission or dependency
+- [x] `android/key.properties` points at the permanent key (git-ignored, never printed); the key was not rotated
+
+Automated
+
+- [x] `dart format --output=none --set-exit-if-changed .` (305 files, 0 changed), `flutter analyze` (no issues)
+- [x] `flutter test` 1265 / 1265 and `./gradlew :app:testDebugUnitTest` 67 / 67
+- [x] Focused suites: migrations v1 → v6, backups 1 / 2 / 3, Focus Guard, update check, release qualification, Phase 11E, Phase 11F release tests
+- [x] `flutter build apk --debug`, `flutter build apk --release` in a worktree without the key (debug-signed, never distributed)
+- [x] `flutter build ios --simulator`, `flutter build ios --release --no-codesign`, iOS simulator smokes
+
+Signed candidate
+
+- [x] `flutter clean`, then `tool/release/prepare_android_release.sh` on the candidate commit: one signer `65:B7:0C:D0:…:F0:BA` (not `CN=Android Debug`), `com.nextrep.nextrep` 1.2.0 (3), exactly the 7 approved permissions, components, R8 constructors, staged APK and `.sha256`
+- [x] Independent `apksigner` / `aapt2` / `apkanalyzer` audit of the staged APK
+- [x] Byte-identical across two clean builds of `bc4009f` (`e3847628…de3e2`), and again on the PR head `c59a051` (docs only after it)
+- [x] Size and SHA-256 written into [releases/v1.2.0.md](releases/v1.2.0.md)
+
+Emulator (disposable AVD)
+
+- [x] Published v1.1.0 (signed) with real data → `adb install -r` of the signed candidate: Success, `firstInstallTime` unchanged, schema v5 → v6, every v5 row unchanged, opt-ins off, reminders kept
+- [x] Minified smoke of the signed candidate: About 1.2.0 (3), Today, habits, XP, Journal, Hydration Coach, Focus Guard (Usage Access, a real background check), notification taps, backup export and restore, relaunch
+- [x] Per-UID network: zero bytes until **Check for updates** is tapped; one request; "newer than the latest published v1.1.0"
+
+Physical Android (OnePlus CPH2707, Android 16): run 17–18 October 2026 with the owner's explicit authorization
+
+- [x] Device identity, installed official v1.1.0 (2) byte-identical to the published asset, its signer `65b70cd0…f0ba`, first-install time 2026-10-08 22:02:50
+- [x] Pre-upgrade backup exported in v1.1.0 (format 2), checksum and validator OK, kept on the phone and off-device (read-only)
+- [x] `adb install -r` of the signed candidate (no `-d`, no uninstall, no data clear): Success, same signer, `firstInstallTime` unchanged
+- [x] Real v5 → v6 migration: same user data as the pre-upgrade backup; Hydration Coach and Focus Guard off; reminders as before
+- [x] Physical smoke: Today, Journey, Journal, Insights, History, Achievements, Reminders, Data & Backup, About, background / resume, force-stop / relaunch, reboot (OxygenOS delivered `BOOT_COMPLETED` ~10 min late; recovery followed it)
+- [x] Physical Hydration Coach, Focus Guard and notification checks (real deliveries of all four kinds, tap routing, natural Focus Guard runs, permission revoke / regrant); settings restored afterwards
+- [x] Physical manual update check: zero bytes until the tap, one request (9,437 / 1,490 bytes), "newer than the latest published v1.1.0"
+- [x] Post-upgrade backup: format 3, checksum OK, equivalent data; original backup kept
+
+Documents and review
+
+- [x] Release notes [releases/v1.2.0.md](releases/v1.2.0.md) with the verified size, SHA-256 and physical result
+- [x] README, CHANGELOG, PRIVACY, DIRECT_DISTRIBUTION, PROJECT_STATE updated; [PHASE_11F.md](PHASE_11F.md)
+- [x] Secret audit: no keystore, `key.properties`, password, token, APK, `.sha256`, personal backup or device dump tracked
+- [ ] CI green on the final PR head
+- [ ] Owner: independent review, then merge
+
+Publication: separate owner authorization (Gate D)
+
+- [ ] On merged `main`: `flutter clean` + release script; SHA-256 equal to the qualified candidate
+- [ ] Tag `v1.2.0` on the release commit; full (not draft, not pre-) GitHub Release "NextRep v1.2.0" with exactly `NextRep-v1.2.0-android.apk` and `NextRep-v1.2.0-android.apk.sha256`
+- [ ] `releases/latest` API: `tag_name` v1.2.0, `draft` false, `prerelease` false, both assets uploaded; downloaded asset SHA-256 and signer match
+- [ ] On the upgraded phone: About → Check for updates → "You're using the latest published version. Latest published: v1.2.0"
 
 ## Direct distribution: v1.1.0 (Phase 10D)
 

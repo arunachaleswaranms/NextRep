@@ -3,10 +3,11 @@
 **A private, local-first Winter Arc: a 92-day self-improvement challenge
 for your daily habits.**
 
-> **Status: v1.0.0 is released. v1.1.0 is a qualified release candidate,
-> pending review and publication.** Android APKs are published on the
+> **Status: v1.1.0 is the latest published release. v1.2.0 is a release
+> candidate, in qualification and not yet published.** Android APKs are
+> published on the
 > [GitHub Releases](https://github.com/arunachaleswaranms/NextRep/releases)
-> page.
+> page, which always lists the current release.
 
 ## What is NextRep?
 
@@ -50,11 +51,17 @@ analytics and no cloud sync. Everything stays on your phone.
   per-habit completion and moods.
 - **Reminders**: an optional daily nudge and an evening reflection prompt,
   scheduled on the device. Off by default.
+- **Hydration Coach** (from v1.2.0): optional nudges, paced against your
+  Water habit within active hours you choose, in a Gentle, Balanced or
+  Supportive style. Off by default.
+- **Focus Guard** (Android, from v1.2.0): pick apps and one combined daily
+  budget; NextRep shows today's time and sends at most one gentle reminder
+  a day when the budget is reached. It never blocks apps, needs Android's
+  Usage Access, and keeps usage on the device. Off by default.
 - **Backup & restore** to a `.nextrep` file.
 - **About NextRep**: the installed version and build, privacy, the official
   source, and on Android a manual **Check for updates** that asks GitHub for
-  the latest published release only when you tap it (unreleased; from the
-  1.2 line).
+  the latest published release only when you tap it (from v1.2.0).
 - A winter scene that respects reduced motion, large-text support and
   screen-reader labels.
 
@@ -65,8 +72,11 @@ Android APKs are published on the
 page as `NextRep-v<version>-android.apk`, each with a `.sha256` checksum
 file.
 
-**Latest release: v1.1.0** ([release notes](docs/releases/v1.1.0.md)).
-The current source is the unreleased 1.2 line.
+The newest release is always at the top of the
+[Releases](https://github.com/arunachaleswaranms/NextRep/releases) page.
+At the time of writing that is v1.1.0
+([release notes](docs/releases/v1.1.0.md)); v1.2.0 is a release candidate
+([draft release notes](docs/releases/v1.2.0.md)) and isn't published yet.
 
 Only download NextRep from this repository's Releases page. How to check a
 download: [docs/DIRECT_DISTRIBUTION.md](docs/DIRECT_DISTRIBUTION.md).
@@ -93,7 +103,7 @@ Protect on.
 
 ## Updating
 
-From the 1.2 line, **About NextRep → Check for updates** tells you whether a
+From v1.2.0, **About NextRep → Check for updates** tells you whether a
 newer release is published and opens its page on GitHub when you tap
 **View official release**. It never checks by itself and never downloads
 anything. With v1.1.0 and earlier, check the Releases page.
@@ -121,10 +131,12 @@ device):
 - **Export Backup** writes everything (arcs, habits, history, XP,
   achievements and your Journal reflections) to a
   `nextrep-backup-YYYY-MM-DD.nextrep` file, wherever you choose in the
-  system file dialog.
+  system file dialog. If you use Focus Guard, it also holds the package
+  names of the apps you chose and your budget, never any usage time.
 - **Restore Backup** checks the whole file first, shows what it contains,
-  and asks before replacing the data on this device. Reminders come back
-  turned off. Turn them on again if you want them.
+  and asks before replacing the data on this device. Reminders, Hydration
+  Coach and Focus Guard come back turned off, with their settings kept.
+  Turn them on again if you want them.
 
 **Backups are not encrypted by NextRep.** Anyone who can open the file can
 read your reflections. Keep it somewhere you trust. The file includes a
@@ -133,14 +145,17 @@ checksum to detect accidental damage; it isn't a security feature.
 ## Privacy
 
 No account, no server, no analytics, telemetry, ads or trackers, and no
-cloud sync. NextRep works offline and never goes online by itself. The
-published v1.0.0 and v1.1.0 don't request the `INTERNET` permission. Builds
-of the current source request it for one thing: when you tap **Check for
-updates** in About, one HTTPS request reads GitHub's latest public release
-information, sending none of your NextRep data. A share card leaves the app only when you
-tap Share and pick an app in the system share sheet. It never includes
-your Journal or moods, and carries no link in the image or its caption. Reminders are local notifications with generic text. Your phone's own
-system backup may include app data if you have it turned on.
+cloud sync. NextRep works offline and never goes online by itself. v1.0.0
+and v1.1.0 don't request the `INTERNET` permission. From v1.2.0 it is
+requested for one thing: when you tap **Check for updates** in About, one
+HTTPS request reads GitHub's latest public release information, sending
+none of your NextRep data (GitHub still sees the request's usual details,
+such as your IP address). Focus Guard's app usage stays on the device. A
+share card leaves the app only when you tap Share and pick an app in the
+system share sheet. It never includes your Journal or moods, and carries no
+link in the image or its caption. Reminders are local notifications with
+generic text. Your phone's own system backup may include app data if you
+have it turned on.
 
 Full details: [PRIVACY.md](PRIVACY.md).
 
@@ -263,7 +278,8 @@ dart format .
 flutter analyze
 flutter test                     # unit + data + migration + widget tests
 flutter test test/data/migration_test.dart test/data/migration_v3_test.dart \
-  test/data/migration_v4_test.dart test/data/migration_v5_test.dart  # → v5
+  test/data/migration_v4_test.dart test/data/migration_v5_test.dart \
+  test/data/migration_v6_test.dart                                   # → v6
 flutter test test/domain/backup_format_test.dart test/domain/backup_v2_test.dart \
   test/data/backup_restore_test.dart test/data/backup_v2_restore_test.dart \
   test/data/phase10c_backup_test.dart \
@@ -335,7 +351,8 @@ implementation and qualification records:
 [10A](docs/PHASE_10A.md), [10B](docs/PHASE_10B.md),
 [10C](docs/PHASE_10C.md), [10D](docs/PHASE_10D.md),
 [11A](docs/PHASE_11A.md), [11B](docs/PHASE_11B.md),
-[11C](docs/PHASE_11C.md), [11D](docs/PHASE_11D.md).
+[11C](docs/PHASE_11C.md), [11D](docs/PHASE_11D.md),
+[11E](docs/PHASE_11E.md), [11F](docs/PHASE_11F.md).
 Current status: [PROJECT_STATE.md](PROJECT_STATE.md).
 
 Release documents:

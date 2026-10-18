@@ -1,8 +1,8 @@
 # NextRep Privacy
 
-_Last updated: 15 October 2026. Applies to NextRep 1.1.0 (Winter Arc) and
-to builds of the current source, which add Hydration Coach, Focus Guard and
-a manual update check (planned for 1.2, not yet released)._
+_Last updated: 16 October 2026. Applies to NextRep 1.2.0, which adds
+Hydration Coach, Focus Guard and a manual update check, and to the earlier
+1.0.0 and 1.1.0 (Winter Arc)._
 
 NextRep is a local-first app that works offline. Everything you put into it
 stays on your device, in the app's own storage, unless you choose to move
@@ -16,15 +16,15 @@ In short:
 - **Sharing you start: possible.** You can make a progress, goal or
   achievement image and hand it to another app through your phone's share
   sheet. Nothing leaves NextRep until you tap **Share** and pick an app.
-- **Update checks you start (Android, current source): possible.** When you
+- **Update checks you start (Android, from 1.2.0): possible.** When you
   tap **Check for updates** in About, NextRep makes one HTTPS request to
   GitHub to read the latest public release information. It sends none of
   your NextRep data. See [Checking for updates](#checking-for-updates-android).
 
-**Which version has what.** The published NextRep 1.0.0 and 1.1.0 have no
-network access at all: their Android APKs don't request the `INTERNET`
-permission. Builds of the current source (the unreleased 1.2 line) request
-`INTERNET` for the manual update check, and for nothing else.
+**Which version has what.** NextRep 1.0.0 and 1.1.0 have no network
+access at all: their Android APKs don't request the `INTERNET` permission.
+NextRep 1.2.0 requests `INTERNET` for the manual update check, and for
+nothing else.
 
 This page describes what the app actually does, as built. It applies to
 the official Android APKs published on this repository's GitHub Releases
@@ -175,8 +175,8 @@ budget you set. **It does not block apps.**
 
 NextRep is distributed as signed APKs on its
 [GitHub Releases page](https://github.com/arunachaleswaranms/NextRep/releases),
-not through an app store. In builds of the current source, **About NextRep**
-can tell you whether a newer release has been published.
+not through an app store. From 1.2.0, **About NextRep** can tell you
+whether a newer release has been published.
 
 - **Only when you tap Check for updates.** NextRep never checks by itself:
   not when it is installed or opened, when you open About, on resume, when
@@ -260,7 +260,7 @@ can turn them off in system settings.
 
 | Permission | Why |
 |---|---|
-| `INTERNET` | current source only (not in 1.0.0 or 1.1.0): the manual update check, sent only when you tap Check for updates in About |
+| `INTERNET` | from 1.2.0 (not in 1.0.0 or 1.1.0): the manual update check, sent only when you tap Check for updates in About |
 | `POST_NOTIFICATIONS` | show the optional reminders (Android 13+, asked when you turn one on) |
 | `VIBRATE` | notification and haptic feedback |
 | `RECEIVE_BOOT_COMPLETED` | re-schedule pending reminders after a restart (and, through Android's WorkManager, Focus Guard's check) |
