@@ -1,6 +1,11 @@
 # Changelog
 
-## 1.2.0 — release candidate (not yet published)
+## 1.2.0 — 2026
+
+Published on 18 October 2026 as the
+[v1.2.0 GitHub Release](https://github.com/arunachaleswaranms/NextRep/releases/tag/v1.2.0)
+(tag `v1.2.0` on `8ab0c43`; APK SHA-256
+`e384762832a8c3fa697e84fc4951c9adfd48fa65c7bce52e66723b4883bde3e2`).
 
 Installs over 1.1.0 and keeps your data. Release notes:
 [docs/releases/v1.2.0.md](docs/releases/v1.2.0.md). Built in Phases 11A

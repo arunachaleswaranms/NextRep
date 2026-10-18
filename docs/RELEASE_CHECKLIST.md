@@ -21,7 +21,7 @@ carried over from v1.1.0. Tick an item only with evidence in
 
 Source and identity
 
-- [x] `pubspec.yaml` `1.2.0+3`; `appVersion` `1.2.0`; planned tag `v1.2.0` (not created)
+- [x] `pubspec.yaml` `1.2.0+3`; `appVersion` `1.2.0`; planned tag `v1.2.0` (not created during qualification; created at publication, below)
 - [x] `applicationId` `com.nextrep.nextrep`, minSdk 24; no temporary suffix in the source
 - [x] Schema **v6**, backup write **3** / read 1, 2, 3; 32 achievements; no new feature, permission or dependency
 - [x] `android/key.properties` points at the permanent key (git-ignored, never printed); the key was not rotated
@@ -63,15 +63,15 @@ Documents and review
 - [x] Release notes [releases/v1.2.0.md](releases/v1.2.0.md) with the verified size, SHA-256 and physical result
 - [x] README, CHANGELOG, PRIVACY, DIRECT_DISTRIBUTION, PROJECT_STATE updated; [PHASE_11F.md](PHASE_11F.md)
 - [x] Secret audit: no keystore, `key.properties`, password, token, APK, `.sha256`, personal backup or device dump tracked
-- [ ] CI green on the final PR head
-- [ ] Owner: independent review, then merge
+- [x] CI green on the final PR head (run 39093437696 on `308a0d6`, both jobs)
+- [x] Owner: independent review, then merge (PR #20 → `8ab0c43`; main CI run 39096524587 green, both jobs)
 
-Publication: separate owner authorization (Gate D)
+Publication: separate owner authorization (Gate D), done 2026-10-18. Evidence: [PHASE_11F.md](PHASE_11F.md#aj-publication-outcome-gate-d)
 
-- [ ] On merged `main`: `flutter clean` + release script; SHA-256 equal to the qualified candidate
-- [ ] Tag `v1.2.0` on the release commit; full (not draft, not pre-) GitHub Release "NextRep v1.2.0" with exactly `NextRep-v1.2.0-android.apk` and `NextRep-v1.2.0-android.apk.sha256`
-- [ ] `releases/latest` API: `tag_name` v1.2.0, `draft` false, `prerelease` false, both assets uploaded; downloaded asset SHA-256 and signer match
-- [ ] On the upgraded phone: About → Check for updates → "You're using the latest published version. Latest published: v1.2.0"
+- [x] On merged `main` (`8ab0c43`): `flutter clean` + release script (1265 / 1265); SHA-256 `e3847628…de3e2`, byte-identical to the qualified candidate
+- [x] Tag `v1.2.0` (annotated) on `8ab0c43`; draft with exactly `NextRep-v1.2.0-android.apk` and `NextRep-v1.2.0-android.apk.sha256`, downloaded and compared, then published as a full (not draft, not pre-) GitHub Release "NextRep v1.2.0"
+- [x] `releases/latest` API (unauthenticated): `tag_name` v1.2.0, `draft` false, `prerelease` false, both assets uploaded; publicly downloaded APK byte-identical, SHA-256 and signer match
+- [ ] On the upgraded phone: About → Check for updates → "You're using the latest published version. Latest published: v1.2.0" (authorized; **NOT RUN**, the phone wasn't reachable over wireless adb)
 
 ## Direct distribution: v1.1.0 (Phase 10D)
 
