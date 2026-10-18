@@ -1,6 +1,6 @@
 # PROJECT_STATE
 
-_Last updated: 2026-10-16. **Latest published release: v1.1.0** (tag
+_Last updated: 2026-10-18. **Latest published release: v1.1.0** (tag
 `v1.1.0` on `7e563e2`, PR #14); v1.0.0 before it. The v1.2 roadmap's
 Phases 11A–11E are merged (PRs #15–#19). **Phase 11F (v1.2.0 release
 qualification) is open on its branch**; the source there is `1.2.0+3`.
@@ -11,7 +11,7 @@ qualification) is open on its branch**; the source there is `1.2.0+3`.
 |---|---|
 | PUBLISHED | **v1.1.0 (2)** (GitHub Release, signed APK `f6bf2a3a…a2d779`); v1.0.0 before it |
 | RELEASE CANDIDATE | **v1.2.0 (3)** on `phase/11f-v1.2-release-qualification`: permanent-key signed candidate `e3847628…de3e2`, reproducible; emulator upgrade rehearsal PASS. See [docs/PHASE_11F.md](docs/PHASE_11F.md) |
-| ANDROID PHYSICAL (v1.2.0) | **NOT RUN: awaiting the owner's explicit authorization** to update the official v1.1.0 on the OnePlus CPH2707 (and the phone wasn't connected) |
+| ANDROID PHYSICAL (v1.2.0) | **PASS** (17–18 Oct 2026, owner-authorized): the official v1.1.0 on the OnePlus CPH2707 updated in place by the signed candidate; real v5 → v6, all user data preserved; Hydration Coach, Focus Guard, notifications, update check and format-3 backup qualified; settings restored. v1.2.0 stays installed |
 | PUBLICATION | **NOT AUTHORIZED, NOT PUBLISHED**: no `v1.2.0` tag, no GitHub Release, no uploaded asset |
 | STORE SUBMISSION | **NOT APPLICABLE / NOT PLANNED** |
 
@@ -28,8 +28,9 @@ planned. TalkBack was deliberately deferred and doesn't block this model.
   (`b3f9c5c`) and `v1.1.0` (`7e563e2`). PRs #1–#19 are Phases 1–11E.
 - Branch: `phase/11f-v1.2-release-qualification`, from `af0c883`
 - PR: [#20](https://github.com/arunachaleswaranms/NextRep/pull/20) "Phase
-  11F: qualify NextRep v1.2.0 release", **draft**, not merged; CI green on
-  `c59a051` (run 38929507633), final head on the PR.
+  11F: qualify NextRep v1.2.0 release", **ready for review** after the
+  physical gate passed, not merged; CI green on `c090446`, final head on
+  the PR.
 - Author and committer of every commit:
   `Arunachaleswaran M S <arunachaleswaranms@gmail.com>` (repo-local
   config). No AI or co-author trailers.
@@ -57,6 +58,15 @@ feature, permission, dependency, schema or backup-format change.
 - Emulator (a disposable API 36 AVD; `emulator-5554` and its official
   v1.1.0 untouched): the published v1.1.0 with real v5 data updated in
   place by the signed candidate; every v5 row identical after v6.
+- Physical OnePlus CPH2707 (Android 16), owner-authorized, 17–18 October:
+  verified format-2 backup first; `adb install -r` of the signed candidate
+  over the official v1.1.0 (same signer, `firstInstallTime` unchanged);
+  user data identical before and after (screens and normalized backups);
+  format-3 export; Hydration Coach and Focus Guard (real deliveries,
+  natural runs, Usage Access and notification revoke / regrant,
+  force-stop, reboot) and all four notification kinds; update check 0
+  bytes until the tap. No defect. OxygenOS delivered `BOOT_COMPLETED`
+  ~10 min after boot (recovery followed it). Settings restored.
 
 ## Phase 11E (integration and regression qualification, merged)
 

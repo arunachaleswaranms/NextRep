@@ -47,20 +47,20 @@ Emulator (disposable AVD)
 - [x] Minified smoke of the signed candidate: About 1.2.0 (3), Today, habits, XP, Journal, Hydration Coach, Focus Guard (Usage Access, a real background check), notification taps, backup export and restore, relaunch
 - [x] Per-UID network: zero bytes until **Check for updates** is tapped; one request; "newer than the latest published v1.1.0"
 
-Physical Android (OnePlus CPH2707, Android 16): needs the owner's explicit authorization
+Physical Android (OnePlus CPH2707, Android 16): run 17–18 October 2026 with the owner's explicit authorization
 
-- [ ] Device identity, installed official v1.1.0 (2), its signer, first-install time
-- [ ] Pre-upgrade backup exported in v1.1.0 (format 2), checksum and validator OK, kept off-device
-- [ ] `adb install -r` of the signed candidate (no `-d`, no uninstall, no data clear): Success, same signer, `firstInstallTime` unchanged
-- [ ] Real v5 → v6 migration: same user data as the pre-upgrade backup; Hydration Coach and Focus Guard off; reminders as before
-- [ ] Physical smoke: Today, Journey, Journal, Insights, History, Achievements, Reminders, Data & Backup, About, background / resume, force-stop / relaunch, reboot
-- [ ] Physical Hydration Coach, Focus Guard and notification checks (as authorized)
-- [ ] Physical manual update check: zero bytes until the tap, one request, "newer than the latest published v1.1.0"
-- [ ] Post-upgrade backup: format 3, checksum OK, equivalent data; original backup kept
+- [x] Device identity, installed official v1.1.0 (2) byte-identical to the published asset, its signer `65b70cd0…f0ba`, first-install time 2026-10-08 22:02:50
+- [x] Pre-upgrade backup exported in v1.1.0 (format 2), checksum and validator OK, kept on the phone and off-device (read-only)
+- [x] `adb install -r` of the signed candidate (no `-d`, no uninstall, no data clear): Success, same signer, `firstInstallTime` unchanged
+- [x] Real v5 → v6 migration: same user data as the pre-upgrade backup; Hydration Coach and Focus Guard off; reminders as before
+- [x] Physical smoke: Today, Journey, Journal, Insights, History, Achievements, Reminders, Data & Backup, About, background / resume, force-stop / relaunch, reboot (OxygenOS delivered `BOOT_COMPLETED` ~10 min late; recovery followed it)
+- [x] Physical Hydration Coach, Focus Guard and notification checks (real deliveries of all four kinds, tap routing, natural Focus Guard runs, permission revoke / regrant); settings restored afterwards
+- [x] Physical manual update check: zero bytes until the tap, one request (9,437 / 1,490 bytes), "newer than the latest published v1.1.0"
+- [x] Post-upgrade backup: format 3, checksum OK, equivalent data; original backup kept
 
 Documents and review
 
-- [ ] Release notes [releases/v1.2.0.md](releases/v1.2.0.md) with the verified size, SHA-256 and physical result
+- [x] Release notes [releases/v1.2.0.md](releases/v1.2.0.md) with the verified size, SHA-256 and physical result
 - [x] README, CHANGELOG, PRIVACY, DIRECT_DISTRIBUTION, PROJECT_STATE updated; [PHASE_11F.md](PHASE_11F.md)
 - [x] Secret audit: no keystore, `key.properties`, password, token, APK, `.sha256`, personal backup or device dump tracked
 - [ ] CI green on the final PR head
