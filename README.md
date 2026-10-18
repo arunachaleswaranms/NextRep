@@ -3,9 +3,9 @@
 **A private, local-first Winter Arc: a 92-day self-improvement challenge
 for your daily habits.**
 
-> **Status: v1.1.0 is the latest published release. v1.2.0 is a release
-> candidate, in qualification and not yet published.** Android APKs are
-> published on the
+> **Status: v1.2.0 is the latest published release** (18 October 2026;
+> [release notes](docs/releases/v1.2.0.md)). Android APKs are published on
+> the
 > [GitHub Releases](https://github.com/arunachaleswaranms/NextRep/releases)
 > page, which always lists the current release.
 
@@ -74,9 +74,10 @@ file.
 
 The newest release is always at the top of the
 [Releases](https://github.com/arunachaleswaranms/NextRep/releases) page.
-At the time of writing that is v1.1.0
-([release notes](docs/releases/v1.1.0.md)); v1.2.0 is a release candidate
-([draft release notes](docs/releases/v1.2.0.md)) and isn't published yet.
+At the time of writing that is
+[v1.2.0](https://github.com/arunachaleswaranms/NextRep/releases/tag/v1.2.0)
+([release notes](docs/releases/v1.2.0.md)); v1.1.0
+([release notes](docs/releases/v1.1.0.md)) came before it.
 
 Only download NextRep from this repository's Releases page. How to check a
 download: [docs/DIRECT_DISTRIBUTION.md](docs/DIRECT_DISTRIBUTION.md).

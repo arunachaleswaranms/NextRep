@@ -1,18 +1,16 @@
 # PROJECT_STATE
 
-_Last updated: 2026-10-18. **Latest published release: v1.1.0** (tag
-`v1.1.0` on `7e563e2`, PR #14); v1.0.0 before it. The v1.2 roadmap's
-Phases 11A–11E are merged (PRs #15–#19). **Phase 11F (v1.2.0 release
-qualification) is open on its branch**; the source there is `1.2.0+3`.
-`main` is still the merged-development baseline (`af0c883`, version
-`1.1.0+2`). **v1.2.0 is a release candidate: NOT tagged, NOT published.**_
+_Last updated: 2026-10-18. **Latest published release: v1.2.0** (tag
+`v1.2.0` on `8ab0c43`, PR #20), published 18 October 2026; v1.1.0 and
+v1.0.0 before it. The v1.2 roadmap (Phases 11A–11F, PRs #15–#20) is
+merged. `main` is `8ab0c43`, version `1.2.0+3`._
 
 | | |
 |---|---|
-| PUBLISHED | **v1.1.0 (2)** (GitHub Release, signed APK `f6bf2a3a…a2d779`); v1.0.0 before it |
-| RELEASE CANDIDATE | **v1.2.0 (3)** on `phase/11f-v1.2-release-qualification`: permanent-key signed candidate `e3847628…de3e2`, reproducible; emulator upgrade rehearsal PASS. See [docs/PHASE_11F.md](docs/PHASE_11F.md) |
-| ANDROID PHYSICAL (v1.2.0) | **PASS** (17–18 Oct 2026, owner-authorized): the official v1.1.0 on the OnePlus CPH2707 updated in place by the signed candidate; real v5 → v6, all user data preserved; Hydration Coach, Focus Guard, notifications, update check and format-3 backup qualified; settings restored. v1.2.0 stays installed |
-| PUBLICATION | **NOT AUTHORIZED, NOT PUBLISHED**: no `v1.2.0` tag, no GitHub Release, no uploaded asset |
+| PUBLISHED | **v1.2.0 (3)**: [GitHub Release](https://github.com/arunachaleswaranms/NextRep/releases/tag/v1.2.0), full (not draft or prerelease), signed APK `e3847628…de3e2`; v1.1.0 (2) and v1.0.0 (1) before it |
+| PUBLICATION VERIFIED | Public download byte-identical to the qualified candidate, checksum OK, signer `65b70cd0…f0ba`; `releases/latest` API → `v1.2.0` with both assets. See [docs/PHASE_11F.md](docs/PHASE_11F.md#aj-publication-outcome-gate-d) |
+| ANDROID PHYSICAL (v1.2.0) | **PASS** (17–18 Oct 2026, owner-authorized): the official v1.1.0 on the OnePlus CPH2707 updated in place by the signed candidate (the same bytes as the published APK); real v5 → v6, all user data preserved; Hydration Coach, Focus Guard, notifications, update check and format-3 backup qualified; settings restored. v1.2.0 stays installed |
+| POST-PUBLICATION UPDATE CHECK ON THE PHONE | **NOT RUN**: authorized, but the phone wasn't reachable over wireless adb on 18 October |
 | STORE SUBMISSION | **NOT APPLICABLE / NOT PLANNED** |
 
 NextRep is distributed as a signed Android APK on GitHub Releases
@@ -24,18 +22,15 @@ planned. TalkBack was deliberately deferred and doesn't block this model.
 ## Repo
 
 - Remote: https://github.com/arunachaleswaranms/NextRep (public, MIT)
-- `main`: `af0c883` (squash merge of PR #19, Phase 11E). Tags `v1.0.0`
-  (`b3f9c5c`) and `v1.1.0` (`7e563e2`). PRs #1–#19 are Phases 1–11E.
-- Branch: `phase/11f-v1.2-release-qualification`, from `af0c883`
-- PR: [#20](https://github.com/arunachaleswaranms/NextRep/pull/20) "Phase
-  11F: qualify NextRep v1.2.0 release", **ready for review** after the
-  physical gate passed, not merged; CI green on `c090446`, final head on
-  the PR.
+- `main`: `8ab0c43` (squash merge of PR #20, Phase 11F); CI run
+  [39096524587](https://github.com/arunachaleswaranms/NextRep/actions/runs/39096524587)
+  green (both jobs). Tags `v1.0.0` (`b3f9c5c`), `v1.1.0` (`7e563e2`) and
+  `v1.2.0` (`8ab0c43`). PRs #1–#20 are Phases 1–11F.
 - Author and committer of every commit:
   `Arunachaleswaran M S <arunachaleswaranms@gmail.com>` (repo-local
   config). No AI or co-author trailers.
 
-## Phase 11F (v1.2.0 release qualification, branch open)
+## Phase 11F (v1.2.0 release qualification, merged and published)
 
 Record, evidence and gates: [docs/PHASE_11F.md](docs/PHASE_11F.md). No
 feature, permission, dependency, schema or backup-format change.
@@ -67,6 +62,14 @@ feature, permission, dependency, schema or backup-format change.
   force-stop, reboot) and all four notification kinds; update check 0
   bytes until the tap. No defect. OxygenOS delivered `BOOT_COMPLETED`
   ~10 min after boot (recovery followed it). Settings restored.
+- Merged as PR #20 (`8ab0c43`), main CI green. Published 18 October 2026
+  after the owner's separate authorization: `flutter clean` + release
+  script on `8ab0c43` (1265 / 1265) gave the same bytes as the qualified
+  candidate; annotated tag `v1.2.0` on `8ab0c43`; draft with the two
+  assets verified, then published as a full release. Unauthenticated
+  public download, checksum, signer and `releases/latest` verified. The
+  phone's post-publication update check was NOT RUN (phone not
+  reachable).
 
 ## Phase 11E (integration and regression qualification, merged)
 
@@ -344,8 +347,8 @@ Evidence and rules: [docs/PHASE_10A.md](docs/PHASE_10A.md).
 
 | | |
 |---|---|
-| Version | Published: `1.1.0+2` (versionName 1.1.0, versionCode 2) and 1.0.0 (1). Candidate on the 11F branch: `1.2.0+3` (versionName 1.2.0, versionCode 3) |
-| Tag | `v1.0.0` on `b3f9c5c`; `v1.1.0` on `7e563e2`; `v1.2.0` planned, **not created** |
+| Version | Published: `1.2.0+3` (versionName 1.2.0, versionCode 3), 1.1.0 (2) and 1.0.0 (1) |
+| Tag | `v1.0.0` on `b3f9c5c`; `v1.1.0` on `7e563e2`; `v1.2.0` on `8ab0c43` (annotated, "NextRep v1.2.0") |
 | Android `applicationId` | `com.nextrep.nextrep` (kept for update continuity) |
 | Database schema | **v5** in v1.1.0; **v6** since Phase 11B, first released with v1.2.0 |
 | Backup | export `formatVersion` **2** in v1.1.0; from Phase 11B (v1.2.0): writes **3**, reads 1, 2 and 3 |
@@ -357,9 +360,9 @@ Evidence and rules: [docs/PHASE_10A.md](docs/PHASE_10A.md).
 | v1.1.0 candidate | `NextRep-v1.1.0-android.apk`, 63,684,809 bytes, minSdk 24, targetSdk 36 |
 | v1.1.0 candidate SHA-256 | `f6bf2a3a5f32a1d53c12d54764361a42f5201ac5d3a60bec2907e15ea2a2d779` (byte-identical across clean builds, fixed environment) |
 | Release permissions | v1.1.0: `POST_NOTIFICATIONS`, `VIBRATE`, `RECEIVE_BOOT_COMPLETED`, app-private `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`; INTERNET, exact-alarm, storage, media, contacts, accounts, camera, microphone and usage-access permissions absent |
-| Release permissions (v1.2.0 candidate) | v1.1.0's plus `PACKAGE_USAGE_STATS`, `WAKE_LOCK` (11C) and `INTERNET` (11D, manual update check only): exactly 7, audited on the signed APK |
-| v1.2.0 candidate | `NextRep-v1.2.0-android.apk`, 66,360,265 bytes, minSdk 24, targetSdk 36, from `bc4009f` |
-| v1.2.0 candidate SHA-256 | `e384762832a8c3fa697e84fc4951c9adfd48fa65c7bce52e66723b4883bde3e2` (byte-identical across two clean builds, fixed environment); **not published** |
+| Release permissions (v1.2.0) | v1.1.0's plus `PACKAGE_USAGE_STATS`, `WAKE_LOCK` (11C) and `INTERNET` (11D, manual update check only): exactly 7, audited on the signed and on the published APK |
+| v1.2.0 APK | `NextRep-v1.2.0-android.apk`, 66,360,265 bytes, minSdk 24, targetSdk 36; qualified from `bc4009f`, rebuilt byte-identical from `main` `8ab0c43` (docs-only difference) |
+| v1.2.0 APK SHA-256 | `e384762832a8c3fa697e84fc4951c9adfd48fa65c7bce52e66723b4883bde3e2`; **published** 2026-10-18 with its `.sha256`, public download verified |
 
 The keystore and `android/key.properties` live only on the owner's machine
 and are git-ignored. Key rules:
@@ -376,8 +379,8 @@ and are git-ignored. Key rules:
 | APK debug | PASS | PASS | PASS | PASS | PASS | PASS | PASS | PASS | PASS | PASS |
 | APK release | **PASS, release key, reproducible** (7 permissions) | PASS, 11C's + `INTERNET` | PASS, v1.1.0 + `PACKAGE_USAGE_STATS`, `WAKE_LOCK` | PASS, permissions = v1.1.0 | PASS, permissions = v1.1.0 | **PASS, release key, reproducible** | PASS (local) | PASS (local) | not built | PASS |
 | iOS simulator / no-codesign build | PASS / PASS (+ 4 simulator smokes) | PASS / PASS (+ simulator run) | PASS / PASS | PASS / PASS | PASS / PASS | PASS / PASS | PASS (local) | PASS (local) | not run | PASS |
-| Signed update continuity (physical, `adb install -r`, same key) | **NOT RUN** (awaiting authorization); emulator rehearsal PASS | n/a (11F) | n/a (11F) | n/a | n/a | **PASS** v1.0.0 → v1.1.0, data kept | n/a | n/a | n/a | **PASS**, data kept |
-| Physical smoke | **NOT RUN** (awaiting authorization) | deferred (not connected) | deferred (not connected) | not run | feasibility only (probe package) | **PASS** (incl. share sheet) | n/a | n/a | n/a | **PASS** |
+| Signed update continuity (physical, `adb install -r`, same key) | **PASS** v1.1.0 → v1.2.0, data kept; emulator rehearsal PASS | n/a (11F) | n/a (11F) | n/a | n/a | **PASS** v1.0.0 → v1.1.0, data kept | n/a | n/a | n/a | **PASS**, data kept |
+| Physical smoke | **PASS** (incl. Hydration Coach, Focus Guard, notifications, update check) | deferred (not connected) | deferred (not connected) | not run | feasibility only (probe package) | **PASS** (incl. share sheet) | n/a | n/a | n/a | **PASS** |
 
 Coverage of handwritten lib: 93.8% at v1.1.0 (93.3% at v1.0.0).
 Earlier results: integration 7 / 7 on emulator-5554 and on the iPhone 17
@@ -397,6 +400,11 @@ simulator (Phase 8); iOS simulator and no-codesign release builds PASS
     v1.0.0 → v1.1.0 in-place update, data survival, share cards and the
     system share sheet, backups before and after, 2× text and reduced
     motion.
+  - Phase 11F ([evidence](docs/PHASE_11F.md#p-physical-oneplus-pre-upgrade-state)):
+    the v1.1.0 → v1.2.0 in-place update with the signed APK later
+    published, real v5 → v6 migration, data preservation, Hydration
+    Coach, Focus Guard, notifications, the update check and format-3
+    backups.
 - **TalkBack:** deferred by the owner; not a blocker for direct
   distribution. Onboarding, Arc choice and habit setup were done with
   TalkBack in Phase 8.5; the node tree of every other screen was checked.
@@ -417,12 +425,9 @@ disclosed in [PRIVACY.md](PRIVACY.md).
 
 ## Remaining actions (owner)
 
-1. Decide on the **physical signed upgrade**: authorize (or not) the
-   in-place update of the official v1.1.0 on the OnePlus CPH2707 to the
-   signed v1.2.0 candidate, after a fresh v1.1.0 backup
-   ([docs/PHASE_11F.md](docs/PHASE_11F.md#ag-publication-approval-gate)).
-2. Independent review of the Phase 11F PR, then merge.
-3. After merge, separately authorize publication: rebuild on `main`
-   (SHA-256 must equal the candidate's), tag `v1.2.0`, publish the full
-   GitHub Release with the APK and its `.sha256`, then the
-   post-publication checks.
+1. Optional: with the phone connected over wireless adb, run the one
+   read-only post-publication check on the installed v1.2.0 (About →
+   **Check for updates** → "You're using the latest published version." /
+   "Latest published: v1.2.0"). It was authorized but NOT RUN because the
+   phone wasn't reachable ([docs/PHASE_11F.md](docs/PHASE_11F.md#aj-publication-outcome-gate-d)).
+2. Review and merge the documentation-only publication-record PR.

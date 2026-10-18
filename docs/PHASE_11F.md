@@ -861,3 +861,96 @@ the owner's real v1.1.0 installation in place on the OnePlus CPH2707 with
 every piece of user data preserved, and v1.2.0's features passed on the
 phone. PR #20 is ready for independent review. **Do not merge or publish
 without approval. NOT TAGGED. NOT PUBLISHED.**
+
+## AJ. Publication outcome (Gate D)
+
+Appended after publication on 18 October 2026. Sections A–AI above are
+the qualification record as merged and are left unchanged.
+
+**Authorization.** After the readiness report, the owner explicitly
+authorized: "Publish NextRep v1.2.0 to GitHub Releases using the verified
+permanent-key signed APK", the tag, a draft, both uploads and a full
+stable release, plus one line added to the release description's Hydration
+Coach section ("Hydration Coach reminders do not award XP or change
+streaks. Logging your Water habit continues to earn its normal rewards.").
+Separately, one read-only About → Check for updates on the OnePlus.
+
+### AJ1. Baseline and build from merged `main`
+
+| | |
+|---|---|
+| PR #20 | merged 2026-10-18 04:16 UTC → `main` `8ab0c4369ec49e1e67325ec78fe9bf341bb021c6`; tree identical to the PR head `308a0d6` |
+| Main CI | run [39096524587](https://github.com/arunachaleswaranms/NextRep/actions/runs/39096524587) on `8ab0c43`: "Format, analyze and test" success, "Android builds and permission audit" success |
+| Source vs. candidate | `bc4009f..8ab0c43` changes 8 documentation files only; no packaged source |
+| Environment | owner's checkout `~/labs/NextRep` (clean, `key.properties` mode 600, keystore outside the repository, values never printed); Flutter 3.47.5 / Dart 3.13.4, `JAVA_HOME` openjdk@21 (21.0.12), build-tools 36.0.0 |
+| Build | `flutter clean`, then `tool/release/prepare_android_release.sh`: format 305 files / 0 changed, analyze no issues, `flutter test` **1265 / 1265**, signed build, verification, staging: exit 0 |
+| Result | 66,360,265 bytes, SHA-256 `e384762832a8c3fa697e84fc4951c9adfd48fa65c7bce52e66723b4883bde3e2`; `cmp` **byte-identical** to the Phase 11F candidate (copied aside before `flutter clean`); `.sha256` file identical; `shasum -c` OK |
+
+Independent audit (a separate script, not the release script) of the
+staged APK: APK Signature Scheme v2, exactly one signer
+`CN=Arunachaleswaran M S, OU=NextRep`, certificate SHA-256
+`65b70cd0…f0ba`, not `CN=Android Debug`; `com.nextrep.nextrep` 1.2.0 (3),
+minSdk 24, targetSdk 36, ABIs `arm64-v8a` `armeabi-v7a` `x86_64`, not
+debuggable or testOnly; exactly the 7 permissions of [K](#k-permission-and-component-audit),
+the 19 listed there absent; no Accessibility, VPN, notification-listener
+or foreground service, no WebView activity, no installer capability;
+`FocusGuardCheckProvider` not exported; exported components only
+`MainActivity` and WorkManager / ProfileInstaller entries guarded by
+`BIND_JOB_SERVICE` / `DUMP`; R8 keeps the three constructors of
+[L](#l-r8--minification-verification); `drawable/ic_stat_reminder` kept;
+no keystore, `key.properties`, database or backup inside the APK.
+**PASS (0 failures).** Same bytes as the physically qualified candidate,
+so the device suite was not repeated.
+
+### AJ2. Tag and release
+
+| | |
+|---|---|
+| Pre-check | `origin/main` still `8ab0c43`; no `v1.2.0` tag (local or remote) and no v1.2.0 release or draft; repository `arunachaleswaranms/NextRep` (public); staged APK re-audited |
+| Tag | annotated `v1.2.0`, message "NextRep v1.2.0", tagger as for v1.0.0 / v1.1.0, created 2026-10-18 05:59:27 UTC; tag object `fe53eae`, dereferences to `8ab0c43`; pushed without force |
+| Draft | `gh release create v1.2.0 … --draft --verify-tag`, title "NextRep v1.2.0"; assets uploaded (state `uploaded`, GitHub digests `sha256:e3847628…de3e2` and `sha256:454baa63…a024`) |
+| Description | [releases/v1.2.0.md](releases/v1.2.0.md) with the authorized Hydration Coach line and its 4 relative links rewritten to `https://github.com/arunachaleswaranms/NextRep/blob/v1.2.0/…` (each returned HTTP 200) |
+| Draft check | draft assets downloaded with `gh release download`: `cmp` equal to the staged APK and `.sha256`; `shasum -c` OK; signer and identity audit PASS |
+| Published | 2026-10-18 06:28:01 UTC, `draft` false, `prerelease` false, made latest: <https://github.com/arunachaleswaranms/NextRep/releases/tag/v1.2.0> |
+
+### AJ3. Public verification (no authentication)
+
+| Check | Result |
+|---|---|
+| `GET api.github.com/repos/arunachaleswaranms/NextRep/releases/latest` (curl, no token), 9 s after publishing | HTTP 200, no redirect; `tag_name` **v1.2.0**, `name` "NextRep v1.2.0", `draft` false, `prerelease` false, `html_url` `…/releases/tag/v1.2.0`; assets exactly `NextRep-v1.2.0-android.apk` (66,360,265, uploaded) and `NextRep-v1.2.0-android.apk.sha256` (93, uploaded). No stale response seen |
+| Release page | HTTP 200, title and the Hydration Coach XP line present; no Draft or Pre-release label |
+| Public download (curl, no credentials, fresh folder) | APK 66,360,265 bytes (HTTP 200), `.sha256` 93 bytes; `shasum -c` OK |
+| Byte comparison | public APK `cmp` equal to the Phase 11F candidate and to the merged-main build |
+| Signature and identity | `apksigner verify` v2, one signer `65b70cd0…f0ba`; `com.nextrep.nextrep` 1.2.0 (3), minSdk 24, targetSdk 36; exactly the 7 permissions |
+
+**Public release verification: PASS.**
+
+### AJ4. In-app update check on the OnePlus
+
+Authorized by the owner as one read-only check (no reinstall, uninstall,
+restore, permission or data change). **NOT RUN:** the phone wasn't
+reachable. `adb devices` listed only `emulator-5554` (not the phone; left
+untouched), and `adb mdns services` found no wireless-debugging service
+over about 60 s of retries. Nothing was done on any device.
+
+The automated test for this state (installed 1.2.0, latest v1.2.0 →
+"You're using the latest published version." / "Latest published:
+v1.2.0", [E](#e-automated-qualification) item F) passed, and the live API
+now returns exactly that release. The physical confirmation remains open
+until the phone is connected.
+
+### AJ5. Outcome
+
+| Gate | Result |
+|---|---|
+| Merged baseline, main CI | PASS |
+| Rebuild on `main`, byte-identical to the qualified candidate | PASS |
+| Independent signer / identity / permission / component / R8 audit | PASS |
+| Tag `v1.2.0` → `8ab0c43` | PASS |
+| Draft assets verified, then full stable release | PASS |
+| Public download, checksum, signer | PASS |
+| `releases/latest` API | PASS |
+| Physical About → Check for updates | **NOT RUN** (phone not reachable) |
+
+**NextRep v1.2.0 is PUBLISHED.** Post-publication verification is
+complete except for the physical in-app update check, which was not run.

@@ -24,7 +24,7 @@ The checksum shows that the file you downloaded is the file that was
 published, and wasn't damaged or swapped on the way.
 
 macOS / Linux, with both files in the same folder (for example
-`<version>` = `1.1.0`):
+`<version>` = `1.2.0`):
 
 ```bash
 shasum -a 256 -c NextRep-v<version>-android.apk.sha256
@@ -70,7 +70,7 @@ signed with the NextRep release key, so a tampered APK can't replace your
 install or read its data.
 
 Because every release uses the same key, a newer official APK installs
-over the old one and keeps your data (for example v1.1.0 over v1.0.0). You
+over the old one and keeps your data (for example v1.2.0 over v1.1.0). You
 don't need to uninstall. Exporting a backup first is still a good habit.
 
 If Android ever says an update conflicts with the installed app or that the
@@ -134,9 +134,13 @@ Release steps, in order:
    with the same key and toolchain, so the SHA-256 should match the one in
    the release notes. If it doesn't, stop and find out why before
    publishing.
-3. Create the tag `v<version>` and a GitHub Release from
-   `docs/releases/v<version>.md`. Attach the two staged files, and nothing
-   else.
+3. Create the annotated tag `v<version>` ("NextRep v<version>") on the
+   release commit and a **draft** GitHub Release from
+   `docs/releases/v<version>.md`, with its relative links rewritten to
+   absolute `https://github.com/arunachaleswaranms/NextRep/blob/v<version>/…`
+   URLs (relative links don't resolve on a Release page). Attach the two
+   staged files, and nothing else. Download the draft's assets and compare
+   them with the staged files before publishing.
 
 Publish the release as a full release (not a draft or prerelease) only once
 both files are attached: from v1.2.0, the in-app check reads the
