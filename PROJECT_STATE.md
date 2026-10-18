@@ -2,15 +2,16 @@
 
 _Last updated: 2026-10-18. **Latest published release: v1.2.0** (tag
 `v1.2.0` on `8ab0c43`, PR #20), published 18 October 2026; v1.1.0 and
-v1.0.0 before it. The v1.2 roadmap (Phases 11A–11F, PRs #15–#20) is
-merged. `main` is `8ab0c43`, version `1.2.0+3`._
+v1.0.0 before it. The v1.2 roadmap (Phases 11A–11F, PRs #15–#20) and the
+publication record (PR #21) are merged. `main` is `28db2af`, version
+`1.2.0+3`. **v1.3.0 is in planning (Phase 12A), not released.**_
 
 | | |
 |---|---|
 | PUBLISHED | **v1.2.0 (3)**: [GitHub Release](https://github.com/arunachaleswaranms/NextRep/releases/tag/v1.2.0), full (not draft or prerelease), signed APK `e3847628…de3e2`; v1.1.0 (2) and v1.0.0 (1) before it |
 | PUBLICATION VERIFIED | Public download byte-identical to the qualified candidate, checksum OK, signer `65b70cd0…f0ba`; `releases/latest` API → `v1.2.0` with both assets. See [docs/PHASE_11F.md](docs/PHASE_11F.md#aj-publication-outcome-gate-d) |
 | ANDROID PHYSICAL (v1.2.0) | **PASS** (17–18 Oct 2026, owner-authorized): the official v1.1.0 on the OnePlus CPH2707 updated in place by the signed candidate (the same bytes as the published APK); real v5 → v6, all user data preserved; Hydration Coach, Focus Guard, notifications, update check and format-3 backup qualified; settings restored. v1.2.0 stays installed |
-| POST-PUBLICATION UPDATE CHECK ON THE PHONE | **NOT RUN**: authorized, but the phone wasn't reachable over wireless adb on 18 October |
+| POST-PUBLICATION UPDATE CHECK ON THE PHONE | **NOT RUN** by the qualification: authorized, but the phone wasn't reachable over wireless adb on 18 October. The owner later reported running it (owner-reported, not instrumented) |
 | STORE SUBMISSION | **NOT APPLICABLE / NOT PLANNED** |
 
 NextRep is distributed as a signed Android APK on GitHub Releases
@@ -22,10 +23,39 @@ planned. TalkBack was deliberately deferred and doesn't block this model.
 ## Repo
 
 - Remote: https://github.com/arunachaleswaranms/NextRep (public, MIT)
-- `main`: `8ab0c43` (squash merge of PR #20, Phase 11F); CI run
+- `main`: `28db2af` (PR #21, the v1.2.0 publication record), on top of
+  `8ab0c43` (squash merge of PR #20, Phase 11F; CI run
   [39096524587](https://github.com/arunachaleswaranms/NextRep/actions/runs/39096524587)
-  green (both jobs). Tags `v1.0.0` (`b3f9c5c`), `v1.1.0` (`7e563e2`) and
-  `v1.2.0` (`8ab0c43`). PRs #1–#20 are Phases 1–11F.
+  green, both jobs). Tags `v1.0.0` (`b3f9c5c`), `v1.1.0` (`7e563e2`) and
+  `v1.2.0` (`8ab0c43`). PRs #1–#20 are Phases 1–11F; #21 the publication
+  record.
+
+## Phase 12A (v1.3.0 Arc Momentum planning, in review)
+
+Documentation only: [docs/PHASE_12A.md](docs/PHASE_12A.md),
+[docs/ARC_MOMENTUM_SPEC.md](docs/ARC_MOMENTUM_SPEC.md),
+[docs/V1_3_ROADMAP.md](docs/V1_3_ROADMAP.md). No production code, test,
+dependency, permission, schema, backup-format or version change; no
+device, emulator or APK used.
+
+- **Guaranteed for v1.3.0:** Weekly Arc Review (12B) and Arc Consistency
+  Calendar (12C), both read-only views of existing history.
+- **Week model:** Arc-relative weeks. 13 weeks; Week 13 = Days 85–92.
+  Pre-join days are neutral, future days never count, and today is shown
+  "so far", outside the totals.
+- **Metrics:** headline "Habit completion" (completed / scheduled
+  habit-days). "Consistency" keeps its app-wide meaning (full days / days)
+  for the week. XP is read from the ledger. Deterministic, local summary
+  rules; nothing generated or stored.
+- **Calendar:** a Path / Calendar switch in Journey, 13 week blocks,
+  using the existing `JourneyDayState` (no second classifier) and zero
+  extra queries.
+- **Database migration: NO. Backup-format change: NO** (schema v6, format
+  3 kept).
+- **Weekly Focus: DEFER** (it would need schema v7 + backup format 4).
+  **Android widget: DEFER** (a separate v1.4 feasibility phase).
+- Roadmap 12B–12F with approval gates A–G. Version stays `1.2.0+3` until
+  12F (`1.3.0+4`).
 - Author and committer of every commit:
   `Arunachaleswaran M S <arunachaleswaranms@gmail.com>` (repo-local
   config). No AI or co-author trailers.
@@ -425,9 +455,13 @@ disclosed in [PRIVACY.md](PRIVACY.md).
 
 ## Remaining actions (owner)
 
-1. Optional: with the phone connected over wireless adb, run the one
-   read-only post-publication check on the installed v1.2.0 (About →
-   **Check for updates** → "You're using the latest published version." /
-   "Latest published: v1.2.0"). It was authorized but NOT RUN because the
-   phone wasn't reachable ([docs/PHASE_11F.md](docs/PHASE_11F.md#aj-publication-outcome-gate-d)).
-2. Review and merge the documentation-only publication-record PR.
+1. Post-publication update check on the installed v1.2.0: authorized but
+   NOT RUN by the qualification
+   ([docs/PHASE_11F.md](docs/PHASE_11F.md#aj-publication-outcome-gate-d)).
+   The owner has since reported doing it (owner-reported, not
+   instrumented).
+2. Publication-record PR #21: merged (`28db2af`).
+3. Phase 12A: independent review of the planning PR, then Gate A
+   ([docs/V1_3_ROADMAP.md](docs/V1_3_ROADMAP.md#approval-gates)): approve
+   the week model and metric naming, confirm the Weekly Focus and widget
+   deferrals, merge.
