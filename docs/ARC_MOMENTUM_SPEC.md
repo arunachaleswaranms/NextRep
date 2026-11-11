@@ -15,7 +15,8 @@ Labels used throughout:
 
 **Phase 12A Addendum.** v1.3.0 also gains Freeze and Restart
 ([ARC_CONTROL_SPEC.md](ARC_CONTROL_SPEC.md)). Sections 1–11 below are the
-approved Phase 12A text and are unchanged. Where Freeze or Restart
+approved Phase 12A text and are unchanged, apart from one pointer added
+at the end of § 4.5.1. Where Freeze or Restart
 affects them, [§ 12](#12-lifecycle-addendum-freeze-and-restart) says
 exactly how, and § 12 wins. Phase letters after 12C in §§ 1–11 follow the
 original plan; § 12.1 maps them to the current roadmap.
@@ -416,6 +417,11 @@ reviewable (§ 3.2, "Before the participation start"): Week 3 holds 17 Oct
 only as a neutral day, so it's `upcoming`. Settled is 0, today is 0
 (17 Oct isn't a participating date) and future is 15 →
 `0 + 0 + 15 = 15` ✓. The same holds for a rolling Arc started that day.
+
+**Addendum.** The split above is restated for all Arc statuses, with one
+revision for `ended` Arcs (they have no open day), in
+[§ 12.5](#125-metrics-and-reconciliation). For active and completed Arcs
+it is identical to this section.
 
 ### 4.6 Worked examples
 
@@ -1025,8 +1031,17 @@ dates(w)     = [ s.dateOfDay(d)  for d in firstDay(w)..lastDay(w) ]
 | neutral | `s.isBeforeJoining(D)` | Never |
 | **not reached** | the Arc is `ended` and the day comes after `closedOn` | Never |
 | upcoming | the day's date is unknown, or after `T` | Never |
-| open (today) | the date is `T`, and the Arc is not `ended` | Not in the totals; "Today so far" |
-| settled | a participating date before `T`; for an `ended` Arc also `closedOn` itself | Yes |
+| open (today) | the date is `T`, a participating date, and the Arc is not `ended` | Not in the totals; "Today so far" |
+| settled | a participating date before `T`; **for an `ended` Arc, a participating date on or before `T`** | Yes |
+
+**An `ended` Arc has no open day.** It is read-only from the moment it
+is ended, so nothing about its last day can still change. Its
+participating dates stop at `closedOn`, and each one is settled as soon
+as it is not after `T`. This is the only place where "settled" differs
+from § 3.2, and it is what § 12.5's XP groups follow. Active and
+completed Arcs keep § 3.2's rule exactly (for a completed Arc a
+participating `T` is only possible after a clock rollback, and it stays
+"open", as approved).
 
 A **paused date** is not in any week's `dates(w)`, so it has no class and
 is never counted.
@@ -1037,9 +1052,9 @@ is never counted.
 |---|---|
 | `beforeJoining` | every date of the week is neutral |
 | **`notReached`** | the Arc is `ended` and the week starts after the day of `closedOn` |
-| `complete` | the week's last date is known and before `T`; or the Arc is `ended` and the week holds the day of `closedOn` |
-| `inProgress` | `T` is in `dates(w)` and `s.isParticipatingOn(T)` |
-| **`paused`** | `T` is a paused date and the week holds the next challenge day (the day after the last one lived) |
+| `complete` | the week's last date is known and before `T`; or the Arc is `ended` and the week has at least one settled day |
+| `inProgress` | the Arc is not `ended`, `T` is in `dates(w)` and `s.isParticipatingOn(T)` |
+| **`paused`** | the Arc is not `ended`, `T` is a paused date and the week holds the next challenge day (the day after the last one lived) |
 | `upcoming` | otherwise |
 
 - **Current week while paused:** the `paused` week. It is reviewable:
@@ -1089,15 +1104,115 @@ K1 and K5 are unchanged; K5 also covers `ended` Arcs.
   computed over settled dates exactly as in § 4.2. Paused dates are never
   settled, so they are in no numerator or denominator.
 - Identities 1–3 of § 4.5 hold unchanged, because `h.elapsedDates` leaves
-  out paused dates and stops at `closedOn`.
-- **The XP ledger split of § 4.5.1 is unchanged.** Invariant L now also
-  says: no ledger row is dated on a paused date or after `closedOn`.
-  Writes are only possible on a participating date, a freeze starts after
-  the latest stored row, and restore rejects such rows. So "other XP"
-  stays 0. For an `ended` Arc, XP dated `closedOn` belongs to the settled
-  group even when `closedOn = T`, and its "today" group is 0. The four
-  groups still split the ledger with no overlap.
-- Freezing and resuming write no XP and change no ledger row.
+  out paused dates and stops at `closedOn`. For an `ended` Arc the term
+  `[T open]` is always 0.
+- Freezing, resuming, restarting and reading a review write no XP and
+  change no ledger row.
+
+#### 12.5.1 The XP ledger split for every Arc status
+
+Revised after independent review (finding F3). The first version of this
+section said that an ended Arc's XP dated `closedOn` "belongs to the
+settled group even when `closedOn = T`" without restating the groups.
+The groups are restated here in full. They replace the table of § 4.5.1
+for `ended` Arcs and are identical to it for every other Arc.
+
+For an Arc `s` on local date `T`, let `part(D)` mean
+`s.isParticipatingOn(D)`: from the participation start to `endDate`, not
+a paused date and, for an `ended` Arc, not after `closedOn`. Each ledger
+date `D` falls into exactly one group:
+
+| Group | Dates | Shown as |
+|---|---|---|
+| **A. Settled XP** | `part(D)` and (`D < T`, or `D = T` and the Arc is `ended`) | the weekly "XP earned" totals, `Σ_w X(w)` |
+| **B. Today's XP** `todayXp` | `part(D)`, `D = T`, and the Arc is **not** `ended` | "Today so far", only while `T`'s week is `inProgress` |
+| **C. Future-dated XP** `futureXp` | `D > T` | nothing: an accounting term |
+| **D. Other XP** `otherXp` | `D ≤ T` and not `part(D)` | nothing. Always 0 for a valid ledger |
+
+```
+settledXp + todayXp + futureXp + otherXp = h.records.totalXp     (always)
+otherXp = 0                                                      (invariant L)
+```
+
+**Exhaustive and exclusive.** Take any ledger date `D`.
+
+1. `D > T`: group C, and no other group admits `D > T`.
+2. `D ≤ T` and not `part(D)`: group D only (A and B require `part(D)`).
+3. `D < T` and `part(D)`: group A only (B requires `D = T`).
+4. `D = T` and `part(D)`: group A if the Arc is `ended`, otherwise
+   group B. Never both: the two conditions are each other's negation.
+
+These four cases cover every `D` and no two overlap. `h.records.totalXp`
+is by construction the sum over all ledger dates (§ 4.5.1, `loadArc`),
+so the four group sums add up to it: no row is omitted and none is
+counted twice.
+
+**Group A equals `Σ_w X(w)`.** `X(w)` sums the ledger over the settled
+dates of week `w` (§ 4.2). By § 12.3 a date is settled exactly when it
+meets group A's condition, and every participating date is a day of
+exactly one week. So summing `X(w)` over all weeks is group A.
+
+**Invariant L, extended.** Every ledger row's date is a participating
+date of its Arc, i.e. `otherXp = 0`:
+
+| Source of a row | Why its date is participating |
+|---|---|
+| App writes | Only for today, and only when today is participating (`HabitTrackingService._trackableSession`). Never on a paused date and never in an ended Arc |
+| A later freeze | Starts tomorrow and is refused while activity is dated after today (clock guard, [ARC_CONTROL_SPEC.md § 5.2](ARC_CONTROL_SPEC.md#52-rules) F2a). So no existing row ends up on a paused date |
+| A later restart | `closedOn` is the last lived day, and Restart is refused while activity is dated after today. So no existing row is after `closedOn` |
+| The v1 → v2 backfill | As in § 4.5.1; those Arcs have no pause and are not ended |
+| Restore | The validator's `checkDate` requires `isParticipatingOn`, which now excludes paused dates and dates after `closedOn` |
+
+`otherXp` stays in the identity so that tests assert it is 0 rather than
+assume it. The review never shows or relies on it.
+
+**What each requirement of the review rests on:**
+
+| Requirement | Why it holds |
+|---|---|
+| No ledger entry is omitted or counted twice | The case analysis above |
+| Reading a review never awards XP | Reviews only read (R5); the groups are computed from `xpByDate` |
+| Completed Arcs are unchanged | They are not `ended`, so groups A–D are those of § 4.5.1 word for word |
+| Ended Arcs stay read-only | Group B is empty for them by definition; nothing is "so far" |
+| Clock rollback | Rows dated after the new `T` are group C; they return to A (or B) when the date returns. Nothing is moved or re-dated |
+| Paused dates earn no XP | Invariant L: no row can be dated on one |
+| Future-dated XP is preserved | Group C keeps it in the total and out of every displayed metric |
+| A restored ledger stays authoritative | XP is read from the ledger; it is never re-derived from completions (§ 4.5, identity 5) |
+
+**Worked examples.** Explanatory figures, not test results. The Rolling
+Arc of A, B and D–F and H started on 7 October 2026.
+
+| # | Situation | Ledger | `T` | A settled | B today | C future | D other | Total |
+|---|---|---|---|---|---|---|---|---|
+| A | Active, normal date | 7 Oct 105, 8 Oct 60, 9 Oct 30 | 9 Oct | 165 | 30 | 0 | 0 | 195 ✓ |
+| B | Active, the date rolled back a day | the same | 8 Oct | 105 | 60 | 30 | 0 | 195 ✓ |
+| C | Completed (7 Oct 2026 – 6 Jan 2027), after Day 92 | 4,200 over its 92 days | 10 Jan | 4,200 | 0 | 0 | 0 | 4,200 ✓ |
+| D | Ended, `closedOn = T` (restarted today after logging) | 2,430 in all: 2,325 through 10 Nov, 60 on 11 Nov, 45 on 12 Nov; `closedOn` 12 Nov | 12 Nov | 2,430 | 0 | 0 | 0 | 2,430 ✓ |
+| E | Ended, `closedOn` before `T` | as D | 20 Nov | 2,430 | 0 | 0 | 0 | 2,430 ✓ |
+| F | Ended, then the date rolled back before `closedOn` | as D | 11 Nov | 2,385 | 0 | 45 | 0 | 2,430 ✓ |
+| G | Rolling Arc from 1 Mar 2027, paused 11–19 Mar, resumed 20 Mar | 900 over 1–10 Mar, 105 on 20 Mar, 60 on 21 Mar | 21 Mar | 1,005 | 60 | 0 | 0 | 1,065 ✓ |
+| G′ | the same Arc while paused | 900 over 1–10 Mar | 15 Mar | 900 | 0 | 0 | 0 | 900 ✓ |
+| H | Restored ended Arc (as D), on a device whose date is behind | as D | 10 Nov | 2,325 | 0 | 105 | 0 | 2,430 ✓ |
+
+Notes on the examples:
+
+- **C.** `T` is after `endDate`, so `T` is not participating: nothing is
+  in B.
+- **D.** If the same Arc were still active on 12 November, the 45 XP
+  would be B ("Today so far") and A would be 2,385. Ending the Arc is
+  what settles its last day. The total is the same either way.
+- **F.** 11 November is on or before `T`, so its 60 XP is settled
+  (2,325 + 60 = 2,385). 12 November is after `T`: group C. B stays 0
+  because the Arc is ended. When the date returns to 12 November the
+  split is D's again.
+- **G.** No row is dated 11–19 March, so the pause contributes to no
+  group. 20 March (Day 11) is settled on 21 March.
+- **G′.** `T` is a paused date: not participating, so B is 0 and there is
+  no "Today so far".
+- **H.** The validator has already checked that every row is on a
+  participating date on or before `closedOn`, so D is 0 on any device.
+  On a device whose date is 12 November or later, the split is D's or
+  E's.
 
 ### 12.6 Restart
 
@@ -1130,5 +1245,29 @@ intervals.
 - R11 A `paused` week and a resumed week show the states of § 12.3.
 - R12 An `ended` Arc's reviews stop at the week of `closedOn`, use the
   final-week wording there, and never change for any later `T`.
+- R13 For active, paused, completed and ended Arcs and every `T`, each
+  ledger row is in exactly one group of § 12.5.1, the four sums equal
+  `totalXp`, and `otherXp = 0`.
+- R14 An `ended` Arc never shows "Today so far"; the XP of `closedOn` is
+  settled when `closedOn ≤ T` and future-dated when `closedOn > T`.
+- R15 Examples A–H of § 12.5.1 give exactly the figures shown.
+- R16 A completed Arc's groups equal those of § 4.5.1 for every `T`,
+  including after a rollback into the Arc.
+
+The 12B rollback test of
+[PHASE_12A.md § L1](PHASE_12A.md#l1-weekly-review-12b) stays as written
+and gains these variants, each with its same assertions (identical
+ledger rows at every step, nothing duplicated, lost or awarded):
+
+- **Ended Arc:** end an Arc on `D` with XP dated `D`; assert group A
+  holds it and B is 0; move the clock to `D − 1` and assert it is group
+  C; return to `D` and to `D + 1` and assert it is group A.
+- **Paused Arc:** XP on the last day before a pause; clock inside the
+  pause, before it and after the resume; B is 0 on every paused date.
+- **Restored format-4 backup** holding an ended and a paused Arc, on a
+  clock behind the export date.
+
+The full list of review regression tests is in
+[PHASE_12A_ADDENDUM.md § L7](PHASE_12A_ADDENDUM.md#l7-regression-tests-required-by-the-review-f1-f2-f3).
 - K7 The calendar shows the pause row and the `notReached` state, and
   agrees with Journey for every day of paused and ended Arcs.

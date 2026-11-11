@@ -136,6 +136,33 @@ Every path below exists at `64d77e0` (checked by script, § M).
 | Restore replaces every table in one transaction and leaves reminders and Focus Guard off | `DriftBackupStore.replaceAll`; `BackupService.restore` |
 | The backup codec is strict: unknown fields and unknown enum values are rejected, and an unknown `formatVersion` is refused before anything is read | `BackupCodec.decode` (`only(...)`, `choice('status', WinterArcStatus.values, …)`, `readableVersions`) |
 
+### C7. Which stored dates are activity, and which are configuration
+
+Added after independent review (findings F1, F2). A date stored for an
+Arc is one of two kinds:
+
+| Kind | Rows | Their date is | Source |
+|---|---|---|---|
+| **Activity** | `daily_habit_progress_entries.date`, `day_modes.date`, `xp_transactions.date`, `daily_reflections.date` | the local date on which it was written: writes are refused unless the date is today and a participating date | `HabitTrackingService._trackableSession` (`date != _clock.today()` → `staleDay`); `ReflectionService` (rejects a date before or after today, or not participating) |
+| **Activity** | `achievement_unlocks.unlocked_on` | the challenge date whose history earned it, never after the date it was stored | `AchievementService._reconcile`; `DriftAchievementRepository.reconcileUnlocks` (`unlockedOn: e.earnedOn`) |
+| **Configuration** | `habit_revisions.effective_from` | **the day after** it was written: an edit made today applies from the next day | `HabitTrackingService.editHabit` (`effectiveFrom: next!`), `_nextChallengeDay` (`date.addDays(1)`) |
+
+- A revision's date is a statement about the future, not a record that
+  the user took part on that date. The backup validator already treats
+  the two kinds differently: activity must not be dated after the export,
+  a revision may be dated one day after it
+  (`revision.effectiveFrom.isAfter(latest.addDays(1))`).
+- `HabitHistory.configOn(habit, date)` returns the latest revision
+  effective **on or before** `date`. So a revision keeps its meaning
+  wherever the next challenge day falls, and it can never apply to a date
+  before its own.
+- `lastActivityDate(s)`: the latest date of any **activity** row of Arc
+  `s`, or none. Revisions are never part of it.
+- Activity is normally never dated after today. It can be only if the
+  local date moved backwards after it was written (a time-zone or clock
+  change). The approved XP split already handles this for reading
+  (spec § 4.5.1, "future-dated XP").
+
 ## D. What already exists, and what is new
 
 | Feature | Reused as is | Genuinely new |
@@ -217,11 +244,15 @@ owner's approval at Gate A2.
 | Recommendation | **A.** C and D are rejected: they breach "do not silently redefine historical days" and "no automatic missed days". B is rejected as a larger, riskier migration for the same result |
 | Owner | YES |
 
-**Why A preserves history.** A freeze always starts after the last date
-that has any stored row (AD6). For every earlier date, the count of frozen
+**Why A preserves history.** A freeze always starts tomorrow, and only
+when the clock guard holds, so no activity row is dated after today
+(AD6, AD19). So every date with
+activity lies before the freeze. For every such date, the count of frozen
 dates before it is unchanged, so its day number is unchanged. No stored
 row is read differently and none is rewritten. Only days not yet lived
-move to later dates.
+move to later dates. A pending goal revision dated tomorrow is
+configuration, not activity: it stays where it is and applies from the
+first challenge day on or after its date (C7).
 
 ### AD6. When a freeze takes effect
 
@@ -233,8 +264,32 @@ move to later dates.
 | Evidence | Ledger invariant L (spec § 4.5.1): every XP row is on a participating date, and restore rejects any other. Today may already hold progress, XP, a Minimum Day row, a reflection and provisional unlocks |
 | Trade-offs | (b) must delete today's rows or leave rows on a non-participating date. The first deletes progress; the second breaks restore. (c) keeps the invariant but makes Freeze a way to erase a bad day after the fact, which empties Minimum Day of meaning, and its result depends on whether anything was tapped. (a) has one rule and never touches a stored row |
 | Risks | (a): a user who is unwell this morning still has today to deal with. Mitigation: the Freeze sheet says so and offers Minimum Day for today |
-| Recommendation | **(a) Next day.** `frozen_from = max(today, latest date with any stored row) + 1`. The second term covers a clock that moved backwards after a later date was written. Until midnight the freeze is "scheduled" and can be cancelled, which deletes the row |
+| Recommendation | **(a) Next day.** `frozen_from = today + 1`, always. Freeze is accepted only when the clock guard holds, in particular when no activity row is dated after today (AD19); otherwise it is refused and nothing is stored. Until midnight the freeze is "scheduled" and can be cancelled, which deletes the row |
 | Owner | YES |
+
+**Corrected after review (finding F1).** The first version of this rule
+was `max(today, latest date with any stored row) + 1`. "Any stored row"
+included goal revisions, which are dated tomorrow by design (C7). An edit
+on Day 10 followed by Freeze on Day 10 would have started the freeze on
+Day 12 while the screen said "from tomorrow". The rule now uses today
+only, and the clock case is handled by a separate, explicit refusal
+(AD19) instead of a silently later date.
+
+**Pending revisions and a freeze.** Nothing is done to them:
+
+- The revision keeps its stored `effective_from`. It is not re-dated,
+  copied or deleted by freeze, cancel or resume.
+- If that date is paused, the revision simply waits. On the resume date
+  `R`, `configOn(habit, R)` finds it (its date is on or before `R`), so
+  the edited goal applies from the first challenge day after the pause.
+- It cannot reach a lived day: every lived day is before its date.
+- Several revisions behave the same way, each for its own habit. A second
+  edit of the same habit on the same day replaces the first, as today
+  (primary key `(session, habit, effective_from)`).
+- While the Arc is paused, habits are read-only, so no revision is
+  written with a date inside a pause other than its first date.
+- Backup and restore carry the revision and the freeze as stored; the
+  format-4 validator accepts a revision on a paused date (§ H).
 
 ### AD7. When a resume takes effect
 
@@ -299,12 +354,43 @@ move to later dates.
 | Recommendation | **(a)**, using each habit's **latest** configuration, i.e. including an edit that is waiting for tomorrow (`HabitSetting.editable`). Copied per habit: id, title, type, unit, icon, order, target, minimum target, enabled (a habit that is off stays off). Not copied: revisions, progress, day modes, XP, unlocks, reflections, freezes. Habit ids are kept on purpose: built-in ids drive Hydration Coach and activity achievements, and ids are unique per session, so there is no clash |
 | Owner | NO |
 
-`closed_on` (PROPOSED): on restart date X, `closed_on` is the later of
-the old Arc's latest date with any stored row and its last challenge date
-before X, and never earlier than the participation start. So it is X when
-something was logged today, and yesterday when nothing was. A day the
-user never touched is not added as an empty last day, and no stored row
-is ever left after `closed_on`, even if the clock moved backwards.
+**`closed_on` is the last lived day (corrected after review, finding
+F2).** The first version used "the latest date with any stored row". That
+counted a goal revision dated tomorrow as a lived day, and after a clock
+rollback it could produce a `closed_on` later than today, which the
+proposed backup rule rejects. The rule now rests on participation only.
+
+Restart on local date `T` is accepted only when all of these hold,
+checked inside the transaction:
+
+1. The Arc is the unfinished Arc, `active`, and not over on `T`.
+2. The clock guard of AD19 holds: `T` is not before the participation
+   start, the latest activity date, or the latest resume date.
+
+Then `closed_on` is the first of these that applies:
+
+| Case | `closed_on` |
+|---|---|
+| `T` is a challenge date and an activity row is dated `T` | `T` |
+| a challenge date exists before `T` | the last one |
+| neither (Day 1, nothing logged yet) | the participation start (= `T`) |
+
+- `closed_on ≤ T` in every case, so it is never after an export made on
+  or after the restart. Every activity row is on or before `closed_on`
+  (activity is only ever on challenge dates, and none is after `T`).
+- `closed_on` is always a challenge date: never a paused date, never a
+  date the user had not reached.
+- A day on which nothing was logged before restarting is not added as an
+  empty last day. The one exception is a Day-1 restart with nothing
+  logged: an ended Arc always has at least one counted day.
+- **Pending revisions stay in the old Arc**, untouched, as a record of a
+  change that was planned and never took effect. Their date is after
+  `closed_on`, and the old Arc is only ever read for dates up to
+  `closed_on`, so they cannot change a lived day. The new Arc's baseline
+  includes them (AD11 above).
+- Nothing in the old Arc is deleted or re-dated. The only writes to it
+  are `status`, `closed_on`, and the removal of a freeze that had not
+  been resumed.
 
 ### AD12. Restart of a Seasonal Arc
 
@@ -396,6 +482,19 @@ is ever left after `closed_on`, even if the clock moved backwards.
 | Recommendation | **(b)** as the plan for a single v1.3.0, keeping the owner's phase letters. **(c)** is the documented fallback if 12E1 or 12E2 slips or fails qualification. No feature is removed from the plan |
 | Owner | YES |
 
+### AD19. Freeze or Restart when the clock is behind the history
+
+| | |
+|---|---|
+| Question | What happens if activity is already stored on a date later than today? |
+| Existing behavior | Possible only after the local date moves backwards. Reading handles it (future-dated XP, spec § 4.5.1). Writing is unaffected: writes are for today only |
+| Options | (a) **Refuse** Freeze and Restart until the local date reaches the latest activity date, with a message that names the date. (b) Accept, but place the freeze start or `closed_on` after the latest activity date, and say so |
+| Evidence | For Freeze, (b) breaks the single promise "from tomorrow" and leaves the dates between tomorrow and the later start as challenge days. For Restart, (b) gives a `closed_on` after today: the old Arc would claim days that, by the device's date, have not happened, and an export would fail the "not after the export" rule. Starting the freeze tomorrow regardless would put stored XP on a paused date, which breaks ledger invariant L and restore |
+| Trade-offs | (a) asks the user to wait, at most until the clock catches up. It stores nothing, so there is nothing to repair. (b) needs extra stored states and extra wording for a rare case |
+| Risks | (a): a device whose clock is wrong for a long time cannot freeze or restart. Tracking still works, and the message says why |
+| Recommendation | **(a) Refuse.** One **clock guard**, used by both: today is not earlier than (1) the participation start, (2) `lastActivityDate(s)`, and (3) the latest `resumedOn` of the Arc's freezes. (3) covers a resume after which nothing was logged yet: without it, a freeze requested after the date moved back before that pause could overlap it. Checked inside the transaction; on failure nothing is written. Message: "Your phone's date (17 Oct) is earlier than your latest logged day (18 Oct). You can pause from 18 Oct. Nothing was changed." Resume needs no guard: no activity can exist on or after an open freeze's start |
+| Owner | YES |
+
 ## F. Freeze: impact on every component
 
 ### F1. The session's day ↔ date mapping (PROPOSED)
@@ -477,6 +576,10 @@ these comparisons, which must be reviewed by hand in 12E1:
 | Long pause | No effect on stored data. The end date is fixed only at resume |
 | Restart while frozen | The old Arc ends on its last lived day; the open freeze row is removed |
 | Seasonal Arc | No freeze: not offered, refused by the service, rejected by restore |
+| Goal edited today, then Freeze today | The freeze still starts tomorrow. The revision (dated tomorrow) waits and applies on the resume date |
+| Freeze scheduled on Day 91 | `frozenFrom` is the planned last date. Day 92 is lived on the resume date; the Arc completes the day after |
+| Clock behind the latest activity | Freeze and Restart are refused, with the date from which they are available (AD19). Nothing is stored |
+| Date moves back after a resume, to before the pause | That date is a challenge date and can be tracked. A new Freeze is refused while today is before the resume date (clock guard, AD19), so intervals can never overlap |
 
 ## G. Schema v7 (PROPOSED, additive)
 
@@ -547,11 +650,24 @@ as today):
 - No dated row (progress, mode, XP, unlock, reflection) on a frozen date.
   This follows from the existing "date outside the arc" check once
   `isParticipatingOn` excludes frozen dates.
-- Revisions: `effectiveFrom` must lie within the Arc's calendar span. It
-  may be a frozen date (an edit made the day before a freeze).
-- `ended`: `closedOn` present, between the participation start and
-  `endDate`, not after the export; no row after `closedOn`; no open
-  freeze. `closedOn` is absent for every other status.
+- Revisions (configuration, C7): `effectiveFrom` lies between the
+  participation start and `endDate`, and no later than one day after the
+  export (today's rule). It need **not** be a participating date: it may
+  be a paused date (an edit made the day before a freeze) or a date after
+  `closedOn` (an edit that was pending when the Arc was restarted). Such
+  a revision is valid and inert until a challenge day on or after it.
+- `ended`: `closedOn` present; a challenge date between the participation
+  start and `endDate`; not after the export; no **activity** row after
+  `closedOn` (this follows from the existing "date outside the arc" check
+  once `isParticipatingOn` stops at `closedOn`); no open freeze.
+  `closedOn` is absent for every other status.
+- These rules match what Freeze and Restart can produce: both refuse to
+  run while activity is dated after today (AD19), so a freeze never
+  covers activity and `closedOn` is never after the restart date.
+- Unchanged from today: an export is validated before it is offered. If
+  the clock moves back after activity was written, an export made then
+  is refused ("date after the export") until the date returns, exactly as
+  in v1.2.0. No new failure of this kind is introduced.
 - Unfinished Arcs are `setup` or `active` (F2).
 
 Restore:
@@ -587,9 +703,14 @@ In short:
 | Deletion and Insights? | Insights are derived, so a deleted Arc's days leave every total. Nothing else changes |
 | Ended vs completed? | `ended` is its own status: "Ended early · Day N", no Summit, not counted in Insights' completed Arcs |
 
-The F1 XP ledger correction is preserved: the four-group split of spec
-§ 4.5.1 is unchanged, and group D ("other XP") stays 0 because no XP row
-can exist on a frozen date or after `closedOn`. The old equation
+The Phase 12A XP ledger correction is preserved. The four groups of spec
+§ 4.5.1 stay exhaustive and mutually exclusive, with one stated revision
+for `ended` Arcs: an ended Arc has no open day, so XP dated today is
+settled and its "today" group is always 0
+([spec § 12.5](ARC_MOMENTUM_SPEC.md#125-metrics-and-reconciliation),
+with the proof and eight worked examples). Active and completed Arcs are
+partitioned exactly as before. "Other XP" stays 0 because no XP row can
+exist on a paused date or after `closedOn`. The old equation
 `Σ_w X(w) + xpByDate[T] = totalXp` is not reintroduced.
 
 ## J. Risks
@@ -610,6 +731,8 @@ can exist on a frozen date or after `closedOn`. The old equation
 | R12 | Saved setup started by accident | low / medium | Start only from the confirm screen |
 | R13 | Reorder leaves duplicate orders | low / medium | One transaction with an id-set check; export validation already rejects duplicates |
 | R14 | Layout at 2× text on the new screens | medium / medium | Wireframe rules; layout sweep; emulator check at 2× / 360 dp |
+| R15 | Freeze or Restart with the clock behind stored activity puts activity on a paused date or ends an Arc in the future | low / critical | Refused inside the transaction (AD19); tests of § L7 |
+| R16 | A pending goal revision is mistaken for a lived day, or is lost | medium / high | Activity and configuration are separate by definition (C7); revisions are never re-dated or deleted; tests of § L7 |
 
 ## K. Phase dependencies
 
@@ -685,7 +808,7 @@ constants that state the schema and format versions.
 | Notifications: nothing pending for a frozen date after freeze; re-planned after resume; Hydration follows | U + E |
 | Achievements: milestones use the mapped date; no unlock is re-dated or lost | U + R |
 | Backup with an open, a scheduled and several closed freezes; restore | R |
-| Freeze `clock rollback` rule: `frozenFrom` is after the latest stored row | R |
+| Review findings F1–F3: every case of § L7 that names Freeze | U + R |
 
 ### L4. Restart and deletion (12F)
 
@@ -695,7 +818,8 @@ constants that state the schema and format versions.
 | Custom habits; edited goals (including an edit waiting for tomorrow) become the baseline; no revision is copied | U + R |
 | Fresh Day 1 today; 0 XP; level 1; no progress, modes, unlocks, reflections | R |
 | No duplicated XP: the old ledger is identical row for row; the new one is empty | R |
-| Old Arc: `ended`, `closed_on` per AD11, shown as "Ended early", no Summit, not "completed" in Insights | U + W |
+| Old Arc: `ended`, `closed_on` = the last lived day (AD11), shown as "Ended early", no Summit, not "completed" in Insights | U + W |
+| Review findings F1–F3: every case of § L7 that names Restart | U + R |
 | Active rolling, frozen rolling, scheduled freeze, seasonal, late seasonal join, Minimum Day history, reminders on | U + R + W |
 | Typed confirmation: empty, "restart", "RESTAR", " RESTART " and "RESTART"; the button state for each | W |
 | Cancel and Back at every step write nothing | R |
@@ -730,6 +854,72 @@ v1.2.0 → v1.3.0 rehearsal on a disposable AVD with a **real v6 → v7
 migration** and every v6 row compared, and the physical OnePlus upgrade
 only after explicit owner authorization.
 
+### L7. Regression tests required by the review (F1, F2, F3)
+
+Requirements for later phases. None is written or run in this phase.
+Layer R tests run on a real in-memory Drift database with an injected
+`Clock`, through the app's own write paths.
+
+**F1: Freeze and pending revisions (12E2; mapping parts in 12E1)**
+
+| # | Case | Must hold |
+|---|---|---|
+| F1-1 | Goal edited today (revision dated tomorrow), then Freeze today | `frozenFrom` is tomorrow, not the day after |
+| F1-2 | The same, then resume `k` days later | The edited goal applies on the resume date; every lived day keeps the old goal; the revision row is byte-identical throughout |
+| F1-3 | Edits to three habits on the same day, then Freeze | All three revisions wait and all apply on the resume date |
+| F1-4 | A second edit of the same habit on the same day, then Freeze | One revision (the second), dated tomorrow |
+| F1-5 | Revision on a paused date, exported while paused, restored | Accepted by the format-4 validator; the Arc is paused; the revision applies on resume |
+| F1-6 | Activity dated 18 Oct, clock at 17 Oct, Freeze | Refused; no row written; the message names 18 Oct |
+| F1-7 | The same, clock back at 18 Oct, Freeze | Accepted; `frozenFrom` is 19 Oct; no activity on a paused date |
+| F1-8 | Freeze on Day 91 with and without a pending revision | `frozenFrom` is the planned last date; Day 92 is the resume date; the Arc completes the day after |
+| F1-9 | Day 92 | Freeze not offered and refused by the service |
+| F1-10 | Freeze, resume (with and without activity after the resume), date moves back before the pause, Freeze again | Refused while today is before the resume date; intervals never overlap |
+| F1-11 | Freeze and resume repeated five times | Day numbers continuous; end date = start + 91 + paused days; no XP, unlock or progress row written by any of them |
+
+**F2: Restart and the last lived day (12F)**
+
+| # | Case | Must hold |
+|---|---|---|
+| F2-1 | Goal edited today, nothing else logged today, Restart | `closed_on` is yesterday; the lived-day count does not include today or tomorrow |
+| F2-2 | Habits logged today and a goal edited today, Restart | `closed_on` is today; the revision dated tomorrow stays in the old Arc and changed no lived day |
+| F2-3 | Several revisions over the Arc, Restart | The new baseline is each habit's latest configuration, pending ones included; no revision is copied; the old Arc's revision rows are identical |
+| F2-4 | Activity dated 18 Oct, clock at 17 Oct, Restart | Refused inside the transaction; every table byte-identical; the message names 18 Oct |
+| F2-5 | The same, clock back at 18 Oct, Restart | `closed_on` is 18 Oct; no activity after `closed_on` |
+| F2-6 | Restart with a freeze scheduled for tomorrow | The scheduled freeze is removed; `closed_on` per the table of AD11 |
+| F2-7 | Restart while paused | `closed_on` is the last challenge date before the pause; never a paused date |
+| F2-8 | Restart on Day 92, and on Day 91 | `closed_on` ≤ the planned last date; the Arc is `ended`, never `completed`; no Summit |
+| F2-9 | Restart from an active Seasonal Arc, and from a late join | The old Arc is `ended` with a season day number; the new Arc is Rolling, Day 1 today; the season's Day 1 is unchanged |
+| F2-10 | Restart on Day 1 with nothing logged | `closed_on` is the participation start; one counted day |
+| F2-11 | Export after each of F2-1 to F2-10, then restore | The export validates; the restore is identical row for row; `closed_on` is never after the export date |
+| F2-12 | Data preservation | Every progress, mode, XP, unlock, reflection and revision row of the old Arc is byte-identical before and after |
+| F2-13 | A validation failure or a storage error at each step of the transaction | Nothing changed; one unfinished Arc before and after |
+| F2-14 | Completed Arc | Restart does not apply; a completed Arc is never changed by any of the above |
+
+**F3: XP accounting (12B, with ended and paused Arcs built in tests)**
+
+| # | Case | Must hold |
+|---|---|---|
+| F3-1 | Generated Arcs (active, paused, completed, ended; rolling and seasonal; with and without pauses) and every `T` from before the start to after the end | Each ledger row is in exactly one of the four groups; `settled + today + future + other = totalXp`; `other = 0` |
+| F3-2 | Examples A–H of spec § 12.5 | The exact figures |
+| F3-3 | Ended Arc with `closedOn = T`, `closedOn < T` and `closedOn > T` | "Today" is 0 in all three; the XP of `closedOn` is settled, settled and future-dated respectively |
+| F3-4 | Completed Arc, including a rollback to a date inside it | The same groups as Phase 12A (spec § 4.5.1): unchanged |
+| F3-5 | Reading any review of any Arc | No ledger row, unlock or other row is written |
+| F3-6 | Restored format-4 backup holding an ended Arc and a paused Arc | Groups computed from the restored ledger; `other = 0`; nothing re-derived from completions |
+
+**Also covered by the phases named** (each already in §§ L1–L6 or
+[PHASE_12A.md § L](PHASE_12A.md#l-test-plan-for-phases-12b12f); listed
+here so the review's checklist is complete):
+
+| Area | Where |
+|---|---|
+| Repeated freeze and resume; restart after a freeze | F1-11, F2-7 |
+| Completed Arcs never change | F2-14, F3-4, spec K5 |
+| Seasonal restrictions (no freeze; start window; restart as Rolling) | § L2, § L3, F2-9 |
+| Maximum 12 habits; custom habits through reorder, restart and restore | § L2, § L4 |
+| Incomplete Minimum Days, Perfect Days and goal revisions inside paused and ended Arcs | § L3, § L4, spec § 12.8 |
+| Backup formats 1–4; migration v6 → v7; Focus Guard's native schema gate | § L1 |
+| No XP and no achievement from freezing, resuming, restarting, deleting or viewing | F1-11, F2-12, F3-5 |
+
 ## M. Owner decisions (Gate A2)
 
 | # | Decision | Recommendation |
@@ -749,6 +939,7 @@ only after explicit owner authorization.
 | O13 | Sounds on by default; one Perfect Day sound (AD15) | Yes |
 | O14 | v1.3.0 becomes a migration release: schema v7, backup format 4 (AD16, AD17) | Yes |
 | O15 | Phase order with the foundation first, or the staged fallback (AD18) | Foundation first, one release |
+| O16 | Freeze and Restart are refused, with an explanation, while the phone's date is earlier than the latest logged day (AD19) | Yes |
 
 **Unresolved until measured on a device** (not blockers for this phase):
 sonification-stream behaviour in Do Not Disturb and on OxygenOS; TalkBack
@@ -764,6 +955,7 @@ phone; the wording of the three sound names.
 | Every source path cited in the changed documents exists at `64d77e0` (script), and every cited class, method and quoted comment was searched for in the source. The one path that doesn't exist is the future `drift_schemas/drift_schema_v7.json` | PASS |
 | Relative Markdown links and anchors in the changed documents resolve (script) | PASS |
 | Stop conditions of the brief | none triggered |
+| Independent review of head `1ca8510`: **F1** (the freeze start counted pending goal revisions as activity), **F2** (`closed_on` could count a pending revision as a lived day and could fall after today following a clock rollback), **F3** (ended-Arc XP changed the settled / today split without restating it) | **RESOLVED** in a follow-up commit. F1: `frozenFrom = today + 1`; activity and configuration separated (C7); revisions never re-dated (AD6). F2: `closed_on` is the last lived day with explicit preconditions (AD11). Both: refused while the clock is behind stored activity (AD19). F3: one partition for every status, with proof and worked examples (spec § 12.5). Required tests in § L7. Documentation-only; no test was written or run for these |
 | `git diff --check` | PASS |
 | Changed files: only `docs/PHASE_12A_ADDENDUM.md`, `docs/ARC_CONTROL_SPEC.md`, `docs/V1_3_ROADMAP.md`, `docs/ARC_MOMENTUM_SPEC.md`, `PROJECT_STATE.md` | PASS |
 | No file under `lib/`, `android/`, `ios/`, `test/`, `integration_test/`, no `pubspec.*`, `.github/`, `tool/` changed; version `1.2.0+3` | PASS |

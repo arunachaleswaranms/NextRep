@@ -222,17 +222,37 @@ endDate            startDate + 91 + |{ dates in closed intervals }|
   count. It is never "missed".
 - Dates already lived keep their day numbers for ever (addendum AD5).
 
+Two kinds of stored date (CONFIRMED, addendum § C7):
+
+```
+activity row       progress, day mode, XP, reflection, achievement unlock:
+                   dated on the local day it was written (an unlock: on or
+                   before it)
+configuration row  goal revision: dated the day AFTER it was written
+lastActivityDate   the latest date of any activity row of the Arc, or none
+clock guard        T ≥ participation start, T ≥ lastActivityDate,
+                   and T ≥ the latest resumedOn
+```
+
+- A goal revision is **never** activity. It does not show that a day was
+  lived, it does not move a freeze, and it is not counted by Restart.
+- A revision is never re-dated. `configOn(habit, D)` uses the latest
+  revision dated on or before `D`, so a revision whose date falls in a
+  pause applies from the first challenge day after it.
+
 ### 5.2 Rules
 
 | # | Rule |
 |---|---|
 | F1 | Freeze is offered only for an `active` **Rolling** Arc. Never for a Seasonal Arc, on any screen. The service refuses it for one, whatever the UI shows. |
-| F2 | A freeze starts at the **next local day boundary**: `frozenFrom = max(T, latest date with any stored row) + 1`. Today finishes as a normal challenge day and can be completed, including as a Minimum Day. |
+| F2 | A freeze starts at the **next local day boundary**: `frozenFrom = T + 1`, always. Today finishes as a normal challenge day and can be completed, including as a Minimum Day. A goal edit made today (a revision dated `T + 1`) does not change this. |
+| F2a | Freeze is accepted only when the **clock guard** holds. If the phone's date is earlier than the latest logged day (or than the last resume), Freeze is refused, nothing is stored, and the message names the date from which it is available. The start date is never silently moved. |
 | F3 | Until `frozenFrom`, the freeze is **scheduled**. Cancelling it deletes it; nothing was paused. |
 | F4 | Freeze is not offered on Day 92 (no day left to pause), nor while a freeze is scheduled or the Arc is frozen. |
 | F5 | **Resume** on date `R` sets `resumedOn = R` and extends `endDate` by `R − frozenFrom`, in one transaction. `R` is the next challenge day. |
 | F6 | While frozen, the Arc is read-only: no habit progress, Minimum Day, habit edit or reflection for a frozen date. History stays viewable. |
-| F7 | No XP is awarded for freezing or resuming. No stored row is changed or removed by either. |
+| F7 | No XP is awarded for freezing or resuming. No activity row and no goal revision is changed, re-dated or removed by freeze, cancel or resume. |
+| F7a | A goal revision waiting for tomorrow stays as stored and applies on the resume date. While paused, habits are read-only (F6), so no new revision is written. |
 | F8 | Streaks continue across a pause: frozen dates neither grow nor break them. |
 | F9 | Daily, reflection and Hydration Coach reminders are not planned for frozen dates. They are re-planned right after freeze, cancel and resume. No new kind of notification is added. |
 | F10 | **Focus Guard is independent** and keeps its own schedule and budget during a freeze (addendum AD9). The Freeze sheet says so. |
@@ -256,6 +276,29 @@ A Rolling Arc starts on 1 March 2027 (Day 1), so it would end on
 
 Check: `dayNumberOf(20 March) = 19 + 1 − 9 = 11`.
 
+**With a goal edit on the same day.** On 10 March (Day 10) the user first
+raises Reading from 10 to 20 pages. That stores a revision dated
+11 March. Then they tap Freeze.
+
+| Date | What applies |
+|---|---|
+| 10 March (Day 10) | Reading 10 pages. `frozenFrom = 11 March`: tomorrow, as the sheet said. The revision is not activity and does not move it |
+| 11–19 March | Paused. The revision of 11 March is stored, unchanged, on a paused date |
+| 20 March (Day 11) | `configOn(Reading, 20 March)` = the revision of 11 March → **20 pages** |
+| Days 1–10 | Still 10 pages: their dates are before 11 March |
+
+**Day 91.** 30 May is Day 91. Freeze → `frozenFrom = 31 May`, the
+planned last date. The user resumes on 5 June: 31 May – 4 June were
+paused (5 dates), 5 June is **Day 92**, `endDate = 31 May + 5 = 5 June`,
+and the Arc completes on 6 June. On Day 92 itself Freeze is not offered.
+
+**Clock behind the history.** Habits were logged on 10 March. The phone's
+date then moves back to 9 March and the user taps Freeze. It is refused:
+"Your phone's date (9 Mar) is earlier than your latest logged day
+(10 Mar). You can pause from 10 Mar. Nothing was changed." On 10 March
+Freeze works and starts on 11 March. Starting it on 10 March instead
+would have put that day's progress and XP on a paused date.
+
 ### 5.4 Clock and device cases
 
 | Case | Result |
@@ -265,6 +308,8 @@ Check: `dayNumberOf(20 March) = 19 + 1 − 9 = 11`.
 | Date moves back before `frozenFrom` | That date is a challenge date: Today is open again until the date returns. |
 | Date moves back into a closed interval | Paused and read-only, with "Continues on <resume date>". |
 | Date moves back before a resume, to a date with rows | Rows stay. The date is shown by the same date rules as any other; nothing is rewritten. |
+| Date is earlier than the latest logged day, or than the last resume | Freeze is refused until the date catches up (F2a). Tracking today still works. |
+| Paused Arc exported and restored | The freeze and any waiting revision are restored as stored. The Arc is paused on the new device; the revision applies on resume. |
 | Daylight saving | No effect. |
 
 ## 6. Restart
@@ -277,21 +322,44 @@ overwritten or re-dated.
 
 ### 6.2 What happens, in one transaction
 
-1. Re-check that the Arc being restarted is still the unfinished Arc.
-2. Old Arc: `status = ended`, `closed_on` set (below). A scheduled or open
-   freeze that lies after `closed_on` is removed. Nothing else in the old
-   Arc is touched.
-3. New Arc: a Rolling session, `active`, Day 1 = today, last day =
-   today + 91, with the habits below.
+1. **Preconditions**, all re-checked inside the transaction:
+   - the Arc being restarted is still the unfinished Arc and is `active`;
+   - it is not over on `T` (an Arc past its last day completes instead);
+   - the **clock guard** of § 5.1 holds.
+
+   If any fails, nothing is written and the reason is shown (§ 6.7).
+2. Old Arc: `status = ended`, `closed_on` = its **last lived day**
+   (below). A freeze that was scheduled or not yet resumed is removed.
+   Nothing else in the old Arc is touched: no activity row and no goal
+   revision is changed, re-dated or deleted.
+3. New Arc: a Rolling session, `active`, Day 1 = `T`, last day =
+   `T + 91`, with the habits of § 6.3.
 
 If any step fails, nothing changes. Afterwards, best effort and repeatable
 on the next launch: reminders are re-planned for the new Arc, pending
 celebrations are cleared, the app goes to Today.
 
-`closed_on`: the later of the old Arc's latest date with any stored row
-and its last challenge date before today, and never earlier than its
-participation start. In practice: today if something was logged today,
-otherwise the last day lived before today.
+**The last lived day.** `closed_on` is the first of these that applies:
+
+| Case | `closed_on` |
+|---|---|
+| `T` is a challenge date and an activity row is dated `T` | `T` |
+| a challenge date exists before `T` | the last one |
+| neither (Day 1, nothing logged yet) | the participation start (= `T`) |
+
+What does and doesn't count as lived:
+
+| Date | Lived? |
+|---|---|
+| A past challenge date, with or without progress | Yes |
+| Today, with any activity row | Yes |
+| Today, with nothing logged | No (except Day 1, so an ended Arc has at least one day) |
+| A date that only has a goal revision waiting on it | No |
+| A paused date | No |
+| A future date | No |
+| A date later than today that already has activity (clock moved back) | Restart is refused instead (§ 6.7) |
+
+So `closed_on` is always a challenge date and never after `T`.
 
 ### 6.3 What is copied
 
@@ -317,7 +385,9 @@ App-level settings are not part of an Arc and are unchanged: reminders
 | Frozen Rolling Arc, or freeze scheduled | Restart as above; the old Arc ends on its last lived day. |
 | Completed Rolling or Seasonal Arc | Nothing is ended. The existing "Start New Arc → Reuse last setup" flow applies (CONFIRMED), followed by Review and Confirm & Start. No typed word is needed. |
 | Active Seasonal Arc (also a late join) | Offered as **"Start a Rolling 92-Day Arc with this setup"**. The season participation ends; the new Arc is Rolling, Day 1 today. The season's Day 1 is never moved. |
-| Edited goals | The latest goals become the new baseline. |
+| Edited goals | The latest goals become the new baseline, including a change made today that was waiting for tomorrow. The waiting revision itself stays in the old Arc, unapplied. |
+| Day 92 | Allowed, with an extra line: "Today is this Arc's last day. If you wait until tomorrow it will be completed." Restarting today ends it as "Ended early · Day 92", without Summit. |
+| Phone's date earlier than the latest logged day | Refused (§ 6.7). |
 | Custom habits | Copied with their ids. |
 | Minimum Day history, XP, achievements | Stay with the old Arc. The new Arc starts at 0 XP, level 1, no unlocks; achievements are earned again by the new Arc's own history, by the existing rules. |
 | Reminders enabled | Stay enabled and are planned from the new Day 1. |
@@ -330,6 +400,13 @@ App-level settings are not part of an Arc and are unchanged: reminders
   read-only, under Arc History.
 - It does not earn Summit. Achievements it had already earned stay.
 - Insights include its lived days and do not count it as a completed Arc.
+- Its progress, Minimum Days, XP, achievements, reflections and goal
+  revisions are exactly as they were. A revision that was waiting when
+  the Arc ended stays stored after `closed_on` as a record of a planned
+  change. The Arc is only ever read for dates up to `closed_on`, so that
+  revision never changes a lived day.
+- A backup holds it as `ended` with `closedOn`. `closedOn` is never after
+  the restart date, so it is never after an export made later.
 
 ### 6.6 Typed confirmation
 
@@ -342,6 +419,28 @@ App-level settings are not part of an Arc and are unchanged: reminders
 - History choice on the sheet: **Keep my old Arc in Arc History**
   (selected) or **Delete my old Arc…**. Choosing the second does not
   delete anything; it adds the separate step of § 7 after the restart.
+
+### 6.7 Safe failure and clock rollback
+
+| Situation | Result |
+|---|---|
+| Phone's date is earlier than the latest logged day, the last resume, or the Arc's first day | Refused before anything is written: "Your phone's date (17 Oct) is earlier than your latest logged day (18 Oct). You can restart from 18 Oct. Nothing was changed." |
+| The Arc completed at midnight while the sheet was open | Refused; the sheet closes to the completed Arc's summary |
+| Storage error at any step | The transaction rolls back. Both the old Arc and the absence of a new one are as before |
+
+Restart never invents an end date in the future, never shortens the old
+Arc below a day that has activity, and never deletes activity to make the
+dates fit.
+
+**Examples** (Rolling Arc started 7 October 2026):
+
+| Today | Before Restart | `closed_on` | Old Arc reads |
+|---|---|---|---|
+| 16 Oct (Day 10) | 2 habits logged today; Reading goal edited (revision dated 17 Oct) | 16 Oct | Ended early · Day 10. The 17 Oct revision stays, unapplied. The new Arc starts with the edited goal |
+| 16 Oct (Day 10) | Nothing logged today; Reading goal edited | 15 Oct | Ended early · Day 9. Day 10 and Day 11 are not counted |
+| 17 Oct | Progress and XP are stored on 18 Oct; the date moved back | — | Refused. On 18 Oct Restart works and `closed_on` = 18 Oct |
+| 25 Oct | Paused since 20 Oct | 19 Oct | Ended early · Day 13. The unresumed pause is removed |
+| 7 Oct (Day 1) | Nothing logged | 7 Oct | Ended early · Day 1 |
 
 ## 7. Deleting the old Arc (optional)
 
@@ -700,7 +799,7 @@ counts. · Cancel pause".
 | Cancel | Not now, Back, dismissing the sheet: nothing changes. After scheduling: "Cancel pause" until midnight |
 | Back | Closes the sheet |
 | Disabled states | Entry hidden on Day 92, while a pause is scheduled and while frozen |
-| Errors | "Couldn't pause. Nothing was changed." with Retry. A day that rolled over while the sheet was open: the sheet re-reads and shows the new dates |
+| Errors | "Couldn't pause. Nothing was changed." with Retry. A day that rolled over while the sheet was open: the sheet re-reads and shows the new dates. Phone's date earlier than the latest logged day: the refusal of § 5.2 F2a, naming the date |
 | Persistence | One row written; reminders re-planned afterwards |
 | Accessibility | Bullets are a list; the dates are read as full dates; the banner's Cancel is a labelled button |
 | Large text | The sheet scrolls; buttons stack |
@@ -809,7 +908,7 @@ today on Day 1."
 | Cancel | Cancel, Back: nothing changes, the typed text is discarded |
 | Back | To the screen it was opened from |
 | Disabled states | Restart Arc until the word matches; busy and single-fire while saving |
-| Errors | "Couldn't restart. Nothing was changed." with Retry. If the Arc completed at midnight meanwhile: the screen closes to the completed Arc's summary |
+| Errors | "Couldn't restart. Nothing was changed." with Retry. Phone's date earlier than the latest logged day: the refusal of § 6.7, naming the date. If the Arc completed at midnight meanwhile: the screen closes to the completed Arc's summary |
 | Persistence | Nothing until confirm; then one transaction |
 | Accessibility | Field label "Type RESTART to confirm"; the disabled button's label says why; the radio group is labelled "Your old Arc"; errors are announced |
 | Large text | Everything in one scrolling column; the field stays visible above the keyboard |
@@ -963,6 +1062,12 @@ today on Day 1."
   dates did not exist.
 - Z8 No Arc reminder is pending for a paused date.
 - Z9 An Arc with no freeze behaves exactly as in v1.2.0.
+- Z10 A freeze requested today starts tomorrow, whether or not a goal
+  was edited today.
+- Z11 A goal edit waiting for tomorrow applies on the resume date, and
+  its stored row never changes.
+- Z12 Freeze is refused, and stores nothing, while the phone's date is
+  earlier than the latest logged day or the last resume.
 
 **Restart and deletion (12F)**
 
@@ -977,6 +1082,13 @@ today on Day 1."
 - T6 Deletion requires DELETE typed on its own screen, after the restart.
 - T7 Deletion removes exactly the old Arc; every other row is identical.
 - T8 Leaving before deletion, or a deletion failure, keeps the old Arc.
+- T9 `closed_on` is the last lived day: never a date with only a pending
+  goal revision, never a paused date, never after today.
+- T10 Restart is refused, and changes nothing, while the phone's date is
+  earlier than the latest logged day, the last resume or the Arc's first
+  day.
+- T11 A backup made after any restart validates and restores row for
+  row.
 
 **Sounds (12G)**
 

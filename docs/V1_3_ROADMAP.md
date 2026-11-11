@@ -113,7 +113,8 @@ tests [PHASE_12A.md § L1](PHASE_12A.md#l1-weekly-review-12b)), built on
 [spec § 12](ARC_MOMENTUM_SPEC.md#12-lifecycle-addendum-freeze-and-restart)
 (tested with sessions built in tests; no UI can create them yet).
 
-- Exit: spec § 11 R1–R8 and § 12.8 R9–R12; owner copy sign-off; CI green;
+- Exit: spec § 11 R1–R8 and § 12.8 R9–R16 (including the XP split for
+  every Arc status, addendum § L7 F3); owner copy sign-off; CI green;
   review; merge.
 
 ### 12C: Arc Consistency Calendar
@@ -142,15 +143,17 @@ row and the `notReached` state (spec § 12.4).
 - Freeze service and repository writes; the Pause sheet, scheduled
   banner, frozen screen and Resume sheet; reminder re-planning; paused
   days in the Arc summary and Arc History.
-- Exit: spec § 10 Z1–Z9; tests of addendum § L3; emulator checks
-  (midnight, kill, reboot, notifications); CI green; review; merge.
+- Exit: spec § 10 Z1–Z12; tests of addendum § L3 and § L7 (F1);
+  emulator checks (midnight, kill, reboot, notifications); CI green;
+  review; merge.
 
 ### 12F: Restart and optional deletion
 
 - The atomic end-and-start transaction; the typed RESTART flow; "Ended
   early" in History, Summary, Journey, reviews and Insights; the separate
   typed DELETE screen; deletion extended to ended Arcs.
-- Exit: spec § 10 T1–T8; tests of addendum § L4; CI green; review; merge.
+- Exit: spec § 10 T1–T11; tests of addendum § L4 and § L7 (F2); CI
+  green; review; merge.
 
 ### 12G: completion sounds
 
@@ -248,7 +251,7 @@ from E1 onwards.
 | Gate | When | Owner decides |
 |---|---|---|
 | **A** | Phase 12A (done, PR #22 merged) | Arc-week model; metric naming; Weekly Focus and widget deferred |
-| **A2** | after this PR's independent review | The fifteen decisions O1–O15 of [PHASE_12A_ADDENDUM.md § M](PHASE_12A_ADDENDUM.md#m-owner-decisions-gate-a2): above all the Freeze model and its next-day rule, the `ended` status, separate deletion, schema v7 and format 4, and this phase order. Merge the addendum |
+| **A2** | after this PR's independent review | The sixteen decisions O1–O16 of [PHASE_12A_ADDENDUM.md § M](PHASE_12A_ADDENDUM.md#m-owner-decisions-gate-a2): above all the Freeze model and its next-day rule, the `ended` status, separate deletion, schema v7 and format 4, and this phase order. Merge the addendum |
 | **E1** | end of 12E1 | migration and mapping results; continue as one release or stage it |
 | **B** | end of 12B | summary copy sign-off; merge |
 | **C** | end of 12C | "Missed" wording; merge |

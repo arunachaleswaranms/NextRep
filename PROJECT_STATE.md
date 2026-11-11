@@ -79,7 +79,17 @@ expanded scope is **proposed** until the owner passes Gate A2.
 - **Recommended order:** 12E1 (foundation) → 12B → 12C → 12D → 12E2 →
   12F → 12G → 12H → 12I, with a staged v1.3.0 / v1.4.0 fallback. Version
   stays `1.2.0+3` until 12I (`1.3.0+4`).
-- Fifteen owner decisions (O1–O15) wait at Gate A2.
+- Sixteen owner decisions (O1–O16) wait at Gate A2.
+- **Independent review of `1ca8510`: three findings, resolved in the
+  documents.** F1: a freeze starts tomorrow (`today + 1`) whatever goal
+  edits are pending; goal revisions are configuration, not activity, and
+  are never re-dated. F2: an ended Arc's `closed_on` is its last lived
+  day, never a date with only a pending revision and never after today.
+  Both Freeze and Restart are refused, storing nothing, while the phone's
+  date is earlier than the latest logged day. F3: the XP ledger split is
+  restated for every Arc status (an ended Arc has no open day), with a
+  proof and worked examples. Required regression tests are listed for
+  the later phases.
 
 ## Phase 12A (v1.3.0 Arc Momentum planning, merged)
 
@@ -515,6 +525,6 @@ disclosed in [PRIVACY.md](PRIVACY.md).
 3. Phase 12A: merged as PR #22 (`64d77e0`).
 4. Phase 12A Addendum: independent review of the PR, then Gate A2
    ([docs/V1_3_ROADMAP.md](docs/V1_3_ROADMAP.md#approval-gates)): decide
-   O1–O15
+   O1–O16
    ([docs/PHASE_12A_ADDENDUM.md](docs/PHASE_12A_ADDENDUM.md#m-owner-decisions-gate-a2)),
    merge. No implementation phase starts before that.
