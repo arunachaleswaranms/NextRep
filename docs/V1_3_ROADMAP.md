@@ -113,9 +113,9 @@ tests [PHASE_12A.md § L1](PHASE_12A.md#l1-weekly-review-12b)), built on
 [spec § 12](ARC_MOMENTUM_SPEC.md#12-lifecycle-addendum-freeze-and-restart)
 (tested with sessions built in tests; no UI can create them yet).
 
-- Exit: spec § 11 R1–R8 and § 12.8 R9–R16 (including the XP split for
-  every Arc status, addendum § L7 F3); owner copy sign-off; CI green;
-  review; merge.
+- Exit: spec § 11 R1–R8 and § 12.8 R9–R23 (including the XP split and
+  the day, consistency and Perfect Day identities for every Arc status,
+  addendum § L7 F3 and F4); owner copy sign-off; CI green; review; merge.
 
 ### 12C: Arc Consistency Calendar
 

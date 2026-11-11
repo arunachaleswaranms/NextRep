@@ -15,8 +15,8 @@ Labels used throughout:
 
 **Phase 12A Addendum.** v1.3.0 also gains Freeze and Restart
 ([ARC_CONTROL_SPEC.md](ARC_CONTROL_SPEC.md)). Sections 1–11 below are the
-approved Phase 12A text and are unchanged, apart from one pointer added
-at the end of § 4.5.1. Where Freeze or Restart
+approved Phase 12A text and are unchanged, apart from two pointers: one
+under identities 1–3 of § 4.5 and one at the end of § 4.5.1. Where Freeze or Restart
 affects them, [§ 12](#12-lifecycle-addendum-freeze-and-restart) says
 exactly how, and § 12 wins. Phase letters after 12C in §§ 1–11 follow the
 original plan; § 12.1 maps them to the current roadmap.
@@ -297,6 +297,11 @@ weeks; weeks that can't be opened contribute 0. These identities must hold
    When `T` is before the participation start, both sides have no days.
 3. `Σ_w P(w) + [T open and Perfect] = h.perfectDays.total`. Both sides are
    derived from the same elapsed dates.
+   **Addendum.** Identities 1–3 are restated for every Arc status in
+   [§ 12.5.2](#1252-day-partition-and-identities-13-for-every-arc-status),
+   where `[T open]` becomes `openToday(s, T)`. The wording above is
+   correct for Arcs that are not `ended`; for an `ended` Arc it would
+   count the last day twice, so § 12.5.2 replaces it.
 4. **The XP ledger split (corrected in review, finding F1).** See § 4.5.1:
    `Σ_w X(w) + todayXp + futureXp + otherXp = h.records.totalXp`, where
    `otherXp = 0` for every valid ledger.
@@ -1054,7 +1059,7 @@ is never counted.
 | **`notReached`** | the Arc is `ended` and the week starts after the day of `closedOn` |
 | `complete` | the week's last date is known and before `T`; or the Arc is `ended` and the week has at least one settled day |
 | `inProgress` | the Arc is not `ended`, `T` is in `dates(w)` and `s.isParticipatingOn(T)` |
-| **`paused`** | the Arc is not `ended`, `T` is a paused date and the week holds the next challenge day (the day after the last one lived) |
+| **`paused`** | the Arc is not `ended`, `T` is a paused date and the week holds the next challenge day: day number `dayNumberOf(L) + 1`, where `L` is the last challenge date before `T` |
 | `upcoming` | otherwise |
 
 - **Current week while paused:** the `paused` week. It is reviewable:
@@ -1103,9 +1108,11 @@ K1 and K5 are unchanged; K5 also covers `ended` Arcs.
 - `N`, `H`, `C`, `F`, `P`, `M`, `Mc`, `X` and the per-habit tallies are
   computed over settled dates exactly as in § 4.2. Paused dates are never
   settled, so they are in no numerator or denominator.
-- Identities 1–3 of § 4.5 hold unchanged, because `h.elapsedDates` leaves
-  out paused dates and stops at `closedOn`. For an `ended` Arc the term
-  `[T open]` is always 0.
+- Identities 1–3 of § 4.5 (day count, consistency, Perfect Days) are
+  restated in § 12.5.2 on one explicit partition of the elapsed dates.
+  They are **not** unchanged: § 4.5 defined `[T open]` as
+  `s.isParticipatingOn(T)`, which is true for an `ended` Arc viewed on
+  `closedOn` although that day is already settled.
 - Freezing, resuming, restarting and reading a review write no XP and
   change no ledger row.
 
@@ -1214,6 +1221,186 @@ Notes on the examples:
   On a device whose date is 12 November or later, the split is D's or
   E's.
 
+#### 12.5.2 Day partition and identities 1–3 for every Arc status
+
+Added after independent review (finding F4). The first version of this
+addendum said identities 1–3 of § 4.5 "hold unchanged". They do not.
+§ 4.5 adds `[T open]`, defined as `s.isParticipatingOn(T)`, to the
+settled days. For an `ended` Arc with `closedOn = T` that term is 1 while
+the day is already settled (§ 12.3), so the last day was counted twice in
+the day count and, if it was a Perfect Day, in the Perfect Day count.
+§ 4.5 also split consistency into "over" and "participating" cases; an
+`ended` Arc viewed after `closedOn` and before its planned last day is
+neither. The three identities are restated here on one partition, with
+no case split by lifecycle status.
+
+**What the code computes (CONFIRMED).**
+
+| Quantity | Definition in the source |
+|---|---|
+| `h.elapsedDates` | `session.participatingDatesThrough(today)`: the participating dates up to `min(today, endDate)` (`ArcHistory`, `WinterArcSession`). With the addendum it also leaves out paused dates and stops at `closedOn` (PROPOSED, addendum § F1) |
+| `ArcSummary.daysElapsed` | `history.elapsedDates.length` |
+| `ArcSummary.fullDays` | the elapsed dates whose record `isPerfect` or `isMinimumComplete`, **today included** |
+| `ArcSummary.consistencyPercent` | `daysElapsed == 0 ? 0 : (fullDays * 100) ~/ daysElapsed` |
+| `h.perfectDays.total` | the elapsed dates whose record `isPerfect`, today included (`ArcHistory.perfectMarks`) |
+| `OverallInsight.consistencyPercent` | the same formula over the elapsed dates of every started Arc, with the same zero guard (`insight_snapshot.dart`) |
+
+None of these depends on the stored status. They depend only on which
+dates are elapsed, so they need no formula change for `ended` or paused
+Arcs once `elapsedDates` follows the mapping.
+
+**Definitions.** `part(D)` is `s.isParticipatingOn(D)` as in § 12.5.1:
+from the participation start to `endDate`, not a paused date and, for an
+`ended` Arc, not after `closedOn`.
+
+```
+E(T)            = { D : part(D) and D ≤ T }                    elapsed dates
+openToday(s,T)  = part(T) and the Arc is not ended
+O(T)            = { T } if openToday(s,T), else { }            the open date
+S(T)            = E(T) \ O(T)                                  settled dates
+                = { D : part(D) and (D < T, or D = T and the Arc is ended) }
+```
+
+`openToday` is false for an `ended` Arc, on a paused date, before the
+participation start (including pre-join season days), and after the last
+day. It is true for an `active` Arc on a challenge date, with or without
+a freeze scheduled for tomorrow. It is also true for a `completed` Arc
+when the local date has moved back to a date inside it: that is the
+approved date-driven presentation (§ 3.3), and it is kept. Three things
+stay separate:
+
+| | Decided by |
+|---|---|
+| Stored lifecycle status | the database; never changed by a date rollback |
+| How a date is presented (open, settled, upcoming) | the date against `T`, and whether the Arc is `ended` |
+| Whether a date counts in the weekly totals | membership of `S(T)` |
+
+**Partition.** `S(T)` and `O(T)` are disjoint by construction, and
+`S(T) ∪ O(T) = E(T)`. Every elapsed date is in exactly one of them. A
+date outside `E(T)` is in neither, and each kind is excluded by the
+definition of `E(T)`:
+
+| Date | Why it is not in `E(T)` |
+|---|---|
+| paused | not `part(D)` |
+| before joining (neutral) | not `part(D)` |
+| not reached (ended Arc, after `closedOn`) | not `part(D)` |
+| future, or of unknown date | `D > T` |
+
+`E(T)` is exactly `h.elapsedDates`: both are the participating dates up
+to `T`, and no participating date is after `endDate`.
+
+**Lemma: every settled date is in a reviewable week.** Let `D ∈ S(T)`
+and let `w` be the week of its day. Go through § 12.3's statuses in
+order. `w` is not `beforeJoining` (`D` is not neutral) and not
+`notReached` (`D ≤ closedOn`). If the Arc is `ended`, `w` has a settled
+day, so it is `complete`. Otherwise `D < T`: if `w`'s last date is known
+and before `T`, `w` is `complete`. If not, `w` contains a day whose date
+is `T`, later, or unknown; then either `T` is one of its dates and
+participating (`inProgress`), or `T` is paused, the last challenge date
+before `T` is in `w` or earlier, and the next challenge day is in `w`
+(`paused`). In every case `w` can be opened, so `D` is counted in
+`N(w)`. Each date is a day of one week only, hence
+
+```
+Σ_w N(w) = |S(T)|      Σ_w F(w) = full days in S(T)      Σ_w P(w) = Perfect Days in S(T)
+```
+
+**Identities** (they replace 1–3 of § 4.5; for every valid Arc and every
+`T`):
+
+```
+1.  Σ_w N(w) + |O(T)|  =  h.elapsedDates.length  =  ArcSummary.daysElapsed
+
+2.  Let  Fs = Σ_w F(w),   Fo = 1 if openToday(s,T) and r(T) is full, else 0.
+    Fs + Fo  =  ArcSummary.fullDays
+    If |E(T)| > 0:
+        (100 · (Fs + Fo)) ~/ (Σ_w N(w) + |O(T)|)  =  ArcSummary.consistencyPercent
+    If |E(T)| = 0:
+        both sides have no days. ArcSummary.consistencyPercent is 0 by its
+        own guard; the review shows no consistency value. Nothing is divided.
+
+3.  Σ_w P(w) + Po  =  h.perfectDays.total,
+    where  Po = 1 if openToday(s,T) and r(T).isPerfect, else 0.
+```
+
+"Full" means `r(D).isPerfect ‖ r(D).isMinimumComplete`, as in § 4.2.
+
+**Proof.** Identity 1 is `|S| + |O| = |E|` with the lemma. For 2 and 3,
+`ArcSummary.fullDays` and `h.perfectDays.total` count, over `E(T)`, the
+dates whose record is full or Perfect. Split `E(T)` into `S(T)` and
+`O(T)`: the part in `S(T)` is `Fs` (or `Σ_w P(w)`) by the lemma, and the
+part in `O(T)` is `Fo` (or `Po`), because `O(T)` is `{T}` exactly when
+`openToday`. The consistency line divides the two sides of the full-day
+equality by the two sides of identity 1.
+
+**Relation to § 4.5.** When `|O(T)| = 0`, identity 2 reads
+`(100·Σ F) ~/ Σ N`: § 4.5's "over" case, which now also covers `ended`
+Arcs on any date and paused dates. When `|O(T)| = 1`, it reads
+`(100·(Σ F + [today full])) ~/ (Σ N + 1)`: § 4.5's "participating" case.
+For an Arc that is not `ended`, `openToday(s,T) = s.isParticipatingOn(T)`,
+so all three identities are § 4.5's, unchanged. The review's own weekly
+and Arc-level consistency keeps § 4.2's rule: `N > 0 ? (100·F) ~/ N :
+none`.
+
+**The XP split is untouched.** § 12.5.1's group A is the ledger over
+`S(T)` and group B the ledger over `O(T)`, so the day partition and the
+XP partition are the same split of the same dates.
+
+**Worked examples.** Explanatory figures, not test results. "Full" and
+"Perfect" are counts within the set named. Consistency is
+`ArcSummary.consistencyPercent`.
+
+| # | Arc and status | `T` | `S` | `O` | `E` | Full in `S` + `O` | Perfect in `S` + `O` | Consistency |
+|---|---|---|---|---|---|---|---|---|
+| A | Rolling from 7 Oct 2026, `active`. 7 Oct Perfect, 8 Oct partial, 9 Oct Perfect so far | 9 Oct | 2 | 1 | 3 | 1 + 1 = 2 | 1 + 1 = 2 | `200 ~/ 3` = 66% |
+| B | Rolling 7 Oct 2026 – 6 Jan 2027, `completed`. 60 full days, 40 of them Perfect | 10 Jan | 92 | 0 | 92 | 60 + 0 | 40 + 0 | `6000 ~/ 92` = 65% |
+| C | The Arc of B, `completed`, after the date moved back. 5 Jan was Perfect; 6 Jan was partial | 5 Jan | 90 | 1 | 91 | 59 + 1 = 60 | 39 + 1 = 40 | `6000 ~/ 91` = 65% |
+| D′ | Rolling from 1 Mar 2027, `active`, freeze scheduled for 11 Mar. Days 1–9: 6 full, 4 of them Perfect. Today not full yet | 10 Mar | 9 | 1 | 10 | 6 + 0 | 4 + 0 | `600 ~/ 10` = 60% |
+| D | The same Arc, `active`, paused since 11 Mar. 10 Mar ended not full | 15 Mar | 10 | 0 | 10 | 6 + 0 | 4 + 0 | `600 ~/ 10` = 60% |
+| E | Rolling from 7 Oct 2026. 7 Oct partial, 8 Oct Perfect, then restarted on 8 Oct: `ended`, `closedOn` 8 Oct | 8 Oct | 2 | 0 | 2 | 1 + 0 | 1 + 0 | `100 ~/ 2` = 50% |
+| F | The Arc of E, `ended`, viewed later. Its planned last day, 6 Jan, has not come | 20 Oct | 2 | 0 | 2 | 1 + 0 | 1 + 0 | 50% |
+| G | The Arc of E, `ended`, after the date moved back before `closedOn` | 7 Oct | 1 | 0 | 1 | 0 + 0 | 0 + 0 | `0 ~/ 1` = 0% |
+| H | Seasonal 2026 joined 18 Oct (Day 18), `active`. 18 Oct Perfect, 19 Oct partial, 20 Oct Perfect, 21 Oct not full yet | 21 Oct | 3 | 1 | 4 | 2 + 0 | 2 + 0 | `200 ~/ 4` = 50% |
+| I | Rolling started 7 Oct 2026, `active`; the date then moved back | 6 Oct | 0 | 0 | 0 | 0 | 0 | 0% by the guard; the review shows none |
+| J | Rolling from 7 Oct 2026, `ended`, `closedOn` 12 Nov (Day 37). 20 full days, 14 of them Perfect, 12 Nov among the Perfect ones | 12 Nov | 37 | 0 | 37 | 20 + 0 | 14 + 0 | `2000 ~/ 37` = 54% |
+
+Checks, each `Σ N + |O| = |E|`, full days, Perfect Days:
+
+- **A.** `2 + 1 = 3`; `1 + 1 = 2`; `1 + 1 = 2`. Today is open and
+  counted once, on the open side.
+- **B.** `92 + 0 = 92`. `T` is after `endDate`, so nothing is open.
+- **C.** `90 + 1 = 91`. 6 Jan is after `T`: upcoming, in neither set. The
+  stored status stays `completed` and nothing is written; 5 Jan is
+  presented as open only because of the date, as approved in § 3.3. When
+  the date returns past 6 Jan the figures are B's again.
+- **D′, D.** A scheduled freeze changes nothing today: `9 + 1 = 10`.
+  Once paused, `10 + 0 = 10`. 11–15 March are in neither set: not
+  Perfect, not missed, not counted. The figures do not move however long
+  the pause lasts.
+- **E.** `2 + 0 = 2`; full `1`; Perfect `1`; 50%. This is the review's
+  failing case: § 4.5 as written gives `2 + [part(T)] = 3` days and
+  `1 + 1 = 2` Perfect Days, both wrong. `openToday` is false because the
+  Arc is `ended`.
+- **F.** Identical to E. The Arc is neither over nor active, and the
+  identity needs neither.
+- **G.** `1 + 0 = 1`. 7 Oct is settled (an ended Arc has no open day);
+  8 Oct is after `T`. When the date returns to 8 Oct the figures are E's.
+- **H.** `3 + 1 = 4`. The 17 neutral dates (1–17 Oct) are in neither set.
+- **I.** `0 + 0 = 0`. No division happens on either side.
+- **J.** `37 + 0 = 37`. The Perfect Day of 12 Nov is one of the 14 in
+  `Σ_w P(w)` (Week 6, Days 36–42) and `Po = 0`: counted once.
+
+**What implementation must respect (requirements for 12E1 and 12F; no
+code is changed in this phase).**
+
+| Source today | Requirement |
+|---|---|
+| `ArcSummary.fromHistory`, `InsightRules.compute` | No formula change. They iterate `elapsedDates`, which must be `E(T)` |
+| `ArcHistory.habitMarks`, `perfectMarks`: a date equal to `today` that is not achieved is `pending` | Use `openToday`, not `date == today`. On an `ended` Arc's `closedOn`, an unachieved day is a `miss`, never `pending`. This only affects streaks; day and Perfect counts already count hits only |
+| `ArcHistory._journeyDay`: `isToday = date == today` selects `JourneyDayState.today` | For an `ended` Arc the day of `closedOn` takes its final state (`perfect`, `partial`, `missed`, …), never `today` |
+| `DaySummary.isTrackable` | Already requires `status == active`; unchanged |
+
 ### 12.6 Restart
 
 - A restarted Arc is a new session. It has its own Weeks 1–13 from its
@@ -1254,6 +1441,25 @@ intervals.
 - R16 A completed Arc's groups equal those of § 4.5.1 for every `T`,
   including after a rollback into the Arc.
 
+- R17 For generated Arcs of every status (active, freeze scheduled,
+  paused, completed, ended; rolling, seasonal, late join) and every `T`
+  from before the start to after the end: `S(T)` and `O(T)` are disjoint,
+  their union is `h.elapsedDates`, and no paused, neutral, not-reached or
+  future date is in either.
+- R18 Identities 1–3 of § 12.5.2 hold for the same Arcs and dates,
+  against `ArcSummary.daysElapsed`, `fullDays`, `consistencyPercent` and
+  `h.perfectDays.total`.
+- R19 An `ended` Arc's `closedOn` is counted exactly once in the day,
+  full-day and Perfect Day counts, for `T` equal to, after and before
+  `closedOn`.
+- R20 With no elapsed day, nothing is divided: the summary's consistency
+  is 0 and the review shows none.
+- R21 Examples A–J of § 12.5.2 give exactly the figures shown.
+- R22 A `completed` Arc viewed on a date inside it has one open day and
+  is not written to.
+- R23 On an `ended` Arc, streaks treat an unachieved `closedOn` as a
+  miss, and Journey and the calendar never show the `today` state.
+
 The 12B rollback test of
 [PHASE_12A.md § L1](PHASE_12A.md#l1-weekly-review-12b) stays as written
 and gains these variants, each with its same assertions (identical
@@ -1268,6 +1474,6 @@ ledger rows at every step, nothing duplicated, lost or awarded):
   clock behind the export date.
 
 The full list of review regression tests is in
-[PHASE_12A_ADDENDUM.md § L7](PHASE_12A_ADDENDUM.md#l7-regression-tests-required-by-the-review-f1-f2-f3).
+[PHASE_12A_ADDENDUM.md § L7](PHASE_12A_ADDENDUM.md#l7-regression-tests-required-by-the-review-f1-f2-f3-f4).
 - K7 The calendar shows the pause row and the `notReached` state, and
   agrees with Journey for every day of paused and ended Arcs.

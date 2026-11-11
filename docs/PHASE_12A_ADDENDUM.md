@@ -803,7 +803,7 @@ constants that state the schema and format versions.
 | Streaks: a streak before the pause continues after it; no miss is created | U |
 | XP: no ledger row is written, changed or removed by freeze, cancel or resume; none can be written on a frozen date | R |
 | Every table except `arc_freezes` and the session's `end_date` is byte-identical around freeze and resume | R |
-| Weekly Review: paused week, resumed week, Week 13 with a pause, identities of spec § 4.5 with frozen dates | U (property) |
+| Weekly Review: paused week, resumed week, Week 13 with a pause, identities of spec § 12.5.2 with frozen dates | U (property) |
 | Calendar: 92 cells, pause row, same state as Journey for every day | U + W |
 | Notifications: nothing pending for a frozen date after freeze; re-planned after resume; Hydration follows | U + E |
 | Achievements: milestones use the mapped date; no unlock is re-dated or lost | U + R |
@@ -854,7 +854,7 @@ v1.2.0 → v1.3.0 rehearsal on a disposable AVD with a **real v6 → v7
 migration** and every v6 row compared, and the physical OnePlus upgrade
 only after explicit owner authorization.
 
-### L7. Regression tests required by the review (F1, F2, F3)
+### L7. Regression tests required by the review (F1, F2, F3, F4)
 
 Requirements for later phases. None is written or run in this phase.
 Layer R tests run on a real in-memory Drift database with an injected
@@ -906,6 +906,32 @@ Layer R tests run on a real in-memory Drift database with an injected
 | F3-5 | Reading any review of any Arc | No ledger row, unlock or other row is written |
 | F3-6 | Restored format-4 backup holding an ended Arc and a paused Arc | Groups computed from the restored ledger; `other = 0`; nothing re-derived from completions |
 
+**F4: day count, consistency and Perfect Days (12B, with ended and
+paused Arcs built in tests; streak and Journey parts in 12E1 / 12F)**
+
+Property tests run over generated Arcs and every `T` from before the
+start to after the planned end. `S`, `O`, `E` and the identities are
+those of [spec § 12.5.2](ARC_MOMENTUM_SPEC.md#1252-day-partition-and-identities-13-for-every-arc-status).
+
+| # | Case | Must hold |
+|---|---|---|
+| F4-1 | Ended Arc, `closedOn` counted | `closedOn` is in `S` exactly once and never in `O`, for every `T` |
+| F4-2 | Ended Arc viewed on `closedOn` | `O` is empty; `Σ N = elapsedDates.length`; spec example E |
+| F4-3 | Ended Arc viewed after `closedOn`, before and after its planned last day | The same figures as on `closedOn`; they never change again |
+| F4-4 | Ended Arc viewed before `closedOn` after a time-zone rollback | Dates up to `T` are settled, later ones upcoming; `O` is empty; figures return when the date does; spec example G |
+| F4-5 | Paused Arc, any number of paused dates | No paused date in `S` or `O`; day, full-day and Perfect counts equal those at the last lived day |
+| F4-6 | Freeze scheduled, not yet in effect | Today is open and counted once; figures equal an Arc with no freeze |
+| F4-7 | Completed Arc after a rollback into it | One open day; identities hold; status stays `completed`; no row written; spec example C |
+| F4-8 | Late Seasonal join | No pre-join date in `S` or `O`; spec example H |
+| F4-9 | No elapsed day (`T` before the participation start) | `S`, `O`, `E` empty; no division; summary consistency 0, review shows none |
+| F4-10 | Perfect Day on an ended Arc's last lived day | In `Σ_w P(w)` once; `Po = 0`; total equals `h.perfectDays.total`; spec example J |
+| F4-11 | Consistency | Identity 2: 100 × (settled full days + open full day), integer-divided by (settled days + open days), equals `ArcSummary.consistencyPercent` whenever there is an elapsed day, for every status |
+| F4-12 | Day count | Identity 1: settled days + open days = `h.elapsedDates.length` = `ArcSummary.daysElapsed` |
+| F4-13 | Perfect Days | `Σ_w P(w) + Po = h.perfectDays.total` |
+| F4-14 | Read-only | Computing any of the above writes nothing (every table byte-identical) |
+| F4-15 | XP unchanged | F3-1 to F3-6 still pass; group A is the ledger over `S`, group B over `O` |
+| F4-16 | Streaks and Journey on an ended Arc | An unachieved `closedOn` is a miss, not pending; its Journey and calendar state is final, never `today` |
+
 **Also covered by the phases named** (each already in §§ L1–L6 or
 [PHASE_12A.md § L](PHASE_12A.md#l-test-plan-for-phases-12b12f); listed
 here so the review's checklist is complete):
@@ -956,6 +982,7 @@ phone; the wording of the three sound names.
 | Relative Markdown links and anchors in the changed documents resolve (script) | PASS |
 | Stop conditions of the brief | none triggered |
 | Independent review of head `1ca8510`: **F1** (the freeze start counted pending goal revisions as activity), **F2** (`closed_on` could count a pending revision as a lived day and could fall after today following a clock rollback), **F3** (ended-Arc XP changed the settled / today split without restating it) | **RESOLVED** in a follow-up commit. F1: `frozenFrom = today + 1`; activity and configuration separated (C7); revisions never re-dated (AD6). F2: `closed_on` is the last lived day with explicit preconditions (AD11). Both: refused while the clock is behind stored activity (AD19). F3: one partition for every status, with proof and worked examples (spec § 12.5). Required tests in § L7. Documentation-only; no test was written or run for these |
+| Independent review of head `fc2384b`: **F4** (identities 1–3 of spec § 4.5 were said to hold unchanged, but their `[T open]` term counts an ended Arc's `closedOn` twice, and their consistency cases do not cover an ended Arc before its planned last day) | **RESOLVED** in a follow-up commit. Spec § 12.5.2 defines `openToday`, partitions the elapsed dates into settled and open, restates the day-count, consistency and Perfect Day identities with one rule for every status, proves them and gives examples A–J. F1–F3 are unchanged. Required tests: § L7 F4-1 to F4-16, spec R17–R23. Documentation-only; no test was written or run |
 | `git diff --check` | PASS |
 | Changed files: only `docs/PHASE_12A_ADDENDUM.md`, `docs/ARC_CONTROL_SPEC.md`, `docs/V1_3_ROADMAP.md`, `docs/ARC_MOMENTUM_SPEC.md`, `PROJECT_STATE.md` | PASS |
 | No file under `lib/`, `android/`, `ios/`, `test/`, `integration_test/`, no `pubspec.*`, `.github/`, `tool/` changed; version `1.2.0+3` | PASS |

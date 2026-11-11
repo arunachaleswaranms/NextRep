@@ -90,6 +90,11 @@ expanded scope is **proposed** until the owner passes Gate A2.
   restated for every Arc status (an ended Arc has no open day), with a
   proof and worked examples. Required regression tests are listed for
   the later phases.
+- **Independent review of `fc2384b`: finding F4, resolved in the
+  documents.** The day-count, consistency and Perfect Day identities are
+  restated on one partition of the elapsed dates (settled and open), with
+  `openToday` false for ended Arcs and paused dates, so an ended Arc's
+  last day is counted once. Completed-Arc rollback behaviour is kept.
 
 ## Phase 12A (v1.3.0 Arc Momentum planning, merged)
 
