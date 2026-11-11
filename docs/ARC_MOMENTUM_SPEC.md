@@ -13,6 +13,13 @@ Labels used throughout:
 - **PROPOSED**: a design decision of this spec, to be built in 12B / 12C.
 - **UNRESOLVED**: needs the owner's decision or later qualification.
 
+**Phase 12A Addendum.** v1.3.0 also gains Freeze and Restart
+([ARC_CONTROL_SPEC.md](ARC_CONTROL_SPEC.md)). Sections 1–11 below are the
+approved Phase 12A text and are unchanged. Where Freeze or Restart
+affects them, [§ 12](#12-lifecycle-addendum-freeze-and-restart) says
+exactly how, and § 12 wins. Phase letters after 12C in §§ 1–11 follow the
+original plan; § 12.1 maps them to the current roadmap.
+
 Notation: `s` is a started `WinterArcSession`, `T` is today's local date
 (`Clock.today()`), `h` is `ArcHistory(session: s, records:
 loadArc(s.id), today: T)`, and `r(D)` is `h.recordOn(D)`, a `DayRecord`.
@@ -965,3 +972,163 @@ up as an extra `loadArc` call, which the tests count.
 - K5 Completed Arcs render read-only and unchanged over time (the same
   output for any later `today`).
 - K6 Accessibility A1–A11.
+
+## 12. Lifecycle addendum: Freeze and Restart
+
+Added by the Phase 12A Addendum
+([PHASE_12A_ADDENDUM.md](PHASE_12A_ADDENDUM.md)). Everything here is
+PROPOSED. It changes how dates are found and adds states for paused and
+ended Arcs. It changes **no metric formula, no summary rule and no XP
+rule** of §§ 3–6.
+
+### 12.1 What changes and what doesn't
+
+| | |
+|---|---|
+| Unchanged | The 13 Arc weeks and their day ranges (§ 3.1); every metric of § 4.2; highlights (§ 4.4); the XP ledger split (§ 4.5.1); the summary rules (§ 6); the 92-cell calendar in 13 blocks (§ 7.3); accessibility (§ 8) |
+| Changed | How a day number becomes a date (§ 12.2); two more day classes and two more week statuses (§ 12.3); a ninth Journey state and a pause row (§ 12.4) |
+| For an Arc that was never paused or ended | Every result is identical to §§ 3–11 |
+
+Phase letters: 12B (Weekly Review) and 12C (Calendar) are unchanged. The
+former 12D hardening and 12E integration are now **12H**; the former 12F
+release qualification is now **12I**. Both features are built after the
+foundation phase **12E1**, which provides the mapping below
+([V1_3_ROADMAP.md](V1_3_ROADMAP.md#phase-plan)).
+
+### 12.2 Day ↔ date mapping
+
+A paused (frozen) date is not a day of the Arc
+([ARC_CONTROL_SPEC.md § 5.1](ARC_CONTROL_SPEC.md#51-model)). So § 3.2's
+definitions read:
+
+```
+lastDay(13)  = WinterArcRules.lengthInDays (= 92 challenge days)
+dates(w)     = [ s.dateOfDay(d)  for d in firstDay(w)..lastDay(w) ]
+```
+
+- `s.dateOfDay(d)` replaces `s.startDate.addDays(d − 1)`. Without a
+  freeze the two are equal.
+- `s.dateOfDay(d)` is **unknown** for a day that lies after the start of
+  an open freeze: its date is fixed only when the user resumes.
+- § 3.2's remark that `s.lengthInDays` is always 92 no longer holds for
+  the calendar span of a paused Arc. The number of challenge days is
+  always 92.
+- Day numbers of dates already lived never change. A freeze begins after
+  today, so it can only move days that have not been lived.
+
+### 12.3 Day classes and week statuses
+
+**Day classes**, checked in this order (new ones in bold):
+
+| Day class | Rule | Counts? |
+|---|---|---|
+| neutral | `s.isBeforeJoining(D)` | Never |
+| **not reached** | the Arc is `ended` and the day comes after `closedOn` | Never |
+| upcoming | the day's date is unknown, or after `T` | Never |
+| open (today) | the date is `T`, and the Arc is not `ended` | Not in the totals; "Today so far" |
+| settled | a participating date before `T`; for an `ended` Arc also `closedOn` itself | Yes |
+
+A **paused date** is not in any week's `dates(w)`, so it has no class and
+is never counted.
+
+**Week status**, checked in this order:
+
+| Status | Rule |
+|---|---|
+| `beforeJoining` | every date of the week is neutral |
+| **`notReached`** | the Arc is `ended` and the week starts after the day of `closedOn` |
+| `complete` | the week's last date is known and before `T`; or the Arc is `ended` and the week holds the day of `closedOn` |
+| `inProgress` | `T` is in `dates(w)` and `s.isParticipatingOn(T)` |
+| **`paused`** | `T` is a paused date and the week holds the next challenge day (the day after the last one lived) |
+| `upcoming` | otherwise |
+
+- **Current week while paused:** the `paused` week. It is reviewable:
+  totals over its settled days, in-progress wording, **no** "Today so
+  far" block, and the line "Paused since <date>". With no settled day it
+  shows "This week begins when you resume." instead of the stats.
+- **A resumed week** is `inProgress` again from the resume date; its
+  remaining days follow from that date.
+- **A final week never changes.** A week is `complete` only when its last
+  date is before `T`, and a freeze starts after `T`.
+- **Week 13** is still Days 85–92. A pause inside it moves its later
+  dates and nothing else.
+- **Date ranges** in headers name a pause: "8 Mar – 23 Mar · includes a
+  9-day pause"; with an open pause, "8 Mar – paused".
+- **Reviewable weeks** are `complete`, `inProgress` and `paused`.
+  `notReached` weeks, like `upcoming` ones, can't be opened.
+- **Ended Arcs:** the default review is the week of `closedOn`. That
+  week and Week 13 of a completed Arc both use the final-week wording of
+  § 6.3 and § 6.4, because no week follows either.
+
+### 12.4 Calendar and Journey
+
+- The calendar still shows exactly 92 day cells in 13 week blocks.
+- **Pause row:** where a pause falls between two days, the week block
+  shows one text row at that point: "Paused 11–19 Mar · 9 days", or
+  "Paused since 11 Mar" while open. It is not a cell, has no state and is
+  not tappable. Its accessibility label is the same sentence.
+- While a pause is open, cells of days not yet lived show no date, and
+  their label reads "Day 26. Upcoming. Its date is set when you resume."
+- **A ninth `JourneyDayState`, `notReached`**, for the days of an `ended`
+  Arc after `closedOn`. This amends § 7.2, which listed eight. It is
+  still one classifier shared by Journey and the calendar.
+
+| Order | State | Condition | Label | Shape | Fill | Icon | Extra cue |
+|---|---|---|---|---|---|---|---|
+| after `notJoined`, before `future` | `notReached` | the Arc is `ended` and the day is after `closedOn` | Not reached | circle | none | – | opacity 0.45 |
+
+It shares the `future` glyph and differs by its label (allowed by A6).
+Without it, those days would turn into `missed` once their dates passed,
+which would be false.
+
+K1 and K5 are unchanged; K5 also covers `ended` Arcs.
+
+### 12.5 Metrics and reconciliation
+
+- `N`, `H`, `C`, `F`, `P`, `M`, `Mc`, `X` and the per-habit tallies are
+  computed over settled dates exactly as in § 4.2. Paused dates are never
+  settled, so they are in no numerator or denominator.
+- Identities 1–3 of § 4.5 hold unchanged, because `h.elapsedDates` leaves
+  out paused dates and stops at `closedOn`.
+- **The XP ledger split of § 4.5.1 is unchanged.** Invariant L now also
+  says: no ledger row is dated on a paused date or after `closedOn`.
+  Writes are only possible on a participating date, a freeze starts after
+  the latest stored row, and restore rejects such rows. So "other XP"
+  stays 0. For an `ended` Arc, XP dated `closedOn` belongs to the settled
+  group even when `closedOn = T`, and its "today" group is 0. The four
+  groups still split the ledger with no overlap.
+- Freezing and resuming write no XP and change no ledger row.
+
+### 12.6 Restart
+
+- A restarted Arc is a new session. It has its own Weeks 1–13 from its
+  own Day 1, and its reviews and calendar start empty.
+- The old Arc is `ended`. Its reviews and calendar stay available,
+  read-only, under `/arc/:id/review` and `/arc/:id/journey`, for the
+  weeks up to `closedOn`.
+- An `ended` Arc is labelled "Ended early · Day N of 92" wherever a
+  completed Arc is labelled "Completed". Insights do not count it as a
+  completed Arc.
+- Deleting the old Arc removes its reviews and calendar with it. Insights
+  are derived, so their totals then leave it out. No other Arc's review
+  changes.
+
+### 12.7 Performance
+
+Loading a session also loads its freeze intervals (one small query per
+session lookup). `loadArc` is unchanged. § 10's "no per-day queries"
+still holds: the mapping is computed in memory from at most a handful of
+intervals.
+
+### 12.8 Additional acceptance criteria and tests
+
+- R9 For generated Arcs with zero, one and several pauses, and every
+  `T`: the identities of § 4.5, including the XP split, hold; paused
+  dates are in no total.
+- R10 A week that was `complete` before a freeze is identical after the
+  freeze and after the resume.
+- R11 A `paused` week and a resumed week show the states of § 12.3.
+- R12 An `ended` Arc's reviews stop at the week of `closedOn`, use the
+  final-week wording there, and never change for any later `T`.
+- K7 The calendar shows the pause row and the `notReached` state, and
+  agrees with Journey for every day of paused and ended Arcs.

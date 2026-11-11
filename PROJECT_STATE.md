@@ -1,10 +1,11 @@
 # PROJECT_STATE
 
-_Last updated: 2026-10-18. **Latest published release: v1.2.0** (tag
+_Last updated: 2026-11-11. **Latest published release: v1.2.0** (tag
 `v1.2.0` on `8ab0c43`, PR #20), published 18 October 2026; v1.1.0 and
-v1.0.0 before it. The v1.2 roadmap (Phases 11A–11F, PRs #15–#20) and the
-publication record (PR #21) are merged. `main` is `28db2af`, version
-`1.2.0+3`. **v1.3.0 is in planning (Phase 12A), not released.**_
+v1.0.0 before it. The v1.2 roadmap (Phases 11A–11F, PRs #15–#20), the
+publication record (PR #21) and the Phase 12A plan (PR #22) are merged.
+`main` is `64d77e0`, version `1.2.0+3`. **v1.3.0 is in planning (Phase
+12A Addendum in review), not released. No v1.3 feature is implemented.**_
 
 | | |
 |---|---|
@@ -23,14 +24,64 @@ planned. TalkBack was deliberately deferred and doesn't block this model.
 ## Repo
 
 - Remote: https://github.com/arunachaleswaranms/NextRep (public, MIT)
-- `main`: `28db2af` (PR #21, the v1.2.0 publication record), on top of
-  `8ab0c43` (squash merge of PR #20, Phase 11F; CI run
+- `main`: `64d77e0` (PR #22, the Phase 12A plan), on top of `28db2af`
+  (PR #21, the v1.2.0 publication record) and `8ab0c43` (squash merge of PR #20, Phase 11F; CI run
   [39096524587](https://github.com/arunachaleswaranms/NextRep/actions/runs/39096524587)
   green, both jobs). Tags `v1.0.0` (`b3f9c5c`), `v1.1.0` (`7e563e2`) and
   `v1.2.0` (`8ab0c43`). PRs #1–#20 are Phases 1–11F; #21 the publication
-  record.
+  record; #22 Phase 12A.
 
-## Phase 12A (v1.3.0 Arc Momentum planning, in review)
+## Phase 12A Addendum (v1.3.0 Arc Control and Personalization, in review)
+
+Documentation only:
+[docs/PHASE_12A_ADDENDUM.md](docs/PHASE_12A_ADDENDUM.md),
+[docs/ARC_CONTROL_SPEC.md](docs/ARC_CONTROL_SPEC.md), § 12 of
+[docs/ARC_MOMENTUM_SPEC.md](docs/ARC_MOMENTUM_SPEC.md) and a revised
+[docs/V1_3_ROADMAP.md](docs/V1_3_ROADMAP.md). No production code, test,
+dependency, permission, schema, backup-format or version change; no
+device, emulator, APK or audio asset. Baseline `main` `64d77e0`. The
+expanded scope is **proposed** until the owner passes Gate A2.
+
+- **Five features added to the v1.3.0 plan** (target name unchanged, Arc
+  Momentum): habit ordering in setup; saved setup with a start
+  confirmation; Freeze / Resume for Rolling Arcs; Restart with the same
+  setup and an optional deletion of the old Arc; completion sounds.
+- **Ordering:** reuses `habits.sort_order`; one new repository write;
+  setup only. No schema or backup change.
+- **Saved setup:** the persisted `setup` session already is the draft
+  (saved on every change, reopened at launch, Day 1 assigned at Start,
+  seasonal rules enforced in the domain). New: a saved-setup hub, Review
+  Setup and Confirm & Start. No schema or backup change.
+- **Freeze:** feasible without rewriting history. Freeze intervals are
+  stored; the day number is derived; a freeze starts at the next local
+  midnight; resuming makes today the next day and moves the last day
+  later. Paused dates are not days of the Arc. Never for Seasonal Arcs.
+  Focus Guard stays independent.
+- **Restart:** one transaction ends the current Arc as `ended` (kept,
+  "Ended early", never "Completed", no Summit) and starts a new Rolling
+  Arc on Day 1 from the current effective setup, after typing RESTART.
+  A Seasonal Arc restarts as a Rolling Arc.
+- **Deleting the old Arc:** optional, never preselected, a separate step
+  after the restart with its own typed DELETE; whole-Arc deletion, as
+  exists today for completed Arcs.
+- **Sounds:** on a saved incomplete → complete transition only;
+  throttled; three original sets; a native player with no new dependency
+  recommended; follows the phone's silent mode (to be measured on
+  devices).
+- **Database migration: YES, schema v7** (additive: `arc_freezes`,
+  `winter_arc_sessions.closed_on`, `feedback_preferences`). **Backup
+  format: YES, format 4** (write 4, read 1–4; v1.2.0 rejects it safely).
+  Focus Guard's native schema gate (`FocusGuardStore.SCHEMA_VERSION`)
+  must move to 7 with it.
+- **Weekly Review and Calendar:** rules unchanged; dates come from a
+  day ↔ date mapping; paused and ended states added (spec § 12). The XP
+  ledger split is preserved.
+- **Recommended order:** 12E1 (foundation) → 12B → 12C → 12D → 12E2 →
+  12F → 12G → 12H → 12I, with a staged v1.3.0 / v1.4.0 fallback. Version
+  stays `1.2.0+3` until 12I (`1.3.0+4`).
+- Fifteen owner decisions (O1–O15) wait at Gate A2.
+
+## Phase 12A (v1.3.0 Arc Momentum planning, merged)
 
 Documentation only: [docs/PHASE_12A.md](docs/PHASE_12A.md),
 [docs/ARC_MOMENTUM_SPEC.md](docs/ARC_MOMENTUM_SPEC.md),
@@ -54,8 +105,8 @@ device, emulator or APK used.
   3 kept).
 - **Weekly Focus: DEFER** (it would need schema v7 + backup format 4).
   **Android widget: DEFER** (a separate v1.4 feasibility phase).
-- Roadmap 12B–12F with approval gates A–G. Version stays `1.2.0+3` until
-  12F (`1.3.0+4`).
+- Roadmap 12B–12F with approval gates A–G, as merged in PR #22
+  (`64d77e0`). The Phase 12A Addendum above proposes the expanded plan.
 - Author and committer of every commit:
   `Arunachaleswaran M S <arunachaleswaranms@gmail.com>` (repo-local
   config). No AI or co-author trailers.
@@ -461,7 +512,9 @@ disclosed in [PRIVACY.md](PRIVACY.md).
    The owner has since reported doing it (owner-reported, not
    instrumented).
 2. Publication-record PR #21: merged (`28db2af`).
-3. Phase 12A: independent review of the planning PR, then Gate A
-   ([docs/V1_3_ROADMAP.md](docs/V1_3_ROADMAP.md#approval-gates)): approve
-   the week model and metric naming, confirm the Weekly Focus and widget
-   deferrals, merge.
+3. Phase 12A: merged as PR #22 (`64d77e0`).
+4. Phase 12A Addendum: independent review of the PR, then Gate A2
+   ([docs/V1_3_ROADMAP.md](docs/V1_3_ROADMAP.md#approval-gates)): decide
+   O1–O15
+   ([docs/PHASE_12A_ADDENDUM.md](docs/PHASE_12A_ADDENDUM.md#m-owner-decisions-gate-a2)),
+   merge. No implementation phase starts before that.
