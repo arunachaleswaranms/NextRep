@@ -915,9 +915,9 @@ those of [spec § 12.5.2](ARC_MOMENTUM_SPEC.md#1252-day-partition-and-identities
 
 | # | Case | Must hold |
 |---|---|---|
-| F4-1 | Ended Arc, `closedOn` counted | `closedOn` is in `S` exactly once and never in `O`, for every `T` |
+| F4-1 | Ended Arc, `closedOn` counted | `closedOn` is never in `O(T)`. When `T ≥ closedOn`, it is in `S(T)` exactly once. When `T < closedOn` (after a date rollback), it is in neither `S(T)` nor `O(T)`: it is not elapsed. Its stored records are unchanged throughout |
 | F4-2 | Ended Arc viewed on `closedOn` | `O` is empty; `Σ N = elapsedDates.length`; spec example E |
-| F4-3 | Ended Arc viewed after `closedOn`, before and after its planned last day | The same figures as on `closedOn`; they never change again |
+| F4-3 | Ended Arc viewed after `closedOn`, before and after its planned last day | The same figures as on `closedOn`, for every `T ≥ closedOn` |
 | F4-4 | Ended Arc viewed before `closedOn` after a time-zone rollback | Dates up to `T` are settled, later ones upcoming; `O` is empty; figures return when the date does; spec example G |
 | F4-5 | Paused Arc, any number of paused dates | No paused date in `S` or `O`; day, full-day and Perfect counts equal those at the last lived day |
 | F4-6 | Freeze scheduled, not yet in effect | Today is open and counted once; figures equal an Arc with no freeze |
@@ -983,6 +983,7 @@ phone; the wording of the three sound names.
 | Stop conditions of the brief | none triggered |
 | Independent review of head `1ca8510`: **F1** (the freeze start counted pending goal revisions as activity), **F2** (`closed_on` could count a pending revision as a lived day and could fall after today following a clock rollback), **F3** (ended-Arc XP changed the settled / today split without restating it) | **RESOLVED** in a follow-up commit. F1: `frozenFrom = today + 1`; activity and configuration separated (C7); revisions never re-dated (AD6). F2: `closed_on` is the last lived day with explicit preconditions (AD11). Both: refused while the clock is behind stored activity (AD19). F3: one partition for every status, with proof and worked examples (spec § 12.5). Required tests in § L7. Documentation-only; no test was written or run for these |
 | Independent review of head `fc2384b`: **F4** (identities 1–3 of spec § 4.5 were said to hold unchanged, but their `[T open]` term counts an ended Arc's `closedOn` twice, and their consistency cases do not cover an ended Arc before its planned last day) | **RESOLVED** in a follow-up commit. Spec § 12.5.2 defines `openToday`, partitions the elapsed dates into settled and open, restates the day-count, consistency and Perfect Day identities with one rule for every status, proves them and gives examples A–J. F1–F3 are unchanged. Required tests: § L7 F4-1 to F4-16, spec R17–R23. Documentation-only; no test was written or run |
+| Independent review of head `f456fa1`: **F5** (three acceptance criteria still contradicted spec § 12.5.2: F4-1 and R19 counted `closedOn` as elapsed when `T < closedOn`, and R9 pointed at the superseded identities of § 4.5) | **RESOLVED** in a follow-up commit. F4-1, R19 and R9 reworded to match § 12.5.2; no formula or rule changed. Documentation-only |
 | `git diff --check` | PASS |
 | Changed files: only `docs/PHASE_12A_ADDENDUM.md`, `docs/ARC_CONTROL_SPEC.md`, `docs/V1_3_ROADMAP.md`, `docs/ARC_MOMENTUM_SPEC.md`, `PROJECT_STATE.md` | PASS |
 | No file under `lib/`, `android/`, `ios/`, `test/`, `integration_test/`, no `pubspec.*`, `.github/`, `tool/` changed; version `1.2.0+3` | PASS |

@@ -95,6 +95,10 @@ expanded scope is **proposed** until the owner passes Gate A2.
   restated on one partition of the elapsed dates (settled and open), with
   `openToday` false for ended Arcs and paused dates, so an ended Arc's
   last day is counted once. Completed-Arc rollback behaviour is kept.
+- **Independent review of `f456fa1`: finding F5, resolved.** Three
+  acceptance criteria (addendum F4-1, spec R19 and R9) reworded to match
+  spec § 12.5.2: an ended Arc's `closedOn` counts only once the local
+  date has reached it. No rule or formula changed.
 
 ## Phase 12A (v1.3.0 Arc Momentum planning, merged)
 

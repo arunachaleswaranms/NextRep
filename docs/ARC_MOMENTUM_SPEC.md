@@ -1384,8 +1384,11 @@ Checks, each `Σ N + |O| = |E|`, full days, Perfect Days:
   Arc is `ended`.
 - **F.** Identical to E. The Arc is neither over nor active, and the
   identity needs neither.
-- **G.** `1 + 0 = 1`. 7 Oct is settled (an ended Arc has no open day);
-  8 Oct is after `T`. When the date returns to 8 Oct the figures are E's.
+- **G.** `1 + 0 = 1`. 7 Oct is settled (an ended Arc has no open day).
+  8 Oct, although it is `closedOn`, is after `T`: it is in none of `E`,
+  `S` or `O`, so its Perfect Day is not counted (full 0, Perfect 0, 0%).
+  Its records are still stored, untouched. When the date returns to
+  8 Oct the figures are E's again (2 days, 1 full, 1 Perfect, 50%).
 - **H.** `3 + 1 = 4`. The 17 neutral dates (1–17 Oct) are in neither set.
 - **I.** `0 + 0 = 0`. No division happens on either side.
 - **J.** `37 + 0 = 37`. The Perfect Day of 12 Nov is one of the 14 in
@@ -1425,8 +1428,14 @@ intervals.
 ### 12.8 Additional acceptance criteria and tests
 
 - R9 For generated Arcs with zero, one and several pauses, and every
-  `T`: the identities of § 4.5, including the XP split, hold; paused
-  dates are in no total.
+  `T`, paused dates are in no total and these hold:
+  - the day-count, consistency and Perfect Day identities **as restated
+    in § 12.5.2**, for every lifecycle status. § 4.5's wording of
+    identities 1–3, with `[T open] = s.isParticipatingOn(T)`, is
+    superseded and must not be used for an `ended` Arc;
+  - the XP split **as restated in § 12.5.1**, for every lifecycle status;
+  - identity 5 of § 4.5 and every metric rule of §§ 3–4 that § 12 does not
+    restate, unchanged.
 - R10 A week that was `complete` before a freeze is identical after the
   freeze and after the resume.
 - R11 A `paused` week and a resumed week show the states of § 12.3.
@@ -1449,9 +1458,11 @@ intervals.
 - R18 Identities 1–3 of § 12.5.2 hold for the same Arcs and dates,
   against `ArcSummary.daysElapsed`, `fullDays`, `consistencyPercent` and
   `h.perfectDays.total`.
-- R19 An `ended` Arc's `closedOn` is counted exactly once in the day,
-  full-day and Perfect Day counts, for `T` equal to, after and before
-  `closedOn`.
+- R19 For an `ended` Arc, `closedOn` contributes exactly once to the
+  settled day, full-day and Perfect Day counts whenever `T ≥ closedOn`.
+  When `T < closedOn` after a date rollback, `closedOn` is not elapsed
+  and contributes to none of those counts. Its stored records are
+  unchanged, and it is counted again once `T` reaches `closedOn`.
 - R20 With no elapsed day, nothing is divided: the summary's consistency
   is 0 and the review shows none.
 - R21 Examples A–J of § 12.5.2 give exactly the figures shown.
