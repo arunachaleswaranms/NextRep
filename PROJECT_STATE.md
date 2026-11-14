@@ -1,11 +1,13 @@
 # PROJECT_STATE
 
-_Last updated: 2026-11-11. **Latest published release: v1.2.0** (tag
+_Last updated: 2026-11-15. **Latest published release: v1.2.0** (tag
 `v1.2.0` on `8ab0c43`, PR #20), published 18 October 2026; v1.1.0 and
 v1.0.0 before it. The v1.2 roadmap (Phases 11A–11F, PRs #15–#20), the
-publication record (PR #21) and the Phase 12A plan (PR #22) are merged.
-`main` is `64d77e0`, version `1.2.0+3`. **v1.3.0 is in planning (Phase
-12A Addendum in review), not released. No v1.3 feature is implemented.**_
+publication record (PR #21), the Phase 12A plan (PR #22) and the Phase
+12A Addendum (PR #23) are merged. `main` is `933960c`, version
+`1.2.0+3`. **v1.3.0 is in development, not released: Phase 12E1 (the
+lifecycle foundation: schema v7, backup format 4, the day ↔ date mapping)
+is in review; no v1.3 user-facing feature exists yet.**_
 
 | | |
 |---|---|
@@ -24,14 +26,39 @@ planned. TalkBack was deliberately deferred and doesn't block this model.
 ## Repo
 
 - Remote: https://github.com/arunachaleswaranms/NextRep (public, MIT)
-- `main`: `64d77e0` (PR #22, the Phase 12A plan), on top of `28db2af`
+- `main`: `933960c` (PR #23, the Phase 12A Addendum), on top of `64d77e0`
+  (PR #22, the Phase 12A plan) and `28db2af`
   (PR #21, the v1.2.0 publication record) and `8ab0c43` (squash merge of PR #20, Phase 11F; CI run
   [39096524587](https://github.com/arunachaleswaranms/NextRep/actions/runs/39096524587)
   green, both jobs). Tags `v1.0.0` (`b3f9c5c`), `v1.1.0` (`7e563e2`) and
   `v1.2.0` (`8ab0c43`). PRs #1–#20 are Phases 1–11F; #21 the publication
-  record; #22 Phase 12A.
+  record; #22 Phase 12A; #23 the Phase 12A Addendum.
 
-## Phase 12A Addendum (v1.3.0 Arc Control and Personalization, in review)
+## Phase 12E1 (v1.3.0 lifecycle foundation, in review)
+
+Contracts, findings and evidence: [docs/PHASE_12E1.md](docs/PHASE_12E1.md).
+Baseline `main` `933960c`; branch `phase/12e1-v1.3-lifecycle-foundation`.
+No user-facing feature, screen, setting or sound; nothing can create a
+freeze or an ended Arc yet. Version `1.2.0+3`; no release, no phone.
+
+- **Schema v7**, one additive v6 → v7 step: `arc_freezes` (one open
+  interval per Arc), `winter_arc_sessions.closed_on`,
+  `feedback_preferences`. The step is atomic (DDL and `user_version`
+  together): a failed upgrade leaves v6 intact and is retried.
+- **Backup format 4** (write 4, read 1–4): `ended`, `closedOn`,
+  `freezes`, `feedback`. Formats 1–3 keep their frozen fields and
+  statuses; they restore with no pause and keep the device's sound
+  setting. Restore stays one transaction.
+- **Domain:** `WinterArcStatus.ended` (never completed, no Summit);
+  `ArcFreeze` intervals; the freeze-aware mapping (`dateOfDay`,
+  `dayNumberOf`, `isParticipatingOn`, `participatingDatesThrough`,
+  `isOverOn`, `positionOn`, `isOpenOn`); every § F1 reader and § F2
+  status site reviewed; the AD19 clock guard (read-only). Zero-freeze
+  results are exactly v1.2.0's (property tests).
+- **Focus Guard** native gate 6 → 7 (exact version), JVM-tested.
+- Tests: 5 new files; old tests changed only in version constants.
+
+## Phase 12A Addendum (v1.3.0 Arc Control and Personalization, merged)
 
 Documentation only:
 [docs/PHASE_12A_ADDENDUM.md](docs/PHASE_12A_ADDENDUM.md),
