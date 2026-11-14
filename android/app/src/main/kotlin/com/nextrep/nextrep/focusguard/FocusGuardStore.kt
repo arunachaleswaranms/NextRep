@@ -29,7 +29,7 @@ data class FocusGuardConfig(
 class UnreadableConfigException(message: String) : Exception(message)
 
 /**
- * Focus Guard's rows in Drift's schema-v6 database, read and claimed by the
+ * Focus Guard's rows in Drift's schema-v7 database, read and claimed by the
  * background check. The schema and representation are Drift's (see
  * `lib/core/database/tables.dart`):
  *
@@ -48,6 +48,12 @@ class FocusGuardStore(private val sql: SqlRunner) {
     /** Drift's `PRAGMA user_version`: the schema the rows follow. */
     fun schemaVersion(): Long =
         sql.query("PRAGMA user_version", emptyList()).single().single() as Long
+
+    /**
+     * Whether the database is exactly the schema these statements are written
+     * for ([SCHEMA_VERSION]). Any other version, older or newer, is left alone.
+     */
+    fun hasSupportedSchema(): Boolean = supportsSchema(schemaVersion())
 
     /**
      * The configuration, or null if the user never saved one (Focus Guard is
@@ -126,8 +132,15 @@ class FocusGuardStore(private val sql: SqlRunner) {
                 lastNudgedOn >= today.toString() &&
                 lastNudgedOn <= today.plusDays(1).toString()
 
-        /** The Drift schema these statements are written for. */
-        const val SCHEMA_VERSION = 6L
+        /**
+         * The Drift schema these statements are written for:
+         * `AppDatabase.schemaVersion`. Schema v7 (v1.3) added tables and a
+         * column elsewhere and left Focus Guard's two tables as in v6.
+         */
+        const val SCHEMA_VERSION = 7L
+
+        /** The exact-version gate: only [SCHEMA_VERSION] is read. */
+        fun supportsSchema(version: Long): Boolean = version == SCHEMA_VERSION
 
         // FocusGuardRules in lib/domain/focus_guard/focus_guard_settings.dart.
         const val MIN_BUDGET_MINUTES = 1L

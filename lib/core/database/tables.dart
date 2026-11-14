@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+import '../../domain/feedback/feedback_preferences.dart';
 import '../../domain/focus_guard/focus_guard_settings.dart';
 import '../../domain/habit/habit.dart';
 import '../../domain/progress/day_mode.dart';
@@ -38,6 +39,71 @@ class WinterArcSessions extends Table {
   /// A calendar fact, deliberately not derived from [startedAt].
   TextColumn get participationStartDate =>
       text().map(const LocalDateConverter()).nullable()();
+
+  /// The last counted date of an `ended` Arc (schema v7), null for every
+  /// other status. Appended, as `ALTER TABLE ADD COLUMN` does; existing
+  /// rows read null.
+  TextColumn get closedOn =>
+      text().map(const LocalDateConverter()).nullable()();
+}
+
+/// Freeze intervals of a Rolling Arc (schema v7). The calendar dates
+/// `[frozen_from, resumed_on)` are paused: not days of the Arc. An open
+/// interval (`resumed_on` null) has no known end. At most one interval of
+/// a session is open.
+///
+/// Nothing in the app writes this table yet (Phase 12E2 adds Freeze); only
+/// restore inserts rows, from a format-4 backup.
+@DataClassName('ArcFreezeRow')
+@TableIndex.sql(
+  'CREATE UNIQUE INDEX one_open_freeze ON arc_freezes (session_id) '
+  'WHERE resumed_on IS NULL',
+)
+class ArcFreezes extends Table {
+  IntColumn get sessionId => integer().references(
+    WinterArcSessions,
+    #id,
+    onDelete: KeyAction.cascade,
+  )();
+
+  /// The first paused local date.
+  TextColumn get frozenFrom => text().map(const LocalDateConverter())();
+
+  /// The first challenge date after the pause; null while it is open.
+  TextColumn get resumedOn =>
+      text().map(const LocalDateConverter()).nullable()();
+  DateTimeColumn get requestedAt => dateTime()();
+  DateTimeColumn get resumedAt => dateTime().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {sessionId, frozenFrom};
+
+  // ISO dates compare chronologically as text.
+  @override
+  List<String> get customConstraints => [
+    'CHECK (resumed_on IS NULL OR resumed_on > frozen_from)',
+  ];
+}
+
+/// The app's feedback settings (schema v7): a single row with id 1, absent
+/// until the settings are first changed (no row reads as the defaults:
+/// sounds on, Ice Crystal). App-level, not Arc-owned.
+@DataClassName('FeedbackPreferencesRow')
+class FeedbackPrefs extends Table {
+  @override
+  String get tableName => 'feedback_preferences';
+
+  // ignore: recursive_getters
+  IntColumn get id => integer().check(id.equals(1))();
+  BoolColumn get soundsEnabled => boolean()();
+  TextColumn get soundTheme =>
+      textEnum<SoundTheme>()
+      // ignore: recursive_getters
+      .check(soundTheme.isIn(['iceCrystal', 'summitSpark', 'warmEmber']))();
+  DateTimeColumn get updatedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {id};
 }
 
 /// A session's habits. [target], [minimumTarget] and [enabled] hold the

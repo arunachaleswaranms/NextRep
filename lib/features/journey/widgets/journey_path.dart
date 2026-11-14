@@ -150,10 +150,17 @@ class _JourneyPathState extends State<JourneyPath> {
     final litFrom = joinIndex > 0
         ? layout.centerOf(layout.indexOfDay(journey.days[joinIndex].dayNumber))
         : 0.0;
+    // Without a today marker (before the start, after an ended arc's last
+    // day, or on a paused date: schema v7) the trail ends at the last day
+    // that has a record. Before v7 that case only meant "before the start",
+    // which has none.
+    final lastLived = journey.days.lastIndexWhere((d) => d.record != null);
     final litUntil = todayIndex >= 0
         ? layout.centerOf(layout.indexOfDay(journey.days[todayIndex].dayNumber))
         : journey.days.every((d) => !d.isFuture)
         ? layout.total
+        : lastLived >= 0
+        ? layout.centerOf(layout.indexOfDay(journey.days[lastLived].dayNumber))
         : 0.0;
 
     return LayoutBuilder(
@@ -417,8 +424,13 @@ class _DayRow extends StatelessWidget {
           child: Text(
             day.isToday
                 ? 'TODAY · Day ${day.dayNumber}'
-                : 'Day ${day.dayNumber} · '
-                      '${_dayMonth.format(day.date.toLocalDateTime())}',
+                : switch (day.date) {
+                    final date? =>
+                      'Day ${day.dayNumber} · '
+                          '${_dayMonth.format(date.toLocalDateTime())}',
+                    // Not dated yet: after an open pause (schema v7).
+                    null => 'Day ${day.dayNumber}',
+                  },
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: text.labelSmall?.copyWith(
@@ -765,13 +777,13 @@ class _SummitRow extends StatelessWidget {
                               letterSpacing: 3,
                             ),
                           ),
-                          Text(
-                            reached
-                                ? 'Reached'
-                                : 'Day ${day.dayNumber} · '
-                                      '${DateFormat('d MMMM').format(day.date.toLocalDateTime())}',
-                            style: text.titleMedium,
-                          ),
+                          Text(switch (day.date) {
+                            _ when reached => 'Reached',
+                            final date? =>
+                              'Day ${day.dayNumber} · '
+                                  '${DateFormat('d MMMM').format(date.toLocalDateTime())}',
+                            null => 'Day ${day.dayNumber}',
+                          }, style: text.titleMedium),
                         ],
                       ),
                     ),

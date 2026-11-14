@@ -76,7 +76,8 @@ abstract final class AppRoutes {
   ///
   /// 1. an arc in setup → Habit Setup
   /// 2. an active arc → Today
-  /// 3. otherwise, after any completed arc → the latest one's summary
+  /// 3. otherwise, after any finished (completed or ended) arc → the
+  ///    latest one's summary
   /// 4. a first install → onboarding
   static String home(ArcResolution resolution) {
     if (resolution.setup != null) return habitSetup;
@@ -91,7 +92,8 @@ abstract final class AppRoutes {
         null => onboarding,
         WinterArcStatus.setup => habitSetup,
         WinterArcStatus.active => today,
-        WinterArcStatus.completed => arc(session!.id),
+        // Finished history: read-only, opened on its summary.
+        WinterArcStatus.completed || WinterArcStatus.ended => arc(session!.id),
       };
 
   /// Where a tapped reminder leads. Reminders only ever point at the active

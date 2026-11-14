@@ -22,7 +22,8 @@ import java.io.File
  * Opened read-write without CREATE (a missing database is never created),
  * with NO_LOCALIZED_COLLATORS (no `android_metadata` table is added) and an
  * explicit rollback journal, Drift's own mode (no compatibility WAL). The
- * schema is never changed, and a database that isn't schema v6 is left alone.
+ * schema is never changed, and a database that isn't exactly
+ * [FocusGuardStore.SCHEMA_VERSION] (schema v7) is left alone.
  */
 object FocusGuardDatabase {
     /** Relative to the app's data directory. */
@@ -48,7 +49,7 @@ object FocusGuardDatabase {
         }
         return db.use {
             val store = FocusGuardStore(AndroidSqlRunner(it))
-            if (store.schemaVersion() != FocusGuardStore.SCHEMA_VERSION) null else block(store)
+            if (!store.hasSupportedSchema()) null else block(store)
         }
     }
 }

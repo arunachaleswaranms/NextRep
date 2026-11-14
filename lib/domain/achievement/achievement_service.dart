@@ -161,6 +161,7 @@ final class AchievementService {
     };
     return AchievementBoard(
       startDate: session.startDate,
+      freezes: session.freezes,
       entries: [
         for (final definition in AchievementCatalog.all)
           AchievementStatus(

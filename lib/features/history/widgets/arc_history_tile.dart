@@ -23,7 +23,13 @@ class ArcHistoryTile extends ConsumerWidget {
     final text = Theme.of(context).textTheme;
     final active = session.status == WinterArcStatus.active;
     final range = arcDateRange(session);
-    final status = active ? 'ACTIVE' : 'COMPLETED';
+    // Never "completed" for an arc ended early (schema v7; only a restored
+    // format-4 backup holds one in Phase 12E1).
+    final status = switch (session.status) {
+      WinterArcStatus.active => 'ACTIVE',
+      WinterArcStatus.ended => 'ENDED EARLY',
+      WinterArcStatus.completed || WinterArcStatus.setup => 'COMPLETED',
+    };
     final stats = card.value;
     final kind = arcKindTitle(session);
     final joined = session.joinedLate

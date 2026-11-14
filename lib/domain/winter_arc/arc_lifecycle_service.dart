@@ -12,8 +12,11 @@ import 'winter_arc_session.dart';
 /// [reconcile] at its entry points (launch, resume, Today / Journey refresh),
 /// so the close-out happens the first time the app is used after the arc.
 ///
-/// Only the current (unfinished) arc is ever examined. Completed arcs are
-/// history and never written again.
+/// Only the current (unfinished) arc is ever examined. Completed and ended
+/// arcs are history and never written again. A paused arc (an open freeze,
+/// schema v7) is never completed: [WinterArcSession.isOverOn] is false
+/// while it is paused, and a resumed arc completes the day after its
+/// moved Day 92.
 final class ArcLifecycleService {
   ArcLifecycleService({required this._sessions, required this._clock});
 

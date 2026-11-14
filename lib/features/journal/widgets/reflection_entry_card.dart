@@ -17,7 +17,10 @@ class ReflectionEntryCard extends StatelessWidget {
   });
 
   final DailyReflection reflection;
-  final int dayNumber;
+
+  /// The challenge day of the reflection's date. Reflections are only ever
+  /// on challenge days, so it is always known; null only shows the date.
+  final int? dayNumber;
 
   /// E.g. an Edit button for today's reflection, shown below the entry.
   final Widget? trailing;
@@ -30,7 +33,7 @@ class ReflectionEntryCard extends StatelessWidget {
         .format(reflection.date.toLocalDateTime());
     final mood = reflection.mood;
     final label = [
-      'Day $dayNumber, $date',
+      if (dayNumber case final day?) 'Day $day, $date' else date,
       if (mood != null) 'Mood: ${mood.label}',
       if (reflection.win case final win?) 'Win: $win',
       if (reflection.improvement case final next?) 'To improve: $next',
@@ -48,7 +51,8 @@ class ReflectionEntryCard extends StatelessWidget {
               runSpacing: WinterSpacing.xs,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                Text('Day $dayNumber', style: text.titleMedium),
+                if (dayNumber case final day?)
+                  Text('Day $day', style: text.titleMedium),
                 Text(date, style: text.bodySmall),
                 if (mood != null) _MoodChip(mood: mood),
               ],

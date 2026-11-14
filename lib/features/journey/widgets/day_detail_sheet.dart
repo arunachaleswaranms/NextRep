@@ -85,7 +85,8 @@ class DayDetailSheet extends StatelessWidget {
             ),
             const SizedBox(height: WinterSpacing.xs),
             Text(
-              DateFormat('EEEE, d MMMM y').format(day.date.toLocalDateTime()),
+              // Days with a record, and days before joining, are dated.
+              DateFormat('EEEE, d MMMM y').format(day.date!.toLocalDateTime()),
               style: text.bodyMedium,
             ),
             Text(
@@ -183,7 +184,8 @@ class NotJoinedDaySheet extends StatelessWidget {
             Text('Day ${day.dayNumber}', style: text.headlineSmall),
             const SizedBox(height: WinterSpacing.xs),
             Text(
-              DateFormat('EEEE, d MMMM y').format(day.date.toLocalDateTime()),
+              // Days with a record, and days before joining, are dated.
+              DateFormat('EEEE, d MMMM y').format(day.date!.toLocalDateTime()),
               style: text.bodyMedium,
             ),
             const SizedBox(height: WinterSpacing.md),

@@ -4,9 +4,12 @@ import 'winter_arc_session.dart';
 
 /// Persistence boundary for Winter Arc sessions.
 ///
-/// A user can have any number of completed sessions but at most one
-/// unfinished one (setup or active). Implementations enforce that when
-/// creating a session.
+/// A user can have any number of finished sessions (completed or ended)
+/// but at most one unfinished one (setup or active). Implementations
+/// enforce that when creating a session.
+///
+/// Every session returned carries its freeze intervals (oldest first) and
+/// its `closedOn` date (schema v7).
 ///
 /// Implementations throw `PersistenceFailure` on storage errors.
 abstract interface class WinterArcRepository {
@@ -19,7 +22,13 @@ abstract interface class WinterArcRepository {
   /// than one.
   Future<WinterArcSession?> currentSession();
 
-  /// The most recently created completed session, or null.
+  /// The most recently created **finished** session (completed or ended),
+  /// or null: the read-only history the app falls back to when nothing is
+  /// unfinished. An ended arc is history like a completed one, but it is
+  /// never counted or awarded as completed (see [WinterArcStatus]).
+  ///
+  /// The name predates the `ended` status (schema v7) and is kept for the
+  /// existing callers.
   Future<WinterArcSession?> latestCompletedSession();
 
   /// The session with [id], or null.
@@ -42,12 +51,14 @@ abstract interface class WinterArcRepository {
     required List<Habit> habits,
   });
 
-  /// Persists [session]'s status, dates, participation start and start
-  /// timestamp. The kind never changes.
+  /// Persists [session]'s status, dates, participation start, start
+  /// timestamp and closing date. The kind never changes. Freeze intervals
+  /// are not written by this method (nothing writes them in Phase 12E1).
   Future<void> updateSession(WinterArcSession session);
 
   /// Permanently deletes session [id] and everything it owns (habits,
-  /// revisions, progress, day modes, XP, achievement unlocks, reflections),
+  /// revisions, progress, day modes, XP, achievement unlocks, reflections,
+  /// freeze intervals),
   /// in one transaction, provided its status is [expected]. App-level data
   /// (reminder preferences) is never touched.
   ///

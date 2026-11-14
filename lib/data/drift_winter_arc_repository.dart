@@ -26,10 +26,12 @@ final class DriftWinterArcRepository implements WinterArcRepository {
     () => _newest(statuses: _unfinished),
   );
 
+  static const _finished = [WinterArcStatus.completed, WinterArcStatus.ended];
+
   @override
   Future<WinterArcSession?> latestCompletedSession() => guardPersistence(
-    'load latest completed session',
-    () => _newest(statuses: [WinterArcStatus.completed]),
+    'load latest finished session',
+    () => _newest(statuses: _finished),
   );
 
   @override
@@ -38,7 +40,7 @@ final class DriftWinterArcRepository implements WinterArcRepository {
         final row = await (_db.select(
           _db.winterArcSessions,
         )..where((s) => s.id.equals(id))).getSingleOrNull();
-        return row == null ? null : _toDomain(row);
+        return row == null ? null : (await _toDomain([row])).single;
       });
 
   @override
@@ -47,7 +49,7 @@ final class DriftWinterArcRepository implements WinterArcRepository {
         final rows = await (_db.select(
           _db.winterArcSessions,
         )..orderBy([(s) => OrderingTerm.desc(s.id)])).get();
-        return rows.map(_toDomain).toList(growable: false);
+        return _toDomain(rows);
       });
 
   @override
@@ -84,7 +86,8 @@ final class DriftWinterArcRepository implements WinterArcRepository {
           for (final habit in habits) habitToCompanion(row.id, habit),
         ]);
       });
-      return _toDomain(row);
+      // A new session has no freeze yet.
+      return (await _toDomain([row])).single;
     }),
   );
 
@@ -101,6 +104,7 @@ final class DriftWinterArcRepository implements WinterArcRepository {
                 status: Value(session.status),
                 startedAt: Value(session.startedAt),
                 participationStartDate: Value(session.participationStartDate),
+                closedOn: Value(session.closedOn),
               ),
             );
         if (updated != 1) {
@@ -128,13 +132,14 @@ final class DriftWinterArcRepository implements WinterArcRepository {
               'Session $id is ${row.status.name}, not ${expected.name}',
             );
           }
-          // Habits, modes, XP, unlocks and reflections reference the
-          // session, and progress and revisions reference its habits, all
-          // with ON DELETE CASCADE.
+          // Habits, freezes, modes, XP, unlocks and reflections reference
+          // the session, and progress and revisions reference its habits,
+          // all with ON DELETE CASCADE.
           await (_db.delete(
             _db.winterArcSessions,
           )..where((s) => s.id.equals(id))).go();
           for (final table in [
+            'arc_freezes',
             'habits',
             'habit_revisions',
             'daily_habit_progress_entries',
@@ -166,17 +171,47 @@ final class DriftWinterArcRepository implements WinterArcRepository {
       query.where((s) => s.status.isIn(statuses.map((v) => v.name)));
     }
     final row = await query.getSingleOrNull();
-    return row == null ? null : _toDomain(row);
+    return row == null ? null : (await _toDomain([row])).single;
   }
 
-  WinterArcSession _toDomain(SessionRow row) => WinterArcSession(
-    id: row.id,
-    kind: row.arcKind,
-    participationStartDate: row.participationStartDate,
-    startDate: row.startDate,
-    endDate: row.endDate,
-    status: row.status,
-    createdAt: row.createdAt,
-    startedAt: row.startedAt,
-  );
+  /// [rows] as domain sessions, in the same order, each with its freeze
+  /// intervals (oldest first), read in one query.
+  Future<List<WinterArcSession>> _toDomain(List<SessionRow> rows) async {
+    if (rows.isEmpty) return const [];
+    final freezes = <int, List<ArcFreeze>>{};
+    final freezeRows =
+        await (_db.select(_db.arcFreezes)
+              ..where((f) => f.sessionId.isIn(rows.map((r) => r.id)))
+              ..orderBy([
+                (f) => OrderingTerm.asc(f.sessionId),
+                (f) => OrderingTerm.asc(f.frozenFrom),
+              ]))
+            .get();
+    for (final f in freezeRows) {
+      (freezes[f.sessionId] ??= []).add(freezeFromRow(f));
+    }
+    return [
+      for (final row in rows)
+        WinterArcSession(
+          id: row.id,
+          kind: row.arcKind,
+          participationStartDate: row.participationStartDate,
+          startDate: row.startDate,
+          endDate: row.endDate,
+          status: row.status,
+          createdAt: row.createdAt,
+          startedAt: row.startedAt,
+          freezes: List.unmodifiable(freezes[row.id] ?? const <ArcFreeze>[]),
+          closedOn: row.closedOn,
+        ),
+    ];
+  }
 }
+
+/// A stored freeze interval as the domain model.
+ArcFreeze freezeFromRow(ArcFreezeRow row) => ArcFreeze(
+  frozenFrom: row.frozenFrom,
+  resumedOn: row.resumedOn,
+  requestedAt: row.requestedAt,
+  resumedAt: row.resumedAt,
+);

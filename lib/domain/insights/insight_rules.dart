@@ -6,8 +6,9 @@ import 'insight_snapshot.dart';
 /// Pure rules turning the stored history of every arc into insights.
 ///
 /// Scope: the participating days of every started arc
-/// ([ArcHistory.elapsedDates]): completed arcs in full and the active arc
-/// up to and including today. Days before the user joined a seasonal arc
+/// ([ArcHistory.elapsedDates]): completed arcs in full, ended arcs up to
+/// their last counted day, and the active arc up to and including today,
+/// never a paused date. Days before the user joined a seasonal arc
 /// aren't participating days, so they never count as elapsed, as a habit's
 /// applicable day or towards reflections. Arcs in setup have no history and
 /// are skipped; future dates are never evaluated. Nothing is read from
@@ -57,15 +58,21 @@ abstract final class InsightRules {
     for (final arc in arcs) {
       final history = arc.history;
       final session = history.session;
-      if (session.status == WinterArcStatus.completed) {
-        completed++;
-      } else {
-        active = session;
-        // The arc's own day number (a season day for a seasonal arc), not
-        // the count of days taken part in.
-        activeDay = history.elapsedDates.isEmpty
-            ? null
-            : session.dayNumberOf(history.elapsedDates.last);
+      // Only a completed arc counts as completed, and only the active arc
+      // is the active one. An ended arc (schema v7) is neither: its lived
+      // days still count below.
+      switch (session.status) {
+        case WinterArcStatus.completed:
+          completed++;
+        case WinterArcStatus.active:
+          active = session;
+          // The arc's own day number (a season day for a seasonal arc), not
+          // the count of days taken part in.
+          activeDay = history.elapsedDates.isEmpty
+              ? null
+              : session.dayNumberOf(history.elapsedDates.last);
+        case WinterArcStatus.ended || WinterArcStatus.setup:
+          break;
       }
       final dates = history.elapsedDates;
       elapsed += dates.length;
@@ -113,7 +120,8 @@ abstract final class InsightRules {
             MoodPoint(
               sessionId: session.id,
               date: mark.date,
-              dayNumber: session.dayNumberOf(mark.date),
+              // An elapsed date is a challenge date: never paused.
+              dayNumber: session.dayNumberOf(mark.date)!,
               mood: mood,
             ),
           );

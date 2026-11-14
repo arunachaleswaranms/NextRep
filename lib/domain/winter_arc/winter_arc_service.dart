@@ -110,8 +110,8 @@ final class ArcSetup {
   final LocalDate today;
 
   /// The season day number of [today] for this arc (a late join shows
-  /// "Day 15"), or 1 for a rolling arc.
-  int get todayDay => session.dayNumberOf(today);
+  /// "Day 15"), or 1 for a rolling arc. A setup is never paused.
+  int get todayDay => session.dayNumberOf(today)!;
 
   int get enabledCount => habits.where((h) => h.enabled).length;
 
@@ -403,10 +403,12 @@ final class WinterArcService {
     return session;
   }
 
-  /// Each habit of the latest completed arc as it stood on its last day:
-  /// the current title and the configuration in effect on the end date
-  /// (from its revision history, not the original baseline). These become
-  /// the new arc's baseline.
+  /// Each habit of the latest finished arc (completed, or ended by a later
+  /// Restart) at its latest configuration: the current title and the
+  /// configuration in effect on the end date, from its revision history,
+  /// not the original baseline. Every revision is dated on or before the
+  /// end date, so this includes one still waiting when an arc was ended
+  /// (addendum AD11). These become the new arc's baseline.
   Future<List<Habit>?> _reusable({required DateTime createdAt}) async {
     final last = await _sessions.latestCompletedSession();
     if (last == null) return null;
