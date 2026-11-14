@@ -1,5 +1,6 @@
 import '../../core/time/local_date.dart';
 import '../achievement/achievement.dart';
+import '../feedback/feedback_preferences.dart';
 import '../habit/habit.dart';
 import '../habit/habit_config.dart';
 import '../progress/daily_habit_progress.dart';
@@ -22,26 +23,32 @@ import '../xp/xp.dart';
 ///   Coach's active hours and mode, and the data holds Focus Guard's
 ///   configuration (daily budget and selected app package names). Arcs
 ///   are laid out as in format 2.
+/// * Format 4 (v1.3, Phase 12E1): an arc may be `ended` with its
+///   `closedOn` date, and holds its freeze intervals (`freezes`); the data
+///   holds the feedback settings (`feedback`: sounds on / off and the
+///   sound set, or null when never changed).
 ///
-/// The app writes format 3 only and reads all three. An older file keeps
+/// The app writes format 4 only and reads all four. An older file keeps
 /// its meaning: its checksum and structure are checked by its own
-/// format's rules, and only then is it read into the current model (a
+/// format's rules (an older format can't hold an `ended` arc, a freeze or
+/// feedback settings), and only then is it read into the current model (a
 /// format-1 arc as a rolling arc joined on its start date; Hydration Coach
-/// and Focus Guard at their defaults). NextRep 1.1 and earlier read only
-/// formats 1 and 2, so they reject a format-3 file as made by a newer
+/// and Focus Guard at their defaults; no freeze, no closing date; the
+/// device's feedback settings kept). NextRep 1.2 and earlier read only
+/// formats 1 to 3, so they reject a format-4 file as made by a newer
 /// version, changing nothing.
 abstract final class BackupFormat {
   /// The `product` field of every NextRep backup.
   static const product = 'NextRep';
 
   /// The format this app writes.
-  static const formatVersion = 3;
+  static const formatVersion = 4;
 
   /// The formats this app reads. Anything else, including a newer format,
   /// is rejected before any of it is interpreted.
-  static const readableVersions = {1, 2, 3};
+  static const readableVersions = {1, 2, 3, 4};
 
-  /// The checksum algorithm of formats 1 to 3.
+  /// The checksum algorithm of formats 1 to 4.
   static const checksumAlgorithm = 'sha256';
 
   /// File extension, without the dot.
@@ -153,10 +160,20 @@ final class BackupFocusGuard {
   final List<String> selectedPackages;
 }
 
-/// Everything a backup restores: every arc, and the reminder settings and
-/// Focus Guard configuration if they were ever saved.
+/// Everything a backup restores: every arc, and the reminder settings,
+/// Focus Guard configuration and feedback settings if they were ever
+/// saved.
 final class BackupData {
-  const BackupData({required this.arcs, this.reminders, this.focusGuard});
+  const BackupData({
+    required this.arcs,
+    this.reminders,
+    this.focusGuard,
+    this.feedback,
+    this.includesFeedback = false,
+  }) : assert(
+         feedback == null || includesFeedback,
+         'feedback settings come from a format that includes them',
+       );
 
   static const empty = BackupData(arcs: []);
 
@@ -164,6 +181,17 @@ final class BackupData {
   final List<BackupArc> arcs;
   final BackupReminderTimes? reminders;
   final BackupFocusGuard? focusGuard;
+
+  /// The feedback settings as stored (format 4), or null when they were
+  /// never changed (the defaults). Only meaningful when [includesFeedback].
+  final FeedbackPreferences? feedback;
+
+  /// Whether this data states the feedback settings at all: true for the
+  /// app's own snapshot and for a format-4 file, false for formats 1–3,
+  /// which predate them. A restore replaces the device's feedback settings
+  /// with [feedback] (null: back to the defaults) only when this is true;
+  /// otherwise it keeps them.
+  final bool includesFeedback;
 
   bool get isEmpty => arcs.isEmpty;
 }
@@ -199,9 +227,11 @@ final class BackupSummary {
     var reflections = 0;
     var achievements = 0;
     for (final arc in data.arcs) {
-      if (arc.session.status == WinterArcStatus.completed) {
+      // An ended arc (format 4) is neither completed nor unfinished.
+      final status = arc.session.status;
+      if (status == WinterArcStatus.completed) {
         completed++;
-      } else {
+      } else if (status.isUnfinished) {
         unfinished = arc.session;
       }
       reflections += arc.reflections.length;
@@ -217,6 +247,8 @@ final class BackupSummary {
   }
 
   final int arcCount;
+
+  /// Completed arcs only: an ended arc is not counted.
   final int completedArcs;
 
   /// The arc in setup or running, if any.

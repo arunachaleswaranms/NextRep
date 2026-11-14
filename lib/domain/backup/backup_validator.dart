@@ -32,10 +32,18 @@ final class ValidatedBackup {
 ///
 /// * at most one unfinished (setup or active) arc; unique arc ids; every
 ///   arc keeps the invariants of its kind (`WinterArcRules.problemWith`: a
-///   rolling 92-day window joined on its start date, or one year's 1
-///   October – 31 December season joined inside it; no participation
-///   while in setup); a completed arc is over and a started one has
-///   started
+///   rolling arc of 92 challenge days joined on its start date, or one
+///   year's 1 October – 31 December season joined inside it; no
+///   participation while in setup); a completed arc is over and a started
+///   one has started
+/// * format 4: freezes only on a started rolling arc, ordered, never
+///   overlapping, at most one open and only on an active arc, each
+///   starting after a lived day and before the last challenge day, with
+///   the rolling end date `start + 91 + closed paused days`; a pause starts
+///   no later than the day after the export and was resumed no later than
+///   the export; an `ended` arc has a `closedOn` that is one of its
+///   challenge dates and not after the export, no open pause, and nothing
+///   but an `ended` arc has a `closedOn` (all in `WinterArcRules`)
 /// * habits: unique id and sort order per arc, at most
 ///   [SetupHabitRules.maxHabits], a known type, a target within the
 ///   editing limits (a clock-time target in the night window, the same on
@@ -43,7 +51,12 @@ final class ValidatedBackup {
 /// * every revision, progress row, XP entry, day mode, unlock and
 ///   reflection references its arc (the format nests them) and, where it
 ///   has one, a habit of that arc; its date is a participating date of the
-///   arc (never before the user joined) and not after the export
+///   arc (never before the user joined, never paused, never after an ended
+///   arc's last day) and not after the export
+/// * a goal revision is configuration, not activity: its date lies between
+///   the participation start and the end date and no later than the day
+///   after the export, and may be a paused date or after an ended arc's
+///   last day (a change that was waiting then)
 /// * a clock-time habit's progress is "not logged" (0) or a night time, and
 ///   its completion agrees with the target in effect on that date (with
 ///   that date's revisions and mode, never today's)
@@ -78,7 +91,8 @@ abstract final class BackupValidator {
     for (final (i, arc) in data.arcs.indexed) {
       final at = 'arcs[$i]';
       if (!ids.add(arc.session.id)) _fail(at, 'duplicate arc id');
-      if (arc.session.status != WinterArcStatus.completed) unfinished++;
+      // Unfinished means setup or active: an ended arc is history.
+      if (arc.session.status.isUnfinished) unfinished++;
       if (unfinished > 1) _fail(at, 'more than one unfinished arc');
       _checkArc(arc, at, latest);
     }
@@ -121,14 +135,36 @@ abstract final class BackupValidator {
         !session.endDate.isBefore(latest)) {
       _fail('$at.endDate', 'a completed arc that has not ended');
     }
+    // A freeze starts tomorrow at the earliest, and is resumed today at the
+    // latest (Freeze and Resume, Phase 12E2).
+    for (final (j, freeze) in session.freezes.indexed) {
+      if (freeze.frozenFrom.isAfter(latest.addDays(1))) {
+        _fail('$at.freezes[$j].frozenFrom', 'after the export date');
+      }
+      if (freeze.resumedOn case final resumed? when resumed.isAfter(latest)) {
+        _fail('$at.freezes[$j].resumedOn', 'after the export date');
+      }
+    }
+    // An ended arc closes on its last lived day, never after the restart.
+    if (session.closedOn case final closed? when closed.isAfter(latest)) {
+      _fail('$at.closedOn', 'after the export date');
+    }
 
     // History only exists on participating dates: never before the user
-    // joined a seasonal arc.
+    // joined a seasonal arc, never on a paused date, never after an ended
+    // arc's last counted day.
     bool inArc(LocalDate date) => session.isParticipatingOn(date);
     void checkDate(LocalDate date, String where) {
       if (!inArc(date)) _fail(where, 'date outside the arc');
       if (date.isAfter(latest)) _fail(where, 'date after the export');
     }
+
+    // The calendar span from joining to the end date. Without a pause or a
+    // closing date it is exactly the participating dates.
+    bool inSpan(LocalDate date) =>
+        joined != null &&
+        !date.isBefore(joined) &&
+        !date.isAfter(session.endDate);
 
     // Habits.
     // A setup may be empty for a moment (habits removed before adding
@@ -177,9 +213,12 @@ abstract final class BackupValidator {
     for (final (j, revision) in arc.revisions.indexed) {
       final where = '$at.habitRevisions[$j]';
       final habit = habitFor(revision.habitId, where);
-      // Revisions take effect on the next challenge day, which can be the
-      // day after the export.
-      if (!inArc(revision.effectiveFrom) ||
+      // Revisions take effect on the next calendar date, which can be the
+      // day after the export. They are configuration, not activity
+      // (addendum C7): the date may be a paused date, or after an ended
+      // arc's last day, where it waits without changing a lived day. It
+      // must still lie within the arc's calendar span from joining.
+      if (!inSpan(revision.effectiveFrom) ||
           revision.effectiveFrom.isAfter(latest.addDays(1))) {
         _fail('$where.effectiveFrom', 'date outside the arc');
       }

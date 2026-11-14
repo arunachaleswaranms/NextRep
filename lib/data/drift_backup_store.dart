@@ -5,6 +5,7 @@ import '../domain/achievement/achievement.dart';
 import '../domain/backup/backup_document.dart';
 import '../domain/backup/backup_store.dart';
 import '../domain/backup/backup_validator.dart';
+import '../domain/feedback/feedback_preferences.dart';
 import '../domain/focus_guard/focus_guard_settings.dart';
 import '../domain/habit/habit_config.dart';
 import '../domain/progress/daily_habit_progress.dart';
@@ -12,6 +13,7 @@ import '../domain/reflection/daily_reflection.dart';
 import '../domain/reminder/reminder_preferences.dart';
 import '../domain/winter_arc/winter_arc_session.dart';
 import '../domain/xp/xp.dart';
+import 'drift_winter_arc_repository.dart' show freezeFromRow;
 import 'habit_mapping.dart';
 import 'persistence_guard.dart';
 
@@ -27,6 +29,7 @@ final class DriftBackupStore implements BackupStore {
 
   static const _reminderId = 1;
   static const _focusGuardId = 1;
+  static const _feedbackId = 1;
 
   @override
   Future<BackupData> read() => guardPrivatePersistence(
@@ -35,6 +38,12 @@ final class DriftBackupStore implements BackupStore {
       final sessions = await (_db.select(
         _db.winterArcSessions,
       )..orderBy([(s) => OrderingTerm.asc(s.id)])).get();
+      final freezes = _bySession(
+        await (_db.select(
+          _db.arcFreezes,
+        )..orderBy([(f) => OrderingTerm.asc(f.frozenFrom)])).get(),
+        (r) => r.sessionId,
+      );
       final habits = _bySession(
         await (_db.select(_db.habits)..orderBy([
               (h) => OrderingTerm.asc(h.sortOrder),
@@ -96,6 +105,9 @@ final class DriftBackupStore implements BackupStore {
       final selectedApps = await (_db.select(
         _db.focusGuardSelectedApps,
       )..orderBy([(a) => OrderingTerm.asc(a.sortOrder)])).get();
+      final feedback = await (_db.select(
+        _db.feedbackPrefs,
+      )..where((f) => f.id.equals(_feedbackId))).getSingleOrNull();
 
       return BackupData(
         arcs: [
@@ -110,6 +122,11 @@ final class DriftBackupStore implements BackupStore {
                 status: s.status,
                 createdAt: s.createdAt,
                 startedAt: s.startedAt,
+                freezes: [
+                  for (final f in freezes[s.id] ?? <ArcFreezeRow>[])
+                    freezeFromRow(f),
+                ],
+                closedOn: s.closedOn,
               ),
               habits: [for (final h in habits[s.id] ?? []) habitFromRow(h)],
               revisions: [
@@ -214,6 +231,14 @@ final class DriftBackupStore implements BackupStore {
                   for (final app in selectedApps) app.packageName,
                 ],
               ),
+        // No row means the settings were never changed: the defaults.
+        includesFeedback: true,
+        feedback: feedback == null
+            ? null
+            : FeedbackPreferences(
+                soundsEnabled: feedback.soundsEnabled,
+                soundTheme: feedback.soundTheme,
+              ),
       );
     }),
   );
@@ -226,6 +251,7 @@ final class DriftBackupStore implements BackupStore {
       final offset = await _idOffset();
 
       // Children first, so the order is safe even without cascades.
+      await _db.delete(_db.arcFreezes).go();
       await _db.delete(_db.dailyReflections).go();
       await _db.delete(_db.achievementUnlocks).go();
       await _db.delete(_db.xpTransactions).go();
@@ -237,6 +263,9 @@ final class DriftBackupStore implements BackupStore {
       await _db.delete(_db.reminderPrefs).go();
       await _db.delete(_db.focusGuardSelectedApps).go();
       await _db.delete(_db.focusGuardPrefs).go();
+      // Formats 1–3 predate the feedback settings: the device keeps its
+      // own. A format-4 backup restores them as stored (no row: defaults).
+      if (data.includesFeedback) await _db.delete(_db.feedbackPrefs).go();
 
       await _db.batch((batch) {
         for (final arc in data.arcs) {
@@ -254,8 +283,19 @@ final class DriftBackupStore implements BackupStore {
                 createdAt: s.createdAt,
                 startedAt: Value(s.startedAt),
                 participationStartDate: Value(s.participationStartDate),
+                closedOn: Value(s.closedOn),
               ),
             )
+            ..insertAll(_db.arcFreezes, [
+              for (final f in s.freezes)
+                ArcFreezesCompanion.insert(
+                  sessionId: id,
+                  frozenFrom: f.frozenFrom,
+                  resumedOn: Value(f.resumedOn),
+                  requestedAt: f.requestedAt,
+                  resumedAt: Value(f.resumedAt),
+                ),
+            ])
             ..insertAll(_db.habits, [
               for (final h in arc.habits) habitToCompanion(id, h),
             ])
@@ -375,6 +415,18 @@ final class DriftBackupStore implements BackupStore {
                 ),
             ]);
         }
+        if (data.feedback case final feedback? when data.includesFeedback) {
+          // A setting only: a restore never plays a sound.
+          batch.insert(
+            _db.feedbackPrefs,
+            FeedbackPrefsCompanion.insert(
+              id: const Value(_feedbackId),
+              soundsEnabled: feedback.soundsEnabled,
+              soundTheme: feedback.soundTheme,
+              updatedAt: backup.document.exportedAt,
+            ),
+          );
+        }
       });
 
       await _verify(data);
@@ -413,6 +465,7 @@ final class DriftBackupStore implements BackupStore {
         data.arcs.fold(0, (sum, arc) => sum + count(arc));
     final expected = <TableInfo, int>{
       _db.winterArcSessions: data.arcs.length,
+      _db.arcFreezes: total((a) => a.session.freezes.length),
       _db.habits: total((a) => a.habits.length),
       _db.habitRevisions: total((a) => a.revisions.length),
       _db.dayModes: total((a) => a.dayModes.length),
@@ -423,6 +476,8 @@ final class DriftBackupStore implements BackupStore {
       _db.reminderPrefs: data.reminders == null ? 0 : 1,
       _db.focusGuardPrefs: data.focusGuard == null ? 0 : 1,
       _db.focusGuardSelectedApps: data.focusGuard?.selectedPackages.length ?? 0,
+      if (data.includesFeedback)
+        _db.feedbackPrefs: data.feedback == null ? 0 : 1,
     };
     for (final MapEntry(key: table, value: count) in expected.entries) {
       final stored = await _db

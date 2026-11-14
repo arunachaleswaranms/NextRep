@@ -6,6 +6,7 @@ import 'package:crypto/crypto.dart';
 import '../../core/errors/app_failure.dart';
 import '../../core/time/local_date.dart';
 import '../achievement/achievement.dart';
+import '../feedback/feedback_preferences.dart';
 import '../focus_guard/focus_guard_settings.dart';
 import '../habit/habit.dart';
 import '../habit/habit_config.dart';
@@ -23,7 +24,16 @@ final class _Layout {
     required this.version,
     required this.arcFields,
     required this.habitTypes,
+    this.statuses = _v1Statuses,
   });
+
+  /// The arc statuses of formats 1 to 3. Frozen: never change it, so an
+  /// older file can never hold a status added later.
+  static const _v1Statuses = [
+    WinterArcStatus.setup,
+    WinterArcStatus.active,
+    WinterArcStatus.completed,
+  ];
 
   static const _sharedArcFields = {
     'id',
@@ -63,10 +73,31 @@ final class _Layout {
     habitTypes: HabitType.values,
   );
 
+  /// v1.3 (Phase 12E1): format-3 arcs plus `closedOn` and `freezes`, the
+  /// `ended` status, and the `feedback` settings. Frozen once released.
+  static const v4 = _Layout._(
+    version: 4,
+    arcFields: {
+      ..._sharedArcFields,
+      'kind',
+      'participationStartDate',
+      'closedOn',
+      'freezes',
+    },
+    habitTypes: HabitType.values,
+    statuses: [
+      WinterArcStatus.setup,
+      WinterArcStatus.active,
+      WinterArcStatus.completed,
+      WinterArcStatus.ended,
+    ],
+  );
+
   static _Layout? of(int version) => switch (version) {
     1 => v1,
     2 => v2,
     3 => v3,
+    4 => v4,
     _ => null,
   };
 
@@ -74,13 +105,19 @@ final class _Layout {
   final Set<String> arcFields;
   final List<HabitType> habitTypes;
 
+  /// The arc statuses this format can hold.
+  final List<WinterArcStatus> statuses;
+
   bool get hasArcKinds => version >= 2;
 
   /// Hydration settings in `reminders`, and a `focusGuard` object.
   bool get hasV12Settings => version >= 3;
+
+  /// `closedOn` and `freezes` in every arc, and a `feedback` object.
+  bool get hasLifecycle => version >= 4;
 }
 
-/// Reads the NextRep backup file formats 1, 2 and 3, and writes format 3.
+/// Reads the NextRep backup file formats 1, 2, 3 and 4, and writes format 4.
 ///
 /// A backup is a UTF-8 JSON object:
 ///
@@ -91,10 +128,11 @@ final class _Layout {
 ///   "data": {
 ///     "arcs": [...],
 ///     "reminders": {...} | null,
-///     "focusGuard": {...} | null
+///     "focusGuard": {...} | null,
+///     "feedback": {...} | null
 ///   },
 ///   "exportedAt": "2026-10-04T09:00:00.000Z",
-///   "formatVersion": 3,
+///   "formatVersion": 4,
 ///   "product": "NextRep"
 /// }
 /// ```
@@ -111,6 +149,15 @@ final class _Layout {
 /// ["<package name>", ...]}` or null. No enabled state is written for any
 /// of them. Formats 1 and 2 have no `focusGuard` field and no hydration
 /// settings, and stay exactly as they were.
+///
+/// Format 4 keeps the format-3 layout and adds to every arc `closedOn` (a
+/// date for an `ended` arc, else null) and `freezes`: `[{"frozenFrom":
+/// date, "resumedOn": date | null, "requestedAt": timestamp,
+/// "resumedAt": timestamp | null}, ...]`, oldest first; the status may be
+/// `ended`; and `data.feedback`: `{"soundsEnabled": bool, "soundTheme":
+/// "iceCrystal" | "summitSpark" | "warmEmber"}` or null. Formats 1 to 3
+/// can hold none of these (their fields and statuses are fixed), and are
+/// read with no freeze, no closing date and no feedback settings.
 ///
 /// **Version dispatch.** [decode] reads `formatVersion` first and refuses
 /// any version it doesn't know (a future format is never partially read).
@@ -328,6 +375,13 @@ abstract final class BackupCodec {
           'selectedApps': [...f.selectedPackages],
         },
       },
+      'feedback': switch (d.data.feedback) {
+        null => null,
+        final f => {
+          'soundsEnabled': f.soundsEnabled,
+          'soundTheme': f.soundTheme.name,
+        },
+      },
     },
   };
 
@@ -340,8 +394,18 @@ abstract final class BackupCodec {
       'status': s.status.name,
       'startDate': s.startDate.toIsoString(),
       'endDate': s.endDate.toIsoString(),
+      'closedOn': s.closedOn?.toIsoString(),
       'createdAt': _timestamp(s.createdAt),
       'startedAt': _optTimestamp(s.startedAt),
+      'freezes': [
+        for (final f in s.freezes)
+          {
+            'frozenFrom': f.frozenFrom.toIsoString(),
+            'resumedOn': f.resumedOn?.toIsoString(),
+            'requestedAt': _timestamp(f.requestedAt),
+            'resumedAt': _optTimestamp(f.resumedAt),
+          },
+      ],
       'habits': [
         for (final h in arc.habits)
           {
@@ -431,8 +495,30 @@ abstract final class BackupCodec {
 
   static BackupData _dataFromJson(_Obj data, _Layout layout) {
     final v12 = layout.hasV12Settings;
-    data.only({'arcs', 'reminders', if (v12) 'focusGuard'});
+    final v13 = layout.hasLifecycle;
+    data.only({
+      'arcs',
+      'reminders',
+      if (v12) 'focusGuard',
+      if (v13) 'feedback',
+    });
     return BackupData(
+      // Formats 1–3 say nothing about feedback: the device keeps its own.
+      includesFeedback: v13,
+      feedback: switch (v13 ? data.optObject('feedback') : null) {
+        null => null,
+        final f => () {
+          f.only(const {'soundsEnabled', 'soundTheme'});
+          return FeedbackPreferences(
+            soundsEnabled: f.boolean('soundsEnabled'),
+            soundTheme: f.choice(
+              'soundTheme',
+              SoundTheme.values,
+              (v) => v.name,
+            ),
+          );
+        }(),
+      },
       arcs: [for (final arc in data.objects('arcs')) _arcFromJson(arc, layout)],
       reminders: switch (data.optObject('reminders')) {
         null => null,
@@ -499,7 +585,7 @@ abstract final class BackupCodec {
   static BackupArc _arcFromJson(_Obj o, _Layout layout) {
     o.only(layout.arcFields);
     final id = o.integer('id', min: 1);
-    final status = o.choice('status', WinterArcStatus.values, (v) => v.name);
+    final status = o.choice('status', layout.statuses, (v) => v.name);
     final startDate = o.date('startDate');
     final ArcKind kind;
     final LocalDate? joined;
@@ -511,6 +597,26 @@ abstract final class BackupCodec {
       kind = ArcKind.rolling92;
       joined = status == WinterArcStatus.setup ? null : startDate;
     }
+    // Ordering, overlaps and dates are checked by the validator.
+    final freezes = layout.hasLifecycle
+        ? [
+            for (final f in o.objects('freezes'))
+              () {
+                f.only(const {
+                  'frozenFrom',
+                  'resumedOn',
+                  'requestedAt',
+                  'resumedAt',
+                });
+                return ArcFreeze(
+                  frozenFrom: f.date('frozenFrom'),
+                  resumedOn: f.optDate('resumedOn'),
+                  requestedAt: f.timestamp('requestedAt'),
+                  resumedAt: f.optTimestamp('resumedAt'),
+                );
+              }(),
+          ]
+        : const <ArcFreeze>[];
     return BackupArc(
       session: WinterArcSession(
         id: id,
@@ -521,6 +627,8 @@ abstract final class BackupCodec {
         createdAt: o.timestamp('createdAt'),
         startedAt: o.optTimestamp('startedAt'),
         participationStartDate: joined,
+        freezes: List.unmodifiable(freezes),
+        closedOn: layout.hasLifecycle ? o.optDate('closedOn') : null,
       ),
       habits: [for (final h in o.objects('habits')) _habitFromJson(h, layout)],
       revisions: [

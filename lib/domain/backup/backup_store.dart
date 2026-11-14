@@ -21,6 +21,9 @@ abstract interface class BackupStore {
   /// restored arc reuses one (a fresh install keeps the backup's ids).
   /// Reminder settings are restored with every reminder off, Hydration
   /// Coach included; Focus Guard's budget and apps are restored with Focus
-  /// Guard off and no nudge on record.
+  /// Guard off and no nudge on record. Freeze intervals and closing dates
+  /// are restored as stored. Feedback settings are replaced only by a
+  /// backup that includes them (format 4; none stored: the defaults);
+  /// an older backup leaves the device's own.
   Future<void> replaceAll(ValidatedBackup backup);
 }
