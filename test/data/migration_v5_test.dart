@@ -126,12 +126,14 @@ Future<List<Map<String, Object?>>> _rowsAfter(
 ) async => [
   for (final row
       in await db.customSelect('SELECT * FROM $table ORDER BY rowid').get())
-    // Columns added after v4 are checked in migration_v6_test.dart.
+    // Columns added after v4 are checked in migration_v6_test.dart and
+    // migration_v7_test.dart.
     {...row.data}..removeWhere(
       (key, _) =>
           key == 'arc_kind' ||
           key == 'participation_start_date' ||
-          key.startsWith('hydration_'),
+          key.startsWith('hydration_') ||
+          key == 'closed_on',
     ),
 ];
 
@@ -157,7 +159,7 @@ void main() {
     },
   );
 
-  group('v4 → v5 → v6 with Phase 5 data', () {
+  group('v4 → v5 → v6 → v7 with Phase 5 data', () {
     late AppDatabase db;
     late TestApp app;
     late Map<String, List<Map<String, Object?>>> before;
@@ -168,7 +170,7 @@ void main() {
       _seedV4(raw);
       before = {for (final t in _tables) t: _rowsBefore(raw, t)};
       db = AppDatabase(schema.newConnection());
-      await verifier.migrateAndValidate(db, 6);
+      await verifier.migrateAndValidate(db, 7);
       app = TestApp(db, FakeClock(DateTime(2026, 10, 4, 9)));
     });
     tearDown(() => db.close());
@@ -243,7 +245,7 @@ void main() {
     );
     final db = AppDatabase(schema.newConnection());
     addTearDown(db.close);
-    await verifier.migrateAndValidate(db, 6);
+    await verifier.migrateAndValidate(db, 7);
 
     final app = TestApp(db, FakeClock(DateTime(2026, 10, 4, 9)));
     final setup = (await app.sessions.currentSession())!;
@@ -257,7 +259,7 @@ void main() {
     expect(started.participationStartDate, LocalDate(2026, 10, 4));
   });
 
-  test('v1 → v6: a Phase 1 active arc is rolling92 joined on Day 1', () async {
+  test('v1 → v7: a Phase 1 active arc is rolling92 joined on Day 1', () async {
     final schema = await verifier.schemaAt(1);
     schema.rawDatabase.execute(
       'INSERT INTO winter_arc_sessions (id, start_date, end_date, status, '
@@ -267,7 +269,7 @@ void main() {
     );
     final db = AppDatabase(schema.newConnection());
     addTearDown(db.close);
-    await verifier.migrateAndValidate(db, 6);
+    await verifier.migrateAndValidate(db, 7);
     final arc = (await TestApp(
       db,
       FakeClock(DateTime(2026, 10, 2, 9)),
@@ -288,7 +290,7 @@ void main() {
     );
     final db = AppDatabase(schema.newConnection());
     addTearDown(db.close);
-    await verifier.migrateAndValidate(db, 6);
+    await verifier.migrateAndValidate(db, 7);
     final row = await db
         .customSelect(
           'SELECT participation_start_date AS p FROM winter_arc_sessions',

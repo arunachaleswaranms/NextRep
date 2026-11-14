@@ -136,11 +136,11 @@ void main() {
       );
     });
 
-    test('it reads as the same arcs as today\'s format-3 export of the same '
+    test('it reads as the same arcs as today\'s format-4 export of the same '
         'data', () {
       final fromV2 = BackupCodec.encode(BackupCodec.decode(v2));
       final fromV3 = BackupCodec.encode(BackupCodec.decode(v3));
-      expect(_json(fromV2)['formatVersion'], 3);
+      expect(_json(fromV2)['formatVersion'], 4);
       // The fixture's instants were recorded in the zone it was made in;
       // calendar dates and everything else don't depend on the zone.
       expect(
@@ -238,7 +238,7 @@ void main() {
     });
 
     test('a future version is rejected', () {
-      for (final version in [4, 100]) {
+      for (final version in [5, 100]) {
         final future = _mutate(v2, (json) => json['formatVersion'] = version);
         expect(
           () => _read(future),

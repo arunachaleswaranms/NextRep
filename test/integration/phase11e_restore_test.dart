@@ -122,7 +122,7 @@ Future<void> _expectHealthy(AppDatabase db) async {
   expect(integrity.single.data.values.single, 'ok');
   expect(await db.customSelect('PRAGMA foreign_key_check').get(), isEmpty);
   final version = await db.customSelect('PRAGMA user_version').get();
-  expect(version.single.data.values.single, 6, reason: 'schema v6, no v7');
+  expect(version.single.data.values.single, 7, reason: 'schema v7, no v8');
 }
 
 /// Everything but the reminder row (a restore stores reminders off on
@@ -214,11 +214,11 @@ void main() {
       expect(original['achievements'], isNotEmpty);
       expect(original['xp'], isNotEmpty);
 
-      // Export a format-3 backup.
+      // Export a backup in the current format.
       final export = await device.backup.export();
       final json = jsonDecode(utf8.decode(export.bytes)) as Map;
       expect(json['formatVersion'], BackupFormat.formatVersion);
-      expect(BackupFormat.formatVersion, 3);
+      expect(BackupFormat.formatVersion, 4);
       final focusGuardJson = (json['data'] as Map)['focusGuard'] as Map;
       expect(focusGuardJson, {
         'dailyBudgetMinutes': 45,

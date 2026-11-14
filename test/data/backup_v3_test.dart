@@ -100,11 +100,13 @@ void main() {
     await app.db.close();
   });
 
+  // Since Phase 12E1 the app writes format 4, which keeps every format-3
+  // field checked here (backup_v4_test.dart covers what it adds).
   group('writing format 3', () {
-    test('the app writes format 3 and reads 1, 2 and 3', () {
-      expect(BackupFormat.formatVersion, 3);
-      expect(BackupFormat.readableVersions, {1, 2, 3});
-      expect(_json(v3)['formatVersion'], 3);
+    test('the app writes format 4 and reads 1, 2, 3 and 4', () {
+      expect(BackupFormat.formatVersion, 4);
+      expect(BackupFormat.readableVersions, {1, 2, 3, 4});
+      expect(_json(v3)['formatVersion'], 4);
     });
 
     test('hydration: hours and style, never whether it is on', () {
@@ -133,7 +135,8 @@ void main() {
       final json = _json((await app.backup.export()).bytes);
       expect(_data(json)['reminders'], isNull);
       expect(_data(json)['focusGuard'], isNull);
-      expect(_data(json).keys, {'arcs', 'reminders', 'focusGuard'});
+      expect(_data(json)['feedback'], isNull);
+      expect(_data(json).keys, {'arcs', 'reminders', 'focusGuard', 'feedback'});
     });
 
     test('it decodes to what was written, deterministically', () {
@@ -232,7 +235,7 @@ void main() {
     );
 
     test('a newer format is refused before anything is read', () {
-      final future = _mutate(v3, (json) => json['formatVersion'] = 4);
+      final future = _mutate(v3, (json) => json['formatVersion'] = 5);
       expect(
         () => _read(future),
         _rejectedAs(BackupProblem.unsupportedVersion),
