@@ -7,6 +7,7 @@ import '../../../app/theme/winter_tokens.dart';
 import '../../../domain/journey/arc_milestones.dart';
 import '../../../domain/journey/journey_day.dart';
 import '../../../domain/journey/journey_overview.dart';
+import '../../../domain/winter_arc/winter_arc_session.dart';
 import '../../../shared/formatting/arc_labels.dart';
 import '../../../shared/winter_scene/cabin_layer.dart';
 import '../../../shared/winter_scene/mountain_layer.dart';
@@ -150,18 +151,33 @@ class _JourneyPathState extends State<JourneyPath> {
     final litFrom = joinIndex > 0
         ? layout.centerOf(layout.indexOfDay(journey.days[joinIndex].dayNumber))
         : 0.0;
-    // Without a today marker (before the start, after an ended arc's last
-    // day, or on a paused date: schema v7) the trail ends at the last day
-    // that has a record. Before v7 that case only meant "before the start",
-    // which has none.
+    // Every day lived: the trail reaches the summit. Never for an ended arc
+    // (schema v7), even one that ended on Day 92: it did not run to its
+    // close (ARC_CONTROL_SPEC § 6.5), so its trail stops at its last day.
+    final reachedSummit =
+        journey.session.status != WinterArcStatus.ended &&
+        journey.days.every((d) => !d.isFuture);
+    // Without a today marker (before the start, on or after an ended arc's
+    // last day, or on a paused date: schema v7) the trail ends at the last
+    // day that has a record. Before v7 that case only meant "before the
+    // start", which has none.
     final lastLived = journey.days.lastIndexWhere((d) => d.record != null);
     final litUntil = todayIndex >= 0
         ? layout.centerOf(layout.indexOfDay(journey.days[todayIndex].dayNumber))
-        : journey.days.every((d) => !d.isFuture)
+        : reachedSummit
         ? layout.total
         : lastLived >= 0
         ? layout.centerOf(layout.indexOfDay(journey.days[lastLived].dayNumber))
         : 0.0;
+    // Opens on today; else on the summit once reached; else on the last
+    // day lived (an ended or paused arc); else at the trailhead.
+    final initialIndex = todayIndex >= 0
+        ? layout.indexOfDay(journey.days[todayIndex].dayNumber)
+        : reachedSummit
+        ? layout.items.length - 1
+        : lastLived >= 0
+        ? layout.indexOfDay(journey.days[lastLived].dayNumber)
+        : 0;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -169,11 +185,7 @@ class _JourneyPathState extends State<JourneyPath> {
         // Created once, so refreshes keep the scroll position.
         _controller ??= ScrollController(
           initialScrollOffset: layout.offsetToShow(
-            todayIndex >= 0
-                ? layout.indexOfDay(journey.days[todayIndex].dayNumber)
-                : litUntil > 0
-                ? layout.items.length - 1
-                : 0,
+            initialIndex,
             constraints.maxHeight,
           ),
         );

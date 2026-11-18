@@ -157,6 +157,33 @@ void _expectIdentities(ArcHistory h) {
   expect(xp.today, ledger(open), reason: at);
 }
 
+/// The Journey's today marker (review finding R1, spec § 12.3): on an
+/// active or completed arc, the current date, exactly as in v1.2; on an
+/// ended arc, no day at all. Only a marked day can be in the `today` state,
+/// and the open day, when there is one, is the one marked.
+void _expectTodayMarker(ArcHistory h) {
+  final s = h.session;
+  final at =
+      '${s.status.name} ${s.freezes} closedOn ${s.closedOn} '
+      'on ${h.today}';
+  final ended = s.status == WinterArcStatus.ended;
+  final days = h.journey();
+  for (final d in days) {
+    expect(
+      d.isToday,
+      !ended && d.date == h.today,
+      reason: '$at: Day ${d.dayNumber}',
+    );
+    if (d.state == JourneyDayState.today) {
+      expect(d.isToday, isTrue, reason: '$at: Day ${d.dayNumber}');
+    }
+  }
+  final marked = days.where((d) => d.isToday).toList();
+  expect(marked.length, lessThanOrEqualTo(1), reason: at);
+  if (ended) expect(marked, isEmpty, reason: at);
+  if (h.isTodayOpen) expect(marked.single.date, h.today, reason: at);
+}
+
 void main() {
   group('status classes', () {
     test('unfinished, finished, completed and writable stay distinct', () {
@@ -236,7 +263,10 @@ void main() {
       expect(days[0].state, JourneyDayState.perfect);
       expect(days[1].state, JourneyDayState.missed);
       expect(days[2].state, JourneyDayState.partial, reason: 'not "today"');
-      expect(days[2].isToday, isTrue);
+      // Settled history on its own date: not marked, announced or scrolled
+      // to as today (review finding R1).
+      expect(days[2].isToday, isFalse);
+      expect(days.where((d) => d.isToday), isEmpty);
       expect(days.skip(3).map((d) => d.state).toSet(), {
         JourneyDayState.notReached,
       });
@@ -261,6 +291,199 @@ void main() {
       expect(h.perfectDays.total, 1);
       expect(_summary(h).fullDays, 1);
       _expectIdentities(h);
+    });
+  });
+
+  group('Journey today marker: only the open day (review finding R1)', () {
+    // The review's example: Rolling Arc from 7 Oct 2026; Day 1 Perfect,
+    // Day 2 missed; ended with closedOn 9 Oct (Day 3).
+    final start = LocalDate(2026, 10, 7);
+    final closed = LocalDate(2026, 10, 9);
+    final ended = rollingArc(
+      start,
+      status: WinterArcStatus.ended,
+      closedOn: closed,
+    );
+    List<JourneyDay> marked(ArcHistory h) =>
+        h.journey().where((d) => d.isToday).toList();
+
+    void expectNotReachedAfterDay3(List<JourneyDay> days, String why) {
+      for (final d in days.skip(3)) {
+        expect(d.state, JourneyDayState.notReached, reason: why);
+        expect(d.isToday, isFalse, reason: why);
+        expect(d.record, isNull, reason: why);
+        expect(d.xpEarned, 0, reason: why);
+      }
+    }
+
+    test('A, D–H. on closedOn: its final state (Perfect, Minimum, Partial, '
+        'Missed), never today; later days not reached', () {
+      for (final (outcome, state) in [
+        (_Day.perfect, JourneyDayState.perfect),
+        (_Day.minimumFull, JourneyDayState.minimumComplete),
+        (_Day.partial, JourneyDayState.partial),
+        (_Day.empty, JourneyDayState.missed),
+      ]) {
+        final why = '$outcome on closedOn';
+        final h = _history(
+          ended,
+          closed,
+          days: {start: _Day.perfect, closed: outcome},
+          xp: {start: 55, closed: 20},
+        );
+        final days = h.journey();
+        expect(h.isTodayOpen, isFalse, reason: why);
+        expect(marked(h), isEmpty, reason: why);
+        expect(days[0].state, JourneyDayState.perfect, reason: why);
+        expect(days[1].state, JourneyDayState.missed, reason: why);
+        expect(days[2].date, closed, reason: why);
+        expect(days[2].state, state, reason: why);
+        expect(days[2].state.isFinal, isTrue, reason: why);
+        expect(days[2].isToday, isFalse, reason: why);
+        // Its stored record and XP are shown as they are.
+        expect(days[2].record, isNotNull, reason: why);
+        expect(days[2].xpEarned, 20, reason: why);
+        expect(h.records.totalXp, 75, reason: why);
+        expectNotReachedAfterDay3(days, why);
+        _expectIdentities(h);
+        _expectTodayMarker(h);
+      }
+    });
+
+    test('B. viewed after closedOn, before and after its planned end', () {
+      for (final today in [
+        closed.addDays(1),
+        closed.addDays(30),
+        ended.endDate,
+        ended.endDate.addDays(1),
+        LocalDate(2028, 1, 1),
+      ]) {
+        final h = _history(
+          ended,
+          today,
+          days: {start: _Day.perfect, closed: _Day.partial},
+        );
+        final days = h.journey();
+        expect(marked(h), isEmpty, reason: '$today');
+        expect(days[2].state, JourneyDayState.partial, reason: '$today');
+        expectNotReachedAfterDay3(days, '$today');
+        _expectTodayMarker(h);
+      }
+    });
+
+    test('C. after a clock rollback to before closedOn: dates up to today '
+        'are settled, closedOn upcoming, nothing today (F4-4)', () {
+      final records = {
+        start: _Day.perfect,
+        start.addDays(1): _Day.partial,
+        closed: _Day.perfect,
+      };
+      final h = _history(ended, start.addDays(1), days: records);
+      final days = h.journey();
+      expect(marked(h), isEmpty);
+      expect(days[0].state, JourneyDayState.perfect);
+      expect(days[1].state, JourneyDayState.partial, reason: 'settled');
+      expect(days[1].isToday, isFalse);
+      expect(days[2].state, JourneyDayState.future);
+      expect(days[2].isToday, isFalse);
+      expectNotReachedAfterDay3(days, 'rollback');
+      _expectTodayMarker(h);
+      // The stored day is untouched and returns with the date.
+      expect(h.records.progressOn(closed), isNotEmpty);
+      final back = _history(ended, closed, days: records);
+      expect(back.journey()[2].state, JourneyDayState.perfect);
+      expect(marked(back), isEmpty);
+    });
+
+    test('an ended seasonal arc marks no day before joining either; an '
+        'active one is unchanged', () {
+      final joined = LocalDate(2026, 10, 10);
+      final rolledBack = LocalDate(2026, 10, 5); // before joining
+      final active = _history(seasonalArc(2026, joined: joined), rolledBack);
+      final activeDays = active.journey();
+      expect(activeDays[4].state, JourneyDayState.notJoined);
+      expect(activeDays[4].isToday, isTrue, reason: 'as in v1.2');
+      final endedSeason = _history(
+        seasonalArc(
+          2026,
+          joined: joined,
+          status: WinterArcStatus.ended,
+          closedOn: LocalDate(2026, 10, 20),
+        ),
+        rolledBack,
+      );
+      expect(endedSeason.journey()[4].state, JourneyDayState.notJoined);
+      expect(marked(endedSeason), isEmpty);
+      _expectTodayMarker(endedSeason);
+      expect(
+        marked(
+          _history(
+            seasonalArc(
+              2026,
+              joined: joined,
+              status: WinterArcStatus.ended,
+              closedOn: LocalDate(2026, 10, 20),
+            ),
+            LocalDate(2026, 10, 20),
+          ),
+        ),
+        isEmpty,
+      );
+    });
+
+    test('I. a paused date has no today marker', () {
+      final pausedFrom = LocalDate(2027, 3, 4);
+      for (final s in [
+        rollingArc(LocalDate(2027, 3, 1), freezes: [openFreeze(pausedFrom)]),
+        rollingArc(
+          LocalDate(2027, 3, 1),
+          freezes: [closedFreeze(pausedFrom, 9)],
+        ),
+      ]) {
+        for (final today in [pausedFrom, pausedFrom.addDays(5)]) {
+          final h = _history(s, today);
+          expect(s.isFrozenOn(today), isTrue);
+          expect(marked(h), isEmpty, reason: '${s.freezes} on $today');
+          _expectTodayMarker(h);
+        }
+      }
+    });
+
+    test('J. an active arc still marks today, whatever its state', () {
+      final active = rollingArc(start);
+      for (final (outcome, state) in [
+        (_Day.empty, JourneyDayState.today),
+        (_Day.partial, JourneyDayState.today),
+        (_Day.perfect, JourneyDayState.perfect),
+        (_Day.minimumFull, JourneyDayState.minimumComplete),
+      ]) {
+        final h = _history(active, closed, days: {closed: outcome});
+        expect(marked(h).single.dayNumber, 3, reason: '$outcome');
+        expect(marked(h).single.state, state, reason: '$outcome');
+        _expectTodayMarker(h);
+      }
+      // A freeze scheduled for tomorrow leaves today open (F4-6).
+      final scheduled = rollingArc(
+        start,
+        freezes: [openFreeze(closed.addDays(1))],
+      );
+      final h = _history(scheduled, closed);
+      expect(marked(h).single.state, JourneyDayState.today);
+    });
+
+    test('K. a completed arc after a rollback into it keeps its open today '
+        '(spec § 12.5.2, as approved)', () {
+      final completed = rollingArc(start, status: WinterArcStatus.completed);
+      final h = _history(completed, start.addDays(10));
+      expect(h.isTodayOpen, isTrue);
+      expect(marked(h).single.dayNumber, 11);
+      expect(marked(h).single.state, JourneyDayState.today);
+      _expectTodayMarker(h);
+      // Viewed after its end, as normal: no day is today.
+      expect(
+        marked(_history(completed, completed.endDate.addDays(1))),
+        isEmpty,
+      );
     });
   });
 
@@ -378,7 +601,9 @@ void main() {
           !t.isAfter(last.addDays(3));
           t = t.addDays(g.nextInt(3) + 1)
         ) {
-          _expectIdentities(_history(s, t, days: days, xp: xp));
+          final h = _history(s, t, days: days, xp: xp);
+          _expectIdentities(h);
+          _expectTodayMarker(h);
         }
       }
     });

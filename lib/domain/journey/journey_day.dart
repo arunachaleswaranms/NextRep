@@ -62,7 +62,9 @@ final class JourneyDay {
   final LocalDate? date;
   final JourneyDayState state;
 
-  /// True for the current date, whatever its [state].
+  /// True for the current date, whatever its [state], except on an ended
+  /// arc: it has no open day (spec § 12.3), so even its last day, viewed
+  /// on its own date, is settled history and never today.
   final bool isToday;
 
   /// What happened that day. Null for future days and days before the

@@ -178,7 +178,8 @@ final class ArcHistory {
         dayNumber: dayNumber,
         date: date,
         state: JourneyDayState.notJoined,
-        isToday: isToday,
+        // An ended arc has no today at all (spec § 12.3).
+        isToday: isToday && session.status != WinterArcStatus.ended,
         xpEarned: 0,
       );
     }
@@ -204,12 +205,15 @@ final class ArcHistory {
       );
     }
     final record = recordOn(date);
+    // Only the open day is today (`openToday`, spec § 12.5.2). An ended
+    // arc's last day is settled even on its own date: it takes its final
+    // state and is never marked, announced or scrolled to as today.
+    final isOpenToday = isToday && isTodayOpen;
     return JourneyDay(
       dayNumber: dayNumber,
       date: date,
-      // An ended arc's last day takes its final state, never "today".
-      state: JourneyRules.stateOf(record, isToday: isToday && isTodayOpen),
-      isToday: isToday,
+      state: JourneyRules.stateOf(record, isToday: isOpenToday),
+      isToday: isOpenToday,
       record: record,
       xpEarned: records.xpByDate[date] ?? 0,
     );

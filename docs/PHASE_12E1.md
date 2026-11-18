@@ -206,6 +206,50 @@ builds; no production signing, no official APK.
 The failure path of the migration and the "schema 6 left alone" gate are
 covered by `migration_v7_test` (atomic, retryable) and the JVM gate tests.
 
+## Independent review corrections (R1, R2)
+
+The independent review of `85f78b7` approved the migration, backup,
+mapping, Focus Guard and emulator evidence and raised two Ended-Arc
+defects. Both are fixed without touching the schema, migration, backup,
+Focus Guard, manifest, version or dependencies.
+
+| | Root cause | Correction |
+|---|---|---|
+| **R1** Journey "today" on an ended Arc | `ArcHistory._journeyDay` gave `JourneyDay.isToday` the calendar test `date == today`. The day's *state* already followed `isOpenOn`, but with `closedOn = today` the settled last day was still marked, announced ("Day 3. Today. Partial…"), labelled "TODAY · Day 3" and scrolled to as the open day | `isToday` is the open day only (`date == today && session.isOpenOn(today)`, spec § 12.5.2); an ended Arc marks no day, not even before joining. Active, completed (rollback included), paused and late-join presentation is unchanged. `JourneyPath`: without a today marker an ended Arc now opens on its last lived day (it opened at the summit), and its trail never reaches the Summit, even when `closedOn` is Day 92 (it would have read "Summit, Day 92, reached") |
+| **R2** Achievement writes to ended Arcs | `AchievementService.sync()` (and `reconcile()`) reconciled the home Arc, which is an ended Arc when nothing newer exists; `backfillCatalog()` reconciled every non-active Arc. Both reached `reconcileUnlocks`, which inserts missing unlocks and revokes unlocks dated today | One guard in `AchievementService._reconcile`, the only path that writes an unlock outside a restore: an ended Arc returns no change and its history is not evaluated. `sync`, `reconcile`, both backfill paths and the app's launch run are covered; boards still read the stored unlocks. Completed Arcs keep their backfill and natural-completion Summit; active Arcs keep provisional unlocks |
+
+Tests (12 new or corrected detectors fail on `85f78b7` and pass now; the
+rest are Active / Completed / paused controls). `flutter test`: 1415
+passed, 0 failed (16 new).
+
+- `lifecycle_foundation_test`: the old assertion `isToday == true` on
+  `closedOn` corrected to false; new group "Journey today marker": on
+  `closedOn` with a Perfect, Minimum, Partial and Missed last day; after
+  `closedOn` and after the planned end; after a rollback before `closedOn`
+  (F4-4); an ended late-joined Seasonal Arc; paused dates (open and closed
+  pause); active controls (every state, a scheduled freeze); a completed
+  Arc after a rollback keeps its open today. The generated-Arc property
+  test now also checks the marker for every status and date.
+- `journey_ended_arc_test` (new, widget): no "Today" in any semantics
+  label and no "TODAY" label for an ended Arc on `closedOn`; it opens
+  centred on its last day while the active Arc of the same date opens on
+  today with its label; an Arc ended on Day 92 never shows the Summit
+  reached, a completed one does.
+- `ended_arc_achievements_test` (new, in-memory Drift): an ended Arc with
+  valid unlocks, unlocks dated `closedOn`, a missing one, unearned rows a
+  reconciliation would revoke and a stored Summit. `sync`, `reconcile`,
+  `backfillCatalog` and app launches, each run three times, leave every
+  table byte-identical and report nothing: as the home Arc, with a newer
+  active Arc, with a newer completed Arc, from a format-4 restore; on
+  `closedOn`, after it, after its planned end and after rollbacks. An Arc
+  ended on Day 92 never gains a Summit. Controls: the active Arc gains,
+  loses (provisional) and celebrates its own unlocks; the completed Arc is
+  backfilled silently and earns its Summit; then everything is idempotent.
+- `lifecycle_storage_test`: "an ended arc is left untouched" relied on the
+  defect (the backfill stored First Rep on the ended Arc); it now stores
+  the unlocks while the Arc is active and requires the backfill to write
+  nothing.
+
 ## Known limitations
 
 - Nothing creates a freeze or an ended Arc; their wording on existing

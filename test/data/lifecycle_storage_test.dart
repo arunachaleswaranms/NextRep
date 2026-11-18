@@ -229,6 +229,9 @@ void main() {
     test('an ended arc is left untouched and earns no Summit', () async {
       final arc = await started();
       await completeAll(app);
+      // Its unlocks are stored while it is active; once ended, it is
+      // read-only history (review finding R2).
+      await app.achievements.sync();
       await app.sessions.updateSession(
         arc.copyWith(status: WinterArcStatus.ended, closedOn: start),
       );
@@ -237,7 +240,10 @@ void main() {
       final home = await app.lifecycle.reconcile();
       expect(home?.status, WinterArcStatus.ended);
       expect(await _snapshot(db), before, reason: 'no write');
-      await app.achievements.backfillCatalog();
+      final backfill = await app.achievements.backfillCatalog();
+      expect(backfill.historical, isEmpty);
+      expect(backfill.celebratable.isEmpty, isTrue);
+      expect(await _snapshot(db), before, reason: 'no unlock written');
       final keys = {
         for (final u in await app.achievementStore.unlocks(arc.id)) u.key,
       };

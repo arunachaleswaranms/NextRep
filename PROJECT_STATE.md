@@ -57,6 +57,12 @@ freeze or an ended Arc yet. Version `1.2.0+3`; no release, no phone.
   results are exactly v1.2.0's (property tests).
 - **Focus Guard** native gate 6 → 7 (exact version), JVM-tested.
 - Tests: 5 new files; old tests changed only in version constants.
+- **Review corrections R1, R2** (after `85f78b7`): an ended Arc's Journey
+  marks no day as today (its last day is settled, even on its own date)
+  and its trail never reaches the Summit; achievement sync, reconcile and
+  the catalog backfill never write to an ended Arc. Active and completed
+  behaviour unchanged. See
+  [docs/PHASE_12E1.md](docs/PHASE_12E1.md#independent-review-corrections-r1-r2).
 
 ## Phase 12A Addendum (v1.3.0 Arc Control and Personalization, merged)
 
