@@ -206,7 +206,7 @@ void main() {
       find.bySemanticsLabel('Day 3. Today. 0 percent complete.'),
       findsOneWidget,
     );
-    expect(find.bySemanticsLabel('Day 2. Missed.'), findsOneWidget);
+    expect(find.bySemanticsLabel('Day 2. No progress.'), findsOneWidget);
     expect(find.bySemanticsLabel('Day 4. Upcoming.'), findsOneWidget);
 
     await tester.tap(

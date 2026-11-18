@@ -605,6 +605,10 @@ void main() {
         -150,
         scrollable: find.byType(Scrollable).last,
       );
+      // The drag's fling can carry the marker past the edge of the path
+      // (shorter since the Phase 12C Path | Calendar switch); bring it back.
+      await tester.ensureVisible(notJoined);
+      await tester.pumpAndSettle();
       expect(notJoined, findsOneWidget);
       expect(find.bySemanticsLabel(RegExp(r'^Day 14. Missed')), findsNothing);
       await _tap(tester, notJoined);

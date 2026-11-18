@@ -5,8 +5,10 @@ import 'package:nextrep/app/dependencies.dart';
 import 'package:nextrep/app/router/app_router.dart';
 import 'package:nextrep/core/database/app_database.dart';
 import 'package:nextrep/data/github_release_feed.dart';
+import 'package:nextrep/domain/achievement/achievement_repository.dart';
 import 'package:nextrep/domain/focus_guard/focus_guard_platform.dart';
 import 'package:nextrep/domain/progress/progress_repository.dart';
+import 'package:nextrep/domain/winter_arc/winter_arc_repository.dart';
 
 import 'fakes.dart';
 import 'updates.dart';
@@ -19,6 +21,8 @@ Widget reviewApp(
   FakeClock clock,
   String route, {
   ProgressRepository? progress,
+  WinterArcRepository? sessions,
+  AchievementRepository? achievements,
 }) => ProviderScope(
   overrides: [
     appDatabaseProvider.overrideWithValue(db),
@@ -41,6 +45,10 @@ Widget reviewApp(
     bootLocationProvider.overrideWith((ref) async => route),
     if (progress != null)
       progressRepositoryProvider.overrideWithValue(progress),
+    if (sessions != null)
+      winterArcRepositoryProvider.overrideWithValue(sessions),
+    if (achievements != null)
+      achievementRepositoryProvider.overrideWithValue(achievements),
   ],
   retry: (_, _) => null,
   child: const NextRepApp(),

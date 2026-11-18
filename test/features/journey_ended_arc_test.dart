@@ -99,7 +99,7 @@ void main() {
     await _show(tester, journey);
 
     expect(find.bySemanticsLabel('Day 1. Perfect Day.'), findsOneWidget);
-    expect(find.bySemanticsLabel('Day 2. Missed.'), findsOneWidget);
+    expect(find.bySemanticsLabel('Day 2. No progress.'), findsOneWidget);
     expect(
       find.bySemanticsLabel(
         RegExp(r'^Day 3\. Partial, \d+ percent complete\.$'),

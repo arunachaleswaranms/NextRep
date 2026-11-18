@@ -221,7 +221,7 @@ void main() {
       final today = _node(tester, RegExp(r'^Day 7\. Today\. '));
       expect(today.label, matches(RegExp(r'\d+ percent complete\.$')));
       expect(today.hasAction(SemanticsAction.tap), isTrue);
-      final missed = _node(tester, 'Day 6. Missed.');
+      final missed = _node(tester, 'Day 6. No progress.');
       expect(missed.hasAction(SemanticsAction.tap), isTrue);
 
       await tester.scrollUntilVisible(
