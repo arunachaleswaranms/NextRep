@@ -339,10 +339,19 @@ final class HabitTrackingService {
     );
   }
 
-  /// The challenge day after [date], or null if [date] is the last one.
+  /// The date a configuration change made on [date] takes effect from: the
+  /// next calendar date, provided a challenge day is still to come on or
+  /// after it; null on the arc's last day, and on a paused date (habits
+  /// are read-only while paused).
+  ///
+  /// Without a freeze this is exactly "tomorrow, if tomorrow is a day of
+  /// the arc". With a freeze scheduled for tomorrow it is still tomorrow:
+  /// the revision waits on that paused date and applies from the first
+  /// challenge day after it (addendum AD6, `HabitHistory.configOn`).
   LocalDate? _nextChallengeDay(WinterArcSession session, LocalDate date) {
+    if (session.isFrozenOn(date)) return null;
     final next = date.addDays(1);
-    return session.positionOn(next) is ArcInProgress ? next : null;
+    return session.hasChallengeDayOnOrAfter(next) ? next : null;
   }
 
   /// The active session, provided [date] is today and one of its

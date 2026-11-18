@@ -96,6 +96,15 @@ class $WinterArcSessionsTable extends WinterArcSessions
         $WinterArcSessionsTable.$converterparticipationStartDaten,
       );
   @override
+  late final GeneratedColumnWithTypeConverter<LocalDate?, String> closedOn =
+      GeneratedColumn<String>(
+        'closed_on',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<LocalDate?>($WinterArcSessionsTable.$converterclosedOnn);
+  @override
   List<GeneratedColumn> get $columns => [
     id,
     startDate,
@@ -105,6 +114,7 @@ class $WinterArcSessionsTable extends WinterArcSessions
     startedAt,
     arcKind,
     participationStartDate,
+    closedOn,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -188,6 +198,12 @@ class $WinterArcSessionsTable extends WinterArcSessions
               data['${effectivePrefix}participation_start_date'],
             ),
           ),
+      closedOn: $WinterArcSessionsTable.$converterclosedOnn.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}closed_on'],
+        ),
+      ),
     );
   }
 
@@ -208,6 +224,10 @@ class $WinterArcSessionsTable extends WinterArcSessions
       const LocalDateConverter();
   static TypeConverter<LocalDate?, String?> $converterparticipationStartDaten =
       NullAwareTypeConverter.wrap($converterparticipationStartDate);
+  static TypeConverter<LocalDate, String> $converterclosedOn =
+      const LocalDateConverter();
+  static TypeConverter<LocalDate?, String?> $converterclosedOnn =
+      NullAwareTypeConverter.wrap($converterclosedOn);
 }
 
 class SessionRow extends DataClass implements Insertable<SessionRow> {
@@ -227,6 +247,11 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
   /// a rolling arc, the join date of a seasonal one. Null while in setup.
   /// A calendar fact, deliberately not derived from [startedAt].
   final LocalDate? participationStartDate;
+
+  /// The last counted date of an `ended` Arc (schema v7), null for every
+  /// other status. Appended, as `ALTER TABLE ADD COLUMN` does; existing
+  /// rows read null.
+  final LocalDate? closedOn;
   const SessionRow({
     required this.id,
     required this.startDate,
@@ -236,6 +261,7 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
     this.startedAt,
     required this.arcKind,
     this.participationStartDate,
+    this.closedOn,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -272,6 +298,11 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
         ),
       );
     }
+    if (!nullToAbsent || closedOn != null) {
+      map['closed_on'] = Variable<String>(
+        $WinterArcSessionsTable.$converterclosedOnn.toSql(closedOn),
+      );
+    }
     return map;
   }
 
@@ -289,6 +320,9 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
       participationStartDate: participationStartDate == null && nullToAbsent
           ? const Value.absent()
           : Value(participationStartDate),
+      closedOn: closedOn == null && nullToAbsent
+          ? const Value.absent()
+          : Value(closedOn),
     );
   }
 
@@ -312,6 +346,7 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
       participationStartDate: serializer.fromJson<LocalDate?>(
         json['participationStartDate'],
       ),
+      closedOn: serializer.fromJson<LocalDate?>(json['closedOn']),
     );
   }
   @override
@@ -332,6 +367,7 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
       'participationStartDate': serializer.toJson<LocalDate?>(
         participationStartDate,
       ),
+      'closedOn': serializer.toJson<LocalDate?>(closedOn),
     };
   }
 
@@ -344,6 +380,7 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
     Value<DateTime?> startedAt = const Value.absent(),
     ArcKind? arcKind,
     Value<LocalDate?> participationStartDate = const Value.absent(),
+    Value<LocalDate?> closedOn = const Value.absent(),
   }) => SessionRow(
     id: id ?? this.id,
     startDate: startDate ?? this.startDate,
@@ -355,6 +392,7 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
     participationStartDate: participationStartDate.present
         ? participationStartDate.value
         : this.participationStartDate,
+    closedOn: closedOn.present ? closedOn.value : this.closedOn,
   );
   SessionRow copyWithCompanion(WinterArcSessionsCompanion data) {
     return SessionRow(
@@ -368,6 +406,7 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
       participationStartDate: data.participationStartDate.present
           ? data.participationStartDate.value
           : this.participationStartDate,
+      closedOn: data.closedOn.present ? data.closedOn.value : this.closedOn,
     );
   }
 
@@ -381,7 +420,8 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
           ..write('createdAt: $createdAt, ')
           ..write('startedAt: $startedAt, ')
           ..write('arcKind: $arcKind, ')
-          ..write('participationStartDate: $participationStartDate')
+          ..write('participationStartDate: $participationStartDate, ')
+          ..write('closedOn: $closedOn')
           ..write(')'))
         .toString();
   }
@@ -396,6 +436,7 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
     startedAt,
     arcKind,
     participationStartDate,
+    closedOn,
   );
   @override
   bool operator ==(Object other) =>
@@ -408,7 +449,8 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
           other.createdAt == this.createdAt &&
           other.startedAt == this.startedAt &&
           other.arcKind == this.arcKind &&
-          other.participationStartDate == this.participationStartDate);
+          other.participationStartDate == this.participationStartDate &&
+          other.closedOn == this.closedOn);
 }
 
 class WinterArcSessionsCompanion extends UpdateCompanion<SessionRow> {
@@ -420,6 +462,7 @@ class WinterArcSessionsCompanion extends UpdateCompanion<SessionRow> {
   final Value<DateTime?> startedAt;
   final Value<ArcKind> arcKind;
   final Value<LocalDate?> participationStartDate;
+  final Value<LocalDate?> closedOn;
   const WinterArcSessionsCompanion({
     this.id = const Value.absent(),
     this.startDate = const Value.absent(),
@@ -429,6 +472,7 @@ class WinterArcSessionsCompanion extends UpdateCompanion<SessionRow> {
     this.startedAt = const Value.absent(),
     this.arcKind = const Value.absent(),
     this.participationStartDate = const Value.absent(),
+    this.closedOn = const Value.absent(),
   });
   WinterArcSessionsCompanion.insert({
     this.id = const Value.absent(),
@@ -439,6 +483,7 @@ class WinterArcSessionsCompanion extends UpdateCompanion<SessionRow> {
     this.startedAt = const Value.absent(),
     this.arcKind = const Value.absent(),
     this.participationStartDate = const Value.absent(),
+    this.closedOn = const Value.absent(),
   }) : startDate = Value(startDate),
        endDate = Value(endDate),
        status = Value(status),
@@ -452,6 +497,7 @@ class WinterArcSessionsCompanion extends UpdateCompanion<SessionRow> {
     Expression<DateTime>? startedAt,
     Expression<String>? arcKind,
     Expression<String>? participationStartDate,
+    Expression<String>? closedOn,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -463,6 +509,7 @@ class WinterArcSessionsCompanion extends UpdateCompanion<SessionRow> {
       if (arcKind != null) 'arc_kind': arcKind,
       if (participationStartDate != null)
         'participation_start_date': participationStartDate,
+      if (closedOn != null) 'closed_on': closedOn,
     });
   }
 
@@ -475,6 +522,7 @@ class WinterArcSessionsCompanion extends UpdateCompanion<SessionRow> {
     Value<DateTime?>? startedAt,
     Value<ArcKind>? arcKind,
     Value<LocalDate?>? participationStartDate,
+    Value<LocalDate?>? closedOn,
   }) {
     return WinterArcSessionsCompanion(
       id: id ?? this.id,
@@ -486,6 +534,7 @@ class WinterArcSessionsCompanion extends UpdateCompanion<SessionRow> {
       arcKind: arcKind ?? this.arcKind,
       participationStartDate:
           participationStartDate ?? this.participationStartDate,
+      closedOn: closedOn ?? this.closedOn,
     );
   }
 
@@ -528,6 +577,11 @@ class WinterArcSessionsCompanion extends UpdateCompanion<SessionRow> {
         ),
       );
     }
+    if (closedOn.present) {
+      map['closed_on'] = Variable<String>(
+        $WinterArcSessionsTable.$converterclosedOnn.toSql(closedOn.value),
+      );
+    }
     return map;
   }
 
@@ -541,7 +595,8 @@ class WinterArcSessionsCompanion extends UpdateCompanion<SessionRow> {
           ..write('createdAt: $createdAt, ')
           ..write('startedAt: $startedAt, ')
           ..write('arcKind: $arcKind, ')
-          ..write('participationStartDate: $participationStartDate')
+          ..write('participationStartDate: $participationStartDate, ')
+          ..write('closedOn: $closedOn')
           ..write(')'))
         .toString();
   }
@@ -5379,6 +5434,713 @@ class FocusGuardSelectedAppsCompanion
   }
 }
 
+class $ArcFreezesTable extends ArcFreezes
+    with TableInfo<$ArcFreezesTable, ArcFreezeRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ArcFreezesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _sessionIdMeta = const VerificationMeta(
+    'sessionId',
+  );
+  @override
+  late final GeneratedColumn<int> sessionId = GeneratedColumn<int>(
+    'session_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES winter_arc_sessions (id) ON DELETE CASCADE',
+    ),
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<LocalDate, String> frozenFrom =
+      GeneratedColumn<String>(
+        'frozen_from',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<LocalDate>($ArcFreezesTable.$converterfrozenFrom);
+  @override
+  late final GeneratedColumnWithTypeConverter<LocalDate?, String> resumedOn =
+      GeneratedColumn<String>(
+        'resumed_on',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<LocalDate?>($ArcFreezesTable.$converterresumedOnn);
+  static const VerificationMeta _requestedAtMeta = const VerificationMeta(
+    'requestedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> requestedAt = GeneratedColumn<DateTime>(
+    'requested_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _resumedAtMeta = const VerificationMeta(
+    'resumedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> resumedAt = GeneratedColumn<DateTime>(
+    'resumed_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    sessionId,
+    frozenFrom,
+    resumedOn,
+    requestedAt,
+    resumedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'arc_freezes';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ArcFreezeRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('session_id')) {
+      context.handle(
+        _sessionIdMeta,
+        sessionId.isAcceptableOrUnknown(data['session_id']!, _sessionIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sessionIdMeta);
+    }
+    if (data.containsKey('requested_at')) {
+      context.handle(
+        _requestedAtMeta,
+        requestedAt.isAcceptableOrUnknown(
+          data['requested_at']!,
+          _requestedAtMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_requestedAtMeta);
+    }
+    if (data.containsKey('resumed_at')) {
+      context.handle(
+        _resumedAtMeta,
+        resumedAt.isAcceptableOrUnknown(data['resumed_at']!, _resumedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {sessionId, frozenFrom};
+  @override
+  ArcFreezeRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ArcFreezeRow(
+      sessionId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}session_id'],
+      )!,
+      frozenFrom: $ArcFreezesTable.$converterfrozenFrom.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}frozen_from'],
+        )!,
+      ),
+      resumedOn: $ArcFreezesTable.$converterresumedOnn.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}resumed_on'],
+        ),
+      ),
+      requestedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}requested_at'],
+      )!,
+      resumedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}resumed_at'],
+      ),
+    );
+  }
+
+  @override
+  $ArcFreezesTable createAlias(String alias) {
+    return $ArcFreezesTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<LocalDate, String> $converterfrozenFrom =
+      const LocalDateConverter();
+  static TypeConverter<LocalDate, String> $converterresumedOn =
+      const LocalDateConverter();
+  static TypeConverter<LocalDate?, String?> $converterresumedOnn =
+      NullAwareTypeConverter.wrap($converterresumedOn);
+}
+
+class ArcFreezeRow extends DataClass implements Insertable<ArcFreezeRow> {
+  final int sessionId;
+
+  /// The first paused local date.
+  final LocalDate frozenFrom;
+
+  /// The first challenge date after the pause; null while it is open.
+  final LocalDate? resumedOn;
+  final DateTime requestedAt;
+  final DateTime? resumedAt;
+  const ArcFreezeRow({
+    required this.sessionId,
+    required this.frozenFrom,
+    this.resumedOn,
+    required this.requestedAt,
+    this.resumedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['session_id'] = Variable<int>(sessionId);
+    {
+      map['frozen_from'] = Variable<String>(
+        $ArcFreezesTable.$converterfrozenFrom.toSql(frozenFrom),
+      );
+    }
+    if (!nullToAbsent || resumedOn != null) {
+      map['resumed_on'] = Variable<String>(
+        $ArcFreezesTable.$converterresumedOnn.toSql(resumedOn),
+      );
+    }
+    map['requested_at'] = Variable<DateTime>(requestedAt);
+    if (!nullToAbsent || resumedAt != null) {
+      map['resumed_at'] = Variable<DateTime>(resumedAt);
+    }
+    return map;
+  }
+
+  ArcFreezesCompanion toCompanion(bool nullToAbsent) {
+    return ArcFreezesCompanion(
+      sessionId: Value(sessionId),
+      frozenFrom: Value(frozenFrom),
+      resumedOn: resumedOn == null && nullToAbsent
+          ? const Value.absent()
+          : Value(resumedOn),
+      requestedAt: Value(requestedAt),
+      resumedAt: resumedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(resumedAt),
+    );
+  }
+
+  factory ArcFreezeRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ArcFreezeRow(
+      sessionId: serializer.fromJson<int>(json['sessionId']),
+      frozenFrom: serializer.fromJson<LocalDate>(json['frozenFrom']),
+      resumedOn: serializer.fromJson<LocalDate?>(json['resumedOn']),
+      requestedAt: serializer.fromJson<DateTime>(json['requestedAt']),
+      resumedAt: serializer.fromJson<DateTime?>(json['resumedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'sessionId': serializer.toJson<int>(sessionId),
+      'frozenFrom': serializer.toJson<LocalDate>(frozenFrom),
+      'resumedOn': serializer.toJson<LocalDate?>(resumedOn),
+      'requestedAt': serializer.toJson<DateTime>(requestedAt),
+      'resumedAt': serializer.toJson<DateTime?>(resumedAt),
+    };
+  }
+
+  ArcFreezeRow copyWith({
+    int? sessionId,
+    LocalDate? frozenFrom,
+    Value<LocalDate?> resumedOn = const Value.absent(),
+    DateTime? requestedAt,
+    Value<DateTime?> resumedAt = const Value.absent(),
+  }) => ArcFreezeRow(
+    sessionId: sessionId ?? this.sessionId,
+    frozenFrom: frozenFrom ?? this.frozenFrom,
+    resumedOn: resumedOn.present ? resumedOn.value : this.resumedOn,
+    requestedAt: requestedAt ?? this.requestedAt,
+    resumedAt: resumedAt.present ? resumedAt.value : this.resumedAt,
+  );
+  ArcFreezeRow copyWithCompanion(ArcFreezesCompanion data) {
+    return ArcFreezeRow(
+      sessionId: data.sessionId.present ? data.sessionId.value : this.sessionId,
+      frozenFrom: data.frozenFrom.present
+          ? data.frozenFrom.value
+          : this.frozenFrom,
+      resumedOn: data.resumedOn.present ? data.resumedOn.value : this.resumedOn,
+      requestedAt: data.requestedAt.present
+          ? data.requestedAt.value
+          : this.requestedAt,
+      resumedAt: data.resumedAt.present ? data.resumedAt.value : this.resumedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ArcFreezeRow(')
+          ..write('sessionId: $sessionId, ')
+          ..write('frozenFrom: $frozenFrom, ')
+          ..write('resumedOn: $resumedOn, ')
+          ..write('requestedAt: $requestedAt, ')
+          ..write('resumedAt: $resumedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(sessionId, frozenFrom, resumedOn, requestedAt, resumedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ArcFreezeRow &&
+          other.sessionId == this.sessionId &&
+          other.frozenFrom == this.frozenFrom &&
+          other.resumedOn == this.resumedOn &&
+          other.requestedAt == this.requestedAt &&
+          other.resumedAt == this.resumedAt);
+}
+
+class ArcFreezesCompanion extends UpdateCompanion<ArcFreezeRow> {
+  final Value<int> sessionId;
+  final Value<LocalDate> frozenFrom;
+  final Value<LocalDate?> resumedOn;
+  final Value<DateTime> requestedAt;
+  final Value<DateTime?> resumedAt;
+  final Value<int> rowid;
+  const ArcFreezesCompanion({
+    this.sessionId = const Value.absent(),
+    this.frozenFrom = const Value.absent(),
+    this.resumedOn = const Value.absent(),
+    this.requestedAt = const Value.absent(),
+    this.resumedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ArcFreezesCompanion.insert({
+    required int sessionId,
+    required LocalDate frozenFrom,
+    this.resumedOn = const Value.absent(),
+    required DateTime requestedAt,
+    this.resumedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : sessionId = Value(sessionId),
+       frozenFrom = Value(frozenFrom),
+       requestedAt = Value(requestedAt);
+  static Insertable<ArcFreezeRow> custom({
+    Expression<int>? sessionId,
+    Expression<String>? frozenFrom,
+    Expression<String>? resumedOn,
+    Expression<DateTime>? requestedAt,
+    Expression<DateTime>? resumedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (sessionId != null) 'session_id': sessionId,
+      if (frozenFrom != null) 'frozen_from': frozenFrom,
+      if (resumedOn != null) 'resumed_on': resumedOn,
+      if (requestedAt != null) 'requested_at': requestedAt,
+      if (resumedAt != null) 'resumed_at': resumedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ArcFreezesCompanion copyWith({
+    Value<int>? sessionId,
+    Value<LocalDate>? frozenFrom,
+    Value<LocalDate?>? resumedOn,
+    Value<DateTime>? requestedAt,
+    Value<DateTime?>? resumedAt,
+    Value<int>? rowid,
+  }) {
+    return ArcFreezesCompanion(
+      sessionId: sessionId ?? this.sessionId,
+      frozenFrom: frozenFrom ?? this.frozenFrom,
+      resumedOn: resumedOn ?? this.resumedOn,
+      requestedAt: requestedAt ?? this.requestedAt,
+      resumedAt: resumedAt ?? this.resumedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (sessionId.present) {
+      map['session_id'] = Variable<int>(sessionId.value);
+    }
+    if (frozenFrom.present) {
+      map['frozen_from'] = Variable<String>(
+        $ArcFreezesTable.$converterfrozenFrom.toSql(frozenFrom.value),
+      );
+    }
+    if (resumedOn.present) {
+      map['resumed_on'] = Variable<String>(
+        $ArcFreezesTable.$converterresumedOnn.toSql(resumedOn.value),
+      );
+    }
+    if (requestedAt.present) {
+      map['requested_at'] = Variable<DateTime>(requestedAt.value);
+    }
+    if (resumedAt.present) {
+      map['resumed_at'] = Variable<DateTime>(resumedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ArcFreezesCompanion(')
+          ..write('sessionId: $sessionId, ')
+          ..write('frozenFrom: $frozenFrom, ')
+          ..write('resumedOn: $resumedOn, ')
+          ..write('requestedAt: $requestedAt, ')
+          ..write('resumedAt: $resumedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $FeedbackPrefsTable extends FeedbackPrefs
+    with TableInfo<$FeedbackPrefsTable, FeedbackPreferencesRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $FeedbackPrefsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    check: () => id.equals(1),
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _soundsEnabledMeta = const VerificationMeta(
+    'soundsEnabled',
+  );
+  @override
+  late final GeneratedColumn<bool> soundsEnabled = GeneratedColumn<bool>(
+    'sounds_enabled',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("sounds_enabled" IN (0, 1))',
+    ),
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<SoundTheme, String> soundTheme =
+      GeneratedColumn<String>(
+        'sound_theme',
+        aliasedName,
+        false,
+        check: () =>
+            soundTheme.isIn(['iceCrystal', 'summitSpark', 'warmEmber']),
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<SoundTheme>($FeedbackPrefsTable.$convertersoundTheme);
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    soundsEnabled,
+    soundTheme,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'feedback_preferences';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<FeedbackPreferencesRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('sounds_enabled')) {
+      context.handle(
+        _soundsEnabledMeta,
+        soundsEnabled.isAcceptableOrUnknown(
+          data['sounds_enabled']!,
+          _soundsEnabledMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_soundsEnabledMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  FeedbackPreferencesRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return FeedbackPreferencesRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      soundsEnabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}sounds_enabled'],
+      )!,
+      soundTheme: $FeedbackPrefsTable.$convertersoundTheme.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}sound_theme'],
+        )!,
+      ),
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $FeedbackPrefsTable createAlias(String alias) {
+    return $FeedbackPrefsTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<SoundTheme, String, String> $convertersoundTheme =
+      const EnumNameConverter<SoundTheme>(SoundTheme.values);
+}
+
+class FeedbackPreferencesRow extends DataClass
+    implements Insertable<FeedbackPreferencesRow> {
+  final int id;
+  final bool soundsEnabled;
+  final SoundTheme soundTheme;
+  final DateTime updatedAt;
+  const FeedbackPreferencesRow({
+    required this.id,
+    required this.soundsEnabled,
+    required this.soundTheme,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['sounds_enabled'] = Variable<bool>(soundsEnabled);
+    {
+      map['sound_theme'] = Variable<String>(
+        $FeedbackPrefsTable.$convertersoundTheme.toSql(soundTheme),
+      );
+    }
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  FeedbackPrefsCompanion toCompanion(bool nullToAbsent) {
+    return FeedbackPrefsCompanion(
+      id: Value(id),
+      soundsEnabled: Value(soundsEnabled),
+      soundTheme: Value(soundTheme),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory FeedbackPreferencesRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return FeedbackPreferencesRow(
+      id: serializer.fromJson<int>(json['id']),
+      soundsEnabled: serializer.fromJson<bool>(json['soundsEnabled']),
+      soundTheme: $FeedbackPrefsTable.$convertersoundTheme.fromJson(
+        serializer.fromJson<String>(json['soundTheme']),
+      ),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'soundsEnabled': serializer.toJson<bool>(soundsEnabled),
+      'soundTheme': serializer.toJson<String>(
+        $FeedbackPrefsTable.$convertersoundTheme.toJson(soundTheme),
+      ),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  FeedbackPreferencesRow copyWith({
+    int? id,
+    bool? soundsEnabled,
+    SoundTheme? soundTheme,
+    DateTime? updatedAt,
+  }) => FeedbackPreferencesRow(
+    id: id ?? this.id,
+    soundsEnabled: soundsEnabled ?? this.soundsEnabled,
+    soundTheme: soundTheme ?? this.soundTheme,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  FeedbackPreferencesRow copyWithCompanion(FeedbackPrefsCompanion data) {
+    return FeedbackPreferencesRow(
+      id: data.id.present ? data.id.value : this.id,
+      soundsEnabled: data.soundsEnabled.present
+          ? data.soundsEnabled.value
+          : this.soundsEnabled,
+      soundTheme: data.soundTheme.present
+          ? data.soundTheme.value
+          : this.soundTheme,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FeedbackPreferencesRow(')
+          ..write('id: $id, ')
+          ..write('soundsEnabled: $soundsEnabled, ')
+          ..write('soundTheme: $soundTheme, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, soundsEnabled, soundTheme, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is FeedbackPreferencesRow &&
+          other.id == this.id &&
+          other.soundsEnabled == this.soundsEnabled &&
+          other.soundTheme == this.soundTheme &&
+          other.updatedAt == this.updatedAt);
+}
+
+class FeedbackPrefsCompanion extends UpdateCompanion<FeedbackPreferencesRow> {
+  final Value<int> id;
+  final Value<bool> soundsEnabled;
+  final Value<SoundTheme> soundTheme;
+  final Value<DateTime> updatedAt;
+  const FeedbackPrefsCompanion({
+    this.id = const Value.absent(),
+    this.soundsEnabled = const Value.absent(),
+    this.soundTheme = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  });
+  FeedbackPrefsCompanion.insert({
+    this.id = const Value.absent(),
+    required bool soundsEnabled,
+    required SoundTheme soundTheme,
+    required DateTime updatedAt,
+  }) : soundsEnabled = Value(soundsEnabled),
+       soundTheme = Value(soundTheme),
+       updatedAt = Value(updatedAt);
+  static Insertable<FeedbackPreferencesRow> custom({
+    Expression<int>? id,
+    Expression<bool>? soundsEnabled,
+    Expression<String>? soundTheme,
+    Expression<DateTime>? updatedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (soundsEnabled != null) 'sounds_enabled': soundsEnabled,
+      if (soundTheme != null) 'sound_theme': soundTheme,
+      if (updatedAt != null) 'updated_at': updatedAt,
+    });
+  }
+
+  FeedbackPrefsCompanion copyWith({
+    Value<int>? id,
+    Value<bool>? soundsEnabled,
+    Value<SoundTheme>? soundTheme,
+    Value<DateTime>? updatedAt,
+  }) {
+    return FeedbackPrefsCompanion(
+      id: id ?? this.id,
+      soundsEnabled: soundsEnabled ?? this.soundsEnabled,
+      soundTheme: soundTheme ?? this.soundTheme,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (soundsEnabled.present) {
+      map['sounds_enabled'] = Variable<bool>(soundsEnabled.value);
+    }
+    if (soundTheme.present) {
+      map['sound_theme'] = Variable<String>(
+        $FeedbackPrefsTable.$convertersoundTheme.toSql(soundTheme.value),
+      );
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FeedbackPrefsCompanion(')
+          ..write('id: $id, ')
+          ..write('soundsEnabled: $soundsEnabled, ')
+          ..write('soundTheme: $soundTheme, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -5401,9 +6163,15 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   );
   late final $FocusGuardSelectedAppsTable focusGuardSelectedApps =
       $FocusGuardSelectedAppsTable(this);
+  late final $ArcFreezesTable arcFreezes = $ArcFreezesTable(this);
+  late final $FeedbackPrefsTable feedbackPrefs = $FeedbackPrefsTable(this);
   late final Index singleOpenSession = Index(
     'single_open_session',
     'CREATE UNIQUE INDEX single_open_session ON winter_arc_sessions ((status IN (\'setup\', \'active\'))) WHERE status IN (\'setup\', \'active\')',
+  );
+  late final Index oneOpenFreeze = Index(
+    'one_open_freeze',
+    'CREATE UNIQUE INDEX one_open_freeze ON arc_freezes (session_id) WHERE resumed_on IS NULL',
   );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
@@ -5421,7 +6189,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     reminderPrefs,
     focusGuardPrefs,
     focusGuardSelectedApps,
+    arcFreezes,
+    feedbackPrefs,
     singleOpenSession,
+    oneOpenFreeze,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -5460,6 +6231,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       ),
       result: [TableUpdate('daily_reflections', kind: UpdateKind.delete)],
     ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'winter_arc_sessions',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('arc_freezes', kind: UpdateKind.delete)],
+    ),
   ]);
 }
 
@@ -5473,6 +6251,7 @@ typedef $$WinterArcSessionsTableCreateCompanionBuilder =
       Value<DateTime?> startedAt,
       Value<ArcKind> arcKind,
       Value<LocalDate?> participationStartDate,
+      Value<LocalDate?> closedOn,
     });
 typedef $$WinterArcSessionsTableUpdateCompanionBuilder =
     WinterArcSessionsCompanion Function({
@@ -5484,6 +6263,7 @@ typedef $$WinterArcSessionsTableUpdateCompanionBuilder =
       Value<DateTime?> startedAt,
       Value<ArcKind> arcKind,
       Value<LocalDate?> participationStartDate,
+      Value<LocalDate?> closedOn,
     });
 
 final class $$WinterArcSessionsTableReferences
@@ -5592,6 +6372,24 @@ final class $$WinterArcSessionsTableReferences
       manager.$state.copyWith(prefetchedData: cache),
     );
   }
+
+  static MultiTypedResultKey<$ArcFreezesTable, List<ArcFreezeRow>>
+  _arcFreezesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.arcFreezes,
+    aliasName: 'winter_arc_sessions__id__arc_freezes__session_id',
+  );
+
+  $$ArcFreezesTableProcessedTableManager get arcFreezesRefs {
+    final manager = $$ArcFreezesTableTableManager(
+      $_db,
+      $_db.arcFreezes,
+    ).filter((f) => f.sessionId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_arcFreezesRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
 }
 
 class $$WinterArcSessionsTableFilterComposer
@@ -5647,6 +6445,12 @@ class $$WinterArcSessionsTableFilterComposer
     column: $table.participationStartDate,
     builder: (column) => ColumnWithTypeConverterFilters(column),
   );
+
+  ColumnWithTypeConverterFilters<LocalDate?, LocalDate, String> get closedOn =>
+      $composableBuilder(
+        column: $table.closedOn,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
 
   Expression<bool> habitsRefs(
     Expression<bool> Function($$HabitsTableFilterComposer f) f,
@@ -5772,6 +6576,31 @@ class $$WinterArcSessionsTableFilterComposer
     );
     return f(composer);
   }
+
+  Expression<bool> arcFreezesRefs(
+    Expression<bool> Function($$ArcFreezesTableFilterComposer f) f,
+  ) {
+    final $$ArcFreezesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.arcFreezes,
+      getReferencedColumn: (t) => t.sessionId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ArcFreezesTableFilterComposer(
+            $db: $db,
+            $table: $db.arcFreezes,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$WinterArcSessionsTableOrderingComposer
@@ -5822,6 +6651,11 @@ class $$WinterArcSessionsTableOrderingComposer
     column: $table.participationStartDate,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get closedOn => $composableBuilder(
+    column: $table.closedOn,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$WinterArcSessionsTableAnnotationComposer
@@ -5859,6 +6693,9 @@ class $$WinterArcSessionsTableAnnotationComposer
     column: $table.participationStartDate,
     builder: (column) => column,
   );
+
+  GeneratedColumnWithTypeConverter<LocalDate?, String> get closedOn =>
+      $composableBuilder(column: $table.closedOn, builder: (column) => column);
 
   Expression<T> habitsRefs<T extends Object>(
     Expression<T> Function($$HabitsTableAnnotationComposer a) f,
@@ -5985,6 +6822,31 @@ class $$WinterArcSessionsTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> arcFreezesRefs<T extends Object>(
+    Expression<T> Function($$ArcFreezesTableAnnotationComposer a) f,
+  ) {
+    final $$ArcFreezesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.arcFreezes,
+      getReferencedColumn: (t) => t.sessionId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ArcFreezesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.arcFreezes,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$WinterArcSessionsTableTableManager
@@ -6006,6 +6868,7 @@ class $$WinterArcSessionsTableTableManager
             bool dayModesRefs,
             bool achievementUnlocksRefs,
             bool dailyReflectionsRefs,
+            bool arcFreezesRefs,
           })
         > {
   $$WinterArcSessionsTableTableManager(
@@ -6034,6 +6897,7 @@ class $$WinterArcSessionsTableTableManager
                 Value<DateTime?> startedAt = const Value.absent(),
                 Value<ArcKind> arcKind = const Value.absent(),
                 Value<LocalDate?> participationStartDate = const Value.absent(),
+                Value<LocalDate?> closedOn = const Value.absent(),
               }) => WinterArcSessionsCompanion(
                 id: id,
                 startDate: startDate,
@@ -6043,6 +6907,7 @@ class $$WinterArcSessionsTableTableManager
                 startedAt: startedAt,
                 arcKind: arcKind,
                 participationStartDate: participationStartDate,
+                closedOn: closedOn,
               ),
           createCompanionCallback:
               ({
@@ -6054,6 +6919,7 @@ class $$WinterArcSessionsTableTableManager
                 Value<DateTime?> startedAt = const Value.absent(),
                 Value<ArcKind> arcKind = const Value.absent(),
                 Value<LocalDate?> participationStartDate = const Value.absent(),
+                Value<LocalDate?> closedOn = const Value.absent(),
               }) => WinterArcSessionsCompanion.insert(
                 id: id,
                 startDate: startDate,
@@ -6063,6 +6929,7 @@ class $$WinterArcSessionsTableTableManager
                 startedAt: startedAt,
                 arcKind: arcKind,
                 participationStartDate: participationStartDate,
+                closedOn: closedOn,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -6079,6 +6946,7 @@ class $$WinterArcSessionsTableTableManager
                 dayModesRefs = false,
                 achievementUnlocksRefs = false,
                 dailyReflectionsRefs = false,
+                arcFreezesRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -6088,6 +6956,7 @@ class $$WinterArcSessionsTableTableManager
                     if (dayModesRefs) db.dayModes,
                     if (achievementUnlocksRefs) db.achievementUnlocks,
                     if (dailyReflectionsRefs) db.dailyReflections,
+                    if (arcFreezesRefs) db.arcFreezes,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -6197,6 +7066,27 @@ class $$WinterArcSessionsTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (arcFreezesRefs)
+                        await $_getPrefetchedData<
+                          SessionRow,
+                          $WinterArcSessionsTable,
+                          ArcFreezeRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $$WinterArcSessionsTableReferences
+                              ._arcFreezesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$WinterArcSessionsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).arcFreezesRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.sessionId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -6223,6 +7113,7 @@ typedef $$WinterArcSessionsTableProcessedTableManager =
         bool dayModesRefs,
         bool achievementUnlocksRefs,
         bool dailyReflectionsRefs,
+        bool arcFreezesRefs,
       })
     >;
 typedef $$HabitsTableCreateCompanionBuilder = HabitsCompanion Function({
@@ -9378,6 +10269,528 @@ typedef $$FocusGuardSelectedAppsTableProcessedTableManager =
       FocusGuardSelectedAppRow,
       PrefetchHooks Function()
     >;
+typedef $$ArcFreezesTableCreateCompanionBuilder = ArcFreezesCompanion Function({
+  required int sessionId,
+  required LocalDate frozenFrom,
+  Value<LocalDate?> resumedOn,
+  required DateTime requestedAt,
+  Value<DateTime?> resumedAt,
+  Value<int> rowid,
+});
+typedef $$ArcFreezesTableUpdateCompanionBuilder = ArcFreezesCompanion Function({
+  Value<int> sessionId,
+  Value<LocalDate> frozenFrom,
+  Value<LocalDate?> resumedOn,
+  Value<DateTime> requestedAt,
+  Value<DateTime?> resumedAt,
+  Value<int> rowid,
+});
+
+final class $$ArcFreezesTableReferences
+    extends BaseReferences<_$AppDatabase, $ArcFreezesTable, ArcFreezeRow> {
+  $$ArcFreezesTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $WinterArcSessionsTable _sessionIdTable(_$AppDatabase db) => db
+      .winterArcSessions
+      .createAlias('arc_freezes__session_id__winter_arc_sessions__id');
+
+  $$WinterArcSessionsTableProcessedTableManager get sessionId {
+    final $_column = $_itemColumn<int>('session_id')!;
+
+    final manager = $$WinterArcSessionsTableTableManager(
+      $_db,
+      $_db.winterArcSessions,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_sessionIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$ArcFreezesTableFilterComposer
+    extends Composer<_$AppDatabase, $ArcFreezesTable> {
+  $$ArcFreezesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnWithTypeConverterFilters<LocalDate, LocalDate, String> get frozenFrom =>
+      $composableBuilder(
+        column: $table.frozenFrom,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnWithTypeConverterFilters<LocalDate?, LocalDate, String> get resumedOn =>
+      $composableBuilder(
+        column: $table.resumedOn,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<DateTime> get requestedAt => $composableBuilder(
+    column: $table.requestedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get resumedAt => $composableBuilder(
+    column: $table.resumedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$WinterArcSessionsTableFilterComposer get sessionId {
+    final $$WinterArcSessionsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sessionId,
+      referencedTable: $db.winterArcSessions,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$WinterArcSessionsTableFilterComposer(
+            $db: $db,
+            $table: $db.winterArcSessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ArcFreezesTableOrderingComposer
+    extends Composer<_$AppDatabase, $ArcFreezesTable> {
+  $$ArcFreezesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get frozenFrom => $composableBuilder(
+    column: $table.frozenFrom,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get resumedOn => $composableBuilder(
+    column: $table.resumedOn,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get requestedAt => $composableBuilder(
+    column: $table.requestedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get resumedAt => $composableBuilder(
+    column: $table.resumedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$WinterArcSessionsTableOrderingComposer get sessionId {
+    final $$WinterArcSessionsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sessionId,
+      referencedTable: $db.winterArcSessions,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$WinterArcSessionsTableOrderingComposer(
+            $db: $db,
+            $table: $db.winterArcSessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ArcFreezesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ArcFreezesTable> {
+  $$ArcFreezesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumnWithTypeConverter<LocalDate, String> get frozenFrom =>
+      $composableBuilder(
+        column: $table.frozenFrom,
+        builder: (column) => column,
+      );
+
+  GeneratedColumnWithTypeConverter<LocalDate?, String> get resumedOn =>
+      $composableBuilder(column: $table.resumedOn, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get requestedAt => $composableBuilder(
+    column: $table.requestedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get resumedAt =>
+      $composableBuilder(column: $table.resumedAt, builder: (column) => column);
+
+  $$WinterArcSessionsTableAnnotationComposer get sessionId {
+    final $$WinterArcSessionsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.sessionId,
+          referencedTable: $db.winterArcSessions,
+          getReferencedColumn: (t) => t.id,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$WinterArcSessionsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.winterArcSessions,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return composer;
+  }
+}
+
+class $$ArcFreezesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ArcFreezesTable,
+          ArcFreezeRow,
+          $$ArcFreezesTableFilterComposer,
+          $$ArcFreezesTableOrderingComposer,
+          $$ArcFreezesTableAnnotationComposer,
+          $$ArcFreezesTableCreateCompanionBuilder,
+          $$ArcFreezesTableUpdateCompanionBuilder,
+          (ArcFreezeRow, $$ArcFreezesTableReferences),
+          ArcFreezeRow,
+          PrefetchHooks Function({bool sessionId})
+        > {
+  $$ArcFreezesTableTableManager(_$AppDatabase db, $ArcFreezesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ArcFreezesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ArcFreezesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ArcFreezesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> sessionId = const Value.absent(),
+                Value<LocalDate> frozenFrom = const Value.absent(),
+                Value<LocalDate?> resumedOn = const Value.absent(),
+                Value<DateTime> requestedAt = const Value.absent(),
+                Value<DateTime?> resumedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ArcFreezesCompanion(
+                sessionId: sessionId,
+                frozenFrom: frozenFrom,
+                resumedOn: resumedOn,
+                requestedAt: requestedAt,
+                resumedAt: resumedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required int sessionId,
+                required LocalDate frozenFrom,
+                Value<LocalDate?> resumedOn = const Value.absent(),
+                required DateTime requestedAt,
+                Value<DateTime?> resumedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ArcFreezesCompanion.insert(
+                sessionId: sessionId,
+                frozenFrom: frozenFrom,
+                resumedOn: resumedOn,
+                requestedAt: requestedAt,
+                resumedAt: resumedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$ArcFreezesTable, ArcFreezeRow>(table),
+                  $$ArcFreezesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({sessionId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (sessionId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.sessionId,
+                        referencedTable: $$ArcFreezesTableReferences
+                            ._sessionIdTable(db),
+                        referencedColumn: $$ArcFreezesTableReferences
+                            ._sessionIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$ArcFreezesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ArcFreezesTable,
+      ArcFreezeRow,
+      $$ArcFreezesTableFilterComposer,
+      $$ArcFreezesTableOrderingComposer,
+      $$ArcFreezesTableAnnotationComposer,
+      $$ArcFreezesTableCreateCompanionBuilder,
+      $$ArcFreezesTableUpdateCompanionBuilder,
+      (ArcFreezeRow, $$ArcFreezesTableReferences),
+      ArcFreezeRow,
+      PrefetchHooks Function({bool sessionId})
+    >;
+typedef $$FeedbackPrefsTableCreateCompanionBuilder =
+    FeedbackPrefsCompanion Function({
+      Value<int> id,
+      required bool soundsEnabled,
+      required SoundTheme soundTheme,
+      required DateTime updatedAt,
+    });
+typedef $$FeedbackPrefsTableUpdateCompanionBuilder =
+    FeedbackPrefsCompanion Function({
+      Value<int> id,
+      Value<bool> soundsEnabled,
+      Value<SoundTheme> soundTheme,
+      Value<DateTime> updatedAt,
+    });
+
+class $$FeedbackPrefsTableFilterComposer
+    extends Composer<_$AppDatabase, $FeedbackPrefsTable> {
+  $$FeedbackPrefsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get soundsEnabled => $composableBuilder(
+    column: $table.soundsEnabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<SoundTheme, SoundTheme, String>
+  get soundTheme => $composableBuilder(
+    column: $table.soundTheme,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$FeedbackPrefsTableOrderingComposer
+    extends Composer<_$AppDatabase, $FeedbackPrefsTable> {
+  $$FeedbackPrefsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get soundsEnabled => $composableBuilder(
+    column: $table.soundsEnabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get soundTheme => $composableBuilder(
+    column: $table.soundTheme,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$FeedbackPrefsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $FeedbackPrefsTable> {
+  $$FeedbackPrefsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<bool> get soundsEnabled => $composableBuilder(
+    column: $table.soundsEnabled,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<SoundTheme, String> get soundTheme =>
+      $composableBuilder(
+        column: $table.soundTheme,
+        builder: (column) => column,
+      );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$FeedbackPrefsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $FeedbackPrefsTable,
+          FeedbackPreferencesRow,
+          $$FeedbackPrefsTableFilterComposer,
+          $$FeedbackPrefsTableOrderingComposer,
+          $$FeedbackPrefsTableAnnotationComposer,
+          $$FeedbackPrefsTableCreateCompanionBuilder,
+          $$FeedbackPrefsTableUpdateCompanionBuilder,
+          (
+            FeedbackPreferencesRow,
+            BaseReferences<
+              _$AppDatabase,
+              $FeedbackPrefsTable,
+              FeedbackPreferencesRow
+            >,
+          ),
+          FeedbackPreferencesRow,
+          PrefetchHooks Function()
+        > {
+  $$FeedbackPrefsTableTableManager(_$AppDatabase db, $FeedbackPrefsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$FeedbackPrefsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$FeedbackPrefsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$FeedbackPrefsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<bool> soundsEnabled = const Value.absent(),
+                Value<SoundTheme> soundTheme = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+              }) => FeedbackPrefsCompanion(
+                id: id,
+                soundsEnabled: soundsEnabled,
+                soundTheme: soundTheme,
+                updatedAt: updatedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required bool soundsEnabled,
+                required SoundTheme soundTheme,
+                required DateTime updatedAt,
+              }) => FeedbackPrefsCompanion.insert(
+                id: id,
+                soundsEnabled: soundsEnabled,
+                soundTheme: soundTheme,
+                updatedAt: updatedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$FeedbackPrefsTable, FeedbackPreferencesRow>(
+                    table,
+                  ),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $FeedbackPrefsTable,
+                    FeedbackPreferencesRow
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$FeedbackPrefsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $FeedbackPrefsTable,
+      FeedbackPreferencesRow,
+      $$FeedbackPrefsTableFilterComposer,
+      $$FeedbackPrefsTableOrderingComposer,
+      $$FeedbackPrefsTableAnnotationComposer,
+      $$FeedbackPrefsTableCreateCompanionBuilder,
+      $$FeedbackPrefsTableUpdateCompanionBuilder,
+      (
+        FeedbackPreferencesRow,
+        BaseReferences<
+          _$AppDatabase,
+          $FeedbackPrefsTable,
+          FeedbackPreferencesRow
+        >,
+      ),
+      FeedbackPreferencesRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -9410,4 +10823,8 @@ class $AppDatabaseManager {
         _db,
         _db.focusGuardSelectedApps,
       );
+  $$ArcFreezesTableTableManager get arcFreezes =>
+      $$ArcFreezesTableTableManager(_db, _db.arcFreezes);
+  $$FeedbackPrefsTableTableManager get feedbackPrefs =>
+      $$FeedbackPrefsTableTableManager(_db, _db.feedbackPrefs);
 }

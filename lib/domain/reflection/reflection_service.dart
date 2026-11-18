@@ -35,8 +35,9 @@ final class JournalView {
   /// one of its days.
   final bool canWriteToday;
 
-  /// 1-based challenge day of [date] in this arc.
-  int dayNumberOf(LocalDate date) => session.dayNumberOf(date);
+  /// 1-based challenge day of [date] in this arc, or null for a paused
+  /// date (a reflection is never on one).
+  int? dayNumberOf(LocalDate date) => session.dayNumberOf(date);
 
   int get count => past.length + (todayEntry == null ? 0 : 1);
 }

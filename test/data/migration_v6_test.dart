@@ -187,14 +187,17 @@ List<Map<String, Object?>> _rowsBefore(dynamic raw, String table) => [
     {for (final key in row.keys) key as String: row[key]},
 ];
 
-/// The rows of [table] with only the columns v5 had.
+/// The rows of [table] with only the columns v5 had (`closed_on`, added
+/// by v7, is checked in migration_v7_test.dart).
 Future<List<Map<String, Object?>>> _v5ColumnsAfter(
   AppDatabase db,
   String table,
 ) async => [
   for (final row
       in await db.customSelect('SELECT * FROM $table ORDER BY rowid').get())
-    {...row.data}..removeWhere((key, _) => key.startsWith('hydration_')),
+    {...row.data}..removeWhere(
+      (key, _) => key.startsWith('hydration_') || key == 'closed_on',
+    ),
 ];
 
 void main() {
@@ -202,12 +205,6 @@ void main() {
   late SchemaVerifier verifier;
 
   setUpAll(() => verifier = SchemaVerifier(GeneratedHelper()));
-
-  test('schema v6 is the current schema', () {
-    final db = memoryDatabase();
-    addTearDown(db.close);
-    expect(db.schemaVersion, 6);
-  });
 
   test('an empty v5 database upgrades to exactly the v6 schema', () async {
     final db = AppDatabase(await verifier.startAt(5));
@@ -233,7 +230,7 @@ void main() {
     });
   }
 
-  group('v5 → v6 with v1.1 data', () {
+  group('v5 → v6 → v7 with v1.1 data', () {
     late AppDatabase db;
     late TestApp app;
     late Map<String, List<Map<String, Object?>>> before;
@@ -244,7 +241,7 @@ void main() {
       _seedV5(raw);
       before = {for (final t in _v5Tables) t: _rowsBefore(raw, t)};
       db = AppDatabase(schema.newConnection());
-      await verifier.migrateAndValidate(db, 6);
+      await verifier.migrateAndValidate(db, 7);
       app = TestApp(db, FakeClock(DateTime(2026, 10, 5, 9)));
     });
     tearDown(() => db.close());

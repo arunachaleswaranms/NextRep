@@ -31,8 +31,11 @@ final class OverallInsight {
     required this.reflectionCount,
   });
 
-  /// Arcs included: every completed arc and the active one.
+  /// Arcs included: every started arc (completed, ended and the active
+  /// one).
   final int arcCount;
+
+  /// Completed arcs only: an ended arc is never counted as completed.
   final int completedArcs;
 
   /// The running arc, if any, and today's day number in it.

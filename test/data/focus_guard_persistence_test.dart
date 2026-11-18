@@ -123,7 +123,7 @@ void main() {
         'tu': 'integer',
       });
       expect((await db.customSelect('PRAGMA user_version').getSingle()).data, {
-        'user_version': 6,
+        'user_version': 7,
       });
     });
 

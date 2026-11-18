@@ -123,6 +123,10 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
       ArcInProgress(:final dayNumber) => dayNumber,
       ArcNotStarted() => 1,
       ArcFinished(:final totalDays) => totalDays,
+      // Schema v7 states, only reachable from a restored format-4 backup
+      // in Phase 12E1: the last day lived.
+      ArcPaused(:final lastDayNumber) => lastDayNumber,
+      ArcEnded(:final lastDayNumber) => lastDayNumber,
     },
     totalDays: journey.position.totalDays,
   );
@@ -145,6 +149,10 @@ class _Header extends StatelessWidget {
       ArcInProgress(:final dayNumber) => dayNumber,
       ArcNotStarted() => 1,
       ArcFinished(:final totalDays) => totalDays,
+      // Schema v7 states, only reachable from a restored format-4 backup
+      // in Phase 12E1: the last day lived.
+      ArcPaused(:final lastDayNumber) => lastDayNumber,
+      ArcEnded(:final lastDayNumber) => lastDayNumber,
     };
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -287,7 +295,10 @@ class _Legend extends StatelessWidget {
             Text('Legend', style: text.headlineSmall),
             const SizedBox(height: WinterSpacing.sm),
             for (final state in JourneyDayState.values)
-              if (showNotJoined || state != JourneyDayState.notJoined)
+              // Only an ended arc (schema v7) has days it did not reach;
+              // no screen shows one yet.
+              if ((showNotJoined || state != JourneyDayState.notJoined) &&
+                  state != JourneyDayState.notReached)
                 Row(
                   children: [
                     ExcludeSemantics(

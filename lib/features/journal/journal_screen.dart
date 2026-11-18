@@ -168,6 +168,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
                 ),
                 const SizedBox(height: WinterSpacing.md),
                 if (view.canWriteToday) ...[
+                  // Writable only on a challenge day, which has a number.
                   _SectionLabel('TODAY · DAY ${view.dayNumberOf(view.today)}'),
                   if (today != null && !_editing)
                     ReflectionEntryCard(

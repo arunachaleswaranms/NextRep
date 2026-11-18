@@ -4,12 +4,20 @@ import '../../domain/journey/arc_milestones.dart';
 import '../../domain/winter_arc/winter_arc_session.dart';
 
 /// "Day 4 of 92", "Starts tomorrow", or "Winter Arc complete".
+///
+/// A paused date and a date after an ended arc's last day (schema v7) only
+/// occur in Phase 12E1 for an arc restored from a format-4 backup; their
+/// wording is a fallback until Phases 12E2 and 12F design it.
 String dayTitle(ArcDayPosition position) => switch (position) {
   ArcInProgress(:final dayNumber, :final totalDays) =>
     'Day $dayNumber of $totalDays',
   ArcNotStarted(:final daysUntilStart) =>
     daysUntilStart == 1 ? 'Starts tomorrow' : 'Starts in $daysUntilStart days',
   ArcFinished() => 'Winter Arc complete',
+  ArcPaused(:final lastDayNumber, :final totalDays) =>
+    'Paused after Day $lastDayNumber of $totalDays',
+  ArcEnded(:final lastDayNumber, :final totalDays) =>
+    'Ended early · Day $lastDayNumber of $totalDays',
 };
 
 /// Display name of a scene milestone.
@@ -43,10 +51,14 @@ String? nextMilestoneLabel(int dayNumber) {
 }
 
 /// "1 Jul – 30 Sep 2026", or "4 Oct 2026 – 3 Jan 2027" when the arc spans
-/// two years.
+/// two years. An ended arc runs to its last counted day; a paused arc has
+/// no known end yet ("1 Mar 2027 – paused").
 String arcDateRange(WinterArcSession session) {
   final start = session.startDate.toLocalDateTime();
-  final end = session.endDate.toLocalDateTime();
+  if (session.hasOpenFreeze) {
+    return '${DateFormat('d MMM y').format(start)} – paused';
+  }
+  final end = (session.closedOn ?? session.endDate).toLocalDateTime();
   final startFormat = start.year == end.year ? 'd MMM' : 'd MMM y';
   return '${DateFormat(startFormat).format(start)} – '
       '${DateFormat('d MMM y').format(end)}';

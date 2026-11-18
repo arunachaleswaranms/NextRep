@@ -10,7 +10,8 @@ final class ArcResolution {
   /// can still change.
   final WinterArcSession? current;
 
-  /// The most recently completed arc, if any. Historical and read-only.
+  /// The most recently finished arc (completed, or ended early), if any.
+  /// Historical and read-only. Its name predates the `ended` status.
   final WinterArcSession? latestCompleted;
 
   /// The current arc if it's running.
@@ -22,7 +23,7 @@ final class ArcResolution {
       current?.status == WinterArcStatus.setup ? current : null;
 
   /// The started arc that the app's home shows: the active arc or, when
-  /// nothing is unfinished, the most recently completed one. Null while a
+  /// nothing is unfinished, the most recently finished one. Null while a
   /// new arc is in setup and before the first arc.
   WinterArcSession? get home => current == null ? latestCompleted : active;
 
@@ -81,8 +82,8 @@ final class CurrentArcService {
     return home;
   }
 
-  /// The session with [id]. It must have started (active or completed):
-  /// a session in setup has no history yet.
+  /// The session with [id]. It must have started (active, completed or
+  /// ended): a session in setup has no history yet.
   Future<WinterArcSession> requireStarted(int id) async {
     final session = await _sessions.sessionById(id);
     if (session == null) {
@@ -101,8 +102,10 @@ final class CurrentArcService {
   /// is the arc the user was looking at; a write meant for an arc that is
   /// no longer active is rejected rather than applied to a different arc.
   ///
-  /// Throws [DomainRule.arcCompleted] when the arc has closed and
-  /// [DomainRule.noActiveSession] when nothing is running.
+  /// Throws [DomainRule.arcCompleted] when the arc has closed (completed,
+  /// or ended early) and [DomainRule.noActiveSession] when nothing is
+  /// running. A paused date of the active arc is refused by the callers'
+  /// participation check (`isParticipatingOn`).
   Future<WinterArcSession> requireWritable({int? sessionId}) async {
     final resolution = await resolve();
     final active = resolution.active;

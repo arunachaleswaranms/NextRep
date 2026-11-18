@@ -7,10 +7,12 @@ import java.sql.Types
 
 /**
  * A SQLite file with Focus Guard's tables exactly as Drift creates them at
- * schema v6 (`SELECT sql FROM sqlite_master`, captured from AppDatabase), and
- * Drift's value representation. Synthetic package names only.
+ * schema v7 (`SELECT sql FROM sqlite_master`, captured from AppDatabase; the
+ * two tables are unchanged since v6), and Drift's value representation.
+ * [userVersion] is Drift's `PRAGMA user_version`: schema 7 by default, or
+ * another version to check the native gate. Synthetic package names only.
  */
-class DriftFixture(val file: File) {
+class DriftFixture(val file: File, private val userVersion: Long = FocusGuardStore.SCHEMA_VERSION) {
     init {
         connect().use { c ->
             c.createStatement().use { s ->
@@ -26,7 +28,7 @@ class DriftFixture(val file: File) {
                         "\"sort_order\" INTEGER NOT NULL CHECK(\"sort_order\" >= 0), " +
                         "\"selected_at\" INTEGER NOT NULL, PRIMARY KEY (\"package_name\"), UNIQUE (\"sort_order\"))",
                 )
-                s.execute("PRAGMA user_version = 6")
+                s.execute("PRAGMA user_version = $userVersion")
             }
         }
     }
@@ -107,11 +109,11 @@ class DriftFixture(val file: File) {
     fun <T> withStore(block: (FocusGuardStore) -> T): T = connect().use { block(FocusGuardStore(JdbcSqlRunner(it))) }
 
     companion object {
-        fun create(): DriftFixture {
+        fun create(userVersion: Long = FocusGuardStore.SCHEMA_VERSION): DriftFixture {
             val file = File.createTempFile("nextrep", ".sqlite")
             file.delete()
             file.deleteOnExit()
-            return DriftFixture(file)
+            return DriftFixture(file, userVersion)
         }
     }
 }

@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 import 'package:sqlite3/common.dart' show CommonDatabase;
 
+import '../../domain/feedback/feedback_preferences.dart';
 import '../../domain/focus_guard/focus_guard_settings.dart';
 import '../../domain/habit/habit.dart';
 import '../../domain/progress/day_mode.dart';
@@ -32,6 +33,8 @@ part 'app_database.g.dart';
     ReminderPrefs,
     FocusGuardPrefs,
     FocusGuardSelectedApps,
+    ArcFreezes,
+    FeedbackPrefs,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -61,7 +64,7 @@ class AppDatabase extends _$AppDatabase {
       db.execute('PRAGMA busy_timeout = ${busyTimeout.inMilliseconds}');
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -74,6 +77,7 @@ class AppDatabase extends _$AppDatabase {
       from3To4: _from3To4,
       from4To5: _from4To5,
       from5To6: _from5To6,
+      from6To7: _from6To7,
     ),
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
@@ -193,4 +197,32 @@ class AppDatabase extends _$AppDatabase {
     await m.createTable(schema.focusGuardPreferences);
     await m.createTable(schema.focusGuardSelectedApps);
   }
+
+  /// v6 → v7: the lifecycle foundation of v1.3 (Phase 12E1): Freeze
+  /// intervals, the last counted date of an ended Arc, and the feedback
+  /// settings.
+  ///
+  /// Additive only: one nullable column on `winter_arc_sessions` (every
+  /// existing Arc reads `closed_on = NULL`), and two new, empty tables with
+  /// their index. No existing row is read, rewritten or deleted, and
+  /// nothing is backfilled: no freeze, no `ended` status, no feedback row,
+  /// no progress or XP. `single_open_session` is unchanged.
+  ///
+  /// Atomic: drift records `user_version` after each step but doesn't run a
+  /// step in a transaction, so a failure halfway (e.g. after the column was
+  /// added) would leave a schema that a retry can't upgrade. The step's
+  /// statements and its version marker commit together or not at all; a
+  /// failed upgrade leaves the v6 database exactly as it was, and the next
+  /// launch retries it.
+  static Future<void> _from6To7(Migrator m, Schema7 schema) =>
+      m.database.transaction(() async {
+        await m.addColumn(
+          schema.winterArcSessions,
+          schema.winterArcSessions.closedOn,
+        );
+        await m.createTable(schema.arcFreezes);
+        await m.createIndex(schema.oneOpenFreeze);
+        await m.createTable(schema.feedbackPreferences);
+        await m.database.customStatement('PRAGMA user_version = 7');
+      });
 }

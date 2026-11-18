@@ -62,7 +62,12 @@ final class PerfectDayStats {
 /// onwards; for a seasonal arc joined late, the days before joining are
 /// neutral: never missed, never part of a streak, a consistency
 /// denominator, a Perfect or Minimum Day, XP or an achievement. Days in the
-/// future never count either.
+/// future never count either. Neither do paused dates (schema v7), nor an
+/// ended arc's dates after its last counted day.
+///
+/// The elapsed dates split into the settled dates and at most one open
+/// date, [today] while [isTodayOpen] (spec § 12.5.2). An ended arc has no
+/// open date: its last counted day is final, never pending.
 final class ArcHistory {
   ArcHistory({
     required this.session,
@@ -92,21 +97,30 @@ final class ArcHistory {
     ),
   );
 
-  /// Whether every challenge day is over (today is after the last day).
+  /// Whether every challenge day is over (today is after the last day, and
+  /// the arc isn't paused).
   bool get isOver => session.isOverOn(today);
+
+  /// Whether [today] is the arc's open day: participating, and the arc is
+  /// not ended (`openToday`, spec § 12.5.2). Without schema v7 states this
+  /// is exactly "today is an elapsed date".
+  late final bool isTodayOpen = session.isOpenOn(today);
 
   /// How each elapsed date (aligned with [elapsedDates]) affects the streak
   /// of [habitId].
   ///
   /// Days on which the habit was disabled are skipped (they neither count
   /// nor break the streak). Completing the minimum target on a Minimum Day
-  /// counts. Today only counts once completed and never breaks the streak.
+  /// counts. The open day only counts once completed and never breaks the
+  /// streak; an ended arc's last day is final, so it is a miss if not
+  /// completed. Paused dates are not elapsed: they neither grow nor break
+  /// it.
   List<StreakMark> habitMarks(String habitId) => [
     for (final date in elapsedDates)
       switch (recordOn(date).entryFor(habitId)) {
         null => StreakMark.skip,
         final entry when entry.progress.completed => StreakMark.hit,
-        _ when date == today => StreakMark.pending,
+        _ when isTodayOpen && date == today => StreakMark.pending,
         _ => StreakMark.miss,
       },
   ];
@@ -117,12 +131,14 @@ final class ArcHistory {
 
   /// How each elapsed date (aligned with [elapsedDates]) affects the Perfect
   /// Day streak. A Minimum Day breaks it, including today once switched to
-  /// Minimum.
+  /// Minimum. Only the open day can be pending.
   late final List<StreakMark> perfectMarks = [
     for (final date in elapsedDates)
       if (recordOn(date).isPerfect)
         StreakMark.hit
-      else if (date == today && recordOn(date).mode == DayMode.normal)
+      else if (isTodayOpen &&
+          date == today &&
+          recordOn(date).mode == DayMode.normal)
         StreakMark.pending
       else
         StreakMark.miss,
@@ -134,22 +150,48 @@ final class ArcHistory {
     total: perfectMarks.where((m) => m == StreakMark.hit).length,
   );
 
-  /// All days of the arc, Day 1 first. A seasonal arc always shows its 92
-  /// season days; the ones before the user joined are
-  /// [JourneyDayState.notJoined].
+  /// All challenge days of the arc, Day 1 first, each on its date
+  /// ([WinterArcSession.dateOfDay]); paused dates are not days and are not
+  /// listed. A seasonal arc always shows its 92 season days; the ones
+  /// before the user joined are [JourneyDayState.notJoined]. An ended
+  /// arc's days after its last counted day are
+  /// [JourneyDayState.notReached]; a day not dated yet (after an open
+  /// pause) is [JourneyDayState.future] with no date.
   List<JourneyDay> journey() => [
-    for (var i = 0; i < session.lengthInDays; i++)
-      _journeyDay(i + 1, session.startDate.addDays(i)),
+    for (var day = 1; day <= session.lengthInDays; day++)
+      _journeyDay(day, session.dateOfDay(day)),
   ];
 
-  JourneyDay _journeyDay(int dayNumber, LocalDate date) {
+  JourneyDay _journeyDay(int dayNumber, LocalDate? date) {
+    if (date == null) {
+      return JourneyDay(
+        dayNumber: dayNumber,
+        date: null,
+        state: JourneyDayState.future,
+        isToday: false,
+        xpEarned: 0,
+      );
+    }
     final isToday = date == today;
     if (session.isBeforeJoining(date)) {
       return JourneyDay(
         dayNumber: dayNumber,
         date: date,
         state: JourneyDayState.notJoined,
-        isToday: isToday,
+        // An ended arc has no today at all (spec § 12.3).
+        isToday: isToday && session.status != WinterArcStatus.ended,
+        xpEarned: 0,
+      );
+    }
+    if (session.status == WinterArcStatus.ended &&
+        !session.isParticipatingOn(date)) {
+      // After the last counted day: the arc ended before it. Never marked
+      // as today, so nothing is drawn as walked beyond the last day.
+      return JourneyDay(
+        dayNumber: dayNumber,
+        date: date,
+        state: JourneyDayState.notReached,
+        isToday: false,
         xpEarned: 0,
       );
     }
@@ -163,11 +205,15 @@ final class ArcHistory {
       );
     }
     final record = recordOn(date);
+    // Only the open day is today (`openToday`, spec § 12.5.2). An ended
+    // arc's last day is settled even on its own date: it takes its final
+    // state and is never marked, announced or scrolled to as today.
+    final isOpenToday = isToday && isTodayOpen;
     return JourneyDay(
       dayNumber: dayNumber,
       date: date,
-      state: JourneyRules.stateOf(record, isToday: isToday),
-      isToday: isToday,
+      state: JourneyRules.stateOf(record, isToday: isOpenToday),
+      isToday: isOpenToday,
       record: record,
       xpEarned: records.xpByDate[date] ?? 0,
     );

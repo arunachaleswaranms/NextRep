@@ -47,7 +47,8 @@ final class RestoreOutcome {
 ///   a full replacement, never a merge. Reminders end up off and pending
 ///   notifications are cancelled, so a restore never schedules anything.
 ///   Focus Guard is stored off and its background check is cancelled, so a
-///   restore never starts monitoring or a nudge.
+///   restore never starts monitoring or a nudge. Nothing plays a sound: a
+///   format-4 backup only stores the sound setting.
 final class BackupService {
   BackupService({
     required this._store,

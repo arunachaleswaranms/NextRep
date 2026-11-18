@@ -11,13 +11,50 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
-/** The worker's SQL against a real SQLite file with Drift's v6 tables. */
+/** The worker's SQL against a real SQLite file with Drift's v7 tables. */
 class FocusGuardStoreTest {
     private val apps = listOf("org.example.alpha", "org.example.beta")
     private val db = DriftFixture.create()
 
     @Test
-    fun readsTheSchemaVersion() = assertEquals(6L, db.withStore { it.schemaVersion() })
+    fun readsTheSchemaVersion() = assertEquals(7L, db.withStore { it.schemaVersion() })
+
+    @Test
+    fun theGateAcceptsExactlySchema7() {
+        assertEquals(7L, FocusGuardStore.SCHEMA_VERSION)
+        assertTrue(FocusGuardStore.supportsSchema(7L))
+        for (version in listOf(0L, 5L, 6L, 8L, 9L, 70L, -1L)) {
+            assertFalse("schema $version", FocusGuardStore.supportsSchema(version))
+        }
+        assertTrue(db.withStore { it.hasSupportedSchema() })
+    }
+
+    @Test
+    fun aSchema6DatabaseIsLeftAlone() {
+        // A database not yet upgraded by the app (v1.2's schema): the updated
+        // worker reads nothing from it and claims nothing.
+        val v6 = DriftFixture.create(userVersion = 6L)
+        v6.save(enabled = true, budget = 60, packages = apps)
+        assertEquals(6L, v6.withStore { it.schemaVersion() })
+        assertFalse(v6.withStore { it.hasSupportedSchema() })
+    }
+
+    @Test
+    fun aNewerSchemaIsLeftAlone() {
+        val v8 = DriftFixture.create(userVersion = 8L)
+        v8.save(enabled = true, budget = 60, packages = apps)
+        assertFalse(v8.withStore { it.hasSupportedSchema() })
+    }
+
+    @Test
+    fun schema7ReadsAndClaimsAsBefore() {
+        db.save(enabled = true, budget = 30, packages = apps)
+        assertTrue(db.withStore { it.hasSupportedSchema() })
+        assertEquals(FocusGuardConfig(true, 30, null, apps), db.withStore { it.load() })
+        assertTrue(db.withStore { it.claim("2026-11-15", 30, apps.toSet()) })
+        assertFalse(db.withStore { it.claim("2026-11-15", 30, apps.toSet()) })
+        assertEquals("2026-11-15", db.lastNudgedOn())
+    }
 
     @Test
     fun noRowMeansNotConfigured() = assertNull(db.withStore { it.load() })

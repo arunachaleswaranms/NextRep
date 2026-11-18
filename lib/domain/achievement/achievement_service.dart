@@ -58,7 +58,8 @@ final class AchievementService {
   ///
   /// The home arc is the active arc or, with nothing unfinished, the arc
   /// that just completed (so its Summit is stored). Changes nothing when no
-  /// arc has started or a new one is still in setup.
+  /// arc has started or a new one is still in setup, and nothing when the
+  /// home arc is an ended one (read-only history, see [_reconcile]).
   Future<UnlockChanges> sync() => _queue.run(() async {
     final session = (await _arcs.resolve()).home;
     if (session == null) return const UnlockChanges();
@@ -78,7 +79,8 @@ final class AchievementService {
   /// Summit, which the close-out earns rather than the lived days: it is
   /// left to the close-out reconciliation, as by [sync], so the Summit is
   /// celebrated when an arc completes. Arcs in setup have no history and
-  /// are skipped. Stored unlocks, including keys this version doesn't
+  /// are skipped, and ended arcs are left exactly as stored (see
+  /// [_reconcile]). Stored unlocks, including keys this version doesn't
   /// know, are never rewritten, and running it again changes nothing.
   Future<CatalogBackfill> backfillCatalog() => _queue.run(() async {
     final arcs = await _arcs.resolve();
@@ -112,21 +114,30 @@ final class AchievementService {
   /// Reconciles [session]'s unlocks with what its history earns. Without
   /// [withSummit], the Summit is not stored (a stored one is kept: it is
   /// dated on the arc's last day, never today).
+  ///
+  /// Every unlock the app writes, outside a restore, goes through here. An
+  /// ended arc is read-only history (ARC_CONTROL_SPEC § 3, invariant 4):
+  /// its unlocks stay exactly as stored when it ended, or as a restored
+  /// backup holds them. Nothing is added, revoked or re-dated, on any date,
+  /// so it never gains a Summit and never has anything to celebrate.
   Future<UnlockChanges> _reconcile(
     WinterArcSession session,
     LocalDate today, {
     bool withSummit = true,
-  }) async => _achievements.reconcileUnlocks(
-    session.id,
-    [
-      for (final e in AchievementRules.evaluate(
-        await _contextOf(session, today),
-      ))
-        if (withSummit || e.key != AchievementKey.summit) e,
-    ],
-    today: today,
-    at: _clock.now(),
-  );
+  }) async {
+    if (session.status == WinterArcStatus.ended) return const UnlockChanges();
+    return _achievements.reconcileUnlocks(
+      session.id,
+      [
+        for (final e in AchievementRules.evaluate(
+          await _contextOf(session, today),
+        ))
+          if (withSummit || e.key != AchievementKey.summit) e,
+      ],
+      today: today,
+      at: _clock.now(),
+    );
+  }
 
   /// The catalog with the home arc's unlocks, or null when there is no home
   /// arc.
@@ -161,6 +172,7 @@ final class AchievementService {
     };
     return AchievementBoard(
       startDate: session.startDate,
+      freezes: session.freezes,
       entries: [
         for (final definition in AchievementCatalog.all)
           AchievementStatus(

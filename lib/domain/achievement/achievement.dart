@@ -1,4 +1,5 @@
 import '../../core/time/local_date.dart';
+import '../winter_arc/arc_freeze.dart';
 
 /// Every achievement of the catalog. [id] is persisted, so never change an
 /// existing id; add new values instead.
@@ -175,10 +176,18 @@ final class AchievementStatus {
 
 /// The whole catalog in display order, with what this arc has unlocked.
 final class AchievementBoard {
-  const AchievementBoard({required this.startDate, required this.entries});
+  const AchievementBoard({
+    required this.startDate,
+    required this.entries,
+    this.freezes = const [],
+  });
 
   /// Day 1 of the arc, to express unlock dates as challenge days.
   final LocalDate startDate;
+
+  /// The arc's pauses (schema v7), so a challenge day after one keeps its
+  /// number.
+  final List<ArcFreeze> freezes;
   final List<AchievementStatus> entries;
 
   int get total => entries.length;
@@ -196,6 +205,11 @@ final class AchievementBoard {
         (category, members),
   ];
 
-  /// 1-based challenge day of [date].
-  int dayNumberOf(LocalDate date) => startDate.daysUntil(date) + 1;
+  /// 1-based challenge day of [date], an unlock date: always a challenge
+  /// date of the arc, never a paused one. Without a pause, as before
+  /// schema v7.
+  int dayNumberOf(LocalDate date) =>
+      startDate.daysUntil(date) +
+      1 -
+      ArcFreezeRules.pausedBefore(freezes, date);
 }

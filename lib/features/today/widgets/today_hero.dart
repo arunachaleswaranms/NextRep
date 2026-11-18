@@ -26,6 +26,10 @@ class TodayHero extends StatelessWidget {
       ArcInProgress(:final dayNumber) => dayNumber,
       ArcNotStarted() => 1,
       ArcFinished(:final totalDays) => totalDays,
+      // Schema v7 states, only reachable from a restored format-4 backup
+      // in Phase 12E1: the last day lived.
+      ArcPaused(:final lastDayNumber) => lastDayNumber,
+      ArcEnded(:final lastDayNumber) => lastDayNumber,
     },
     totalDays: summary.position.totalDays,
     dayCompletion: summary.completion.ratio,

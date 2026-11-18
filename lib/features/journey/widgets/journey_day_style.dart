@@ -11,6 +11,7 @@ enum MarkerFill { none, half, full }
 extension JourneyDayStyle on JourneyDayState {
   String get label => switch (this) {
     JourneyDayState.notJoined => 'Before you joined',
+    JourneyDayState.notReached => 'Not reached',
     JourneyDayState.future => 'Upcoming',
     JourneyDayState.today => 'Today',
     JourneyDayState.perfect => 'Perfect',
@@ -22,6 +23,7 @@ extension JourneyDayStyle on JourneyDayState {
 
   Color color(WinterColors colors) => switch (this) {
     JourneyDayState.notJoined => colors.outline,
+    JourneyDayState.notReached => colors.outline,
     JourneyDayState.future => colors.outline,
     JourneyDayState.today => colors.snow,
     JourneyDayState.perfect => colors.accentSecondary,
@@ -42,6 +44,7 @@ extension JourneyDayStyle on JourneyDayState {
     JourneyDayState.partial ||
     JourneyDayState.minimumPartial => MarkerFill.half,
     JourneyDayState.notJoined ||
+    JourneyDayState.notReached ||
     JourneyDayState.future ||
     JourneyDayState.today ||
     JourneyDayState.missed => MarkerFill.none,
@@ -63,13 +66,15 @@ extension JourneyDayStyle on JourneyDayState {
     JourneyDayState.today => 52,
     JourneyDayState.perfect || JourneyDayState.minimumComplete => 40,
     JourneyDayState.partial || JourneyDayState.minimumPartial => 36,
-    JourneyDayState.future || JourneyDayState.missed => 30,
+    JourneyDayState.future ||
+    JourneyDayState.notReached ||
+    JourneyDayState.missed => 30,
     JourneyDayState.notJoined => 26,
   };
 
   /// Dimmed states.
   double get opacity => switch (this) {
-    JourneyDayState.notJoined => 0.45,
+    JourneyDayState.notJoined || JourneyDayState.notReached => 0.45,
     JourneyDayState.future => 0.55,
     JourneyDayState.missed => 0.7,
     _ => 1,
@@ -90,6 +95,7 @@ String journeyDayLabel(JourneyDay day) {
   final percent = day.record?.completion.percent ?? 0;
   final state = switch (day.state) {
     JourneyDayState.notJoined => 'Before you joined this Seasonal Winter Arc.',
+    JourneyDayState.notReached => 'Not reached.',
     JourneyDayState.future => 'Upcoming.',
     JourneyDayState.today when day.mode?.isMinimum ?? false =>
       'Minimum Day, $percent percent complete.',

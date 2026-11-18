@@ -154,7 +154,14 @@ class SummaryScreen extends ConsumerWidget {
                   duration: context.motion.celebration * 3,
                   curve: Curves.easeInOutCubic,
                   builder: (context, reveal, _) => WinterScene(
-                    scene: SceneProgress.summit(),
+                    // An arc ended early (schema v7) didn't reach the summit:
+                    // its trail stops at its last counted day.
+                    scene: switch (view.session.closedOn) {
+                      final last? => SceneProgress(
+                        dayNumber: view.session.dayNumberOf(last) ?? 1,
+                      ),
+                      null => SceneProgress.summit(),
+                    },
                     trailReveal: reveal,
                     maxSnow: 36,
                   ),
@@ -188,9 +195,16 @@ class SummaryScreen extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      view.session.isSeasonal
-                          ? 'SEASONAL WINTER ARC COMPLETE'
-                          : 'WINTER ARC COMPLETE',
+                      // An ended arc (schema v7) is never called complete.
+                      switch ((
+                        view.session.isSeasonal,
+                        view.session.status == WinterArcStatus.ended,
+                      )) {
+                        (true, true) => 'SEASONAL WINTER ARC ENDED EARLY',
+                        (false, true) => 'WINTER ARC ENDED EARLY',
+                        (true, false) => 'SEASONAL WINTER ARC COMPLETE',
+                        (false, false) => 'WINTER ARC COMPLETE',
+                      },
                       style: text.labelLarge?.copyWith(
                         color: colors.warmLight,
                         letterSpacing: 3,
@@ -370,8 +384,11 @@ class SummaryScreen extends ConsumerWidget {
                   ],
                   const SizedBox(height: WinterSpacing.md),
                   Text(
-                    'Your Winter Arc is complete and kept as it was. '
-                    'Its history is read-only.',
+                    view.session.status == WinterArcStatus.ended
+                        ? 'This Winter Arc ended early and is kept as it '
+                              'was. Its history is read-only.'
+                        : 'Your Winter Arc is complete and kept as it was. '
+                              'Its history is read-only.',
                     textAlign: TextAlign.center,
                     style: text.bodySmall,
                   ),

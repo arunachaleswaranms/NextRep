@@ -81,12 +81,13 @@ void main() {
       expect(gradle, isNot(contains('applicationIdSuffix')));
     });
 
-    test('schema stays v6; backups write format 3 and read 1, 2 and 3', () {
+    // Phase 12E1 (v1.3 foundation) moved these on from v1.2.0's v6 / 3.
+    test('schema is v7; backups write format 4 and read 1, 2, 3 and 4', () {
       final db = memoryDatabase();
       addTearDown(db.close);
-      expect(db.schemaVersion, 6);
-      expect(BackupFormat.formatVersion, 3);
-      expect(BackupFormat.readableVersions, {1, 2, 3});
+      expect(db.schemaVersion, 7);
+      expect(BackupFormat.formatVersion, 4);
+      expect(BackupFormat.readableVersions, {1, 2, 3, 4});
     });
 
     test('v1.1.0 is older than v1.2.0', () {
@@ -275,7 +276,7 @@ void main() {
   });
 
   group('backups from this build', () {
-    test('record appVersion 1.2.0 in format 3, and restore here', () async {
+    test('record appVersion 1.2.0 in format 4, and restore here', () async {
       final db = memoryDatabase();
       addTearDown(db.close);
       final clock = FakeClock(DateTime(2026, 10, 16, 9));
@@ -292,7 +293,7 @@ void main() {
       final export = await backup.export();
       final root = jsonDecode(utf8.decode(export.bytes)) as Map;
       expect(root['appVersion'], '1.2.0');
-      expect(root['formatVersion'], 3);
+      expect(root['formatVersion'], 4);
       expect(root['product'], 'NextRep');
       final document = BackupCodec.decode(export.bytes);
       expect(document.appVersion, '1.2.0');

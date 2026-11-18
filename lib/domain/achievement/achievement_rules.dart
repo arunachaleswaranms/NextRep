@@ -1,6 +1,7 @@
 import '../../core/time/local_date.dart';
 import '../progress/arc_history.dart';
 import '../progress/streak_rules.dart';
+import '../winter_arc/winter_arc_session.dart';
 import '../xp/level_rules.dart';
 import 'achievement.dart';
 import 'achievement_catalog.dart';
@@ -183,10 +184,13 @@ abstract final class AchievementRules {
       earn(key, _participatedMilestone(history, day));
     }
     // Summit: the arc ran to its close. A seasonal arc joined late earns it
-    // too: it was completed through 31 December.
+    // too: it was completed through 31 December. An ended arc (schema v7)
+    // stopped before its close and never earns it, whatever the date.
     earn(
       AchievementKey.summit,
-      history.isOver ? history.session.endDate : null,
+      history.isOver && history.session.status != WinterArcStatus.ended
+          ? history.session.endDate
+          : null,
     );
 
     return [
@@ -239,12 +243,15 @@ abstract final class AchievementRules {
         date,
   ], n);
 
-  /// Challenge day [dayNumber] itself, once it has started, and only if
-  /// the user took part that day: joining a season later never awards a
-  /// milestone retroactively.
+  /// Challenge day [dayNumber] itself, on its date
+  /// ([WinterArcSession.dateOfDay]), once it has started, and only if the
+  /// user took part that day: joining a season later never awards a
+  /// milestone retroactively, a day after an open pause has no date yet,
+  /// and an ended arc never reaches a day after its last counted one.
   static LocalDate? _participatedMilestone(ArcHistory history, int dayNumber) {
-    final date = history.session.startDate.addDays(dayNumber - 1);
-    return history.session.isParticipatingOn(date) &&
+    final date = history.session.dateOfDay(dayNumber);
+    return date != null &&
+            history.session.isParticipatingOn(date) &&
             !date.isAfter(history.today)
         ? date
         : null;

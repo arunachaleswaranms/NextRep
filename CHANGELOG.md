@@ -1,5 +1,27 @@
 # Changelog
 
+## Unreleased (v1.3.0 in development)
+
+Not released; the version stays 1.2.0+3. Phase 12E1 laid the lifecycle
+foundation of v1.3.0 ([docs/PHASE_12E1.md](docs/PHASE_12E1.md)). It has
+no visible feature: nothing can pause or end an Arc yet.
+
+Schema **v7** · backup format **4** (reads 1, 2, 3 and 4)
+
+### Changed
+
+- **Database schema v7** (additive, one atomic step): freeze intervals
+  (`arc_freezes`), the closing date of an Arc ended early
+  (`winter_arc_sessions.closed_on`) and sound settings
+  (`feedback_preferences`). Every existing row is kept unchanged.
+- **Backup format 4**: also holds paused and ended Arcs and the sound
+  settings. Formats 1, 2 and 3 still restore, with no pause and the
+  device's own sound setting. NextRep 1.2.0 and earlier refuse a format-4
+  file without changing anything.
+- Focus Guard's background check reads schema v7.
+- Internal: challenge days are mapped to dates through one freeze-aware
+  mapping; an `ended` Arc is never treated as completed (no Summit).
+
 ## 1.2.0 — 2026
 
 Published on 18 October 2026 as the
