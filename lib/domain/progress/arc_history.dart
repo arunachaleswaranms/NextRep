@@ -158,9 +158,13 @@ final class ArcHistory {
   /// [JourneyDayState.notReached]; a day not dated yet (after an open
   /// pause) is [JourneyDayState.future] with no date.
   List<JourneyDay> journey() => [
-    for (var day = 1; day <= session.lengthInDays; day++)
-      _journeyDay(day, session.dateOfDay(day)),
+    for (var day = 1; day <= session.lengthInDays; day++) journeyDay(day),
   ];
+
+  /// Challenge day [dayNumber] exactly as [journey] lists it, without
+  /// building the other days (the Weekly Review's week strip needs 7 or 8).
+  JourneyDay journeyDay(int dayNumber) =>
+      _journeyDay(dayNumber, session.dateOfDay(dayNumber));
 
   JourneyDay _journeyDay(int dayNumber, LocalDate? date) {
     if (date == null) {
