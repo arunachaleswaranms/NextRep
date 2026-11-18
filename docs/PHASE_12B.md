@@ -130,6 +130,17 @@ network, model or storage.
    steps add up."; the full sentence used is the complete-week sentence
    with "this week" replaced by "so far this week".
 
+### Gate B outcome
+
+**APPROVED by the owner on 18 November 2026.** The owner formally approved
+the Weekly Review summary copy in the table above, as implemented at
+`79e05ee` (PR #25), including all three 12B decisions: (1) an ended Arc's
+last week keeps the complete-week HIGH sentence instead of the "summit"
+sentence; (2) a paused week with nothing settled shows "This week begins
+when you resume."; (3) the full STEADY in-progress sentence. No wording
+changed with the approval. The PR stays unmerged pending a final
+independent verification; the owner merges it.
+
 **Other review wording added in 12B** (from the § 5.2 wireframe or new,
 for the same sign-off): "Week N review" (Journey button, title); "Week N of
 13 · Days a–b"; "Thu 15 Oct – Wed 21 Oct · In progress | Complete |

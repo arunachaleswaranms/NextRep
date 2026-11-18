@@ -7,8 +7,9 @@ publication record (PR #21), the Phase 12A plan (PR #22), the Phase 12A
 Addendum (PR #23) and the Phase 12E1 lifecycle foundation (PR #24) are
 merged. `main` is `7e5ece4`, version `1.2.0+3`. **v1.3.0 is in
 development, not released: Phase 12B (the Weekly Arc Review, the first
-v1.3 user-facing feature) is in review and waits for an independent review
-and the owner's copy sign-off (Gate B).**_
+v1.3 user-facing feature, PR #25) is in review: the owner approved its
+copy at Gate B on 18 November 2026; it waits for a final independent
+verification before the owner merges it.**_
 
 | | |
 |---|---|
@@ -56,10 +57,13 @@ phone, no signing, no release.
 - **Proof:** every table identical after every review operation; one
   `loadArc` per load; XP and day partitions (§§ 12.5.1–12.5.2) on worked
   examples, generated Arcs of every status and real-Drift clock rollbacks.
-- **Gate B (owner):** the summary copy, including three 12B decisions
-  (ended Arc HIGH without "summit", the empty paused week, the full STEADY
+- **Gate B (owner): APPROVED on 18 November 2026.** The summary copy as
+  implemented at `79e05ee`, including all three 12B decisions (ended Arc
+  HIGH without "summit", the empty paused week, the full STEADY
   in-progress sentence). See
-  [docs/PHASE_12B.md](docs/PHASE_12B.md#summary-rules-6-and-the-copy-for-gate-b).
+  [docs/PHASE_12B.md](docs/PHASE_12B.md#gate-b-outcome).
+- **Next:** a final independent verification of PR #25; the owner merges
+  it. Not merged; no release.
 
 ## Phase 12E1 (v1.3.0 lifecycle foundation, merged)
 
