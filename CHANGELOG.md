@@ -3,10 +3,21 @@
 ## Unreleased (v1.3.0 in development)
 
 Not released; the version stays 1.2.0+3. Phase 12E1 laid the lifecycle
-foundation of v1.3.0 ([docs/PHASE_12E1.md](docs/PHASE_12E1.md)). It has
-no visible feature: nothing can pause or end an Arc yet.
+foundation of v1.3.0 ([docs/PHASE_12E1.md](docs/PHASE_12E1.md)). Phase
+12B adds the Weekly Arc Review ([docs/PHASE_12B.md](docs/PHASE_12B.md)).
 
 Schema **v7** · backup format **4** (reads 1, 2, 3 and 4)
+
+### Added
+
+- **Weekly Arc Review**: open "Week N review" from the Journey to see a
+  week of your Arc (Days 1–7, 8–14, … and an 8-day summit week): habit
+  completion, consistency, XP, Perfect Days and Minimum Days for the days
+  that are over, today's progress kept apart until it ends, the habit that
+  carried the week and one that could use attention, and a short,
+  supportive summary. Works for the current Arc and for finished Arcs in
+  Arc History. Read-only: viewing a review never changes XP, progress or
+  achievements, and nothing is stored or sent.
 
 ### Changed
 

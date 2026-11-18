@@ -169,6 +169,82 @@ void main() {
     });
   });
 
+  group('Weekly Review (Phase 12B)', () {
+    test('locations always carry the week', () {
+      expect(AppRoutes.activeReview(3), '/journey/review?week=3');
+      expect(AppRoutes.arcReview(7, 13), '/arc/7/review?week=13');
+    });
+
+    test(
+      'the active review needs an active arc; existing guards unchanged',
+      () {
+        final review = AppRoutes.activeReview(2);
+        expect(AppRoutes.redirect(active, review), isNull);
+        expect(AppRoutes.redirect(completed, review), AppRoutes.arc(1));
+        expect(
+          AppRoutes.redirect(completedPlusSetup, review),
+          AppRoutes.habitSetup,
+        );
+        expect(AppRoutes.redirect(setupOnly, review), AppRoutes.habitSetup);
+        expect(AppRoutes.redirect(none, review), AppRoutes.onboarding);
+      },
+    );
+
+    test('a finished arc\'s review is history bound to its id; the current '
+        'arc is never shown as history', () {
+      expect(AppRoutes.redirect(active, AppRoutes.arcReview(1, 13)), isNull);
+      expect(AppRoutes.redirect(completed, AppRoutes.arcReview(1, 13)), isNull);
+      expect(
+        AppRoutes.redirect(active, AppRoutes.arcReview(2, 1)),
+        AppRoutes.today,
+      );
+      expect(
+        AppRoutes.redirect(completedPlusSetup, AppRoutes.arcReview(2, 1)),
+        AppRoutes.habitSetup,
+      );
+      final ended = ArcResolution(
+        latestCompleted: _arc(1, WinterArcStatus.ended),
+      );
+      expect(AppRoutes.redirect(ended, AppRoutes.arcReview(1, 2)), isNull);
+      expect(
+        AppRoutes.redirect(completed, '/arc/oops/review?week=1'),
+        AppRoutes.arc(1),
+      );
+    });
+
+    test('the week query: digits only, one or two of them; anything else is '
+        'missing (the review then picks its default)', () {
+      int? week(String query) =>
+          AppRoutes.reviewWeekOf(Uri.parse('/journey/review$query'));
+      expect(week('?week=1'), 1);
+      expect(week('?week=13'), 13);
+      expect(week('?week=01'), 1);
+      expect(week('?week=0'), 0); // out of range: settled by the review
+      expect(week('?week=99'), 99);
+      for (final bad in [
+        '',
+        '?week=',
+        '?week=abc',
+        '?week=-1',
+        '?week=+1',
+        '?week=1.0',
+        '?week=0x1',
+        '?week=123',
+        '?week=%20',
+        '?week=%201',
+        "?week=1'%20OR%201=1",
+        '?week=99999999999999999999',
+        '?other=3',
+      ]) {
+        expect(week(bad), isNull, reason: bad);
+      }
+      expect(
+        AppRoutes.reviewWeekOf(Uri(path: '/journey/review', query: 'week=%zz')),
+        isNull,
+      );
+    });
+  });
+
   group('About', () {
     test('is reachable in every state and never redirected', () {
       for (final resolution in [

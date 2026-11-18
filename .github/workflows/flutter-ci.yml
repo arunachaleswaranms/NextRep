@@ -66,6 +66,18 @@ jobs:
           test/domain/lifecycle_foundation_test.dart
           test/data/lifecycle_storage_test.dart
 
+      - name: Weekly Review tests (Arc weeks, metrics, summaries, XP and day partitions, read-only, routes, layouts)
+        run: >-
+          flutter test
+          test/domain/arc_weeks_test.dart
+          test/domain/weekly_review_test.dart
+          test/domain/weekly_summary_rules_test.dart
+          test/data/weekly_review_rollback_test.dart
+          test/features/weekly_review_provider_test.dart
+          test/features/weekly_review_read_only_test.dart
+          test/features/weekly_review_screen_test.dart
+          test/integration/weekly_review_layout_test.dart
+
       - name: Focus Guard tests (settings, usage, one nudge a day, restore)
         run: >-
           flutter test
