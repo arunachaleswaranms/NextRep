@@ -1,15 +1,15 @@
 # PROJECT_STATE
 
-_Last updated: 2026-11-18. **Latest published release: v1.2.0** (tag
+_Last updated: 2026-11-19. **Latest published release: v1.2.0** (tag
 `v1.2.0` on `8ab0c43`, PR #20), published 18 October 2026; v1.1.0 and
 v1.0.0 before it. The v1.2 roadmap (Phases 11A–11F, PRs #15–#20), the
 publication record (PR #21), the Phase 12A plan (PR #22), the Phase 12A
-Addendum (PR #23) and the Phase 12E1 lifecycle foundation (PR #24) are
-merged. `main` is `7e5ece4`, version `1.2.0+3`. **v1.3.0 is in
-development, not released: Phase 12B (the Weekly Arc Review, the first
-v1.3 user-facing feature, PR #25) is in review: the owner approved its
-copy at Gate B on 18 November 2026; it waits for a final independent
-verification before the owner merges it.**_
+Addendum (PR #23), the Phase 12E1 lifecycle foundation (PR #24) and the
+Phase 12B Weekly Arc Review (PR #25) are merged. `main` is `f10fd75`,
+version `1.2.0+3`. **v1.3.0 is in development, not released: Phase 12C
+(the Arc Consistency Calendar) is in review; its "No progress" wording
+(Gate C) is PENDING OWNER SIGN-OFF, and it waits for independent review
+and the owner's merge.**_
 
 | | |
 |---|---|
@@ -28,16 +28,43 @@ planned. TalkBack was deliberately deferred and doesn't block this model.
 ## Repo
 
 - Remote: https://github.com/arunachaleswaranms/NextRep (public, MIT)
-- `main`: `7e5ece4` (PR #24, Phase 12E1), on top of `933960c` (PR #23,
+- `main`: `f10fd75` (PR #25, Phase 12B), on top of `7e5ece4` (PR #24,
+  Phase 12E1), `933960c` (PR #23,
   the Phase 12A Addendum), `64d77e0` (PR #22, the Phase 12A plan),
   `28db2af` (PR #21, the v1.2.0 publication record) and `8ab0c43` (squash
   merge of PR #20, Phase 11F; CI run
   [39096524587](https://github.com/arunachaleswaranms/NextRep/actions/runs/39096524587)
   green, both jobs). Tags `v1.0.0` (`b3f9c5c`), `v1.1.0` (`7e563e2`) and
   `v1.2.0` (`8ab0c43`). PRs #1–#20 are Phases 1–11F; #21 the publication
-  record; #22 Phase 12A; #23 the Phase 12A Addendum; #24 Phase 12E1.
+  record; #22 Phase 12A; #23 the Phase 12A Addendum; #24 Phase 12E1;
+  #25 Phase 12B.
 
-## Phase 12B (v1.3.0 Weekly Arc Review, in review)
+## Phase 12C (v1.3.0 Arc Consistency Calendar, in review)
+
+Contracts, copy and evidence: [docs/PHASE_12C.md](docs/PHASE_12C.md).
+Baseline `main` `f10fd75`; branch `phase/12c-v1.3-arc-calendar`
+(worktree `~/labs/NextRep-12C`). Read-only: no schema, backup, Focus
+Guard, permission, dependency, XP, achievement, route, tab or version
+change; no phone, no signing, no release.
+
+- **Calendar** (`ArcCalendar`, `ArcCalendarView`): a Path | Calendar
+  switch on the Journey (not persisted) shows the loaded `JourneyOverview`
+  as 13 Arc-week blocks of 92 cells (Week 13: 8), each cell the Journey's
+  own `JourneyDay` (no second classifier); headings with dates and settled
+  full-day counts open the 12B review routes; pause rows between days;
+  ended Arcs' later days "Not reached"; late-join days neutral.
+- **Proof:** every table identical after every Calendar operation
+  (active, completed, ended, paused and late-joined Arcs); zero extra
+  `loadArc`, session, progress or achievement reads on switching; state
+  equality with the Journey for 2,000+ generated calendars; outlines
+  ≥ 3:1 and text ≥ 4.5:1 against `surface`; a 35-run layout sweep.
+- **Gate C (owner): PENDING.** "Missed" → "No progress" (copy only; the
+  state stays `missed`), plus the new Calendar wording. See
+  [docs/PHASE_12C.md](docs/PHASE_12C.md#gate-c-the-missed-wording-pending-owner-sign-off).
+- **Next:** Gate C sign-off, independent review, the owner's merge. Not
+  merged; no release.
+
+## Phase 12B (v1.3.0 Weekly Arc Review, merged)
 
 Contracts, copy and evidence: [docs/PHASE_12B.md](docs/PHASE_12B.md).
 Baseline `main` `7e5ece4`; branch `phase/12b-v1.3-weekly-review`
@@ -62,8 +89,7 @@ phone, no signing, no release.
   HIGH without "summit", the empty paused week, the full STEADY
   in-progress sentence). See
   [docs/PHASE_12B.md](docs/PHASE_12B.md#gate-b-outcome).
-- **Next:** a final independent verification of PR #25; the owner merges
-  it. Not merged; no release.
+- **Merged** as PR #25 (`f10fd75`) on 18 November 2026. No release.
 
 ## Phase 12E1 (v1.3.0 lifecycle foundation, merged)
 
