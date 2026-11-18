@@ -1,13 +1,14 @@
 # PROJECT_STATE
 
-_Last updated: 2026-11-15. **Latest published release: v1.2.0** (tag
+_Last updated: 2026-11-18. **Latest published release: v1.2.0** (tag
 `v1.2.0` on `8ab0c43`, PR #20), published 18 October 2026; v1.1.0 and
 v1.0.0 before it. The v1.2 roadmap (Phases 11A–11F, PRs #15–#20), the
-publication record (PR #21), the Phase 12A plan (PR #22) and the Phase
-12A Addendum (PR #23) are merged. `main` is `933960c`, version
-`1.2.0+3`. **v1.3.0 is in development, not released: Phase 12E1 (the
-lifecycle foundation: schema v7, backup format 4, the day ↔ date mapping)
-is in review; no v1.3 user-facing feature exists yet.**_
+publication record (PR #21), the Phase 12A plan (PR #22), the Phase 12A
+Addendum (PR #23) and the Phase 12E1 lifecycle foundation (PR #24) are
+merged. `main` is `7e5ece4`, version `1.2.0+3`. **v1.3.0 is in
+development, not released: Phase 12B (the Weekly Arc Review, the first
+v1.3 user-facing feature) is in review and waits for an independent review
+and the owner's copy sign-off (Gate B).**_
 
 | | |
 |---|---|
@@ -26,15 +27,41 @@ planned. TalkBack was deliberately deferred and doesn't block this model.
 ## Repo
 
 - Remote: https://github.com/arunachaleswaranms/NextRep (public, MIT)
-- `main`: `933960c` (PR #23, the Phase 12A Addendum), on top of `64d77e0`
-  (PR #22, the Phase 12A plan) and `28db2af`
-  (PR #21, the v1.2.0 publication record) and `8ab0c43` (squash merge of PR #20, Phase 11F; CI run
+- `main`: `7e5ece4` (PR #24, Phase 12E1), on top of `933960c` (PR #23,
+  the Phase 12A Addendum), `64d77e0` (PR #22, the Phase 12A plan),
+  `28db2af` (PR #21, the v1.2.0 publication record) and `8ab0c43` (squash
+  merge of PR #20, Phase 11F; CI run
   [39096524587](https://github.com/arunachaleswaranms/NextRep/actions/runs/39096524587)
   green, both jobs). Tags `v1.0.0` (`b3f9c5c`), `v1.1.0` (`7e563e2`) and
   `v1.2.0` (`8ab0c43`). PRs #1–#20 are Phases 1–11F; #21 the publication
-  record; #22 Phase 12A; #23 the Phase 12A Addendum.
+  record; #22 Phase 12A; #23 the Phase 12A Addendum; #24 Phase 12E1.
 
-## Phase 12E1 (v1.3.0 lifecycle foundation, in review)
+## Phase 12B (v1.3.0 Weekly Arc Review, in review)
+
+Contracts, copy and evidence: [docs/PHASE_12B.md](docs/PHASE_12B.md).
+Baseline `main` `7e5ece4`; branch `phase/12b-v1.3-weekly-review`
+(worktree `~/labs/NextRep-12B`). Read-only: no schema, backup, Focus
+Guard, permission, dependency, XP, achievement or version change; no
+phone, no signing, no release.
+
+- **Arc weeks** (`ArcWeeks`): 13 weeks (Week 13 = Days 85–92), dates from
+  the freeze-aware `dateOfDay`; day classes neutral / not reached /
+  upcoming / open / settled and week statuses before joining / not reached
+  / complete / in progress / paused / upcoming (spec § 12.3).
+- **Weekly Review** (`WeeklyReview`, `WeeklySummaryRules`): settled-day
+  totals (habit completion, consistency, full, Perfect and Minimum Days,
+  ledger XP), Today so far apart, exact-ratio highlights, nine summary
+  kinds with the approved copy. Opened from the Journey header ("Week N
+  review"): `/journey/review?week=N` and `/arc/:id/review?week=N`.
+- **Proof:** every table identical after every review operation; one
+  `loadArc` per load; XP and day partitions (§§ 12.5.1–12.5.2) on worked
+  examples, generated Arcs of every status and real-Drift clock rollbacks.
+- **Gate B (owner):** the summary copy, including three 12B decisions
+  (ended Arc HIGH without "summit", the empty paused week, the full STEADY
+  in-progress sentence). See
+  [docs/PHASE_12B.md](docs/PHASE_12B.md#summary-rules-6-and-the-copy-for-gate-b).
+
+## Phase 12E1 (v1.3.0 lifecycle foundation, merged)
 
 Contracts, findings and evidence: [docs/PHASE_12E1.md](docs/PHASE_12E1.md).
 Baseline `main` `933960c`; branch `phase/12e1-v1.3-lifecycle-foundation`.
