@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/router/app_router.dart';
 import '../../app/theme/winter_tokens.dart';
 import '../../core/errors/app_failure.dart';
 import '../../core/time/local_date.dart';
 import '../../domain/journey/arc_milestones.dart';
+import '../../domain/journey/arc_weeks.dart';
 import '../../domain/journey/journey_day.dart';
 import '../../domain/journey/journey_overview.dart';
 import '../../domain/winter_arc/winter_arc_session.dart';
@@ -154,6 +156,10 @@ class _Header extends StatelessWidget {
       ArcPaused(:final lastDayNumber) => lastDayNumber,
       ArcEnded(:final lastDayNumber) => lastDayNumber,
     };
+    // The Weekly Review opens on the current (or paused) week, Week 13 of
+    // a completed Arc, or an ended Arc's last week. Hidden while no week
+    // can be reviewed (before the participation start).
+    final reviewWeek = ArcWeeks.of(journey.session, journey.today).defaultWeek;
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         WinterSpacing.md,
@@ -207,6 +213,21 @@ class _Header extends StatelessWidget {
             '${milestoneTitle(ArcMilestone.forDay(day))}',
             style: text.bodyMedium?.copyWith(color: colors.textPrimary),
           ),
+          if (reviewWeek != null) ...[
+            const SizedBox(height: WinterSpacing.xs),
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: OutlinedButton.icon(
+                onPressed: () => context.push(
+                  historical
+                      ? AppRoutes.arcReview(journey.session.id, reviewWeek)
+                      : AppRoutes.activeReview(reviewWeek),
+                ),
+                icon: const Icon(Icons.calendar_view_week_rounded),
+                label: Text('Week $reviewWeek review'),
+              ),
+            ),
+          ],
           const SizedBox(height: WinterSpacing.sm),
           WinterCard(
             padding: const EdgeInsets.fromLTRB(

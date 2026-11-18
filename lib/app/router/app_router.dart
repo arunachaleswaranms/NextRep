@@ -21,6 +21,7 @@ import '../../features/journey/journey_screen.dart';
 import '../../features/new_arc/new_arc_screen.dart';
 import '../../features/onboarding/onboarding_screen.dart';
 import '../../features/reminders/reminder_settings_screen.dart';
+import '../../features/review/weekly_review_screen.dart';
 import '../../features/shell/active_shell.dart';
 import '../../features/shell/unknown_page_screen.dart';
 import '../../features/summary/summary_screen.dart';
@@ -71,6 +72,30 @@ abstract final class AppRoutes {
   static String arcJournal(int sessionId) => '/arc/$sessionId/journal';
   static String arcAchievements(int sessionId) =>
       '/arc/$sessionId/achievements';
+
+  /// The active arc's Weekly Review of [week] (`1..13`), over Journey on
+  /// the root navigator.
+  static const journeyReview = '/journey/review';
+  static String activeReview(int week) => '$journeyReview?week=$week';
+
+  /// A started arc's Weekly Review of [week], read-only, bound to that arc.
+  static String arcReview(int sessionId, int week) =>
+      '/arc/$sessionId/review?week=$week';
+
+  /// The `week` a review location asks for, or null when it is missing or
+  /// not a plain number of one or two digits. A number outside `1..13`,
+  /// or a week that can't be opened, is settled by the review itself
+  /// (`ArcWeeks.resolve`): it never leads to an error page.
+  static int? reviewWeekOf(Uri uri) {
+    final String? raw;
+    try {
+      raw = uri.queryParameters['week'];
+    } on FormatException {
+      return null; // malformed percent-encoding
+    }
+    if (raw == null || !RegExp(r'^\d{1,2}$').hasMatch(raw)) return null;
+    return int.parse(raw);
+  }
 
   /// Where the app should open:
   ///
@@ -267,6 +292,13 @@ GoRouter buildAppRouter({
             builder: (context, state) =>
                 AchievementsScreen(sessionId: sessionIdOf(state)),
           ),
+          GoRoute(
+            path: 'review',
+            builder: (context, state) => WeeklyReviewScreen(
+              sessionId: sessionIdOf(state),
+              requestedWeek: AppRoutes.reviewWeekOf(state.uri),
+            ),
+          ),
         ],
       ),
       StatefulShellRoute.indexedStack(
@@ -293,6 +325,15 @@ GoRouter buildAppRouter({
               GoRoute(
                 path: AppRoutes.journey,
                 builder: (context, state) => const JourneyScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'review',
+                    parentNavigatorKey: rootKey,
+                    builder: (context, state) => WeeklyReviewScreen(
+                      requestedWeek: AppRoutes.reviewWeekOf(state.uri),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
