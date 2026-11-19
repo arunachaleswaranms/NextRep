@@ -20,13 +20,22 @@ import '../../shared/winter_scene/scene_progress.dart';
 import '../../shared/winter_scene/winter_scene.dart';
 import '../achievements/widgets/trophy_button.dart';
 import 'journey_controller.dart';
+import 'widgets/arc_calendar_view.dart';
 import 'widgets/journey_day_style.dart';
 import 'widgets/journey_marker.dart';
 import 'widgets/journey_path.dart';
 
+/// The two layouts of the same Journey: the climb, or the Arc Consistency
+/// Calendar's 13 week blocks.
+enum JourneyView { path, calendar }
+
 /// Journey v2: the arc's days as a climb up the mountain, from stored
 /// history. Without [sessionId] it shows the active arc (the Journey tab);
 /// with one, that arc from Arc History, read-only.
+///
+/// A Path | Calendar switch (Phase 12C) shows the same loaded Journey as
+/// the Arc Consistency Calendar instead. The choice lasts while the screen
+/// is open and is never stored; switching reads and writes nothing.
 class JourneyScreen extends ConsumerStatefulWidget {
   const JourneyScreen({super.key, this.sessionId});
 
@@ -38,6 +47,18 @@ class JourneyScreen extends ConsumerStatefulWidget {
 
 class _JourneyScreenState extends ConsumerState<JourneyScreen> {
   late final AppLifecycleListener _lifecycle;
+
+  /// Path by default; not persisted.
+  JourneyView _view = JourneyView.path;
+
+  /// The calendar is built the first time it is chosen, then kept (with
+  /// its scroll position) while the screen is open, as the path is.
+  bool _calendarBuilt = false;
+
+  void _show(JourneyView view) => setState(() {
+    _view = view;
+    if (view == JourneyView.calendar) _calendarBuilt = true;
+  });
 
   @override
   void initState() {
@@ -104,7 +125,22 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
                         ),
                       ),
                     ),
-                    Expanded(child: JourneyPath(journey: value)),
+                    _ViewSwitch(view: _view, onChanged: _show),
+                    Expanded(
+                      child: IndexedStack(
+                        index: _view.index,
+                        children: [
+                          JourneyPath(journey: value),
+                          if (_calendarBuilt)
+                            ArcCalendarView(
+                              journey: value,
+                              historical: widget.sessionId != null,
+                            )
+                          else
+                            const SizedBox.shrink(),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -190,6 +226,8 @@ class _Header extends StatelessWidget {
                 onPressed: () => _Legend.show(
                   context,
                   showNotJoined: journey.session.joinedLate,
+                  showNotReached:
+                      journey.session.status == WinterArcStatus.ended,
                 ),
                 icon: const Icon(Icons.info_outline_rounded),
               ),
@@ -280,22 +318,28 @@ class _Stat extends StatelessWidget {
   }
 }
 
-/// What each marker means; shapes and icons, not only colours.
+/// What each marker means; shapes and icons, not only colours. Shared by
+/// the Path and the Calendar, which use the same states and words.
 class _Legend extends StatelessWidget {
-  const _Legend({required this.showNotJoined});
+  const _Legend({required this.showNotJoined, required this.showNotReached});
 
   /// Include the "before you joined" marker of a seasonal arc joined late.
   final bool showNotJoined;
 
+  /// Include the "not reached" marker of an ended arc.
+  final bool showNotReached;
+
   static Future<void> show(
     BuildContext context, {
     required bool showNotJoined,
+    required bool showNotReached,
   }) => showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
     isScrollControlled: true,
     backgroundColor: context.winter.surface,
-    builder: (_) => _Legend(showNotJoined: showNotJoined),
+    builder: (_) =>
+        _Legend(showNotJoined: showNotJoined, showNotReached: showNotReached),
   );
 
   @override
@@ -316,10 +360,10 @@ class _Legend extends StatelessWidget {
             Text('Legend', style: text.headlineSmall),
             const SizedBox(height: WinterSpacing.sm),
             for (final state in JourneyDayState.values)
-              // Only an ended arc (schema v7) has days it did not reach;
-              // no screen shows one yet.
+              // Only a seasonal arc joined late has days before joining,
+              // and only an ended arc days it did not reach.
               if ((showNotJoined || state != JourneyDayState.notJoined) &&
-                  state != JourneyDayState.notReached)
+                  (showNotReached || state != JourneyDayState.notReached))
                 Row(
                   children: [
                     ExcludeSemantics(
@@ -348,4 +392,47 @@ class _Legend extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Path | Calendar: two layouts of the same Journey (spec § 7.1).
+class _ViewSwitch extends StatelessWidget {
+  const _ViewSwitch({required this.view, required this.onChanged});
+
+  final JourneyView view;
+  final ValueChanged<JourneyView> onChanged;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(
+      WinterSpacing.md,
+      0,
+      WinterSpacing.md,
+      WinterSpacing.xs,
+    ),
+    child: Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: ArcCalendarView.maxWidth),
+        child: SizedBox(
+          width: double.infinity,
+          child: SegmentedButton<JourneyView>(
+            showSelectedIcon: false,
+            segments: const [
+              ButtonSegment(
+                value: JourneyView.path,
+                icon: Icon(Icons.route_rounded),
+                label: Text('Path'),
+              ),
+              ButtonSegment(
+                value: JourneyView.calendar,
+                icon: Icon(Icons.calendar_month_rounded),
+                label: Text('Calendar'),
+              ),
+            ],
+            selected: {view},
+            onSelectionChanged: (selected) => onChanged(selected.single),
+          ),
+        ),
+      ),
+    ),
+  );
 }

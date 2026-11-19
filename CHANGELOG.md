@@ -5,6 +5,9 @@
 Not released; the version stays 1.2.0+3. Phase 12E1 laid the lifecycle
 foundation of v1.3.0 ([docs/PHASE_12E1.md](docs/PHASE_12E1.md)). Phase
 12B adds the Weekly Arc Review ([docs/PHASE_12B.md](docs/PHASE_12B.md)).
+Phase 12C adds the Arc Consistency Calendar
+([docs/PHASE_12C.md](docs/PHASE_12C.md)); the owner approved its wording
+at Gate C.
 
 Schema **v7** · backup format **4** (reads 1, 2, 3 and 4)
 
@@ -18,9 +21,23 @@ Schema **v7** · backup format **4** (reads 1, 2, 3 and 4)
   supportive summary. Works for the current Arc and for finished Arcs in
   Arc History. Read-only: viewing a review never changes XP, progress or
   achievements, and nothing is stored or sent.
+- **Arc Consistency Calendar**: a Path | Calendar switch on the Journey
+  shows the same 92 days as 13 Arc-week blocks (Week 13 holds 8 days),
+  each day with its number and the Journey's shape, fill and icon:
+  Perfect, Minimum complete, partial, no progress, today, upcoming, before
+  you joined and not reached. Each week's heading shows its dates and how
+  many finished days were full, and opens that week's review. Pauses show
+  as a row between days; days before a late Seasonal join stay neutral.
+  Works for the current Arc and for finished Arcs. Read-only: nothing is
+  stored, awarded or sent, and the view isn't remembered.
 
 ### Changed
 
+- **Journey wording (Gate C):** a past day with no progress reads
+  "No progress" instead of "Missed" in the Journey, the Calendar, the
+  Legend, the Weekly Review's day strip, day details and screen-reader
+  announcements. Wording only: nothing is re-scored and no data changes.
+- The Journey Legend includes "Not reached" for an Arc ended early.
 - **Database schema v7** (additive, one atomic step): freeze intervals
   (`arc_freezes`), the closing date of an Arc ended early
   (`winter_arc_sessions.closed_on`) and sound settings

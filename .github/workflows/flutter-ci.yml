@@ -78,6 +78,17 @@ jobs:
           test/features/weekly_review_screen_test.dart
           test/integration/weekly_review_layout_test.dart
 
+      - name: Calendar tests (92 cells in 13 weeks, shared Journey states, pauses, ended Arcs, read-only, zero extra reads, accessibility, layouts)
+        run: >-
+          flutter test
+          test/domain/calendar_state_test.dart
+          test/data/calendar_restore_test.dart
+          test/features/arc_calendar_test.dart
+          test/features/calendar_navigation_test.dart
+          test/features/calendar_read_only_test.dart
+          test/features/calendar_accessibility_test.dart
+          test/integration/calendar_layout_test.dart
+
       - name: Focus Guard tests (settings, usage, one nudge a day, restore)
         run: >-
           flutter test

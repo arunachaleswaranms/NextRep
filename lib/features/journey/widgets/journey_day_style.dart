@@ -18,7 +18,7 @@ extension JourneyDayStyle on JourneyDayState {
     JourneyDayState.minimumComplete => 'Minimum complete',
     JourneyDayState.partial => 'Partial',
     JourneyDayState.minimumPartial => 'Minimum partial',
-    JourneyDayState.missed => 'Missed',
+    JourneyDayState.missed => 'No progress',
   };
 
   Color color(WinterColors colors) => switch (this) {
@@ -104,7 +104,7 @@ String journeyDayLabel(JourneyDay day) {
     JourneyDayState.minimumComplete => 'Minimum Day completed.',
     JourneyDayState.partial => 'Partial, $percent percent complete.',
     JourneyDayState.minimumPartial => 'Minimum Day, $percent percent complete.',
-    JourneyDayState.missed => 'Missed.',
+    JourneyDayState.missed => 'No progress.',
   };
   return 'Day ${day.dayNumber}. ${day.isToday ? 'Today. ' : ''}$state';
 }
