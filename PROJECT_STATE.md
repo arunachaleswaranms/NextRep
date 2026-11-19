@@ -7,9 +7,10 @@ publication record (PR #21), the Phase 12A plan (PR #22), the Phase 12A
 Addendum (PR #23), the Phase 12E1 lifecycle foundation (PR #24) and the
 Phase 12B Weekly Arc Review (PR #25) are merged. `main` is `f10fd75`,
 version `1.2.0+3`. **v1.3.0 is in development, not released: Phase 12C
-(the Arc Consistency Calendar) is in review; its "No progress" wording
-(Gate C) is PENDING OWNER SIGN-OFF, and it waits for independent review
-and the owner's merge.**_
+(the Arc Consistency Calendar, PR #26) is in review: the owner approved
+its wording at Gate C on 19 November 2026 and its independent technical
+review passed; it waits for a final independent verification before the
+owner merges it.**_
 
 | | |
 |---|---|
@@ -58,11 +59,14 @@ change; no phone, no signing, no release.
   `loadArc`, session, progress or achievement reads on switching; state
   equality with the Journey for 2,000+ generated calendars; outlines
   ≥ 3:1 and text ≥ 4.5:1 against `surface`; a 35-run layout sweep.
-- **Gate C (owner): PENDING.** "Missed" → "No progress" (copy only; the
-  state stays `missed`), plus the new Calendar wording. See
-  [docs/PHASE_12C.md](docs/PHASE_12C.md#gate-c-the-missed-wording-pending-owner-sign-off).
-- **Next:** Gate C sign-off, independent review, the owner's merge. Not
-  merged; no release.
+- **Gate C (owner): APPROVED on 19 November 2026.** "Missed" → "No
+  progress" (copy only; the state stays `missed`), "Pause starts [date]",
+  "No finished days yet" and all other Calendar wording, as implemented at
+  `db1f40c`. See
+  [docs/PHASE_12C.md](docs/PHASE_12C.md#gate-c-outcome).
+- **Independent technical review:** passed (owner-reported).
+- **Next:** a final independent verification of PR #26; the owner merges
+  it. Not merged; no release.
 
 ## Phase 12B (v1.3.0 Weekly Arc Review, merged)
 

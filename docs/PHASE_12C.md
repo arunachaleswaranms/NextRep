@@ -351,7 +351,7 @@ debug-mode widget test (not a profile build; recorded, not gated). No
 emulator or physical device was used, and no production signing key was
 read: the worktree has no `android/key.properties`.
 
-## Gate C: the "Missed" wording (PENDING OWNER SIGN-OFF)
+## Gate C: the "Missed" wording (APPROVED)
 
 **Proposal (spec § 7.2, recommended):** the Journey state labelled
 "Missed" is shown as **"No progress"**.
@@ -367,8 +367,7 @@ Shared consumers: Journey Path, Calendar, the Legend, the Weekly Review
 day strip, the day detail sheet and every accessibility description. The
 Dart state stays `JourneyDayState.missed`; its classification, precedence,
 stored data, Minimum Day records, progress flags, XP, achievements and
-streaks are unchanged; no migration. Merge waits for the owner's explicit
-approval.
+streaks are unchanged; no migration.
 
 **New Calendar wording, for the same sign-off:** "Path", "Calendar";
 headings "Week 3 · 15–21 Oct · 2 of 3 days full", "· This week", "·
@@ -387,6 +386,22 @@ week review."
    header's § 12.3 wording): the pause row says it in place.
 3. A not-reached cell names no date: its planned date was never lived.
 4. Before the participation start the calendar opens on the join week.
+
+### Gate C outcome
+
+**APPROVED by the owner on 19 November 2026.** The owner formally
+approved Gate C for the implementation at `db1f40c` (PR #26; CI run
+[44377903117](https://github.com/arunachaleswaranms/NextRep/actions/runs/44377903117)
+green on that head, both jobs), including:
+
+1. "No progress" replacing the user-facing "Missed" label;
+2. "Pause starts [date]" for a scheduled pause;
+3. "No finished days yet" for a reviewable week with no settled days;
+
+and all the other Calendar wording documented above. No wording changed
+with the approval. The owner also reported that the independent technical
+review of PR #26 passed. The PR stays unmerged pending one final
+independent verification; the owner merges it.
 
 ## Known limitations
 
