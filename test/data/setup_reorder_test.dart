@@ -5,7 +5,6 @@ import 'package:nextrep/core/time/local_date.dart';
 import 'package:nextrep/core/database/app_database.dart';
 import 'package:nextrep/domain/habit/habit.dart';
 import 'package:nextrep/domain/habit/setup_habit_rules.dart';
-import 'package:nextrep/domain/habit/night_time.dart';
 import 'package:nextrep/domain/winter_arc/winter_arc_service.dart';
 import 'package:nextrep/domain/winter_arc/winter_arc_session.dart';
 

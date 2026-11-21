@@ -88,7 +88,8 @@ class _ReviewSetupScreenState extends ConsumerState<ReviewSetupScreen> {
         leading: BackButton(
           onPressed: () => setupBack(context, fallback: AppRoutes.savedSetup),
         ),
-        title: const Text(SetupLabels.reviewSetup),
+        // The title is the page's first heading instead, so it can wrap at
+        // large text sizes.
       ),
       extendBodyBehindAppBar: false,
       body: WinterBackground(
@@ -176,11 +177,10 @@ class _Review extends ConsumerWidget {
           children: [
             Semantics(
               header: true,
-              child: Text(
-                SetupLabels.kindTitle(session),
-                style: text.titleLarge,
-              ),
+              child: Text(SetupLabels.reviewSetup, style: text.headlineMedium),
             ),
+            const SizedBox(height: WinterSpacing.sm),
+            Text(SetupLabels.kindTitle(session), style: text.titleLarge),
             Text(
               SetupLabels.reviewDates(setup),
               style: text.bodyLarge?.copyWith(color: colors.textSecondary),
