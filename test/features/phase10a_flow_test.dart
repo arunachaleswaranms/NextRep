@@ -585,6 +585,8 @@ void main() {
     await _setPhoneSize(tester);
     await tester.pumpWidget(_app(db, clock));
     await tester.pumpAndSettle();
+    // Phase 12D: a saved setup opens the hub; the editor is one tap on.
+    await continueEditing(tester);
 
     const copy = 'Morning check-in · counts toward the day you wake up';
     Finder tile(String title) => find.widgetWithText(HabitToggleTile, title);

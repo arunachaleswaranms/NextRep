@@ -47,8 +47,7 @@ Future<void> _onboardAndStart(WidgetTester tester) async {
   await tester.pumpAndSettle();
   await tester.tap(find.text('Rolling 92-Day Arc'));
   await tester.pumpAndSettle();
-  await tester.tap(find.text('Start Winter Arc'));
-  await tester.pumpAndSettle();
+  await startFromSetup(tester);
 }
 
 void main() {
@@ -93,8 +92,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('4 habits selected'), findsOneWidget);
 
-    await tester.tap(find.text('Start Winter Arc'));
-    await tester.pumpAndSettle();
+    await startFromSetup(tester);
 
     // Today
     expect(find.text('Day 1 of 92'), findsOneWidget);

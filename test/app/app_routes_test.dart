@@ -51,7 +51,7 @@ void main() {
       expect(AppRoutes.forReminder('hydration', completed), AppRoutes.arc(1));
       expect(
         AppRoutes.forReminder('hydration', setupOnly),
-        AppRoutes.habitSetup,
+        AppRoutes.savedSetup,
       );
     });
 
@@ -67,7 +67,7 @@ void main() {
       );
       expect(
         AppRoutes.forReminder(focusGuardTapPayload, setupOnly),
-        AppRoutes.habitSetup,
+        AppRoutes.savedSetup,
       );
       expect(
         AppRoutes.forReminder(focusGuardTapPayload, none),
@@ -93,10 +93,10 @@ void main() {
     });
 
     test('a setup arc never opens a writable Today', () {
-      expect(AppRoutes.forReminder('today', setupOnly), AppRoutes.habitSetup);
+      expect(AppRoutes.forReminder('today', setupOnly), AppRoutes.savedSetup);
       expect(
         AppRoutes.forReminder('journal', completedPlusSetup),
-        AppRoutes.habitSetup,
+        AppRoutes.savedSetup,
       );
     });
 
@@ -118,7 +118,7 @@ void main() {
         expect(AppRoutes.redirect(completed, location), AppRoutes.arc(1));
         expect(
           AppRoutes.redirect(completedPlusSetup, location),
-          AppRoutes.habitSetup,
+          AppRoutes.savedSetup,
         );
         expect(AppRoutes.redirect(active, location), isNull);
       }
@@ -145,7 +145,7 @@ void main() {
       );
       expect(
         AppRoutes.redirect(completedPlusSetup, AppRoutes.arc(2)),
-        AppRoutes.habitSetup,
+        AppRoutes.savedSetup,
       );
       expect(AppRoutes.redirect(completed, '/arc/oops'), AppRoutes.arc(1));
     });
@@ -183,9 +183,9 @@ void main() {
         expect(AppRoutes.redirect(completed, review), AppRoutes.arc(1));
         expect(
           AppRoutes.redirect(completedPlusSetup, review),
-          AppRoutes.habitSetup,
+          AppRoutes.savedSetup,
         );
-        expect(AppRoutes.redirect(setupOnly, review), AppRoutes.habitSetup);
+        expect(AppRoutes.redirect(setupOnly, review), AppRoutes.savedSetup);
         expect(AppRoutes.redirect(none, review), AppRoutes.onboarding);
       },
     );
@@ -200,7 +200,7 @@ void main() {
       );
       expect(
         AppRoutes.redirect(completedPlusSetup, AppRoutes.arcReview(2, 1)),
-        AppRoutes.habitSetup,
+        AppRoutes.savedSetup,
       );
       final ended = ArcResolution(
         latestCompleted: _arc(1, WinterArcStatus.ended),
@@ -298,7 +298,90 @@ void main() {
       );
 
       await app.winterArc.startNewArc(NewArcBaseline.fresh);
-      expect(await boot(app, 'journal'), AppRoutes.habitSetup);
+      expect(await boot(app, 'journal'), AppRoutes.savedSetup);
+    });
+  });
+
+  group('saved setup (Phase 12D)', () {
+    final endedPlusSetup = ArcResolution(
+      current: _arc(2, WinterArcStatus.setup),
+      latestCompleted: _arc(1, WinterArcStatus.ended),
+    );
+    const setupRoutes = [
+      AppRoutes.savedSetup,
+      AppRoutes.reviewSetup,
+      AppRoutes.confirmStart,
+    ];
+
+    test('a setup opens the hub, with or without finished history', () {
+      for (final r in [setupOnly, completedPlusSetup, endedPlusSetup]) {
+        expect(AppRoutes.home(r), AppRoutes.savedSetup);
+        expect(AppRoutes.forSession(r.current), AppRoutes.savedSetup);
+      }
+      expect(AppRoutes.home(none), AppRoutes.onboarding);
+      expect(AppRoutes.home(active), AppRoutes.today);
+      expect(AppRoutes.home(completed), AppRoutes.arc(1));
+    });
+
+    test('with a setup, every setup screen stays where it is (no loop '
+        'between the editor and the hub)', () {
+      for (final r in [setupOnly, completedPlusSetup, endedPlusSetup]) {
+        for (final location in [AppRoutes.habitSetup, ...setupRoutes]) {
+          expect(AppRoutes.redirect(r, location), isNull, reason: location);
+        }
+        // Settings and history stay reachable from the hub.
+        for (final location in [
+          AppRoutes.reminders,
+          AppRoutes.dataBackup,
+          AppRoutes.focusGuard,
+          AppRoutes.about,
+          AppRoutes.arcs,
+        ]) {
+          expect(AppRoutes.redirect(r, location), isNull, reason: location);
+        }
+      }
+    });
+
+    test('choosing an Arc still opens the editor, not the hub', () {
+      expect(
+        AppRoutes.redirect(setupOnly, AppRoutes.newArc),
+        AppRoutes.habitSetup,
+      );
+      expect(
+        AppRoutes.redirect(setupOnly, AppRoutes.onboarding),
+        AppRoutes.habitSetup,
+      );
+    });
+
+    test('an active arc leaves every setup screen for Today', () {
+      for (final location in [AppRoutes.habitSetup, ...setupRoutes]) {
+        expect(AppRoutes.redirect(active, location), AppRoutes.today);
+      }
+    });
+
+    test('without a setup, the hub, Review and Confirm go home', () {
+      for (final location in setupRoutes) {
+        expect(AppRoutes.redirect(none, location), AppRoutes.onboarding);
+        expect(AppRoutes.redirect(completed, location), AppRoutes.arc(1));
+      }
+      // The redirect target never redirects again.
+      for (final r in [
+        none,
+        completed,
+        active,
+        setupOnly,
+        completedPlusSetup,
+      ]) {
+        final home = AppRoutes.home(r);
+        expect(AppRoutes.redirect(r, home), isNull, reason: home);
+      }
+    });
+
+    test('a stale reminder with a setup opens the hub, never Today', () {
+      for (final payload in ['today', 'journal', 'hydration', null]) {
+        expect(AppRoutes.forReminder(payload, setupOnly), AppRoutes.savedSetup);
+      }
+      expect(AppRoutes.reviewFromEditor, '/setup/review?from=editor');
     });
   });
 }

@@ -38,7 +38,7 @@ void main() {
     app = launch();
     expect(
       AppRoutes.forSession(await app.winterArc.currentSession()),
-      AppRoutes.habitSetup,
+      AppRoutes.savedSetup,
     );
     await app.winterArc.startWinterArc();
     await app.db.close();

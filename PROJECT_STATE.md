@@ -1,16 +1,15 @@
 # PROJECT_STATE
 
-_Last updated: 2026-11-19. **Latest published release: v1.2.0** (tag
+_Last updated: 2026-11-21. **Latest published release: v1.2.0** (tag
 `v1.2.0` on `8ab0c43`, PR #20), published 18 October 2026; v1.1.0 and
 v1.0.0 before it. The v1.2 roadmap (Phases 11A–11F, PRs #15–#20), the
 publication record (PR #21), the Phase 12A plan (PR #22), the Phase 12A
-Addendum (PR #23), the Phase 12E1 lifecycle foundation (PR #24) and the
-Phase 12B Weekly Arc Review (PR #25) are merged. `main` is `f10fd75`,
-version `1.2.0+3`. **v1.3.0 is in development, not released: Phase 12C
-(the Arc Consistency Calendar, PR #26) is in review: the owner approved
-its wording at Gate C on 19 November 2026 and its independent technical
-review passed; it waits for a final independent verification before the
-owner merges it.**_
+Addendum (PR #23), the Phase 12E1 lifecycle foundation (PR #24), the
+Phase 12B Weekly Arc Review (PR #25) and the Phase 12C Arc Consistency
+Calendar (PR #26) are merged. `main` is `fa5ad0f`, version `1.2.0+3`.
+**v1.3.0 is in development, not released: Phase 12D (habit ordering,
+saved setup and Confirm & Start) is in review and waits for the owner's
+Gate D wording sign-off.**_
 
 | | |
 |---|---|
@@ -29,7 +28,8 @@ planned. TalkBack was deliberately deferred and doesn't block this model.
 ## Repo
 
 - Remote: https://github.com/arunachaleswaranms/NextRep (public, MIT)
-- `main`: `f10fd75` (PR #25, Phase 12B), on top of `7e5ece4` (PR #24,
+- `main`: `fa5ad0f` (PR #26, Phase 12C), on top of `f10fd75` (PR #25,
+  Phase 12B), `7e5ece4` (PR #24,
   Phase 12E1), `933960c` (PR #23,
   the Phase 12A Addendum), `64d77e0` (PR #22, the Phase 12A plan),
   `28db2af` (PR #21, the v1.2.0 publication record) and `8ab0c43` (squash
@@ -38,9 +38,33 @@ planned. TalkBack was deliberately deferred and doesn't block this model.
   green, both jobs). Tags `v1.0.0` (`b3f9c5c`), `v1.1.0` (`7e563e2`) and
   `v1.2.0` (`8ab0c43`). PRs #1–#20 are Phases 1–11F; #21 the publication
   record; #22 Phase 12A; #23 the Phase 12A Addendum; #24 Phase 12E1;
-  #25 Phase 12B.
+  #25 Phase 12B; #26 Phase 12C.
 
-## Phase 12C (v1.3.0 Arc Consistency Calendar, in review)
+## Phase 12D (v1.3.0 habit ordering, saved setup, Confirm & Start, in review)
+
+Contracts, copy and evidence: [docs/PHASE_12D.md](docs/PHASE_12D.md).
+Baseline `main` `fa5ad0f` (PR #26 merged); branch
+`phase/12d-v1.3-setup-control` (worktree `~/labs/NextRep-12D`). No schema,
+backup, Focus Guard native, permission, dependency, XP, achievement or
+version change; no phone, no signing, no release.
+
+- **Order:** `HabitRepository.reorderSetupHabits` (one transaction, exact
+  id set, setup only) behind drag, Move up / Move down and screen-reader
+  actions; failures restore the stored order.
+- **Saved setup:** the existing `setup` session; Save for Later writes
+  nothing; the hub `/setup/saved` is a setup's launch home; Review Setup
+  `/setup/review` is read-only; Confirm & Start `/setup/confirm` is the only
+  UI that starts an Arc, with the shown date checked by the service.
+- **Proof:** 138 new tests (transactions and rollback, process death,
+  formats 1–4, dates and Seasonal rules, midnight, double confirmation,
+  read-only gate, routes, 64-case layout and guideline sweep); 1,822
+  Flutter and 71 JVM tests pass locally.
+- **Gate D (owner): pending.** The wording proposal is in
+  [docs/PHASE_12D.md](docs/PHASE_12D.md#gate-d-owner-wording-sign-off-proposed-not-approved).
+- **Next:** independent review; owner Gate D; owner merge. Not merged; no
+  release.
+
+## Phase 12C (v1.3.0 Arc Consistency Calendar, merged)
 
 Contracts, copy and evidence: [docs/PHASE_12C.md](docs/PHASE_12C.md).
 Baseline `main` `f10fd75`; branch `phase/12c-v1.3-arc-calendar`
@@ -64,9 +88,8 @@ change; no phone, no signing, no release.
   "No finished days yet" and all other Calendar wording, as implemented at
   `db1f40c`. See
   [docs/PHASE_12C.md](docs/PHASE_12C.md#gate-c-outcome).
-- **Independent technical review:** passed (owner-reported).
-- **Next:** a final independent verification of PR #26; the owner merges
-  it. Not merged; no release.
+- **Independent technical review:** passed (owner-reported). Merged as
+  PR #26 (`fa5ad0f`, 18 November 2026).
 
 ## Phase 12B (v1.3.0 Weekly Arc Review, merged)
 

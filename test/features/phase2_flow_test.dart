@@ -40,8 +40,7 @@ Future<void> _onboardAndStart(WidgetTester tester) async {
   await tester.pumpAndSettle();
   await tester.tap(find.text('Rolling 92-Day Arc'));
   await tester.pumpAndSettle();
-  await tester.tap(find.text('Start Winter Arc'));
-  await tester.pumpAndSettle();
+  await startFromSetup(tester);
 }
 
 Future<void> _tapTimes(WidgetTester tester, Finder finder, int times) async {
@@ -86,8 +85,7 @@ void main() {
     expect(find.text('Choose your habits'), findsOneWidget);
     expect(_navBar, findsNothing);
 
-    await tester.tap(find.text('Start Winter Arc'));
-    await tester.pumpAndSettle();
+    await startFromSetup(tester);
     expect(find.text('Day 1 of 92'), findsOneWidget);
     expect(_navBar, findsOneWidget);
     await _shutDown(tester);

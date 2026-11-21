@@ -28,4 +28,9 @@ abstract final class Haptics {
 
   /// A reflection was saved.
   static Future<void> reflectionSaved() => HapticFeedback.lightImpact();
+
+  /// A setup habit card was picked up, or dropped, by a drag. Gesture
+  /// feedback only: the drop's write follows, and its failure has its own
+  /// message.
+  static Future<void> reorderGrip() => HapticFeedback.lightImpact();
 }

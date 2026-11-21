@@ -100,6 +100,43 @@ final class DriftHabitRepository implements HabitRepository {
         }),
       );
 
+  @override
+  Future<void> reorderSetupHabits(int sessionId, List<String> orderedIds) =>
+      // Ids are bound as variables and never quoted in an error.
+      guardPersistence(
+        'reorder setup habits of session $sessionId',
+        () => _db.transaction(() async {
+          await _requireSetup(sessionId);
+          final rows = await (_db.select(
+            _db.habits,
+          )..where((h) => h.sessionId.equals(sessionId))).get();
+          final stored = {for (final row in rows) row.id: row.sortOrder};
+          final requested = orderedIds.toSet();
+          if (requested.length != orderedIds.length ||
+              requested.length != stored.length ||
+              !requested.every(stored.containsKey)) {
+            throw DomainFailure(
+              DomainRule.invalidHabitOrder,
+              'The new order of session $sessionId names '
+              '${orderedIds.length} habits (${requested.length} distinct); '
+              'the session has ${stored.length}',
+            );
+          }
+          // Rows already in place aren't rewritten. sort_order has no
+          // unique index, and the transaction hides the intermediate state.
+          for (final (index, id) in orderedIds.indexed) {
+            if (stored[id] == index) continue;
+            final updated =
+                await (_db.update(_db.habits)..where(_matches(sessionId, id)))
+                    .write(HabitsCompanion(sortOrder: Value(index)));
+            if (updated != 1) {
+              // Rolls back every row already moved.
+              throw StateError('A habit of session $sessionId vanished');
+            }
+          }
+        }),
+      );
+
   /// Throws unless session [sessionId] exists and is still in setup.
   Future<void> _requireSetup(int sessionId) async {
     final row = await (_db.select(

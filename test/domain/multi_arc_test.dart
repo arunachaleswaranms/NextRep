@@ -254,9 +254,9 @@ void main() {
       expect(await home(), AppRoutes.onboarding);
     });
 
-    test('a setup arc → Habit Setup', () async {
+    test('a setup arc → the saved-setup hub (Phase 12D)', () async {
       await app.winterArc.beginSetup();
-      expect(await home(), AppRoutes.habitSetup);
+      expect(await home(), AppRoutes.savedSetup);
     });
 
     test('an active arc → Today', () async {
@@ -275,11 +275,14 @@ void main() {
       expect(await home(), AppRoutes.arc(second.id));
     });
 
-    test('a completed arc plus a new setup arc → Habit Setup', () async {
-      await runFirstArc(app);
-      await app.winterArc.startNewArc(NewArcBaseline.reuseLast);
-      expect(await home(), AppRoutes.habitSetup);
-    });
+    test(
+      'a completed arc plus a new setup arc → the saved-setup hub (Phase 12D)',
+      () async {
+        await runFirstArc(app);
+        await app.winterArc.startNewArc(NewArcBaseline.reuseLast);
+        expect(await home(), AppRoutes.savedSetup);
+      },
+    );
 
     test('a completed arc plus an active arc → Today', () async {
       await runFirstArc(app);

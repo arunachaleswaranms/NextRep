@@ -13,6 +13,7 @@ import 'package:nextrep/domain/reminder/reminder_preferences.dart';
 import 'package:nextrep/domain/winter_arc/winter_arc_service.dart';
 import 'package:nextrep/features/backup/data_backup_screen.dart';
 import 'package:nextrep/features/habit_setup/habit_setup_screen.dart';
+import 'package:nextrep/features/habit_setup/saved_setup_screen.dart';
 import 'package:nextrep/features/history/arc_history_screen.dart';
 import 'package:nextrep/features/insights/insights_screen.dart';
 import 'package:nextrep/features/onboarding/onboarding_screen.dart';
@@ -379,7 +380,9 @@ void main() {
 
     await tester.pumpWidget(_app(seeded.db, seeded.clock));
     await tester.pumpAndSettle();
-    expect(find.byType(HabitSetupScreen), findsOneWidget);
+    // Phase 12D: a saved setup opens the hub, which cancels with the
+    // editor's own dialog and deletion.
+    expect(find.byType(SavedSetupScreen), findsOneWidget);
     await _tapVisible(tester, find.text('Cancel setup'));
     expect(find.text('Cancel this setup?'), findsOneWidget);
     expect(
@@ -387,7 +390,7 @@ void main() {
       findsOneWidget,
     );
     await _tap(tester, _button('Keep Setup'));
-    expect(find.byType(HabitSetupScreen), findsOneWidget);
+    expect(find.byType(SavedSetupScreen), findsOneWidget);
 
     await _tapVisible(tester, find.text('Cancel setup'));
     await _tap(tester, _button('Cancel Setup'));
