@@ -26,18 +26,34 @@ Future<void> reveal(WidgetTester tester, Finder finder) async {
   await tester.pumpAndSettle();
 }
 
-/// Taps [finder], scrolling the first scrollable to it if it isn't on
-/// screen yet (Habit Setup's actions follow the list at large text).
-Future<void> tapShown(WidgetTester tester, Finder finder) async {
+/// Scrolls the first scrollable, down and then up, until [finder] is on
+/// screen (Habit Setup's lazy list may have been scrolled either way).
+Future<void> showIn(WidgetTester tester, Finder finder) async {
   if (finder.hitTestable().evaluate().isEmpty) {
-    await tester.scrollUntilVisible(
-      finder,
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
+    final scrollable = find.byType(Scrollable).first;
+    try {
+      await tester.scrollUntilVisible(
+        finder,
+        200,
+        scrollable: scrollable,
+        maxScrolls: 30,
+      );
+    } on StateError {
+      await tester.scrollUntilVisible(
+        finder,
+        -200,
+        scrollable: scrollable,
+        maxScrolls: 30,
+      );
+    }
   }
   await tester.ensureVisible(finder);
   await tester.pumpAndSettle();
+}
+
+/// Taps [finder] once [showIn] has brought it on screen.
+Future<void> tapShown(WidgetTester tester, Finder finder) async {
+  await showIn(tester, finder);
   await tester.tap(finder);
   await tester.pumpAndSettle();
 }

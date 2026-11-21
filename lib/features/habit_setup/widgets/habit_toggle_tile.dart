@@ -184,14 +184,21 @@ class _DragHandle extends StatelessWidget {
   @override
   Widget build(BuildContext context) => ReorderableDragStartListener(
     index: index,
-    child: Semantics(
-      container: true,
-      label: SetupLabels.reorderHandle(habit),
-      child: SizedBox.square(
-        dimension: 48,
-        child: Icon(
-          Icons.drag_indicator_rounded,
-          color: context.winter.textSecondary,
+    // A tap on the grip is not a tap on the card: it never switches the
+    // habit. (A drag still wins once it moves past the touch slop.)
+    child: GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      excludeFromSemantics: true,
+      onTap: () {},
+      child: Semantics(
+        container: true,
+        label: SetupLabels.reorderHandle(habit),
+        child: SizedBox.square(
+          dimension: 48,
+          child: Icon(
+            Icons.drag_indicator_rounded,
+            color: context.winter.textSecondary,
+          ),
         ),
       ),
     ),
