@@ -328,7 +328,7 @@ void main() {
     final app = TestApp(db, FakeClock(DateTime(2026, 10, 2, 9)));
     expect(
       AppRoutes.forSession(await app.winterArc.currentSession()),
-      AppRoutes.habitSetup,
+      AppRoutes.savedSetup, // Phase 12D: a setup opens the saved-setup hub
     );
     final started = await app.winterArc.startWinterArc();
     expect(started.startDate, LocalDate(2026, 10, 2));

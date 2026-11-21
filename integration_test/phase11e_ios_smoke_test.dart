@@ -77,7 +77,7 @@ void main() {
 
     await tap(find.text("Let's Begin"));
     await tap(find.text('Rolling 92-Day Arc'));
-    await tap(find.text('Start Winter Arc'));
+    await _confirmStart(tester);
     expect(find.text('Day 1 of 92'), findsOneWidget);
 
     await tester.scrollUntilVisible(
@@ -162,4 +162,27 @@ void main() {
       'backup screen; HTTP clients: ${network.clients}',
     );
   });
+}
+
+
+/// Phase 12D: Habit Setup no longer starts the Arc. Review & Start →
+/// Continue to Start → the confirm button is the only way.
+Future<void> _confirmStart(
+  WidgetTester tester, {
+  String confirm = 'Confirm & Start Challenge',
+}) async {
+  for (final label in ['Review & Start', 'Continue to Start', confirm]) {
+    final finder = find.text(label);
+    if (finder.hitTestable().evaluate().isEmpty) {
+      await tester.scrollUntilVisible(
+        finder,
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+    }
+    await tester.ensureVisible(finder);
+    await tester.pumpAndSettle();
+    await tester.tap(finder);
+    await tester.pumpAndSettle();
+  }
 }

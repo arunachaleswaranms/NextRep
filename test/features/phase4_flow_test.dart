@@ -125,8 +125,7 @@ void main() {
     expect(find.text('3 habits selected'), findsOneWidget);
     expect(find.textContaining('days to a better you'), findsNothing);
 
-    await tester.tap(find.text('Start Winter Arc'));
-    await tester.pumpAndSettle();
+    await startFromSetup(tester);
     expect(find.byType(TodayScreen), findsOneWidget);
     expect(find.text('Day 1 of 92'), findsOneWidget);
     expect(find.text('0 XP'), findsOneWidget);

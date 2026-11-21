@@ -200,9 +200,11 @@ void main() {
       );
       await tester.pumpWidget(_app(db, clock));
       await tester.pumpAndSettle();
+      // Phase 12D: a saved setup opens the hub; the editor is one tap on.
+      await continueEditing(tester);
       expect(find.byType(HabitSetupScreen), findsOneWidget);
       FilledButton join() => tester.widget<FilledButton>(
-        find.widgetWithText(FilledButton, 'Join Seasonal Winter Arc'),
+        find.widgetWithText(FilledButton, 'Review & Start'),
       );
       expect(join().onPressed, isNull);
       expect(
@@ -230,6 +232,8 @@ void main() {
       clock.current = DateTime(2027, 1, 1, 9);
       await tester.pumpWidget(_app(db, clock));
       await tester.pumpAndSettle();
+      // Phase 12D: a saved setup opens the hub; the editor is one tap on.
+      await continueEditing(tester);
       expect(find.byType(HabitSetupScreen), findsOneWidget);
       expect(
         find.text(

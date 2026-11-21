@@ -43,8 +43,7 @@ Future<void> _onboardAndStart(WidgetTester tester) async {
   await tester.pumpAndSettle();
   await tester.tap(find.text('Rolling 92-Day Arc'));
   await tester.pumpAndSettle();
-  await tester.tap(find.text('Start Winter Arc'));
-  await tester.pumpAndSettle();
+  await startFromSetup(tester);
 }
 
 Finder get _navBar => find.byType(NavigationBar);

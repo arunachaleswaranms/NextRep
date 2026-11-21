@@ -51,7 +51,7 @@ void main() {
       expect(AppRoutes.forReminder('hydration', completed), AppRoutes.arc(1));
       expect(
         AppRoutes.forReminder('hydration', setupOnly),
-        AppRoutes.habitSetup,
+        AppRoutes.savedSetup,
       );
     });
 
@@ -67,7 +67,7 @@ void main() {
       );
       expect(
         AppRoutes.forReminder(focusGuardTapPayload, setupOnly),
-        AppRoutes.habitSetup,
+        AppRoutes.savedSetup,
       );
       expect(
         AppRoutes.forReminder(focusGuardTapPayload, none),
@@ -93,10 +93,10 @@ void main() {
     });
 
     test('a setup arc never opens a writable Today', () {
-      expect(AppRoutes.forReminder('today', setupOnly), AppRoutes.habitSetup);
+      expect(AppRoutes.forReminder('today', setupOnly), AppRoutes.savedSetup);
       expect(
         AppRoutes.forReminder('journal', completedPlusSetup),
-        AppRoutes.habitSetup,
+        AppRoutes.savedSetup,
       );
     });
 
@@ -118,7 +118,7 @@ void main() {
         expect(AppRoutes.redirect(completed, location), AppRoutes.arc(1));
         expect(
           AppRoutes.redirect(completedPlusSetup, location),
-          AppRoutes.habitSetup,
+          AppRoutes.savedSetup,
         );
         expect(AppRoutes.redirect(active, location), isNull);
       }
@@ -145,7 +145,7 @@ void main() {
       );
       expect(
         AppRoutes.redirect(completedPlusSetup, AppRoutes.arc(2)),
-        AppRoutes.habitSetup,
+        AppRoutes.savedSetup,
       );
       expect(AppRoutes.redirect(completed, '/arc/oops'), AppRoutes.arc(1));
     });
@@ -183,9 +183,9 @@ void main() {
         expect(AppRoutes.redirect(completed, review), AppRoutes.arc(1));
         expect(
           AppRoutes.redirect(completedPlusSetup, review),
-          AppRoutes.habitSetup,
+          AppRoutes.savedSetup,
         );
-        expect(AppRoutes.redirect(setupOnly, review), AppRoutes.habitSetup);
+        expect(AppRoutes.redirect(setupOnly, review), AppRoutes.savedSetup);
         expect(AppRoutes.redirect(none, review), AppRoutes.onboarding);
       },
     );
@@ -200,7 +200,7 @@ void main() {
       );
       expect(
         AppRoutes.redirect(completedPlusSetup, AppRoutes.arcReview(2, 1)),
-        AppRoutes.habitSetup,
+        AppRoutes.savedSetup,
       );
       final ended = ArcResolution(
         latestCompleted: _arc(1, WinterArcStatus.ended),
@@ -298,7 +298,7 @@ void main() {
       );
 
       await app.winterArc.startNewArc(NewArcBaseline.fresh);
-      expect(await boot(app, 'journal'), AppRoutes.habitSetup);
+      expect(await boot(app, 'journal'), AppRoutes.savedSetup);
     });
   });
 }

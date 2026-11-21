@@ -25,3 +25,38 @@ Future<void> reveal(WidgetTester tester, Finder finder) async {
   );
   await tester.pumpAndSettle();
 }
+
+/// Taps [finder], scrolling the first scrollable to it if it isn't on
+/// screen yet (Habit Setup's actions follow the list at large text).
+Future<void> tapShown(WidgetTester tester, Finder finder) async {
+  if (finder.hitTestable().evaluate().isEmpty) {
+    await tester.scrollUntilVisible(
+      finder,
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+  }
+  await tester.ensureVisible(finder);
+  await tester.pumpAndSettle();
+  await tester.tap(finder);
+  await tester.pumpAndSettle();
+}
+
+/// Phase 12D: starts the Arc from Habit Setup the only way the app offers:
+/// Review & Start → Review Setup's Continue to Start → Confirm & Start's
+/// "Confirm & Start Challenge" (or "Confirm & Join Season").
+Future<void> startFromSetup(WidgetTester tester) async {
+  await tapShown(tester, find.text('Review & Start'));
+  await confirmFromReview(tester);
+}
+
+/// From Review Setup: Continue to Start, then the confirm button.
+Future<void> confirmFromReview(WidgetTester tester) async {
+  await tapShown(tester, find.text('Continue to Start'));
+  await tapShown(tester, find.textContaining(RegExp(r'^Confirm & ')));
+}
+
+/// Phase 12D: from the saved-setup hub (where the app opens with a setup),
+/// Continue Editing opens Habit Setup.
+Future<void> continueEditing(WidgetTester tester) =>
+    tapShown(tester, find.text('Continue Editing'));

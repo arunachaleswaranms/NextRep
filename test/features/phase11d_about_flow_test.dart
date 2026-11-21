@@ -1011,6 +1011,8 @@ void main() {
       final setup = await app.winterArc.beginSetup();
       final before = await snapshotOf(db, setup.id);
       await launch(tester);
+      // Phase 12D: a saved setup opens the hub; the editor is one tap on.
+      await continueEditing(tester);
       expect(find.byType(HabitSetupScreen), findsOneWidget);
       await tester.scrollUntilVisible(
         _button('About NextRep'),
