@@ -96,6 +96,14 @@ enum DomainRule {
   /// Hydration Coach's active hours aren't a same-day window of 8 to 18
   /// hours.
   invalidHydrationWindow,
+
+  /// A new habit order that isn't exactly the setup's stored habits, each
+  /// once (a duplicate, missing, extra or deleted id).
+  invalidHabitOrder,
+
+  /// Confirm & Start was pressed for a date that is no longer today (the
+  /// screen showed yesterday's Day 1, say). Nothing was started.
+  startDateChanged,
 }
 
 /// A domain rule rejected the requested action. Nothing was persisted.

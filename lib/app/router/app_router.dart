@@ -12,7 +12,10 @@ import '../../features/achievements/achievements_screen.dart';
 import '../../features/backup/data_backup_screen.dart';
 import '../../features/focus_guard/focus_guard_app_picker_screen.dart';
 import '../../features/focus_guard/focus_guard_settings_screen.dart';
+import '../../features/habit_setup/confirm_start_screen.dart';
 import '../../features/habit_setup/habit_setup_screen.dart';
+import '../../features/habit_setup/review_setup_screen.dart';
+import '../../features/habit_setup/saved_setup_screen.dart';
 import '../../features/habits/habits_screen.dart';
 import '../../features/history/arc_history_screen.dart';
 import '../../features/insights/insights_screen.dart';
@@ -32,7 +35,21 @@ import '../dependencies.dart';
 
 abstract final class AppRoutes {
   static const onboarding = '/onboarding';
+
+  /// Habit Setup: the editor of the arc in setup.
   static const habitSetup = '/setup';
+
+  /// The saved-setup hub: the home of an arc in setup (launch, restore,
+  /// Save for Later).
+  static const savedSetup = '/setup/saved';
+
+  /// Review Setup: read-only. Opened from the hub, or from Habit Setup
+  /// ([reviewFromEditor], whose Edit Setup returns to the editor beneath).
+  static const reviewSetup = '/setup/review';
+  static const reviewFromEditor = '$reviewSetup?from=editor';
+
+  /// Confirm & Start: the only screen that starts an arc in setup.
+  static const confirmStart = '/setup/confirm';
   static const newArc = '/new-arc';
 
   // The active arc's tabs.
@@ -99,13 +116,13 @@ abstract final class AppRoutes {
 
   /// Where the app should open:
   ///
-  /// 1. an arc in setup → Habit Setup
+  /// 1. an arc in setup → the saved-setup hub (whatever else exists)
   /// 2. an active arc → Today
   /// 3. otherwise, after any finished (completed or ended) arc → the
   ///    latest one's summary
   /// 4. a first install → onboarding
   static String home(ArcResolution resolution) {
-    if (resolution.setup != null) return habitSetup;
+    if (resolution.setup != null) return savedSetup;
     if (resolution.active != null) return today;
     if (resolution.latestCompleted case final done?) return arc(done.id);
     return onboarding;
@@ -115,7 +132,7 @@ abstract final class AppRoutes {
   static String forSession(WinterArcSession? session) =>
       switch (session?.status) {
         null => onboarding,
-        WinterArcStatus.setup => habitSetup,
+        WinterArcStatus.setup => savedSetup,
         WinterArcStatus.active => today,
         // Finished history: read-only, opened on its summary.
         WinterArcStatus.completed || WinterArcStatus.ended => arc(session!.id),
@@ -140,6 +157,7 @@ abstract final class AppRoutes {
   ///
   /// * the active-arc screens (tabs, achievements) need an active arc
   /// * onboarding, setup and New Arc aren't reachable while an arc runs
+  /// * the hub, Review Setup and Confirm & Start need an arc in setup
   /// * the current arc is never shown as history (`/arc/:id`)
   /// * onboarding is only for a first install
   static String? redirect(ArcResolution? resolution, String location) {
@@ -170,8 +188,13 @@ abstract final class AppRoutes {
     if (viewedArc != null && viewedArc == resolution.current?.id) {
       return home(resolution);
     }
+    // Just after choosing an Arc: into the editor, not the hub.
     if (resolution.setup != null && (under(onboarding) || under(newArc))) {
       return habitSetup;
+    }
+    if (resolution.setup == null &&
+        (under(savedSetup) || under(reviewSetup) || under(confirmStart))) {
+      return home(resolution);
     }
     if (resolution.current == null &&
         !resolution.isEmpty &&
@@ -233,6 +256,22 @@ GoRouter buildAppRouter({
       GoRoute(
         path: AppRoutes.habitSetup,
         builder: (context, state) => const HabitSetupScreen(),
+      ),
+      // Top-level, not nested under /setup: the hub is a home (back leaves
+      // the app), and Review / Confirm are pushed over whatever opened them.
+      GoRoute(
+        path: AppRoutes.savedSetup,
+        builder: (context, state) => const SavedSetupScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.reviewSetup,
+        builder: (context, state) => ReviewSetupScreen(
+          fromEditor: state.uri.queryParameters['from'] == 'editor',
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.confirmStart,
+        builder: (context, state) => const ConfirmStartScreen(),
       ),
       GoRoute(
         path: AppRoutes.newArc,

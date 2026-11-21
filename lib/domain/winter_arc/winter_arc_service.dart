@@ -90,6 +90,21 @@ abstract final class ArcStartRules {
   }
 }
 
+/// Why an arc in setup can't start today.
+enum SetupBlocker {
+  /// The setup has no habits at all.
+  noHabits,
+
+  /// Every habit is switched off.
+  noneEnabled,
+
+  /// A Seasonal Winter Arc before 1 October.
+  seasonNotStarted,
+
+  /// A Seasonal Winter Arc after 31 December: it can only be cancelled.
+  seasonEnded,
+}
+
 /// An arc in setup with its habits, as Habit Setup shows it.
 final class ArcSetup {
   const ArcSetup({
@@ -120,6 +135,50 @@ final class ArcSetup {
 
   /// Start is available: the season allows it and a habit is on.
   bool get canStart => startState == SetupStartState.ready && enabledCount > 0;
+
+  /// Why Start is unavailable today, or null when [canStart]. The season
+  /// comes first: no habit change can make an ended season startable.
+  SetupBlocker? get blocker => switch (startState) {
+    SetupStartState.seasonNotStarted => SetupBlocker.seasonNotStarted,
+    SetupStartState.seasonEnded => SetupBlocker.seasonEnded,
+    SetupStartState.ready when habits.isEmpty => SetupBlocker.noHabits,
+    SetupStartState.ready when enabledCount == 0 => SetupBlocker.noneEnabled,
+    SetupStartState.ready => null,
+  };
+
+  /// The habits that are on, in display order.
+  List<Habit> get enabledHabits => [
+    for (final habit in habits)
+      if (habit.enabled) habit,
+  ];
+
+  /// The habits that are off, in display order.
+  List<Habit> get disabledHabits => [
+    for (final habit in habits)
+      if (!habit.enabled) habit,
+  ];
+
+  /// The arc as it would be if it started on [today], computed by
+  /// [ArcStartRules.start] itself (never a second calendar), or null when
+  /// it can't start today. Rolling: Day 1 is [today], the last day is
+  /// `today + 91`. Seasonal: 1 October – 31 December, joined [today].
+  WinterArcSession? get startPreview {
+    if (startState != SetupStartState.ready) return null;
+    return ArcStartRules.start(
+      session,
+      today: today,
+      now: today.toLocalDateTime(),
+    );
+  }
+
+  /// The same setup with [habits] in place of its own, e.g. the order a
+  /// drop shows while it is being saved.
+  ArcSetup withHabits(List<Habit> habits) => ArcSetup(
+    session: session,
+    habits: List.unmodifiable(habits),
+    startState: startState,
+    today: today,
+  );
 }
 
 /// Use cases for configuring and starting a Winter Arc, including every arc
@@ -288,6 +347,21 @@ final class WinterArcService {
     }
   });
 
+  /// Puts the habits of the arc in setup in the order of [orderedIds],
+  /// which must name each of its stored habits exactly once (see
+  /// [HabitRepository.reorderSetupHabits], which writes the whole order in
+  /// one transaction). Only the order changes.
+  ///
+  /// Setup only: a running arc's order is fixed (addendum AD2). Throws
+  /// [DomainRule.sessionNotInSetup] once the arc has started and
+  /// [DomainRule.invalidHabitOrder] for an order that isn't exactly the
+  /// stored habits (e.g. one built before a habit was removed).
+  Future<void> reorderSetupHabits(List<String> orderedIds) =>
+      _mutations.run(() async {
+        final session = await _requireSetup();
+        await _habits.reorderSetupHabits(session.id, orderedIds);
+      });
+
   static Habit _find(List<Habit> habits, String habitId) {
     for (final habit in habits) {
       if (habit.id == habitId) return habit;
@@ -315,13 +389,38 @@ final class WinterArcService {
   /// Idempotent: calling it on an already active session returns that
   /// session. Throws [DomainRule.seasonNotStarted] / [DomainRule.seasonEnded]
   /// outside the season, whatever the UI showed.
-  Future<WinterArcSession> startWinterArc() => _mutations.run(() async {
-    final session = await _sessions.currentSession();
-    if (session == null) {
-      throw const DomainFailure(DomainRule.noSession, 'No session to start');
-    }
-    if (session.status == WinterArcStatus.active) return session;
+  ///
+  /// [confirmedOn] is the date Confirm & Start showed as the start: when it
+  /// is given and is no longer today (midnight passed, or the clock moved),
+  /// [DomainRule.startDateChanged] is thrown and nothing is written, so an
+  /// arc never starts on a date the user wasn't shown. It is compared with
+  /// the same clock read that dates the start.
+  Future<WinterArcSession> startWinterArc({LocalDate? confirmedOn}) =>
+      _mutations.run(() async {
+        final session = await _sessions.currentSession();
+        if (session == null) {
+          throw const DomainFailure(
+            DomainRule.noSession,
+            'No session to start',
+          );
+        }
+        if (session.status == WinterArcStatus.active) return session;
+        return _start(session, confirmedOn: confirmedOn);
+      });
 
+  Future<WinterArcSession> _start(
+    WinterArcSession session, {
+    LocalDate? confirmedOn,
+  }) async {
+    final now = _clock.now();
+    final today = LocalDate.fromDateTime(now);
+
+    if (confirmedOn != null && confirmedOn != today) {
+      throw const DomainFailure(
+        DomainRule.startDateChanged,
+        'The confirmed start date is no longer today',
+      );
+    }
     final habits = await _habits.habitsForSession(session.id);
     if (!habits.any((h) => h.enabled)) {
       throw const DomainFailure(
@@ -331,11 +430,11 @@ final class WinterArcService {
     }
 
     final started = _checked(
-      ArcStartRules.start(session, today: _clock.today(), now: _clock.now()),
+      ArcStartRules.start(session, today: today, now: now),
     );
     await _sessions.updateSession(started);
     return started;
-  });
+  }
 
   /// Permanently deletes the completed arc [sessionId] with all of its
   /// history: habits, progress, XP, Journey, achievements and reflections.
