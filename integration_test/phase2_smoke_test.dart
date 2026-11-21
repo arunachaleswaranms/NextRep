@@ -112,7 +112,6 @@ void main() {
   });
 }
 
-
 /// Phase 12D: Habit Setup no longer starts the Arc. Review & Start →
 /// Continue to Start → the confirm button is the only way.
 Future<void> _confirmStart(
