@@ -104,6 +104,31 @@ enum DomainRule {
   /// Confirm & Start was pressed for a date that is no longer today (the
   /// screen showed yesterday's Day 1, say). Nothing was started.
   startDateChanged,
+
+  /// Freeze isn't available for this arc today: not an active Rolling Arc,
+  /// Day 92, or a pause already scheduled or in effect. Nothing was
+  /// stored.
+  pauseUnavailable,
+
+  /// Freeze was confirmed for a start date that is no longer tomorrow
+  /// (midnight passed while the sheet was open). Nothing was stored.
+  pauseDateChanged,
+
+  /// The phone's date is earlier than the arc's latest logged day, its
+  /// last resume or its first day (clock guard, addendum AD19). Nothing
+  /// was stored.
+  clockBehindHistory,
+
+  /// Cancel pause after the pause began (midnight passed): it can only be
+  /// resumed now. Nothing was changed.
+  pauseAlreadyStarted,
+
+  /// Resume for an arc that isn't paused today. Nothing was changed.
+  notPaused,
+
+  /// Resume was confirmed for a date that is no longer today. Nothing was
+  /// changed.
+  resumeDateChanged,
 }
 
 /// A domain rule rejected the requested action. Nothing was persisted.

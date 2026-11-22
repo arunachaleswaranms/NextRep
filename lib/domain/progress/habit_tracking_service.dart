@@ -47,6 +47,8 @@ final class HabitSettings {
     required this.habits,
     required this.editable,
     required this.configEditable,
+    this.pausedToday = false,
+    this.waitsForResume = false,
   });
 
   /// The arc these settings belong to.
@@ -60,6 +62,14 @@ final class HabitSettings {
   /// Goals and on/off can change (from tomorrow). False on the last day,
   /// when only names can still be edited.
   final bool configEditable;
+
+  /// Today is a paused date of the running arc: habits are read-only until
+  /// it is resumed (spec § 5.2 F6).
+  final bool pausedToday;
+
+  /// A pause is scheduled from tomorrow, so a goal or on/off change made
+  /// today waits and applies on the day the arc resumes (F7a).
+  final bool waitsForResume;
 }
 
 /// What a habit edit changed.
@@ -252,6 +262,9 @@ final class HabitTrackingService {
       date: today,
       editable: editable,
       configEditable: editable && next != null,
+      pausedToday:
+          session.status == WinterArcStatus.active && session.isFrozenOn(today),
+      waitsForResume: editable && next != null && session.isFrozenOn(next),
       habits: [
         for (final habit in records.habits.habits)
           HabitSetting(

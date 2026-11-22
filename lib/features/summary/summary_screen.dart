@@ -7,6 +7,7 @@ import '../../app/router/app_router.dart';
 import '../../app/theme/winter_tokens.dart';
 import '../../core/errors/action_result.dart';
 import '../../core/errors/app_failure.dart';
+import '../../domain/winter_arc/arc_pause.dart';
 import '../../domain/winter_arc/winter_arc_session.dart';
 import '../../shared/formatting/arc_labels.dart';
 import '../../shared/formatting/failure_messages.dart';
@@ -17,6 +18,7 @@ import '../../shared/widgets/winter_background.dart';
 import '../../shared/winter_scene/scene_progress.dart';
 import '../../shared/winter_scene/winter_scene.dart';
 import '../about/about_entry.dart';
+import '../arc_pause/pause_labels.dart';
 import 'arc_removal.dart';
 import 'summary_controller.dart';
 
@@ -218,6 +220,13 @@ class SummaryScreen extends ConsumerWidget {
                       style: text.displaySmall,
                     ),
                     Text(dates, style: text.bodyMedium),
+                    // Total paused days (spec § 5.2 F11): the record is
+                    // honest about the calendar the 92 days took.
+                    if (pausedTotalLabel(
+                          view.session.pausedDaysThrough(view.today),
+                        )
+                        case final paused?)
+                      Text(paused, style: text.bodyMedium),
                     // Season length and participation are different
                     // things; consistency counts participated days.
                     if (joinedLabel(view.session) case final joined?)

@@ -61,8 +61,18 @@ String userMessageFor(AppFailure failure) => switch (failure) {
       'Choose a daily budget between 1 minute and 24 hours.',
     DomainRule.invalidFocusGuardApps => 'Focus Guard can watch up to 100 apps.',
     DomainRule.invalidHabitOrder => "Couldn't save the new order.",
-    DomainRule.startDateChanged =>
+    DomainRule.startDateChanged ||
+    DomainRule.pauseDateChanged ||
+    DomainRule.resumeDateChanged =>
       'The date has changed. Check the new dates, then confirm again.',
+    DomainRule.pauseUnavailable =>
+      "Your Arc can't be paused today. Nothing was changed.",
+    DomainRule.clockBehindHistory =>
+      "Your phone's date is earlier than your latest logged day. "
+          'Nothing was changed.',
+    DomainRule.pauseAlreadyStarted =>
+      'Your pause has already started. Resume when you are ready.',
+    DomainRule.notPaused => 'Your Arc is not paused today.',
     DomainRule.sessionNotFound ||
     DomainRule.noSession ||
     DomainRule.sessionNotInSetup ||

@@ -2,16 +2,24 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/arc_status.dart';
 import '../../app/dependencies.dart';
+import '../../core/time/local_date.dart';
 import '../../domain/progress/arc_summary.dart';
 import '../../domain/winter_arc/winter_arc_session.dart';
 import '../achievements/achievements_controller.dart';
 
 /// The summary of one arc, with the arc it describes.
 final class SummaryView {
-  const SummaryView({required this.session, required this.summary});
+  const SummaryView({
+    required this.session,
+    required this.summary,
+    required this.today,
+  });
 
   final WinterArcSession session;
   final ArcSummary summary;
+
+  /// The local date the summary was computed for.
+  final LocalDate today;
 }
 
 /// Derives the summary of arc [sessionId] from its stored history only.
@@ -29,6 +37,7 @@ final summaryControllerProvider = FutureProvider.autoDispose
       final history = await tracking.historyFor(sessionId);
       final board = await achievements.boardFor(sessionId);
       return SummaryView(
+        today: history.today,
         session: history.session,
         summary: ArcSummary.fromHistory(
           history,

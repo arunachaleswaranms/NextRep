@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../app/arc_refresh.dart';
+import '../../../app/dependencies.dart';
 import '../../../app/theme/winter_tokens.dart';
+import '../../../core/time/clock.dart';
+import '../../../domain/winter_arc/arc_pause.dart';
 import '../../../domain/history/arc_history_service.dart';
 import '../../../domain/winter_arc/winter_arc_session.dart';
 import '../../../shared/formatting/arc_labels.dart';
 import '../../../shared/widgets/winter_card.dart';
+import '../../arc_pause/pause_labels.dart';
 import '../arc_history_controller.dart';
 
 /// One arc in Arc History: dates, status and results. Its numbers load
@@ -24,7 +29,7 @@ class ArcHistoryTile extends ConsumerWidget {
     final active = session.status == WinterArcStatus.active;
     final range = arcDateRange(session);
     // Never "completed" for an arc ended early (schema v7; only a restored
-    // format-4 backup holds one in Phase 12E1).
+    // format-4 backup holds one until Restart, Phase 12F).
     final status = switch (session.status) {
       WinterArcStatus.active => 'ACTIVE',
       WinterArcStatus.ended => 'ENDED EARLY',
@@ -35,9 +40,13 @@ class ArcHistoryTile extends ConsumerWidget {
     final joined = session.joinedLate
         ? 'Joined Day ${session.joinDayNumber}'
         : null;
+    ref.watch(dayChangedProvider); // an open pause grows at midnight
+    final paused = pausedTotalLabel(
+      session.pausedDaysThrough(ref.watch(clockProvider).today()),
+    );
     return Semantics(
       button: true,
-      label: _label(kind, range, status, joined, stats),
+      label: _label(kind, range, status, joined, paused, stats),
       onTap: onTap,
       excludeSemantics: true,
       child: WinterCard(
@@ -65,6 +74,11 @@ class ArcHistoryTile extends ConsumerWidget {
             if (joined != null)
               Text(
                 joined,
+                style: text.bodyMedium?.copyWith(color: colors.textSecondary),
+              ),
+            if (paused != null)
+              Text(
+                paused,
                 style: text.bodyMedium?.copyWith(color: colors.textSecondary),
               ),
             const SizedBox(height: WinterSpacing.sm),
@@ -103,10 +117,11 @@ class ArcHistoryTile extends ConsumerWidget {
     String range,
     String status,
     String? joined,
+    String? paused,
     ArcHistoryCard? card,
   ) {
     String count(int n, String one, String many) => '$n ${n == 1 ? one : many}';
-    final parts = ['$kind, $range, ${status.toLowerCase()}', ?joined];
+    final parts = ['$kind, $range, ${status.toLowerCase()}', ?joined, ?paused];
     if (card != null) {
       final s = card.summary;
       parts.addAll([

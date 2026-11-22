@@ -48,8 +48,8 @@ final class ClockGuardBehind extends ClockGuardVerdict {
   final ClockGuardBound bound;
 }
 
-/// The clock guard of addendum AD19, shared by the future Freeze (12E2)
-/// and Restart (12F) transactions: a lifecycle write on local date `T` is
+/// The clock guard of addendum AD19, shared by the Freeze (12E2) and the
+/// future Restart (12F) transactions: a lifecycle write on local date `T` is
 /// only safe when
 ///
 /// * `T ≥` the participation start,
@@ -104,9 +104,10 @@ abstract interface class ArcActivityRepository {
 /// [ArcClockGuard] with the arc's activity read from storage and today
 /// from the [Clock]. Read-only: evaluating it never writes.
 ///
-/// Phase 12E1 provides it for the Freeze and Restart transactions of
-/// Phases 12E2 and 12F, which must also re-check it inside their own
-/// transaction. Nothing calls it before a write yet.
+/// Used for display. A write re-checks the guard inside its own
+/// transaction: Freeze does so through `ArcPauseRules.pause` within
+/// `WinterArcRepository.changeFreezes` (Phase 12E2); Restart (12F) will
+/// too.
 final class ArcClockGuardService {
   const ArcClockGuardService({required this._activity, required this._clock});
 

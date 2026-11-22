@@ -5,9 +5,10 @@ import '../../domain/winter_arc/winter_arc_session.dart';
 
 /// "Day 4 of 92", "Starts tomorrow", or "Winter Arc complete".
 ///
-/// A paused date and a date after an ended arc's last day (schema v7) only
-/// occur in Phase 12E1 for an arc restored from a format-4 backup; their
-/// wording is a fallback until Phases 12E2 and 12F design it.
+/// A paused date (Freeze, Phase 12E2) reads "Paused after Day N of 92"
+/// where a day title is shown (Journey); Today shows its own paused card.
+/// A date after an ended arc's last day keeps a fallback until Phase 12F
+/// designs it.
 String dayTitle(ArcDayPosition position) => switch (position) {
   ArcInProgress(:final dayNumber, :final totalDays) =>
     'Day $dayNumber of $totalDays',

@@ -14,6 +14,8 @@ import '../../domain/habit/habit.dart';
 import '../../domain/progress/day_summary.dart';
 import '../../domain/progress/habit_progress_rules.dart';
 import '../../domain/progress/progress_repository.dart';
+import '../../domain/winter_arc/arc_pause.dart';
+import '../../domain/winter_arc/winter_arc_session.dart';
 import '../../domain/xp/level_rules.dart';
 import '../../shared/feedback/haptics.dart';
 import '../../shared/formatting/failure_messages.dart';
@@ -21,6 +23,11 @@ import '../../shared/widgets/failure_view.dart';
 import '../../shared/widgets/loading_view.dart';
 import '../../shared/widgets/winter_background.dart';
 import '../achievements/widgets/trophy_button.dart';
+import '../arc_pause/pause_actions.dart';
+import '../arc_pause/pause_labels.dart';
+import '../arc_pause/pause_sheet.dart';
+import '../arc_pause/paused_arc_card.dart';
+import '../arc_pause/resume_sheet.dart';
 import '../celebration/celebration_queue.dart';
 import '../focus_guard/focus_guard_card.dart';
 import '../share/share_choice_sheet.dart';
@@ -41,6 +48,7 @@ class TodayScreen extends ConsumerStatefulWidget {
 class _TodayScreenState extends ConsumerState<TodayScreen> {
   late final AppLifecycleListener _lifecycle;
   bool _returningToFull = false;
+  bool _cancellingPause = false;
 
   TodayController get _controller => ref.read(todayControllerProvider.notifier);
 
@@ -205,6 +213,45 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     };
   }
 
+  /// "Pause Arc": the sheet does the rest. Today re-reads through the
+  /// arcRefresh listener once the pause is stored.
+  Future<void> _openPause(DaySummary summary) async {
+    final result = await PauseArcSheet.show(context, summary.session.id);
+    if (!mounted) return;
+    if (result == PauseSheetResult.openFocusGuard) {
+      await context.push(AppRoutes.focusGuard);
+    }
+  }
+
+  /// "Cancel pause", until midnight. The service re-checks the stored pause
+  /// and today's date; after midnight the pause has begun and Today shows
+  /// it instead.
+  Future<void> _cancelPause(DaySummary summary) async {
+    if (_cancellingPause) return;
+    setState(() => _cancellingPause = true);
+    final result = await runPauseAction(
+      ref,
+      'cancel_pause',
+      (service) => service.cancelPause(sessionId: summary.session.id),
+    );
+    if (!mounted) return;
+    setState(() => _cancellingPause = false);
+    switch (result) {
+      case ActionSuccess():
+        _showSnack(PauseCopy.cancelled);
+      case ActionFailure(failure: DomainFailure() && final failure):
+        _showSnack(userMessageFor(failure));
+        await _controller.refresh();
+      case ActionFailure():
+        _showSnack(PauseCopy.cancelFailed);
+    }
+  }
+
+  /// "Resume Arc": Today shows the resumed day once the sheet has stored
+  /// it (never before).
+  Future<void> _openResume(DaySummary summary) =>
+      ResumeArcSheet.show(context, summary.session.id);
+
   // Today re-reads after edits through the arcRefresh listener in build, so
   // an edit still being saved when the editor closes is not missed.
   Future<void> _editHabits() => context.push(AppRoutes.habits);
@@ -245,9 +292,16 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
   }
 
   Widget _content(BuildContext context, DaySummary summary) {
+    if (summary.position case final ArcPaused paused
+        when summary.session.status == WinterArcStatus.active) {
+      return _pausedContent(context, summary, paused);
+    }
     final colors = context.winter;
     final text = Theme.of(context).textTheme;
     final completion = summary.completion;
+    final pauseOffered =
+        ArcPauseRules.blockerOn(summary.session, summary.date) == null;
+    final scheduled = summary.session.scheduledPauseOn(summary.date);
     // At most a handful of habits, so build everything (no lazy list): tiles
     // keep their animation state while scrolled away.
     return SingleChildScrollView(
@@ -283,10 +337,34 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                 icon: const Icon(Icons.notifications_none_rounded),
               ),
               const TrophyButton(),
+              if (pauseOffered)
+                PopupMenuButton<void>(
+                  tooltip: 'More options',
+                  icon: const Icon(Icons.more_vert_rounded),
+                  itemBuilder: (context) => [
+                    PopupMenuItem(
+                      onTap: () => _openPause(summary),
+                      child: const ListTile(
+                        leading: Icon(Icons.ac_unit_rounded),
+                        title: Text(PauseCopy.menuItem),
+                      ),
+                    ),
+                  ],
+                ),
             ],
           ),
           const SizedBox(height: WinterSpacing.xs),
           TodayHero(summary: summary),
+          if (scheduled != null)
+            Padding(
+              padding: const EdgeInsets.only(top: WinterSpacing.md),
+              child: PauseScheduledBanner(
+                frozenFrom: scheduled.frozenFrom,
+                today: summary.date,
+                busy: _cancellingPause,
+                onCancel: () => _cancelPause(summary),
+              ),
+            ),
           AnimatedSize(
             duration: context.motion.standard,
             child: summary.mode.isMinimum
@@ -350,6 +428,60 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
               icon: const Icon(Icons.tune_rounded),
               label: const Text('Edit habits'),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Today on a paused date (spec § 9.7): the paused card and Focus Guard,
+  /// which isn't part of the Arc. Nothing here writes.
+  Widget _pausedContent(
+    BuildContext context,
+    DaySummary summary,
+    ArcPaused paused,
+  ) {
+    final colors = context.winter;
+    final text = Theme.of(context).textTheme;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(
+        WinterSpacing.md,
+        WinterSpacing.sm,
+        WinterSpacing.md,
+        WinterSpacing.lg,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              const SizedBox(width: WinterSpacing.xs),
+              Expanded(
+                child: Text(
+                  'WINTER ARC',
+                  style: text.labelLarge?.copyWith(
+                    color: colors.accentSecondary,
+                    letterSpacing: 3,
+                  ),
+                ),
+              ),
+              IconButton(
+                tooltip: 'Reminders',
+                onPressed: () => context.push(AppRoutes.reminders),
+                icon: const Icon(Icons.notifications_none_rounded),
+              ),
+              const TrophyButton(),
+            ],
+          ),
+          const SizedBox(height: WinterSpacing.sm),
+          PausedArcCard(
+            position: paused,
+            today: summary.date,
+            onResume: () => _openResume(summary),
+          ),
+          const Padding(
+            padding: EdgeInsets.only(top: WinterSpacing.md),
+            child: FocusGuardCard(),
           ),
         ],
       ),

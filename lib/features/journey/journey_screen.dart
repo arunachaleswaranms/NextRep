@@ -161,8 +161,8 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
       ArcInProgress(:final dayNumber) => dayNumber,
       ArcNotStarted() => 1,
       ArcFinished(:final totalDays) => totalDays,
-      // Schema v7 states, only reachable from a restored format-4 backup
-      // in Phase 12E1: the last day lived.
+      // A paused date (Freeze, Phase 12E2), or after an ended arc's last
+      // day: the last day lived.
       ArcPaused(:final lastDayNumber) => lastDayNumber,
       ArcEnded(:final lastDayNumber) => lastDayNumber,
     },
@@ -187,8 +187,8 @@ class _Header extends StatelessWidget {
       ArcInProgress(:final dayNumber) => dayNumber,
       ArcNotStarted() => 1,
       ArcFinished(:final totalDays) => totalDays,
-      // Schema v7 states, only reachable from a restored format-4 backup
-      // in Phase 12E1: the last day lived.
+      // A paused date (Freeze, Phase 12E2), or after an ended arc's last
+      // day: the last day lived.
       ArcPaused(:final lastDayNumber) => lastDayNumber,
       ArcEnded(:final lastDayNumber) => lastDayNumber,
     };
