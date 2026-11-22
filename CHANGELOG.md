@@ -9,7 +9,9 @@ Phase 12C adds the Arc Consistency Calendar
 ([docs/PHASE_12C.md](docs/PHASE_12C.md)); the owner approved its wording
 at Gate C. Phase 12D adds habit ordering, saved setup and Confirm & Start
 ([docs/PHASE_12D.md](docs/PHASE_12D.md)); the owner approved its wording
-at Gate D.
+at Gate D. Phase 12E2 adds Freeze and Resume
+([docs/PHASE_12E2.md](docs/PHASE_12E2.md)); the owner approved it at
+Gate E2.
 
 Schema **v7** · backup format **4** (reads 1, 2, 3 and 4)
 
@@ -47,6 +49,14 @@ Schema **v7** · backup format **4** (reads 1, 2, 3 and 4)
   Minimum Day goals, the habits that are off and your reminders, then
   confirm on a separate screen that shows Day 1 and Day 92 (or the season
   day you join on). A Rolling Arc's Day 1 is the day you confirm.
+- **Pause and Resume (Rolling Arcs):** "Pause Arc" (Today ⋮ or Habits)
+  pauses an active Rolling Arc from tomorrow; today still counts. Until
+  midnight a banner offers Cancel pause. Paused days are never missed
+  days: nothing can be logged, reminders stop, and Focus Guard keeps its
+  own schedule. "Resume Arc" makes today the next challenge day and moves
+  the last day later by the paused days. Summary and Arc History show the
+  days paused. Never offered for a Seasonal Arc or on Day 92, and refused
+  while the phone's date is earlier than the Arc's history.
 
 ### Changed
 

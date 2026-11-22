@@ -311,12 +311,32 @@ latest-instant read, or the scheduled/paused distinction — all 6 detected
   longest English forms (full weekday and month names, a 2029 year).
 - TalkBack was not run (deferred, as for every v1.3 phase).
 
+## Gate E2 outcome
+
+**Gate E2 (owner): APPROVED on 22 November 2026**, after the review
+corrections R1–R3 (head `b1f4173`; CI run 45025404878, both jobs green).
+Until then the behaviour and wording here were a proposal; nothing was
+approved before this explicit sign-off. The owner approved:
+
+1. The Freeze and Resume behaviour as implemented and qualified on the
+   disposable emulator (see Emulator qualification).
+2. All pause wording in "Screens and wording", including the additions
+   accepted at review and the R3 message "Saved. Applies on your next
+   challenge day."
+3. The R1 Cancel pause rules (scheduling day only, clock guard, clock not
+   earlier than the request or the Arc's latest write), with the residual
+   limitation in Known limitations.
+4. The R2 date ranges ("– pause scheduled", then "– paused").
+5. Resume on the first paused date removing the empty pause.
+
+Merging PR #28 is the owner's decision. No tag or release.
+
 ## Review questions for Gate E2
 
 1. The added wording — **accepted** at review, with the R3 change.
 2. "– paused" before the pause begins — **resolved by R2**.
 3. Resume on the first paused date deletes the pause (addendum § F3);
-   the sheet then says "No days were paused." Acceptable?
+   the sheet then says "No days were paused." — **accepted** at review.
 4. Cancel after a clock rollback — **resolved by R1**, with the
    residual limitation stated there.
 

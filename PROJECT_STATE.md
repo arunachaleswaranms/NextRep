@@ -8,10 +8,10 @@ Addendum (PR #23), the Phase 12E1 lifecycle foundation (PR #24), the
 Phase 12B Weekly Arc Review (PR #25), the Phase 12C Arc Consistency
 Calendar (PR #26) and Phase 12D habit ordering and saved setup (PR #27)
 are merged. `main` is `dcde6b3`, version `1.2.0+3`. **v1.3.0 is in
-development, not released: Phase 12E2 (Freeze and Resume) is implemented
-and qualified in PR #28, with the Gate E2 review corrections (R1–R3)
-applied; it awaits final independent verification, the owner's Gate E2
-approval and the owner's merge decision.**_
+development, not released: Phase 12E2 (Freeze and Resume, PR #28) is
+implemented and qualified, with the Gate E2 review corrections (R1–R3)
+applied, and the owner approved Gate E2 on 22 November 2026; it awaits
+the owner's merge decision.**_
 
 | | |
 |---|---|
@@ -45,7 +45,7 @@ planned. TalkBack was deliberately deferred and doesn't block this model.
   record; #22 Phase 12A; #23 the Phase 12A Addendum; #24 Phase 12E1;
   #25 Phase 12B; #26 Phase 12C; #27 Phase 12D.
 
-## Phase 12E2 (v1.3.0 Freeze and Resume, PR open, Gate E2 pending)
+## Phase 12E2 (v1.3.0 Freeze and Resume, Gate E2 approved, not merged)
 
 Contracts, wording and evidence: [docs/PHASE_12E2.md](docs/PHASE_12E2.md).
 Baseline `main` `dcde6b3` (PR #27 merged); branch
@@ -85,8 +85,14 @@ release.
   offline). **R2:** date ranges read "– pause scheduled" until the pause
   begins. 22 more tests (148 in total for 12E2); 1,973 Flutter and 71 JVM
   tests pass.
-- **Next:** final independent verification; the owner's Gate E2 approval;
-  the owner's merge decision. Not merged; no release.
+- **Gate E2 (owner): APPROVED on 22 November 2026**, after the review
+  corrections (head `b1f4173`, CI run 45025404878 green): the Freeze and
+  Resume behaviour qualified on the emulator, the pause wording with the
+  R3 change, the R1 Cancel rules with their residual limitation, the R2
+  date ranges, and Resume on the first paused date removing the empty
+  pause. It was pending until that sign-off. See
+  [docs/PHASE_12E2.md](docs/PHASE_12E2.md#gate-e2-outcome).
+- **Next:** the owner merges PR #28. Not merged; no release.
 
 ## Phase 12D (v1.3.0 habit ordering, saved setup, Confirm & Start, merged)
 
