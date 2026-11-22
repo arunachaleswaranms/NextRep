@@ -4,8 +4,10 @@ import '../core/database/app_database.dart';
 import '../core/errors/app_failure.dart';
 import '../core/time/local_date.dart';
 import '../domain/habit/habit.dart';
+import '../domain/winter_arc/arc_pause.dart';
 import '../domain/winter_arc/winter_arc_repository.dart';
 import '../domain/winter_arc/winter_arc_session.dart';
+import 'drift_arc_activity_repository.dart';
 import 'habit_mapping.dart';
 import 'persistence_guard.dart';
 
@@ -36,12 +38,14 @@ final class DriftWinterArcRepository implements WinterArcRepository {
 
   @override
   Future<WinterArcSession?> sessionById(int id) =>
-      guardPersistence('load session $id', () async {
-        final row = await (_db.select(
-          _db.winterArcSessions,
-        )..where((s) => s.id.equals(id))).getSingleOrNull();
-        return row == null ? null : (await _toDomain([row])).single;
-      });
+      guardPersistence('load session $id', () => _byId(id));
+
+  Future<WinterArcSession?> _byId(int id) async {
+    final row = await (_db.select(
+      _db.winterArcSessions,
+    )..where((s) => s.id.equals(id))).getSingleOrNull();
+    return row == null ? null : (await _toDomain([row])).single;
+  }
 
   @override
   Future<List<WinterArcSession>> listSessions() =>
@@ -111,6 +115,125 @@ final class DriftWinterArcRepository implements WinterArcRepository {
           throw StateError('Session ${session.id} not found');
         }
       });
+
+  @override
+  Future<WinterArcSession> changeFreezes(
+    int sessionId,
+    FreezeChange Function(WinterArcSession session, StoredArcFacts facts)
+    decide,
+  ) => guardPersistence(
+    'change freezes of session $sessionId',
+    () => _db.transaction(() async {
+      final before = await _byId(sessionId);
+      if (before == null) {
+        throw DomainFailure(
+          DomainRule.sessionNotFound,
+          'No session $sessionId',
+        );
+      }
+      final change = decide(
+        before,
+        StoredArcFacts(
+          lastActivityDate: await queryLastActivityDate(_db, sessionId),
+          latestRecordedAt: await queryLatestRecordedInstant(_db, sessionId),
+        ),
+      );
+      switch (change) {
+        case FreezeUnchanged():
+          return before;
+        case ScheduleFreeze(:final freeze):
+          await _db
+              .into(_db.arcFreezes)
+              .insert(
+                ArcFreezesCompanion.insert(
+                  sessionId: sessionId,
+                  frozenFrom: freeze.frozenFrom,
+                  requestedAt: freeze.requestedAt,
+                ),
+              );
+        case DeleteOpenFreeze(:final frozenFrom):
+          final deleted =
+              await (_db.delete(_db.arcFreezes)..where(
+                    (f) =>
+                        f.sessionId.equals(sessionId) &
+                        f.frozenFrom.equalsValue(frozenFrom) &
+                        f.resumedOn.isNull(),
+                  ))
+                  .go();
+          _expectOne(deleted, 'open freeze');
+        case CloseFreeze(
+          :final frozenFrom,
+          :final resumedOn,
+          :final resumedAt,
+          :final endDate,
+        ):
+          final closed =
+              await (_db.update(_db.arcFreezes)..where(
+                    (f) =>
+                        f.sessionId.equals(sessionId) &
+                        f.frozenFrom.equalsValue(frozenFrom) &
+                        f.resumedOn.isNull(),
+                  ))
+                  .write(
+                    ArcFreezesCompanion(
+                      resumedOn: Value(resumedOn),
+                      resumedAt: Value(resumedAt),
+                    ),
+                  );
+          _expectOne(closed, 'open freeze');
+          final moved =
+              await (_db.update(_db.winterArcSessions)
+                    ..where((s) => s.id.equals(sessionId)))
+                  .write(WinterArcSessionsCompanion(endDate: Value(endDate)));
+          _expectOne(moved, 'session');
+      }
+      final after = (await _byId(sessionId))!;
+      final expected = change.applyTo(before);
+      final problem = WinterArcRules.problemWith(after);
+      if (problem != null || !_sameDates(after, expected)) {
+        // Rolls the change back.
+        throw DomainFailure(
+          DomainRule.invalidArc,
+          problem ?? 'the stored pause differs from the change',
+        );
+      }
+      return after;
+    }),
+  );
+
+  static void _expectOne(int rows, String what) {
+    if (rows != 1) throw StateError('Expected one $what, changed $rows');
+  }
+
+  /// Whether [a] and [b] have the same status, dates and freeze intervals.
+  static bool _sameDates(WinterArcSession a, WinterArcSession b) {
+    if (a.status != b.status ||
+        a.startDate != b.startDate ||
+        a.endDate != b.endDate ||
+        a.participationStartDate != b.participationStartDate ||
+        a.closedOn != b.closedOn ||
+        a.freezes.length != b.freezes.length) {
+      return false;
+    }
+    for (var i = 0; i < a.freezes.length; i++) {
+      final x = a.freezes[i];
+      final y = b.freezes[i];
+      if (x.frozenFrom != y.frozenFrom ||
+          x.resumedOn != y.resumedOn ||
+          !_sameInstant(x.requestedAt, y.requestedAt) ||
+          !_sameInstant(x.resumedAt, y.resumedAt)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /// Instants compare at the precision the database stores (seconds).
+  static bool _sameInstant(DateTime? a, DateTime? b) =>
+      (a == null) == (b == null) &&
+      (a == null ||
+          a.millisecondsSinceEpoch ~/ 1000 ==
+              b!.millisecondsSinceEpoch ~/ 1000);
 
   @override
   Future<void> deleteSession(int id, {required WinterArcStatus expected}) =>

@@ -6,6 +6,7 @@ import '../core/errors/error_reporter.dart';
 import '../core/time/clock.dart';
 import '../data/backup_files.dart';
 import '../data/drift_achievement_repository.dart';
+import '../data/drift_arc_activity_repository.dart';
 import '../data/drift_backup_store.dart';
 import '../data/drift_focus_guard_settings_repository.dart';
 import '../data/drift_habit_repository.dart';
@@ -37,7 +38,9 @@ import '../domain/reminder/reminder_scheduler.dart';
 import '../domain/reminder/reminder_service.dart';
 import '../domain/update/installed_app.dart';
 import '../domain/update/release_feed.dart';
+import '../domain/winter_arc/arc_clock_guard.dart';
 import '../domain/winter_arc/arc_lifecycle_service.dart';
+import '../domain/winter_arc/arc_pause_service.dart';
 import '../domain/winter_arc/winter_arc_repository.dart';
 import '../domain/winter_arc/winter_arc_service.dart';
 import 'app_info.dart';
@@ -177,6 +180,21 @@ final reminderServiceProvider = Provider<ReminderService>(
 final arcLifecycleServiceProvider = Provider<ArcLifecycleService>(
   (ref) => ArcLifecycleService(
     sessions: ref.watch(winterArcRepositoryProvider),
+    clock: ref.watch(clockProvider),
+  ),
+);
+
+/// The latest activity date of an arc, for the clock guard (addendum
+/// AD19).
+final arcActivityRepositoryProvider = Provider<ArcActivityRepository>(
+  (ref) => DriftArcActivityRepository(_database(ref)),
+);
+
+/// Freeze, Cancel pause and Resume (Phase 12E2).
+final arcPauseServiceProvider = Provider<ArcPauseService>(
+  (ref) => ArcPauseService(
+    sessions: ref.watch(winterArcRepositoryProvider),
+    activity: ref.watch(arcActivityRepositoryProvider),
     clock: ref.watch(clockProvider),
   ),
 );

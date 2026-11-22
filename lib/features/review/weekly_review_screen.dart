@@ -257,7 +257,7 @@ class _Header extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                arcHeading(session),
+                arcHeading(session, today: review.date),
                 style: text.bodyMedium?.copyWith(color: colors.textSecondary),
               ),
               if (ended)

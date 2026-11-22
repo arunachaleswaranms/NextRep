@@ -52,8 +52,9 @@ class WinterArcSessions extends Table {
 /// interval (`resumed_on` null) has no known end. At most one interval of
 /// a session is open.
 ///
-/// Nothing in the app writes this table yet (Phase 12E2 adds Freeze); only
-/// restore inserts rows, from a format-4 backup.
+/// Written only by `WinterArcRepository.changeFreezes` (Freeze, Cancel
+/// pause and Resume, Phase 12E2), one row per transaction, and by restore
+/// from a format-4 backup.
 @DataClassName('ArcFreezeRow')
 @TableIndex.sql(
   'CREATE UNIQUE INDEX one_open_freeze ON arc_freezes (session_id) '

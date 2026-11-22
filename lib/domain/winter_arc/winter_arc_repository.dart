@@ -1,5 +1,6 @@
 import '../../core/time/local_date.dart';
 import '../habit/habit.dart';
+import 'arc_pause.dart';
 import 'winter_arc_session.dart';
 
 /// Persistence boundary for Winter Arc sessions.
@@ -53,8 +54,33 @@ abstract interface class WinterArcRepository {
 
   /// Persists [session]'s status, dates, participation start, start
   /// timestamp and closing date. The kind never changes. Freeze intervals
-  /// are not written by this method (nothing writes them in Phase 12E1).
+  /// are never written by this method (see [changeFreezes]).
   Future<void> updateSession(WinterArcSession session);
+
+  /// Freeze, Cancel pause and Resume (Phase 12E2), in **one transaction**:
+  ///
+  /// 1. session [sessionId] is read with its freeze intervals, together with
+  ///    [StoredArcFacts]: its last activity date
+  ///    (`ArcActivityRepository.lastActivityDate`) and the latest instant
+  ///    anything of it was written, inside the transaction;
+  /// 2. [decide] returns the [FreezeChange] to make, or throws (typically a
+  ///    `DomainFailure`) to refuse, and then nothing is written;
+  /// 3. the change is applied: at most one `arc_freezes` row and, for a
+  ///    [CloseFreeze], the session's `end_date`. No other row of any table
+  ///    is written;
+  /// 4. the stored session is read back; it must equal
+  ///    `change.applyTo(session)` and keep every arc invariant
+  ///    (`WinterArcRules.problemWith`), otherwise the whole transaction is
+  ///    rolled back (`DomainRule.invalidArc`).
+  ///
+  /// Returns the stored session afterwards. Throws
+  /// `DomainRule.sessionNotFound` for an unknown id, and
+  /// `PersistenceFailure` on storage errors; either way nothing changed.
+  Future<WinterArcSession> changeFreezes(
+    int sessionId,
+    FreezeChange Function(WinterArcSession session, StoredArcFacts facts)
+    decide,
+  );
 
   /// Permanently deletes session [id] and everything it owns (habits,
   /// revisions, progress, day modes, XP, achievement unlocks, reflections,

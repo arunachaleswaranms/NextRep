@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../app/router/app_router.dart';
 import '../../app/theme/winter_tokens.dart';
 import '../../core/errors/action_result.dart';
 import '../../core/errors/app_failure.dart';
@@ -15,6 +17,9 @@ import '../../shared/widgets/habit_icon.dart';
 import '../../shared/widgets/loading_view.dart';
 import '../../shared/widgets/winter_background.dart';
 import '../../shared/widgets/winter_card.dart';
+import '../arc_pause/pause_actions.dart';
+import '../arc_pause/pause_labels.dart';
+import '../arc_pause/pause_sheet.dart';
 import 'habits_controller.dart';
 import 'widgets/habit_edit_sheet.dart';
 
@@ -33,9 +38,13 @@ class HabitsScreen extends ConsumerWidget {
         .read(habitsControllerProvider.notifier)
         .edit(habitId, edit);
     if (!context.mounted) return;
+    final waits =
+        ref.read(habitsControllerProvider).value?.waitsForResume ?? false;
     final message = switch (result) {
       ActionSuccess(:final value) when value.configFrom != null =>
-        'Saved. Applies from tomorrow.',
+        waits
+            ? 'Saved. Applies on your next challenge day.'
+            : 'Saved. Applies from tomorrow.',
       ActionSuccess(:final value) when value.renamed => 'Renamed.',
       ActionSuccess() => 'No changes.',
       ActionFailure(:final failure) => userMessageFor(failure),
@@ -59,6 +68,20 @@ class HabitsScreen extends ConsumerWidget {
     if (edit != null && context.mounted) {
       await _apply(context, ref, setting.habit.id, edit);
     }
+  }
+
+  /// "Pause Arc" from the Habits screen (spec § 9.6 entry points).
+  Future<void> _openPause(
+    BuildContext context,
+    WidgetRef ref,
+    int sessionId,
+  ) async {
+    final result = await PauseArcSheet.show(context, sessionId);
+    if (result == PauseSheetResult.openFocusGuard && context.mounted) {
+      await context.push(AppRoutes.focusGuard);
+    }
+    // A pause scheduled from here changes what an edit waits for.
+    ref.invalidate(habitsControllerProvider);
   }
 
   @override
@@ -90,7 +113,13 @@ class HabitsScreen extends ConsumerWidget {
       padding: const EdgeInsets.all(WinterSpacing.lg),
       children: [
         Text(
-          value.configEditable
+          value.pausedToday
+              ? PausedCopy.habitsReadOnly
+              : value.configEditable && value.waitsForResume
+              ? 'Your Arc is paused from tomorrow. Goal and on/off changes '
+                    'apply when you resume, so today stays as it began. '
+                    'Renames apply now. Past days keep the goals they had.'
+              : value.configEditable
               ? 'Goal and on/off changes start tomorrow, so today stays as it '
                     'began. Renames apply now. Past days keep the goals they had.'
               : value.editable
@@ -126,7 +155,11 @@ class HabitsScreen extends ConsumerWidget {
                       ),
                       if (setting.hasPendingChange)
                         Text(
-                          _pending(setting.habit, setting.upcoming!),
+                          _pending(
+                            setting.habit,
+                            setting.upcoming!,
+                            waitsForResume: value.waitsForResume,
+                          ),
                           style: text.bodySmall?.copyWith(
                             color: colors.accentSecondary,
                           ),
@@ -135,7 +168,9 @@ class HabitsScreen extends ConsumerWidget {
                   ),
                 ),
                 Semantics(
-                  label: '${setting.habit.title} from tomorrow',
+                  label: value.waitsForResume
+                      ? '${setting.habit.title} when you resume'
+                      : '${setting.habit.title} from tomorrow',
                   child: Switch(
                     value: setting.editable.enabled,
                     onChanged: value.configEditable
@@ -158,6 +193,18 @@ class HabitsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: WinterSpacing.sm),
         ],
+        if (ref.watch(pauseEntryProvider).value case final sessionId?
+            when sessionId == value.sessionId) ...[
+          const SizedBox(height: WinterSpacing.sm),
+          Center(
+            child: TextButton.icon(
+              style: TextButton.styleFrom(minimumSize: const Size(48, 48)),
+              onPressed: () => _openPause(context, ref, sessionId),
+              icon: const Icon(Icons.ac_unit_rounded),
+              label: const Text(PauseCopy.menuItem),
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -170,7 +217,16 @@ class HabitsScreen extends ConsumerWidget {
     HabitType.binary => 'Daily goal',
   };
 
-  static String _pending(Habit habit, HabitConfig upcoming) => !upcoming.enabled
-      ? 'Off from tomorrow'
-      : 'From tomorrow: ${_goals(habit, upcoming)}';
+  /// What waits for the next challenge day: tomorrow, or the day the Arc
+  /// resumes when a pause starts tomorrow (spec § 5.2 F7a).
+  static String _pending(
+    Habit habit,
+    HabitConfig upcoming, {
+    required bool waitsForResume,
+  }) => switch ((upcoming.enabled, waitsForResume)) {
+    (false, false) => 'Off from tomorrow',
+    (false, true) => 'Off when you resume',
+    (true, false) => 'From tomorrow: ${_goals(habit, upcoming)}',
+    (true, true) => 'When you resume: ${_goals(habit, upcoming)}',
+  };
 }

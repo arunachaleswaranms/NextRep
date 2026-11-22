@@ -6,6 +6,7 @@ import 'package:nextrep/domain/habit/habit.dart';
 import 'package:nextrep/domain/progress/arc_history.dart';
 import 'package:nextrep/domain/progress/daily_habit_progress.dart';
 import 'package:nextrep/domain/progress/progress_repository.dart';
+import 'package:nextrep/domain/winter_arc/arc_pause.dart';
 import 'package:nextrep/domain/winter_arc/winter_arc_repository.dart';
 import 'package:nextrep/domain/winter_arc/winter_arc_session.dart';
 
@@ -134,6 +135,16 @@ final class CountingSessionRepository implements WinterArcRepository {
   Future<void> updateSession(WinterArcSession session) {
     writes++;
     return _inner.updateSession(session);
+  }
+
+  @override
+  Future<WinterArcSession> changeFreezes(
+    int sessionId,
+    FreezeChange Function(WinterArcSession session, StoredArcFacts facts)
+    decide,
+  ) {
+    writes++;
+    return _inner.changeFreezes(sessionId, decide);
   }
 
   @override

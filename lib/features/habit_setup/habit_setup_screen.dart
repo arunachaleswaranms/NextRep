@@ -447,7 +447,7 @@ class _ArcHeader extends StatelessWidget {
     final colors = context.winter;
     final session = setup.session;
     final kind = session.isSeasonal
-        ? 'Seasonal · ${arcDateRange(session)}'
+        ? 'Seasonal · ${arcDateRange(session, today: setup.today)}'
         : 'Rolling 92-Day';
     final detail = switch ((session.kind, setup.startState)) {
       (ArcKind.rolling92, _) =>

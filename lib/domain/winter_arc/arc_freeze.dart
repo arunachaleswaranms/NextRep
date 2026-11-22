@@ -13,8 +13,8 @@ import 'winter_arc_session.dart';
 /// no Perfect Day, no reflection, never missed, and it neither grows nor
 /// breaks a streak.
 ///
-/// Nothing in Phase 12E1 creates one (Freeze is Phase 12E2). Only a
-/// restored format-4 backup, or a test, can.
+/// Created by Freeze, deleted by Cancel pause and closed by Resume
+/// (`ArcPauseService`, Phase 12E2), or restored from a format-4 backup.
 final class ArcFreeze {
   const ArcFreeze({
     required this.frozenFrom,

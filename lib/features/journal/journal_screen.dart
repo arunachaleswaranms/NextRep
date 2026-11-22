@@ -11,11 +11,13 @@ import '../../core/errors/action_result.dart';
 import '../../core/errors/app_failure.dart';
 import '../../domain/reflection/daily_reflection.dart';
 import '../../domain/reflection/reflection_service.dart';
+import '../../domain/winter_arc/winter_arc_session.dart';
 import '../../shared/feedback/haptics.dart';
 import '../../shared/formatting/arc_labels.dart';
 import '../../shared/widgets/failure_view.dart';
 import '../../shared/widgets/loading_view.dart';
 import '../../shared/widgets/winter_background.dart';
+import '../arc_pause/pause_labels.dart';
 import 'journal_controller.dart';
 import 'widgets/reflection_editor.dart';
 import 'widgets/reflection_entry_card.dart';
@@ -160,7 +162,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
                   ),
                   child: Text(
                     _historical
-                        ? arcHeading(view.session)
+                        ? arcHeading(view.session, today: view.today)
                         : 'A minute to look back on the day. '
                               'Skipping a night is fine.',
                     style: text.bodyMedium,
@@ -197,7 +199,11 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
                   const SizedBox(height: WinterSpacing.lg),
                 ] else if (!_historical) ...[
                   _Note(
-                    'This Winter Arc is complete. Its Journal is read-only.',
+                    view.session.status == WinterArcStatus.active &&
+                            view.session.isFrozenOn(view.today)
+                        ? PausedCopy.journalReadOnly
+                        : 'This Winter Arc is complete. Its Journal is '
+                              'read-only.',
                   ),
                   const SizedBox(height: WinterSpacing.lg),
                 ],
