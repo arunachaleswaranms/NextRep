@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../app/dependencies.dart';
 import '../../app/theme/winter_tokens.dart';
 import '../../core/errors/action_result.dart';
 import '../../core/errors/app_failure.dart';
+import '../../core/time/clock.dart';
+import '../../core/time/local_date.dart';
 import '../../domain/backup/backup_document.dart';
 import '../../domain/backup/backup_validator.dart';
 import '../../domain/winter_arc/winter_arc_session.dart';
@@ -72,7 +75,11 @@ class DataBackupScreen extends ConsumerWidget {
         return;
       case ActionSuccess(value: final BackupPicked picked):
         final confirmed =
-            await _confirmRestore(context, picked.backup) &&
+            await _confirmRestore(
+              context,
+              picked.backup,
+              today: ref.read(clockProvider).today(),
+            ) &&
             context.mounted &&
             (picked.current.isEmpty ||
                 await _confirmReplace(context, picked.current));
@@ -88,8 +95,9 @@ class DataBackupScreen extends ConsumerWidget {
 
   Future<bool> _confirmRestore(
     BuildContext context,
-    ValidatedBackup backup,
-  ) async {
+    ValidatedBackup backup, {
+    required LocalDate today,
+  }) async {
     final summary = backup.summary;
     final exported = DateFormat('d MMM y, HH:mm')
         .format(backup.document.exportedAt.toLocal());
@@ -115,7 +123,7 @@ class DataBackupScreen extends ConsumerWidget {
                         ? 'Active Arc'
                         : 'Arc in setup',
                     unfinished.status == WinterArcStatus.active
-                        ? arcDateRange(unfinished)
+                        ? arcDateRange(unfinished, today: today)
                         : 'not started yet',
                   ),
                 _Fact('Reflections', '${summary.reflectionCount}'),

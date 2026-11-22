@@ -141,12 +141,17 @@ class PauseScheduledBanner extends StatelessWidget {
     required this.frozenFrom,
     required this.today,
     required this.onCancel,
+    this.cancelOffered = true,
     this.busy = false,
   });
 
   final LocalDate frozenFrom;
   final LocalDate today;
   final VoidCallback onCancel;
+
+  /// Cancel pause is offered only on the day the pause was set
+  /// (`ArcPauseRules.cancelOfferedOn`); otherwise the banner says so.
+  final bool cancelOffered;
   final bool busy;
 
   @override
@@ -195,14 +200,31 @@ class PauseScheduledBanner extends StatelessWidget {
               ),
             ],
           ),
-          Align(
-            alignment: AlignmentDirectional.centerEnd,
-            child: TextButton(
-              style: TextButton.styleFrom(minimumSize: const Size(48, 48)),
-              onPressed: busy ? null : onCancel,
-              child: const Text(PauseCopy.cancelAction),
+          if (cancelOffered)
+            Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: TextButton(
+                style: TextButton.styleFrom(minimumSize: const Size(48, 48)),
+                onPressed: busy ? null : onCancel,
+                child: const Text(PauseCopy.cancelAction),
+              ),
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                WinterSpacing.lg + WinterSpacing.md, // under the text
+                WinterSpacing.xs,
+                WinterSpacing.sm,
+                WinterSpacing.sm,
+              ),
+              child: Text(
+                PauseCopy.cancelOnlyOn(frozenFrom.addDays(-1), today),
+                semanticsLabel: PauseCopy.cancelOnlyOnSpoken(
+                  frozenFrom.addDays(-1),
+                ),
+                style: text.bodySmall?.copyWith(color: colors.textPrimary),
+              ),
             ),
-          ),
         ],
       ),
     );

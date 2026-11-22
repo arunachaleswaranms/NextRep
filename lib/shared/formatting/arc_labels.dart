@@ -1,5 +1,7 @@
 import 'package:intl/intl.dart';
 
+import '../../core/time/local_date.dart';
+
 import '../../domain/journey/arc_milestones.dart';
 import '../../domain/winter_arc/winter_arc_session.dart';
 
@@ -54,10 +56,18 @@ String? nextMilestoneLabel(int dayNumber) {
 /// "1 Jul – 30 Sep 2026", or "4 Oct 2026 – 3 Jan 2027" when the arc spans
 /// two years. An ended arc runs to its last counted day; a paused arc has
 /// no known end yet ("1 Mar 2027 – paused").
-String arcDateRange(WinterArcSession session) {
+///
+/// [today] is the local date the caller's screen state was read on (never a
+/// fresh clock read here): an open pause that starts after [today] is only
+/// scheduled ("1 Mar 2027 – pause scheduled"), one in effect on [today]
+/// reads "– paused" (Gate E2 review R2). A pause scheduled for a date that
+/// the clock later moved back before reads "scheduled" again.
+String arcDateRange(WinterArcSession session, {required LocalDate today}) {
   final start = session.startDate.toLocalDateTime();
-  if (session.hasOpenFreeze) {
-    return '${DateFormat('d MMM y').format(start)} – paused';
+  if (session.freezes.isNotEmpty && session.freezes.last.isOpen) {
+    final scheduled = today.isBefore(session.freezes.last.frozenFrom);
+    return '${DateFormat('d MMM y').format(start)} – '
+        '${scheduled ? 'pause scheduled' : 'paused'}';
   }
   final end = (session.closedOn ?? session.endDate).toLocalDateTime();
   final startFormat = start.year == end.year ? 'd MMM' : 'd MMM y';
@@ -74,9 +84,9 @@ String arcKindTitle(WinterArcSession session) => switch (session.kind) {
 /// "Winter Arc · 1 Jul – 30 Sep 2026" for a rolling arc, "Seasonal Winter
 /// Arc · 1 Oct – 31 Dec 2026" for a seasonal one: an arc's heading on its
 /// history pages.
-String arcHeading(WinterArcSession session) =>
+String arcHeading(WinterArcSession session, {required LocalDate today}) =>
     '${session.isSeasonal ? 'Seasonal Winter Arc' : 'Winter Arc'} · '
-    '${arcDateRange(session)}';
+    '${arcDateRange(session, today: today)}';
 
 /// "Joined Day 15 · 78 days participated", or null for an arc joined on
 /// Day 1 (every rolling arc) or not started.

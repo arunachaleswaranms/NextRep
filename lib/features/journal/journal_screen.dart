@@ -162,7 +162,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
                   ),
                   child: Text(
                     _historical
-                        ? arcHeading(view.session)
+                        ? arcHeading(view.session, today: view.today)
                         : 'A minute to look back on the day. '
                               'Skipping a night is fine.',
                     style: text.bodyMedium,

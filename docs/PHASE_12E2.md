@@ -79,7 +79,7 @@ requires it to equal `start + 91 + closed paused days`.
 | F1 active Rolling only | `blockerOn`: `notActive` (setup, completed, ended), `seasonal`; the service refuses (`pauseUnavailable`) whatever the UI shows |
 | F2 tomorrow, always | `frozenFrom = today + 1` from the transaction's own clock read; the sheet's shown date must equal it (`pauseDateChanged` otherwise). A goal revision never moves it |
 | F2a clock guard | `ArcClockGuard.check` inside the transaction with `queryLastActivityDate` (progress, day modes, XP, reflections, unlocks; never revisions) and the last `resumedOn`; refusal stores nothing and the sheet names the dates |
-| F3 Cancel | deletes the open row only while `today < frozenFrom`; after midnight `pauseAlreadyStarted` |
+| F3 Cancel | deletes the open row only while `today < frozenFrom` (after midnight `pauseAlreadyStarted`), and — since Gate E2 review R1 — only on the scheduling day, with the clock guard holding and the clock not earlier than `requestedAt` or the Arc's latest recorded instant (`cancelPauseUnavailable` otherwise); all checked inside the transaction |
 | F4 not on Day 92 / while scheduled / paused | `blockerOn`: `lastDay`, `scheduled`, `paused`; the ⋮ entry and the Habits entry are hidden |
 | F5 Resume | `resumedOn = today`, `endDate += today − frozenFrom`, one transaction; on the first paused date the interval would be empty, so the row is deleted (addendum § F3) |
 | F6 read-only while paused | existing write guards (`_trackableSession`, `ReflectionService`) refuse a paused date; the paused Today has no habit tile, Minimum Day, Edit habits or share; Habits and the Journal say "paused" |
@@ -107,14 +107,14 @@ All new copy lives in `lib/features/arc_pause/pause_labels.dart`.
 | Pause sheet | "Pause your Arc"; "From tomorrow, Sat 14 Nov, your Arc stops counting days until you resume."; bullets "Today (Day 25) still counts. You can finish it, or use a Minimum Day." · "Paused days are never missed days." · "You continue on Day 26 when you resume; your last day moves later." · "Reminders pause. Focus Guard keeps its own schedule." + "Focus Guard settings"; "Pause from tomorrow" / "Not now" |
 | Refusal (clock) | "Your phone's date (9 Mar) is earlier than your latest logged day (10 Mar). You can pause from 10 Mar. Nothing was changed." (other bounds: "the day your Arc last resumed", "your Arc's first day") |
 | Errors | "Couldn't pause. Nothing was changed." + Retry; date changed: "The date changed while this was open. These are the new dates." |
-| Banner | "Pause starts tomorrow. Today still counts." · "Cancel pause"; after a clock move back: "Pause starts Sat 14 Nov. Today still counts." |
-| Cancel | snack "Pause cancelled. Nothing was paused."; after midnight "Your pause has already started. Resume when you are ready." |
+| Banner | "Pause starts tomorrow. Today still counts." · "Cancel pause"; after a clock move back: "Pause starts Sat 14 Nov. Today still counts." and, instead of Cancel, "This pause can only be cancelled on Fri 13 Nov, the day it was set." (R1) |
+| Cancel | snack "Pause cancelled. Nothing was paused."; after midnight "Your pause has already started. Resume when you are ready."; clock behind (R1) "Your phone's date or time is earlier than when this pause was set, so it can't be cancelled now. Nothing was changed." |
 | Paused Today | "Arc paused"; "Paused since Sat 14 Nov · 6 days" (on the first date "Paused since today, Sat 14 Nov"); "You stopped after Day 25 of 92."; "When you resume, that day becomes Day 26."; "Paused days don't count against you."; "Resume Arc"; Journey › Journal › Arc History ›; Focus Guard card below |
 | Closed pause (date moved back) | "Paused Sat 14 Nov – Thu 19 Nov"; "Continues on Fri 20 Nov."; no Resume |
 | Resume sheet | "Resume your Arc?"; "Today, Fri 20 Nov, becomes Day 26 of 92."; "Your new last day is Mon 25 Jan 2027."; "You paused for 6 days." (+ "Paused days in this Arc: N days." after earlier pauses); "Resume today" / "Not yet"; failure "Couldn't resume. Your Arc is still paused." + Retry |
-| Habits while scheduled / paused | "Your Arc is paused from tomorrow. Goal and on/off changes apply when you resume, …"; "When you resume: 10 glasses · …"; "Off when you resume"; snack "Saved. Applies when you resume."; paused: "Your Arc is paused. Habits can be edited again when you resume." |
+| Habits while scheduled / paused | "Your Arc is paused from tomorrow. Goal and on/off changes apply when you resume, …"; "When you resume: 10 glasses · …"; "Off when you resume"; snack "Saved. Applies on your next challenge day." (R3); paused: "Your Arc is paused. Habits can be edited again when you resume." |
 | Journal while paused | "Your Arc is paused. Reflections continue when you resume." |
-| Summary / History | "Paused 9 days" |
+| Summary / History | "Paused 9 days"; date range "1 Mar 2027 – pause scheduled" before the pause begins, "– paused" while it is in effect (R2) |
 
 Dates are short on screen ("Sat 14 Nov", the year only when it differs
 from today's) and read in full by a screen reader ("Saturday 14 November
@@ -222,12 +222,86 @@ passes).
 | Network | no new request; `network_boundary_test` passes |
 | Notifications | no new channel, permission or type; exact alarms not used |
 
+## Gate E2 review corrections (R1–R3)
+
+Review of head `5472331` (owner, 22 November 2026). The wording listed
+under "Deviations and additions" is **accepted** ("Paused days in this
+Arc: N days.", "No days were paused.", "Pause cancelled. Nothing was
+paused.", the Habits and Journal paused explanations, the clock-guard
+descriptions), except the one change of R3. Resume on the first paused
+date still deletes the empty interval.
+
+**R1 — Cancel pause against a clock moved back.** Before, Cancel only
+needed `today < frozenFrom`, so after a pause had begun, setting the
+phone's date back made Cancel delete it, turning its dates into unlived
+challenge days. Now `ArcPauseRules.cancel`, run inside the
+`changeFreezes` transaction with facts read in it, refuses and writes
+nothing unless:
+
+1. the pause has not started (`today < frozenFrom`);
+2. today is the scheduling day, `frozenFrom − 1`;
+3. the Arc clock guard holds (participation start, latest activity,
+   latest resume);
+4. the clock reading is not earlier than the stored `requestedAt`
+   (absolute instants, one-second stored precision, so a time-zone change
+   neither helps nor hurts);
+5. the clock reading is not earlier than **the latest instant anything of
+   the Arc was written** (`queryLatestRecordedInstant`: the Arc's
+   creation and start, freeze request and resume times, habits, goal
+   revisions, progress, day modes, XP, unlocks, reflections). This is the
+   narrow addition found by reading the source: within schema v7 every
+   Arc write already stores an instant, so any write after the pause was
+   set (e.g. a habit logged that evening) also bounds a rollback. App-level
+   tables (reminders, Focus Guard, sound settings) are not consulted, to
+   keep Arc rules independent of them (AD9).
+
+The banner offers Cancel only on the scheduling day (other dates: "This
+pause can only be cancelled on Fri 13 Nov, the day it was set."); a
+refusal on that day shows "Your phone's date or time is earlier than when
+this pause was set, so it can't be cancelled now. Nothing was changed."
+Freeze, Resume, the next-day rule and every stored row are unchanged; a
+repeated Cancel is still `FreezeUnchanged`.
+
+**Residual limitation (not removable offline).** If a pause has begun
+and the device clock is set back to the scheduling day, to a time after
+the pause request and after every stored write of the Arc, with nothing
+written since, Cancel succeeds: nothing stored can show that midnight
+passed. The test "moved back to the scheduling day … the documented
+residual limitation" asserts this behaviour explicitly. No trusted clock
+and no new persistence were introduced.
+
+**R2 — date ranges.** `arcDateRange` / `arcHeading` take the caller's
+`today` (from the screen's own injected state: `JournalView.today`,
+`JourneyOverview.today`, `WeeklyReview.date`, `SummaryView.today`,
+`ArcSetup.today`, and `clockProvider` in the History tile and the restore
+dialog; no new `DateTime.now()`). An open pause that starts after today
+reads "1 Mar 2027 – pause scheduled", one in effect "– paused"; closed,
+completed and ended ranges are unchanged. The History tile now rebuilds at
+midnight. Consumers checked: Arc History tile, Summary heading and delete
+dialog, Journal, Journey and Weekly Review headings, Habit Setup (setup
+arcs have no pause), the restore confirmation.
+
+**R3 — wording.** "Saved. Applies when you resume." → "Saved. Applies on
+your next challenge day." Stored revision behaviour unchanged (still dated
+tomorrow).
+
+| New tests | Count | Covers |
+|---|---|---|
+| `test/data/arc_pause_test.dart`, group R1 (real Drift) | 9 | ordinary later-same-day Cancel (every table identical); 23:59:59 vs 00:00:00; moved back before the scheduling day, before and after the pause began; before `requestedAt` and the residual limitation; behind a later habit log; behind stored activity and a later resume (synthetic damaged data); repeated and concurrent Cancel; failure injection + retry; process restart over a file database (same evening, after midnight, moved back before the request) |
+| `test/domain/arc_pause_rules_test.dart` | 1 | every R1 check, the same instant in UTC, a time-zone move west that only the scheduling-day check catches, `cancelOfferedOn` |
+| `test/features/arc_pause_flow_test.dart` | 3 | banner without Cancel and its explanation; refusal message with nothing written; History "pause scheduled" → "paused" at midnight; R3 snack with the revision still dated tomorrow |
+| `test/shared/arc_labels_test.dart` | 2 | scheduled, in effect, rolled back, none, cancelled, closed (several dates), completed, heading |
+| `test/integration/pause_layout_test.dart` | 7 | the no-Cancel banner on all 7 layouts (plus the guideline checks) |
+
+Mutation check of the corrections: removing the scheduling-day check,
+the `requestedAt` check, the latest-write check, the guard, the
+latest-instant read, or the scheduled/paused distinction — all 6 detected
+(the scheduling-day check only after the time-zone case was added).
+
 ## Known limitations
 
-- `arcDateRange` (12E1) prints "1 Mar 2027 – paused" as soon as a pause is
-  **scheduled** (Arc History tile, historical headings), although today
-  still counts; the end date is indeed unknown from then on. Left as is;
-  a review question.
+- Cancel pause cannot detect a clock set back to later on the scheduling
+  day after the last stored write (R1 residual limitation).
 - A snackbar shown before midnight (e.g. "+15 XP · Undo") can stay on
   screen after the day changes; its Undo is then refused safely on a
   paused date (observed on the emulator, nothing written). Pre-existing
@@ -239,14 +313,12 @@ passes).
 
 ## Review questions for Gate E2
 
-1. The added wording listed under "Deviations and additions".
-2. Should "– paused" in date ranges wait until the pause has begun?
+1. The added wording — **accepted** at review, with the R3 change.
+2. "– paused" before the pause begins — **resolved by R2**.
 3. Resume on the first paused date deletes the pause (addendum § F3);
    the sheet then says "No days were paused." Acceptable?
-4. Cancel pause after the phone's date moved back to before a pause that
-   had already begun deletes it (F3 as written); its dates would then be
-   unlived challenge days. Should Cancel also require the clock guard
-   (or a date at least the pause's request date)?
+4. Cancel after a clock rollback — **resolved by R1**, with the
+   residual limitation stated there.
 
 ## Local validation
 
@@ -254,6 +326,6 @@ passes).
 |---|---|
 | `dart format --output=none --set-exit-if-changed .` | clean |
 | `flutter analyze` | no issues |
-| `flutter test` (all) | **1,951 passed, 0 failed** (the 1,825 of `main` plus 126 new) |
+| `flutter test` (all) | **1,951 passed, 0 failed** at `5472331` (the 1,825 of `main` plus 126 new); **1,973 passed, 0 failed** after the Gate E2 corrections (+22) |
 | Native JVM (`:app:testDebugUnitTest`) | 71 / 71 |
-| Android debug and release builds | both built |
+| Android debug and release builds | both built (again after the corrections); CI's permission audit replayed: passed |

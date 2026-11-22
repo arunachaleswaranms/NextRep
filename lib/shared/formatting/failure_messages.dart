@@ -73,6 +73,9 @@ String userMessageFor(AppFailure failure) => switch (failure) {
     DomainRule.pauseAlreadyStarted =>
       'Your pause has already started. Resume when you are ready.',
     DomainRule.notPaused => 'Your Arc is not paused today.',
+    DomainRule.cancelPauseUnavailable =>
+      "Your phone's date or time is earlier than when this pause was set, "
+          "so it can't be cancelled now. Nothing was changed.",
     DomainRule.sessionNotFound ||
     DomainRule.noSession ||
     DomainRule.sessionNotInSetup ||

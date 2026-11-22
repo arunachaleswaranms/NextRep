@@ -84,24 +84,33 @@ final class ArcPauseService {
     final today = LocalDate.fromDateTime(now);
     return _sessions.changeFreezes(
       sessionId,
-      (session, lastActivity) => ArcPauseRules.pause(
+      (session, facts) => ArcPauseRules.pause(
         session,
         today: today,
         now: now,
-        lastActivityDate: lastActivity,
+        lastActivityDate: facts.lastActivityDate,
         shownFrozenFrom: frozenFrom,
       ),
     );
   });
 
-  /// Deletes the pause of arc [sessionId] that has not started yet. See
-  /// [ArcPauseRules.cancel]. Returns the stored arc.
+  /// Deletes the pause of arc [sessionId] that has not started yet, on
+  /// the day it was scheduled, with the clock checks of
+  /// [ArcPauseRules.cancel] made inside the transaction. Returns the stored
+  /// arc.
   Future<WinterArcSession> cancelPause({required int sessionId}) =>
       _queue.run(() {
-        final today = _clock.today();
+        final now = _clock.now();
+        final today = LocalDate.fromDateTime(now);
         return _sessions.changeFreezes(
           sessionId,
-          (session, _) => ArcPauseRules.cancel(session, today: today),
+          (session, facts) => ArcPauseRules.cancel(
+            session,
+            today: today,
+            now: now,
+            lastActivityDate: facts.lastActivityDate,
+            latestRecordedAt: facts.latestRecordedAt,
+          ),
         );
       });
 

@@ -104,7 +104,7 @@ class SummaryScreen extends ConsumerWidget {
     final colors = context.winter;
     final text = Theme.of(context).textTheme;
     final summary = view.summary;
-    final dates = arcDateRange(view.session);
+    final dates = arcDateRange(view.session, today: view.today);
     final strongest = summary.strongestHabit;
     final stats = [
       _StatData('Total XP', '${summary.totalXp}', Icons.bolt_rounded),
@@ -434,7 +434,10 @@ class _DeleteArcDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(arcDateRange(view.session), style: text.titleMedium),
+            Text(
+              arcDateRange(view.session, today: view.today),
+              style: text.titleMedium,
+            ),
             Text('${summary.totalXp} XP', style: text.bodyLarge),
             Text(perfect, style: text.bodyLarge),
             const SizedBox(height: WinterSpacing.md),

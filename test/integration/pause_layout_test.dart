@@ -38,6 +38,7 @@ enum _Scene {
   pauseSheet,
   pauseRefused,
   banner,
+  bannerNoCancel,
   pausedToday,
   pausedClosed,
   resumeSheet,
@@ -70,6 +71,10 @@ Future<void> _open(WidgetTester tester, _Scene scene) async {
     case _Scene.banner:
       at(app, _d(25));
       await service.pause(sessionId: arc.id, frozenFrom: _d(26));
+    case _Scene.bannerNoCancel: // the clock moved back two days
+      at(app, _d(25));
+      await service.pause(sessionId: arc.id, frozenFrom: _d(26));
+      at(app, _d(23));
     case _Scene.pausedToday || _Scene.resumeSheet || _Scene.resumeFailed:
       at(app, _d(10));
       await service.pause(sessionId: arc.id, frozenFrom: _d(11));
@@ -120,6 +125,9 @@ Future<void> _open(WidgetTester tester, _Scene scene) async {
       expect(find.textContaining("Your phone's date"), findsOneWidget);
     case _Scene.banner:
       expect(find.text(PauseCopy.cancelAction), findsOneWidget);
+    case _Scene.bannerNoCancel:
+      expect(find.text(PauseCopy.cancelAction), findsNothing);
+      expect(find.textContaining('can only be cancelled'), findsOneWidget);
     case _Scene.pausedToday:
       expect(find.text(PausedCopy.resumeAction), findsOneWidget);
     case _Scene.pausedClosed:

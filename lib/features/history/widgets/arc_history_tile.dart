@@ -27,7 +27,11 @@ class ArcHistoryTile extends ConsumerWidget {
     final colors = context.winter;
     final text = Theme.of(context).textTheme;
     final active = session.status == WinterArcStatus.active;
-    final range = arcDateRange(session);
+    // The date is the one the paused-days count uses below; the tile is
+    // rebuilt at midnight (dayChangedProvider).
+    ref.watch(dayChangedProvider);
+    final today = ref.watch(clockProvider).today();
+    final range = arcDateRange(session, today: today);
     // Never "completed" for an arc ended early (schema v7; only a restored
     // format-4 backup holds one until Restart, Phase 12F).
     final status = switch (session.status) {
@@ -40,10 +44,7 @@ class ArcHistoryTile extends ConsumerWidget {
     final joined = session.joinedLate
         ? 'Joined Day ${session.joinDayNumber}'
         : null;
-    ref.watch(dayChangedProvider); // an open pause grows at midnight
-    final paused = pausedTotalLabel(
-      session.pausedDaysThrough(ref.watch(clockProvider).today()),
-    );
+    final paused = pausedTotalLabel(session.pausedDaysThrough(today));
     return Semantics(
       button: true,
       label: _label(kind, range, status, joined, paused, stats),

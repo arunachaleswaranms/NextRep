@@ -164,20 +164,114 @@ void main() {
   });
 
   group('cancel and resume', () {
+    FreezeChange cancel(
+      WinterArcSession s,
+      LocalDate today, {
+      DateTime? now,
+      LocalDate? lastActivity,
+      DateTime? latest,
+    }) => ArcPauseRules.cancel(
+      s,
+      today: today,
+      now: now ?? DateTime(today.year, today.month, today.day, 9),
+      lastActivityDate: lastActivity,
+      latestRecordedAt: latest,
+    );
+
     test('cancel before the start; refused after; nothing to cancel', () {
       final s = rollingArc(start, freezes: [openFreeze(d(11))]);
-      expect(
-        (ArcPauseRules.cancel(s, today: d(10)) as DeleteOpenFreeze).frozenFrom,
-        d(11),
+      expect((cancel(s, d(10)) as DeleteOpenFreeze).frozenFrom, d(11));
+      expect(() => cancel(s, d(11)), _refused(DomainRule.pauseAlreadyStarted));
+      expect(cancel(rollingArc(start), d(10)), isA<FreezeUnchanged>());
+    });
+
+    test('R1: cancel only on the scheduling day, with the clock not behind '
+        'the request, the latest write, the activity or the last resume', () {
+      final requested = DateTime(2027, 3, 10, 21); // Day 10, 21:00
+      final s = rollingArc(
+        start,
+        freezes: [ArcFreeze(frozenFrom: d(11), requestedAt: requested)],
       );
+      final unavailable = _refused(DomainRule.cancelPauseUnavailable);
+      // Same day, later: allowed (also at the very same second).
+      expect(cancel(s, d(10), now: requested), isA<DeleteOpenFreeze>());
       expect(
-        () => ArcPauseRules.cancel(s, today: d(11)),
+        cancel(s, d(10), now: DateTime(2027, 3, 10, 23, 59, 59)),
+        isA<DeleteOpenFreeze>(),
+      );
+      // Midnight: the pause has begun.
+      expect(
+        () => cancel(s, d(11), now: DateTime(2027, 3, 11)),
         _refused(DomainRule.pauseAlreadyStarted),
       );
+      // Rolled back before the scheduling day.
+      expect(() => cancel(s, d(9)), unavailable);
+      expect(() => cancel(s, d(4)), unavailable);
+      // A later instant whose local date is before the scheduling day (a
+      // time-zone move west): only the scheduling-day check refuses it.
       expect(
-        ArcPauseRules.cancel(rollingArc(start), today: d(10)),
-        isA<FreezeUnchanged>(),
+        () => cancel(s, d(9), now: requested.add(const Duration(hours: 1))),
+        unavailable,
       );
+      // Rolled back before the request instant on the same day.
+      expect(
+        () => cancel(s, d(10), now: DateTime(2027, 3, 10, 20, 59, 59)),
+        unavailable,
+      );
+      // Instants compare absolutely: the same instant seen in UTC.
+      expect(cancel(s, d(10), now: requested.toUtc()), isA<DeleteOpenFreeze>());
+      // Behind a later write of this arc.
+      expect(
+        () => cancel(
+          s,
+          d(10),
+          now: DateTime(2027, 3, 10, 22),
+          latest: DateTime(2027, 3, 10, 22, 30),
+        ),
+        unavailable,
+      );
+      expect(
+        cancel(
+          s,
+          d(10),
+          now: DateTime(2027, 3, 10, 22, 31),
+          latest: DateTime(2027, 3, 10, 22, 30),
+        ),
+        isA<DeleteOpenFreeze>(),
+      );
+      // Behind stored activity (only possible with damaged or restored data).
+      expect(
+        () => cancel(
+          s,
+          d(10),
+          now: DateTime(2027, 3, 10, 22),
+          lastActivity: d(11),
+        ),
+        unavailable,
+      );
+      // Behind the last resume (synthetic: the guard is checked anyway).
+      final resumedLater =
+          rollingArc(
+            start,
+            freezes: [ArcFreeze(frozenFrom: d(11), requestedAt: requested)],
+          ).copyWith(
+            freezes: [
+              closedFreeze(
+                d(3),
+                9,
+              ), // resumed on d(12), after the scheduling day
+              ArcFreeze(frozenFrom: d(11), requestedAt: requested),
+            ],
+          );
+      expect(
+        () => cancel(resumedLater, d(10), now: DateTime(2027, 3, 10, 22)),
+        unavailable,
+      );
+      // Offered only on the scheduling day.
+      expect(ArcPauseRules.cancelOfferedOn(s, d(10)), isTrue);
+      expect(ArcPauseRules.cancelOfferedOn(s, d(9)), isFalse);
+      expect(ArcPauseRules.cancelOfferedOn(s, d(11)), isFalse);
+      expect(ArcPauseRules.cancelOfferedOn(rollingArc(start), d(10)), isFalse);
     });
 
     test(

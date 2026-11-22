@@ -236,7 +236,7 @@ class _Header extends StatelessWidget {
           ),
           if (historical || journey.session.isSeasonal)
             Text(
-              arcHeading(journey.session),
+              arcHeading(journey.session, today: journey.today),
               style: text.bodyMedium?.copyWith(color: colors.textSecondary),
             ),
           Text(dayTitle(journey.position), style: text.headlineSmall),

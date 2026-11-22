@@ -43,7 +43,7 @@ class HabitsScreen extends ConsumerWidget {
     final message = switch (result) {
       ActionSuccess(:final value) when value.configFrom != null =>
         waits
-            ? 'Saved. Applies when you resume.'
+            ? 'Saved. Applies on your next challenge day.'
             : 'Saved. Applies from tomorrow.',
       ActionSuccess(:final value) when value.renamed => 'Renamed.',
       ActionSuccess() => 'No changes.',

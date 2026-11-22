@@ -129,6 +129,11 @@ enum DomainRule {
   /// Resume was confirmed for a date that is no longer today. Nothing was
   /// changed.
   resumeDateChanged,
+
+  /// Cancel pause was refused because the device clock reads earlier than
+  /// the pause's scheduling day, its request, the arc's latest write or
+  /// the clock guard allows (Gate E2 review R1). Nothing was changed.
+  cancelPauseUnavailable,
 }
 
 /// A domain rule rejected the requested action. Nothing was persisted.

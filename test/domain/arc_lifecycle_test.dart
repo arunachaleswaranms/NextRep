@@ -224,7 +224,7 @@ final class _CountingSessions implements WinterArcRepository {
   @override
   Future<WinterArcSession> changeFreezes(
     int sessionId,
-    FreezeChange Function(WinterArcSession session, LocalDate? lastActivity)
+    FreezeChange Function(WinterArcSession session, StoredArcFacts facts)
     decide,
   ) {
     updates++;

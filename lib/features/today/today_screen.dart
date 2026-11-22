@@ -362,6 +362,10 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                 frozenFrom: scheduled.frozenFrom,
                 today: summary.date,
                 busy: _cancellingPause,
+                cancelOffered: ArcPauseRules.cancelOfferedOn(
+                  summary.session,
+                  summary.date,
+                ),
                 onCancel: () => _cancelPause(summary),
               ),
             ),

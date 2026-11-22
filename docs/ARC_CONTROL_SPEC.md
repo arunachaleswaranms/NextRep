@@ -247,7 +247,7 @@ clock guard        T ≥ participation start, T ≥ lastActivityDate,
 | F1 | Freeze is offered only for an `active` **Rolling** Arc. Never for a Seasonal Arc, on any screen. The service refuses it for one, whatever the UI shows. |
 | F2 | A freeze starts at the **next local day boundary**: `frozenFrom = T + 1`, always. Today finishes as a normal challenge day and can be completed, including as a Minimum Day. A goal edit made today (a revision dated `T + 1`) does not change this. |
 | F2a | Freeze is accepted only when the **clock guard** holds. If the phone's date is earlier than the latest logged day (or than the last resume), Freeze is refused, nothing is stored, and the message names the date from which it is available. The start date is never silently moved. |
-| F3 | Until `frozenFrom`, the freeze is **scheduled**. Cancelling it deletes it; nothing was paused. |
+| F3 | Until `frozenFrom`, the freeze is **scheduled**. Cancelling it deletes it; nothing was paused. *Amended at Gate E2 review (R1):* Cancel is accepted only on the scheduling day (`frozenFrom − 1`), when the clock guard holds and the device's clock is not earlier than the freeze's `requestedAt` or the latest instant anything of the Arc was written; otherwise it is refused and nothing changes. These checks detect a clock moved back; they cannot prove offline that midnight never passed (a clock set back to later on the scheduling day, after the last write, is not detectable). |
 | F4 | Freeze is not offered on Day 92 (no day left to pause), nor while a freeze is scheduled or the Arc is frozen. |
 | F5 | **Resume** on date `R` sets `resumedOn = R` and extends `endDate` by `R − frozenFrom`, in one transaction. `R` is the next challenge day. |
 | F6 | While frozen, the Arc is read-only: no habit progress, Minimum Day, habit edit or reflection for a frozen date. History stays viewable. |
@@ -796,7 +796,7 @@ counts. · Cancel pause".
 | Entry point | Today's overflow menu and the Habits screen: "Pause Arc". Shown for an active Rolling Arc only; absent for Seasonal Arcs |
 | Primary action | Pause from tomorrow |
 | Secondary action | Not now |
-| Cancel | Not now, Back, dismissing the sheet: nothing changes. After scheduling: "Cancel pause" until midnight |
+| Cancel | Not now, Back, dismissing the sheet: nothing changes. After scheduling: "Cancel pause" until midnight, on the scheduling day only; on any other date the banner says "This pause can only be cancelled on <date>, the day it was set." (R1) |
 | Back | Closes the sheet |
 | Disabled states | Entry hidden on Day 92, while a pause is scheduled and while frozen |
 | Errors | "Couldn't pause. Nothing was changed." with Retry. A day that rolled over while the sheet was open: the sheet re-reads and shows the new dates. Phone's date earlier than the latest logged day: the refusal of § 5.2 F2a, naming the date |

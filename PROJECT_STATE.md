@@ -9,8 +9,9 @@ Phase 12B Weekly Arc Review (PR #25), the Phase 12C Arc Consistency
 Calendar (PR #26) and Phase 12D habit ordering and saved setup (PR #27)
 are merged. `main` is `dcde6b3`, version `1.2.0+3`. **v1.3.0 is in
 development, not released: Phase 12E2 (Freeze and Resume) is implemented
-and qualified on its branch, awaiting independent review, the owner's
-Gate E2 sign-off and the owner's merge decision.**_
+and qualified in PR #28, with the Gate E2 review corrections (R1–R3)
+applied; it awaits final independent verification, the owner's Gate E2
+approval and the owner's merge decision.**_
 
 | | |
 |---|---|
@@ -75,8 +76,17 @@ release.
   a disposable API 36 AVD (midnight with the app open, kill, reboot,
   reminders 55 → 5 → 0 → 55, the pending goal revision applying on the
   resume date, Focus Guard untouched).
-- **Next:** independent technical review; the owner's acceptance of the
-  Freeze behaviour and wording (Gate E2); the owner's merge decision.
+- **Gate E2 review (22 November 2026):** wording accepted except one
+  change (R3: "Saved. Applies on your next challenge day."). **R1:** Cancel
+  pause now only on the scheduling day, with the clock guard and the clock
+  not earlier than the request or the Arc's latest recorded write, all
+  inside the transaction; residual limitation documented (a clock set back
+  to later on the scheduling day, after the last write, can't be detected
+  offline). **R2:** date ranges read "– pause scheduled" until the pause
+  begins. 22 more tests (148 in total for 12E2); 1,973 Flutter and 71 JVM
+  tests pass.
+- **Next:** final independent verification; the owner's Gate E2 approval;
+  the owner's merge decision. Not merged; no release.
 
 ## Phase 12D (v1.3.0 habit ordering, saved setup, Confirm & Start, merged)
 

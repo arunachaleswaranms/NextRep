@@ -1180,4 +1180,218 @@ void main() {
       expect(p.resumed!.freezes.last.resumedOn, resumed.freezes.last.resumedOn);
     });
   });
+
+  group('Cancel pause against a clock moved back (Gate E2 review R1)', () {
+    Future<WinterArcSession> scheduleAt(int id, DateTime when) {
+      app.clock.current = when;
+      return pauseServiceOf(app).pause(
+        sessionId: id,
+        frozenFrom: LocalDate.fromDateTime(when).addDays(1),
+      );
+    }
+
+    Future<WinterArcSession> cancelAt(int id, DateTime when) {
+      app.clock.current = when;
+      return pauseServiceOf(app).cancelPause(sessionId: id);
+    }
+
+    Future<void> refused(int id, DateTime when, DomainRule rule) async {
+      final before = await snapshotAll(app.db);
+      await expectLater(cancelAt(id, when), throwsRule(rule));
+      expect(await snapshotAll(app.db), before, reason: '$when');
+    }
+
+    test('an ordinary Cancel later on the scheduling day restores every '
+        'table', () async {
+      final arc = await startRolling(app, day1);
+      await liveDay(app, d(10));
+      final before = await snapshotAll(app.db);
+      await scheduleAt(arc.id, DateTime(2027, 3, 10, 9, 30));
+      final cancelled = await cancelAt(arc.id, DateTime(2027, 3, 10, 20));
+      expect(cancelled.freezes, isEmpty);
+      expect(await snapshotAll(app.db), before);
+    });
+
+    test(
+      'midnight: 23:59:59 cancels; 00:00:00 the next day is refused',
+      () async {
+        final arc = await startRolling(app, day1);
+        await scheduleAt(arc.id, DateTime(2027, 3, 10, 9));
+        expect(
+          (await cancelAt(arc.id, DateTime(2027, 3, 10, 23, 59, 59))).freezes,
+          isEmpty,
+        );
+        await scheduleAt(arc.id, DateTime(2027, 3, 10, 23, 59, 59));
+        await refused(
+          arc.id,
+          DateTime(2027, 3, 11),
+          DomainRule.pauseAlreadyStarted,
+        );
+      },
+    );
+
+    test('moved back before the scheduling day: refused, before and after '
+        'the pause began', () async {
+      final arc = await startRolling(app, day1);
+      await scheduleAt(arc.id, DateTime(2027, 3, 10, 9));
+      // Before midnight, the clock moves back two days.
+      await refused(
+        arc.id,
+        DateTime(2027, 3, 8, 12),
+        DomainRule.cancelPauseUnavailable,
+      );
+      // After the pause began (14 Mar), back to 9 Mar.
+      app.clock.current = DateTime(2027, 3, 14, 9);
+      expect((await app.tracking.today()).position, isA<ArcPaused>());
+      await refused(
+        arc.id,
+        DateTime(2027, 3, 9, 23),
+        DomainRule.cancelPauseUnavailable,
+      );
+      expect((await stored(app, arc.id)).hasOpenFreeze, isTrue);
+    });
+
+    test('moved back to the scheduling day, before the request instant: '
+        'refused. Later that day with nothing written since: the documented '
+        'residual limitation, Cancel succeeds', () async {
+      final arc = await startRolling(app, day1);
+      await scheduleAt(arc.id, DateTime(2027, 3, 10, 21));
+      app.clock.current = DateTime(2027, 3, 12, 9); // paused since 11 Mar
+      await refused(
+        arc.id,
+        DateTime(2027, 3, 10, 20, 59, 59),
+        DomainRule.cancelPauseUnavailable,
+      );
+      // Not detectable offline: the clock reads the scheduling day, after
+      // the request and every stored write.
+      final cancelled = await cancelAt(arc.id, DateTime(2027, 3, 10, 21, 30));
+      expect(cancelled.freezes, isEmpty);
+    });
+
+    test('moved back behind a later write of the arc (a habit logged after '
+        'the pause was set): refused', () async {
+      final arc = await startRolling(app, day1);
+      await scheduleAt(arc.id, DateTime(2027, 3, 10, 21));
+      app.clock.current = DateTime(2027, 3, 10, 22, 30);
+      await completeHabit(app, 'water'); // today still counts
+      app.clock.current = DateTime(2027, 3, 13, 9); // paused
+      await refused(
+        arc.id,
+        DateTime(2027, 3, 10, 22),
+        DomainRule.cancelPauseUnavailable,
+      );
+      // After that write, the same residual limitation applies.
+      expect(
+        (await cancelAt(arc.id, DateTime(2027, 3, 10, 22, 31))).freezes,
+        isEmpty,
+      );
+    });
+
+    test('behind stored activity or a later resume (damaged or restored '
+        'data): the clock guard refuses', () async {
+      final arc = await startRolling(app, day1);
+      await scheduleAt(arc.id, DateTime(2027, 3, 10, 9));
+      // A day mode dated on the first paused date: activity after today.
+      await app.db.customStatement(
+        'INSERT INTO day_modes (session_id, date, mode, changed_at) '
+        "VALUES (${arc.id}, '2027-03-11', 'minimum', 0)",
+      );
+      await refused(
+        arc.id,
+        DateTime(2027, 3, 10, 12),
+        DomainRule.cancelPauseUnavailable,
+      );
+      await app.db.customStatement('DELETE FROM day_modes');
+      // A closed pause resumed after the scheduling day.
+      await app.db.customStatement(
+        'INSERT INTO arc_freezes (session_id, frozen_from, resumed_on, '
+        "requested_at, resumed_at) VALUES (${arc.id}, '2027-03-03', "
+        "'2027-03-12', 0, 0)",
+      );
+      await refused(
+        arc.id,
+        DateTime(2027, 3, 10, 12),
+        DomainRule.cancelPauseUnavailable,
+      );
+    });
+
+    test(
+      'repeated and concurrent cancellation: one deletion, then nothing',
+      () async {
+        final arc = await startRolling(app, day1);
+        await scheduleAt(arc.id, DateTime(2027, 3, 10, 9));
+        app.clock.current = DateTime(2027, 3, 10, 10);
+        final service = pauseServiceOf(app);
+        final results = await Future.wait([
+          service.cancelPause(sessionId: arc.id),
+          service.cancelPause(sessionId: arc.id),
+        ]);
+        expect(results.every((s) => s.freezes.isEmpty), isTrue);
+        final before = await snapshotAll(app.db);
+        await service.cancelPause(sessionId: arc.id);
+        expect(await snapshotAll(app.db), before);
+      },
+    );
+
+    test('a storage failure leaves the pause; the retry cancels', () async {
+      final arc = await startRolling(app, day1);
+      await scheduleAt(arc.id, DateTime(2027, 3, 10, 9));
+      await app.db.customStatement(
+        'CREATE TEMP TRIGGER injected_failure BEFORE DELETE ON arc_freezes '
+        "BEGIN SELECT RAISE(ABORT, 'injected'); END",
+      );
+      final before = await snapshotAll(app.db);
+      await expectLater(
+        cancelAt(arc.id, DateTime(2027, 3, 10, 18)),
+        throwsA(isA<PersistenceFailure>()),
+      );
+      expect(await snapshotAll(app.db), before);
+      await app.db.customStatement('DROP TRIGGER injected_failure');
+      expect(
+        (await cancelAt(arc.id, DateTime(2027, 3, 10, 18))).freezes,
+        isEmpty,
+      );
+    });
+
+    test('process restart: the same evening cancels; after midnight, and '
+        'after a clock moved back before the request, it does not', () async {
+      final dir = await Directory.systemTemp.createTemp('nextrep_cancel');
+      addTearDown(() => dir.delete(recursive: true));
+      final file = File('${dir.path}/nextrep.sqlite');
+      final clock = FakeClock(DateTime(2027, 3, 1, 9));
+      AppDatabase open() => AppDatabase(NativeDatabase(file));
+      Future<T> run<T>(Future<T> Function(TestApp app) body) async {
+        final db = open();
+        try {
+          return await body(TestApp(db, clock));
+        } finally {
+          await db.close();
+        }
+      }
+
+      final arc = await run((a) => startRolling(a, day1));
+      Future<void> schedule() => run((a) {
+        clock.current = DateTime(2027, 3, 10, 21);
+        return pauseServiceOf(a).pause(sessionId: arc.id, frozenFrom: d(11));
+      });
+      Future<WinterArcSession> cancelOn(DateTime when) => run((a) {
+        clock.current = when;
+        return pauseServiceOf(a).cancelPause(sessionId: arc.id);
+      });
+
+      await schedule();
+      expect((await cancelOn(DateTime(2027, 3, 10, 21, 30))).freezes, isEmpty);
+      await schedule();
+      await expectLater(
+        cancelOn(DateTime(2027, 3, 11, 8)),
+        throwsRule(DomainRule.pauseAlreadyStarted),
+      );
+      await expectLater(
+        cancelOn(DateTime(2027, 3, 10, 20)),
+        throwsRule(DomainRule.cancelPauseUnavailable),
+      );
+      final kept = await run((a) => a.sessions.sessionById(arc.id));
+      expect(kept!.freezes.single.isOpen, isTrue);
+    });
+  });
 }

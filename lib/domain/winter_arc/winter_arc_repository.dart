@@ -60,8 +60,9 @@ abstract interface class WinterArcRepository {
   /// Freeze, Cancel pause and Resume (Phase 12E2), in **one transaction**:
   ///
   /// 1. session [sessionId] is read with its freeze intervals, together with
-  ///    its last activity date (`ArcActivityRepository.lastActivityDate`),
-  ///    inside the transaction;
+  ///    [StoredArcFacts]: its last activity date
+  ///    (`ArcActivityRepository.lastActivityDate`) and the latest instant
+  ///    anything of it was written, inside the transaction;
   /// 2. [decide] returns the [FreezeChange] to make, or throws (typically a
   ///    `DomainFailure`) to refuse, and then nothing is written;
   /// 3. the change is applied: at most one `arc_freezes` row and, for a
@@ -77,7 +78,7 @@ abstract interface class WinterArcRepository {
   /// `PersistenceFailure` on storage errors; either way nothing changed.
   Future<WinterArcSession> changeFreezes(
     int sessionId,
-    FreezeChange Function(WinterArcSession session, LocalDate? lastActivity)
+    FreezeChange Function(WinterArcSession session, StoredArcFacts facts)
     decide,
   );
 

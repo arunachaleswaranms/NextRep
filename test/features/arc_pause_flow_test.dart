@@ -583,4 +583,88 @@ void main() {
     expect(find.text(ResumeCopy.failed), findsNothing);
     expect(await snapshotAll(app.db), before);
   });
+
+  testWidgets('R1: Cancel pause is offered only on the scheduling day; a '
+      'clock behind the request is refused with a message, nothing '
+      'written', (tester) async {
+    await _tall(tester);
+    final app = TestApp(memoryDatabase(), FakeClock(DateTime(2027, 3, 1)));
+    addTearDown(app.db.close);
+    final arc = await startRolling(app, day1);
+    app.clock.current = DateTime(2027, 3, 10, 21);
+    await pauseServiceOf(app).pause(sessionId: arc.id, frozenFrom: d(11));
+
+    // The clock moved back two days: the banner explains, no Cancel.
+    app.clock.current = DateTime(2027, 3, 8, 9);
+    await tester.pumpWidget(_app(app));
+    await tester.pumpAndSettle();
+    expect(find.text('Pause starts Thu 11 Mar. Today still counts.'), findsOne);
+    expect(find.text(PauseCopy.cancelAction), findsNothing);
+    expect(
+      find.text(
+        'This pause can only be cancelled on Wed 10 Mar, the day it was set.',
+      ),
+      findsOneWidget,
+    );
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(seconds: 5));
+
+    // The scheduling day, but earlier than the request: offered, refused.
+    app.clock.current = DateTime(2027, 3, 10, 20);
+    final before = await snapshotAll(app.db);
+    await tester.pumpWidget(_app(app));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(PauseCopy.cancelAction));
+    await tester.pumpAndSettle();
+    expect(
+      find.text(
+        "Your phone's date or time is earlier than when this pause was set, "
+        "so it can't be cancelled now. Nothing was changed.",
+      ),
+      findsOneWidget,
+    );
+    expect(find.text(PauseCopy.bannerTomorrow), findsOneWidget);
+    expect(await snapshotAll(app.db), before);
+  });
+
+  testWidgets('R2: Arc History reads "pause scheduled" until the pause '
+      'begins, then "paused"', (tester) async {
+    await _tall(tester);
+    final app = TestApp(memoryDatabase(), FakeClock(DateTime(2027, 3, 1)));
+    addTearDown(app.db.close);
+    final arc = await startRolling(app, day1);
+    at(app, d(10));
+    await pauseServiceOf(app).pause(sessionId: arc.id, frozenFrom: d(11));
+    app.clock.current = DateTime(2027, 3, 10, 23, 59, 50);
+    await tester.pumpWidget(_app(app));
+    await tester.pumpAndSettle();
+    await tester.tap(_tab('History'));
+    await tester.pumpAndSettle();
+    expect(find.text('1 Mar 2027 – pause scheduled'), findsOneWidget);
+    app.clock.current = DateTime(2027, 3, 11, 0, 0, 2);
+    await tester.pump(const Duration(seconds: 15));
+    await tester.pumpAndSettle();
+    expect(find.text('1 Mar 2027 – paused'), findsOneWidget);
+  });
+
+  testWidgets('R3: a goal edit while a pause is scheduled says it applies on '
+      'the next challenge day', (tester) async {
+    await _tall(tester);
+    final app = TestApp(memoryDatabase(), FakeClock(DateTime(2027, 3, 1)));
+    addTearDown(app.db.close);
+    final arc = await startRolling(app, day1);
+    at(app, d(10));
+    await pauseServiceOf(app).pause(sessionId: arc.id, frozenFrom: d(11));
+    await tester.pumpWidget(_app(app));
+    await tester.pumpAndSettle();
+    await tapShown(tester, find.text('Edit habits'));
+    await tester.tap(find.byType(Switch).first);
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Saved. Applies on your next challenge day.'),
+      findsOneWidget,
+    );
+    final revisions = (await snapshotAll(app.db))['habit_revisions']!;
+    expect(revisions.single['effective_from'], d(11).toIsoString());
+  });
 }

@@ -119,7 +119,7 @@ final class DriftWinterArcRepository implements WinterArcRepository {
   @override
   Future<WinterArcSession> changeFreezes(
     int sessionId,
-    FreezeChange Function(WinterArcSession session, LocalDate? lastActivity)
+    FreezeChange Function(WinterArcSession session, StoredArcFacts facts)
     decide,
   ) => guardPersistence(
     'change freezes of session $sessionId',
@@ -133,7 +133,10 @@ final class DriftWinterArcRepository implements WinterArcRepository {
       }
       final change = decide(
         before,
-        await queryLastActivityDate(_db, sessionId),
+        StoredArcFacts(
+          lastActivityDate: await queryLastActivityDate(_db, sessionId),
+          latestRecordedAt: await queryLatestRecordedInstant(_db, sessionId),
+        ),
       );
       switch (change) {
         case FreezeUnchanged():

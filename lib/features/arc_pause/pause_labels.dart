@@ -93,6 +93,15 @@ abstract final class PauseCopy {
       'Pause starts ${pauseDate(frozenFrom, today: today)}. Today still '
       'counts.';
   static const cancelAction = 'Cancel pause';
+
+  /// Shown instead of Cancel pause when the phone's date isn't the day the
+  /// pause was set (a clock moved back; Gate E2 review R1).
+  static String cancelOnlyOn(LocalDate scheduledOn, LocalDate today) =>
+      'This pause can only be cancelled on '
+      '${pauseDate(scheduledOn, today: today)}, the day it was set.';
+  static String cancelOnlyOnSpoken(LocalDate scheduledOn) =>
+      'This pause can only be cancelled on ${pauseDateSpoken(scheduledOn)}, '
+      'the day it was set.';
   static const cancelled = 'Pause cancelled. Nothing was paused.';
   static const cancelFailed = "Couldn't cancel the pause. Please try again.";
 }

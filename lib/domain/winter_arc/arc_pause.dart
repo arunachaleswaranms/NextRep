@@ -109,6 +109,18 @@ final class CloseFreeze extends FreezeChange {
   );
 }
 
+/// What `WinterArcRepository.changeFreezes` reads about an arc inside its
+/// transaction, besides the session itself.
+final class StoredArcFacts {
+  const StoredArcFacts({this.lastActivityDate, this.latestRecordedAt});
+
+  /// The latest date of any activity row (never a goal revision).
+  final LocalDate? lastActivityDate;
+
+  /// The latest instant anything of the arc was written, or null.
+  final DateTime? latestRecordedAt;
+}
+
 /// Pure rules of Freeze, Cancel pause and Resume (ARC_CONTROL_SPEC § 5,
 /// addendum AD5–AD8, AD19). They read only their arguments; the service
 /// calls them inside the repository's transaction with the stored session,
@@ -188,15 +200,36 @@ abstract final class ArcPauseRules {
     return ScheduleFreeze(ArcFreeze(frozenFrom: frozenFrom, requestedAt: now));
   }
 
-  /// Cancel pause on [today]: deletes a pause that has not started yet
-  /// (F3). With no pause scheduled there is nothing to cancel
-  /// ([FreezeUnchanged]).
+  /// Cancel pause on [today] at [now]: deletes a pause that has not
+  /// started yet (F3). With no pause scheduled there is nothing to cancel
+  /// ([FreezeUnchanged]: a repeated request).
   ///
-  /// Throws [DomainRule.pauseAlreadyStarted] once the pause has begun
-  /// (midnight passed): it can only be resumed then.
+  /// Because a device clock can be set back after a pause has begun,
+  /// Cancel is conservative (Gate E2 review R1). It is refused, so that
+  /// nothing is written, unless every check holds:
+  ///
+  /// * the pause has not started: `today < frozenFrom`, else
+  ///   [DomainRule.pauseAlreadyStarted];
+  /// * today is the day the pause was scheduled, `frozenFrom − 1` (Freeze
+  ///   always starts the next day), else [DomainRule.cancelPauseUnavailable];
+  /// * the clock guard holds (participation start, latest activity, latest
+  ///   resume; [ArcClockGuard]);
+  /// * [now] is not earlier than the pause's `requestedAt`, nor than
+  ///   [latestRecordedAt], the latest instant anything of this arc was
+  ///   written (compared as absolute instants, at the stored precision of
+  ///   one second, so a time-zone change neither helps nor hurts).
+  ///
+  /// These checks detect a clock moved back to before the scheduling day,
+  /// or to before the latest write. They **cannot** prove that midnight
+  /// never passed: a clock set back to later on the scheduling day, after
+  /// the last write, with nothing written since, is indistinguishable
+  /// offline from that same day (documented residual limitation).
   static FreezeChange cancel(
     WinterArcSession session, {
     required LocalDate today,
+    required DateTime now,
+    required LocalDate? lastActivityDate,
+    required DateTime? latestRecordedAt,
   }) {
     final open = session.openFreeze;
     if (open == null) return const FreezeUnchanged();
@@ -206,8 +239,51 @@ abstract final class ArcPauseRules {
         'The pause has already started',
       );
     }
+    if (today != open.frozenFrom.addDays(-1)) {
+      throw const DomainFailure(
+        DomainRule.cancelPauseUnavailable,
+        'Today is not the day the pause was scheduled',
+      );
+    }
+    final guard = ArcClockGuard.check(
+      session: session,
+      lastActivityDate: lastActivityDate,
+      today: today,
+    );
+    if (guard is ClockGuardBehind) {
+      throw DomainFailure(
+        DomainRule.cancelPauseUnavailable,
+        'Today is before the ${guard.bound.name} date',
+      );
+    }
+    if (_beforeSecond(now, open.requestedAt)) {
+      throw const DomainFailure(
+        DomainRule.cancelPauseUnavailable,
+        'The clock is earlier than the pause request',
+      );
+    }
+    if (latestRecordedAt != null && _beforeSecond(now, latestRecordedAt)) {
+      throw const DomainFailure(
+        DomainRule.cancelPauseUnavailable,
+        'The clock is earlier than the latest stored write',
+      );
+    }
     return DeleteOpenFreeze(open.frozenFrom);
   }
+
+  /// Whether instant [a] is in an earlier second than [b] (instants are
+  /// stored with one-second precision).
+  static bool _beforeSecond(DateTime a, DateTime b) =>
+      a.millisecondsSinceEpoch ~/ 1000 < b.millisecondsSinceEpoch ~/ 1000;
+
+  /// Whether Cancel pause may be offered on [today] for [session]: a pause
+  /// is scheduled and today is the day it was scheduled. The service
+  /// re-checks everything else ([cancel]) inside its transaction.
+  static bool cancelOfferedOn(WinterArcSession session, LocalDate today) =>
+      switch (session.scheduledPauseOn(today)) {
+        final open? => today == open.frozenFrom.addDays(-1),
+        null => false,
+      };
 
   /// Resume on [today] at [now], for the date the user was shown
   /// ([shownOn]) (F5, AD7): today becomes the next challenge day, the open
