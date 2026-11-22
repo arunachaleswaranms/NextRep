@@ -55,12 +55,16 @@ version change; no phone, no signing, no release.
   nothing; the hub `/setup/saved` is a setup's launch home; Review Setup
   `/setup/review` is read-only; Confirm & Start `/setup/confirm` is the only
   UI that starts an Arc, with the shown date checked by the service.
-- **Proof:** 138 new tests (transactions and rollback, process death,
+- **Proof:** 141 new tests (transactions and rollback, process death,
   formats 1–4, dates and Seasonal rules, midnight, double confirmation,
-  read-only gate, routes, 64-case layout and guideline sweep); 1,822
-  Flutter and 71 JVM tests pass locally.
-- **Gate D (owner): pending.** The wording proposal is in
-  [docs/PHASE_12D.md](docs/PHASE_12D.md#gate-d-owner-wording-sign-off-proposed-not-approved).
+  read-only gate, routes, 64-case layout and guideline sweep, 3 D1
+  contrast tests); 1,825 Flutter and 71 JVM tests pass locally.
+- **Independent review:** D1 fixed (primary-button text now about
+  6.9:1, was 2.61:1; contrast tested with no exemptions); Rolling editor
+  header "Your 92-day Arc begins when you confirm the start."; reduced-
+  motion reorder animation recorded for 12H, not resolved.
+- **Gate D (owner): PENDING OWNER APPROVAL.** The wording proposal is in
+  [docs/PHASE_12D.md](docs/PHASE_12D.md#gate-d-owner-wording-sign-off-pending-owner-approval).
 - **Next:** independent review; owner Gate D; owner merge. Not merged; no
   release.
 

@@ -58,6 +58,10 @@ Schema **v7** · backup format **4** (reads 1, 2, 3 and 4)
 - **Starting an Arc** takes Review & Start → Continue to Start → Confirm &
   Start Challenge (or Confirm & Join Season); Habit Setup no longer starts
   an Arc with one tap. Starting never uses a date the screen didn't show.
+- **Easier-to-read primary buttons:** filled buttons (Let's Begin, Start
+  Challenge, Confirm, Share, …) now use dark text on the blue, about
+  6.9:1 contrast instead of 2.61:1. Sizes, actions and the unavailable
+  look are unchanged.
 - **Database schema v7** (additive, one atomic step): freeze intervals
   (`arc_freezes`), the closing date of an Arc ended early
   (`winter_arc_sessions.closed_on`) and sound settings

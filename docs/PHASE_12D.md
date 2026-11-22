@@ -277,7 +277,8 @@ row (status, started-at, participation and, for Rolling, its dates).
 | `test/domain/setup_start_test.dart` | 15 | D / D+1 / D+2 / D+5 Rolling; order on Today; date changed forward and back; Seasonal 30 Sep, 30 Sep → 1 Oct, 18 Oct, 31 Dec, 1 Jan; empty / all-off / no setup; double confirmation; storage failure and retry; only the session row changes; blocker order; preview = `ArcStartRules.start` |
 | `test/features/setup_control_flow_test.dart` | 19 | The full § 30 journey; menu, screen-reader and drag moves and announcements; one habit; failed reorder; hub empty / all-off / Seasonal (before, Day 18, after, deep link); settings and history links; Cancel setup; Review content and back paths; Confirm focus, Enter, 24 dp, Back, double tap, storage failure, midnight, unseen date change, Seasonal midnights; route guards |
 | `test/features/setup_read_only_test.dart` | 1 | The read-only gate above |
-| `test/integration/setup_layout_test.dart` | 64 | 9 scenes × 7 layouts; tap-target, label and contrast guidelines at 1× and 2× |
+| `test/integration/setup_layout_test.dart` | 64 | 9 scenes × 7 layouts; tap-target, label and contrast guidelines (no exemptions) at 1× and 2× on 7 scenes, enabled and unavailable actions |
+| `test/app/winter_theme_contrast_test.dart` | 3 | Review D1: primary-button text ≥ 4.5:1 at rest, hovered, focused and pressed; disabled colours, 56 dp height, shape and label style unchanged; rendered buttons at 1× and 2× |
 | `test/app/app_routes_test.dart` | +6 | Hub as home, no loops, editor after choosing, active guards, no-setup guards, stale reminders |
 
 Existing tests changed only where 12D deliberately changes behaviour (no
@@ -291,8 +292,9 @@ expectations for a setup are the hub (`app_routes_test`,
 The on-device `integration_test/` smoke scripts were updated the same way
 and compile (`flutter analyze`), but were not run (device only).
 
-Totals at the final local run: **1,822 Flutter tests passed, 0 failed**
-(1,684 before the new 12D tests); **71 native JVM tests passed**.
+Totals at the final local run (after the review corrections): **1,825
+Flutter tests passed, 0 failed** (1,684 before the 12D tests, 138 added
+first, 3 added for D1); **71 native JVM tests passed**.
 
 ## Accessibility and layout
 
@@ -305,32 +307,66 @@ one-node review rows and date rows ("Day 1: Today, Friday 6 November
 no sideways scrolling, no overflow, on 360 × 800 at 1× and 2×,
 320 × 568 at 1.5×, 568 × 320, 800 × 360 at 1.3×, 1280 × 800 and
 360 × 640 at 1.3× with reduced motion. Text contrast: Flutter's rendered
-contrast guideline passes for every text on the four screens **except the
-shared filled-button style** (see limitations).
+contrast guideline passes for every text on the hub (normal and empty),
+Review Setup, Confirm & Start (Rolling, Seasonal and preseason) and Habit
+Setup, with no exemption. Flutter's guideline treats 16 sp bold as large
+text (3:1), so the primary button's 4.5:1 is asserted separately in
+`test/app/winter_theme_contrast_test.dart`.
 
 Not done: physical TalkBack, Switch Access, keyboard or haptics on a
 device; no emulator screenshots this phase.
 
 ## Known limitations
 
-1. **Reduced motion:** the lift and scale apply instantly, but
-   `SliverReorderableList`'s own gap-opening and settle animations use
-   fixed internal durations that the built-in widget doesn't expose. They
-   stay short; disabling them would need a custom list.
-2. **Shared filled-button contrast:** the app-wide `FilledButton` theme
-   (text `textPrimary` #F2F6FF on `accent` #4C9BFF, 16 sp bold) measures
-   2.61:1, below WCAG for its size. It predates 12D and is used on every
-   screen (Let's Begin, Start, …). 12D doesn't restyle the design system;
-   the owner may want it addressed in 12H.
-3. **TalkBack initial focus** on Confirm & Start is decided by the OS;
+1. **Reduced motion (open, for Phase 12H):** with the system's reduce
+   motion setting on, the lifted card's elevation and scale apply
+   instantly, but `SliverReorderableList`'s own gap-opening and settle
+   animations still play: their durations are fixed inside the built-in
+   widget and aren't exposed. They are short, but they are motion. This
+   is **not resolved** in 12D; removing them needs a custom reorderable
+   list, recorded for 12H.
+2. **TalkBack initial focus** on Confirm & Start is decided by the OS;
    keyboard focus starting on the heading is tested, TalkBack's is not.
-4. **Sound & Feedback** link deferred to 12G (above).
-5. The editor's header still says "92 days from the day you press Start."
-   (existing copy, see Gate D).
+3. **Sound & Feedback** link deferred to 12G (above).
+4. **Danger buttons (outside D1, not changed):** the destructive dialog
+   buttons that set their own style (Cancel Setup, Replace Data, Delete
+   Arc: text `textPrimary` on `danger` #FF5C8A) measure about 2.7:1.
+   They predate 12D and aren't the primary-button theme; reported for
+   12H rather than changed here.
 
-## Gate D: owner wording sign-off (PROPOSED, not approved)
+## Independent review corrections
 
-The spec is the starting copy. Reconciliation with Gate C: the spec's
+The first independent review returned one merge blocker and four related
+requests; they are fixed on the same branch:
+
+- **D1, primary-button contrast (fixed):** the app-wide `FilledButton`
+  theme drew `textPrimary` #F2F6FF on `accent` #4C9BFF at 2.61:1. Its
+  foreground is now `background` #070B18 on the same accent, about
+  6.9:1 (pressed, hovered and focused overlays stay above 4.5:1). This is
+  the pairing the Minimum Day button already uses (`background` on
+  `recovery`). Every filled button inherits the theme (Let's Begin, Start
+  Challenge, Confirm, Share, Start New Arc, Go home, Save, …); none
+  overrode the foreground. Background, disabled colours, 56 dp height,
+  shape, label style and actions are unchanged. The layout test's
+  exemption list for filled buttons is removed, and the rendered contrast
+  guideline now runs on every node.
+- **Editor header (changed):** Rolling now reads "Your 92-day Arc begins
+  when you confirm the start."
+- **Gate C wording kept:** "Days with nothing logged show as No progress."
+- **Gate D:** still pending owner approval.
+- **Reduced motion:** documented above for 12H, not resolved.
+- **Tests:** the setup layout test's exemption is gone;
+  `test/app/winter_theme_contrast_test.dart` (3 tests) asserts 4.5:1 for
+  the theme in every interactive state. The longer header wraps to two
+  lines on the default 800 × 600 test surface, so two existing tests
+  (`phase4_flow_test` Reuse Last Setup, `setup_control_flow_test`
+  screen-reader actions) now scroll a card into view before checking it;
+  their assertions are unchanged.
+
+## Gate D: owner wording sign-off (PENDING OWNER APPROVAL)
+
+**Status: PENDING OWNER APPROVAL.** Nothing below is approved until the
+owner says so. The spec is the starting copy. Reconciliation with Gate C: the spec's
 Confirm text "Days you don't log will count as missed." is replaced by
 "Days with nothing logged show as No progress." so Gate C's approved
 "No progress" isn't reversed.
@@ -344,7 +380,7 @@ Confirm text "Days you don't log will count as missed." is replaced by
 | After a move (announced) | Water moved to position 1 of 8 |
 | Reorder failure | Couldn't save the new order. |
 | Editor primary action | Review & Start (replaces "Start Winter Arc" / "Join Seasonal Winter Arc") |
-| Editor header, Rolling (existing, unchanged) | 92 days from the day you press Start. *(owner: keep, or "…from the day you confirm the start."?)* |
+| Editor header, Rolling | Your 92-day Arc begins when you confirm the start. *(set by the owner in review; replaces "92 days from the day you press Start.")* |
 | Save for Later (button, three screens) | Save for Later |
 | Save confirmation | Your Arc setup is saved. / It stays here until you start it. |
 | Hub | YOUR WINTER ARC · Your Arc Setup Is Saved · Rolling 92-Day · 8 habits · 7 on |
@@ -376,8 +412,9 @@ Confirm text "Days you don't log will count as missed." is replaced by
 - **12G:** the Sound & Feedback screen, and its hub link.
 - **12F:** Restart must copy `sortOrder` (it reuses the "Reuse last setup"
   copy, which already does); no Restart UI was built or tested here.
-- **12H:** the shared filled-button contrast; physical TalkBack, Switch
-  Access and drag qualification; the remaining reduced-motion animation.
+- **12H:** the reorder list's remaining reduced-motion animation (custom
+  list); the danger-button contrast; physical TalkBack, Switch Access and
+  drag qualification.
 
 ## CI
 
@@ -391,7 +428,7 @@ run is recorded in the PR.
 ## Local validation
 
 `dart format --set-exit-if-changed .` clean; `flutter analyze` no issues;
-`flutter test` 1,822 passed; `flutter build apk --debug` and `--release`
+`flutter test` 1,825 passed; `flutter build apk --debug` and `--release`
 (debug-signed: this worktree has no `key.properties`) built; `./gradlew
 :app:testDebugUnitTest` 71 passed; the CI permission audit, replayed on
 the local release APK, passed (exact expected set). `git diff --check`
