@@ -5,12 +5,12 @@ _Last updated: 2026-11-22. **Latest published release: v1.2.0** (tag
 v1.0.0 before it. The v1.2 roadmap (Phases 11A–11F, PRs #15–#20), the
 publication record (PR #21), the Phase 12A plan (PR #22), the Phase 12A
 Addendum (PR #23), the Phase 12E1 lifecycle foundation (PR #24), the
-Phase 12B Weekly Arc Review (PR #25) and the Phase 12C Arc Consistency
-Calendar (PR #26) are merged. `main` is `fa5ad0f`, version `1.2.0+3`.
-**v1.3.0 is in development, not released: Phase 12D (habit ordering,
-saved setup and Confirm & Start, PR #27) passed independent re-review
-and the owner approved Gate D on 22 November 2026; it awaits a final
-independent verification and the owner's merge.**_
+Phase 12B Weekly Arc Review (PR #25), the Phase 12C Arc Consistency
+Calendar (PR #26) and Phase 12D habit ordering and saved setup (PR #27)
+are merged. `main` is `dcde6b3`, version `1.2.0+3`. **v1.3.0 is in
+development, not released: Phase 12E2 (Freeze and Resume) is implemented
+and qualified on its branch, awaiting independent review, the owner's
+Gate E2 sign-off and the owner's merge decision.**_
 
 | | |
 |---|---|
@@ -29,7 +29,10 @@ planned. TalkBack was deliberately deferred and doesn't block this model.
 ## Repo
 
 - Remote: https://github.com/arunachaleswaranms/NextRep (public, MIT)
-- `main`: `fa5ad0f` (PR #26, Phase 12C), on top of `f10fd75` (PR #25,
+- `main`: `dcde6b3` (squash merge of PR #27, Phase 12D, 22 November 2026;
+  post-merge CI run
+  [44994020321](https://github.com/arunachaleswaranms/NextRep/actions/runs/44994020321)
+  green, both jobs), on top of `fa5ad0f` (PR #26, Phase 12C), `f10fd75` (PR #25,
   Phase 12B), `7e5ece4` (PR #24,
   Phase 12E1), `933960c` (PR #23,
   the Phase 12A Addendum), `64d77e0` (PR #22, the Phase 12A plan),
@@ -39,9 +42,43 @@ planned. TalkBack was deliberately deferred and doesn't block this model.
   green, both jobs). Tags `v1.0.0` (`b3f9c5c`), `v1.1.0` (`7e563e2`) and
   `v1.2.0` (`8ab0c43`). PRs #1–#20 are Phases 1–11F; #21 the publication
   record; #22 Phase 12A; #23 the Phase 12A Addendum; #24 Phase 12E1;
-  #25 Phase 12B; #26 Phase 12C.
+  #25 Phase 12B; #26 Phase 12C; #27 Phase 12D.
 
-## Phase 12D (v1.3.0 habit ordering, saved setup, Confirm & Start, Gate D approved, not merged)
+## Phase 12E2 (v1.3.0 Freeze and Resume, PR open, Gate E2 pending)
+
+Contracts, wording and evidence: [docs/PHASE_12E2.md](docs/PHASE_12E2.md).
+Baseline `main` `dcde6b3` (PR #27 merged); branch
+`phase/12e2-v1.3-freeze-resume` (worktree `~/labs/NextRep-12E2`). No
+schema, migration, backup format, Focus Guard native, permission,
+dependency, XP, achievement or version change; no phone, no signing, no
+release.
+
+- **Freeze:** "Pause Arc" (Today ⋮ and Habits) for an active Rolling Arc,
+  never Seasonal, never on Day 92, never while scheduled or paused; always
+  from tomorrow; refused with the dates named while the phone's date is
+  behind the history (clock guard re-checked in the transaction).
+  Scheduled banner with Cancel pause until midnight.
+- **Paused Today:** "Arc paused", since / duration, last lived day, the
+  next day number, Resume Arc, links to Journey, Journal and Arc History;
+  Focus Guard's card stays. Nothing can be tracked, edited or reflected on
+  a paused date. A date moved back into a past pause shows "Continues on".
+- **Resume:** today becomes the next challenge day; the end date moves by
+  the paused dates; one transaction; nothing shown as resumed before it
+  is stored. Reminders re-planned straight after each action.
+- **One transaction per action** (`WinterArcRepository.changeFreezes`):
+  at most one `arc_freezes` row and, on Resume, `end_date`; read back and
+  validated, or rolled back.
+- **Proof:** 126 new tests (53 real-Drift transaction tests incl. failure
+  injection, 2,000 generated histories, 11 whole-app flows, a full-table
+  read-only gate, a 49-case layout sweep plus guideline and semantics
+  checks); 12 of 12 deliberate defects detected; emulator qualification on
+  a disposable API 36 AVD (midnight with the app open, kill, reboot,
+  reminders 55 → 5 → 0 → 55, the pending goal revision applying on the
+  resume date, Focus Guard untouched).
+- **Next:** independent technical review; the owner's acceptance of the
+  Freeze behaviour and wording (Gate E2); the owner's merge decision.
+
+## Phase 12D (v1.3.0 habit ordering, saved setup, Confirm & Start, merged)
 
 Contracts, copy and evidence: [docs/PHASE_12D.md](docs/PHASE_12D.md).
 Baseline `main` `fa5ad0f` (PR #26 merged); branch
@@ -72,8 +109,9 @@ version change; no phone, no signing, no release.
   the start." and all other setup, ordering, Save for Later, Review Setup
   and Confirm & Start wording. It was pending until that sign-off. See
   [docs/PHASE_12D.md](docs/PHASE_12D.md#gate-d-outcome).
-- **Next:** one final independent verification; then the owner merges
-  PR #27. Not merged; no release.
+- **Merged** as PR #27 (`dcde6b3`, 22 November 2026, final head
+  `d764419`); post-merge CI run 44994020321 green (both jobs). No
+  release.
 
 ## Phase 12C (v1.3.0 Arc Consistency Calendar, merged)
 
