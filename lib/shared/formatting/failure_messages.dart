@@ -60,6 +60,9 @@ String userMessageFor(AppFailure failure) => switch (failure) {
     DomainRule.invalidFocusGuardBudget =>
       'Choose a daily budget between 1 minute and 24 hours.',
     DomainRule.invalidFocusGuardApps => 'Focus Guard can watch up to 100 apps.',
+    DomainRule.invalidHabitOrder => "Couldn't save the new order.",
+    DomainRule.startDateChanged =>
+      'The date has changed. Check the new dates, then confirm again.',
     DomainRule.sessionNotFound ||
     DomainRule.noSession ||
     DomainRule.sessionNotInSetup ||

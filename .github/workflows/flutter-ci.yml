@@ -89,6 +89,18 @@ jobs:
           test/features/calendar_accessibility_test.dart
           test/integration/calendar_layout_test.dart
 
+      - name: Phase 12D tests (setup ordering transactions, saved setup, start dates, Confirm & Start, read-only, routes, accessibility, contrast, layouts)
+        run: >-
+          flutter test
+          test/data/setup_reorder_test.dart
+          test/data/setup_persistence_test.dart
+          test/domain/setup_start_test.dart
+          test/features/setup_control_flow_test.dart
+          test/features/setup_read_only_test.dart
+          test/integration/setup_layout_test.dart
+          test/app/app_routes_test.dart
+          test/app/winter_theme_contrast_test.dart
+
       - name: Focus Guard tests (settings, usage, one nudge a day, restore)
         run: >-
           flutter test

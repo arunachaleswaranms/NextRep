@@ -331,6 +331,8 @@ void main() {
       _setSize(tester);
       await tester.pumpWidget(_app(setupDb, clock, gateway));
       await tester.pumpAndSettle();
+      // Phase 12D: a saved setup opens the hub; the editor is one tap on.
+      await continueEditing(tester);
       // Not seeded.
       expect(find.widgetWithText(HabitToggleTile, 'Hair Care'), findsNothing);
 

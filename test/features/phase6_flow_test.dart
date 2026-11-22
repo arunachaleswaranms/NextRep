@@ -134,7 +134,8 @@ void main() {
       await _tap(tester, find.text('Rolling 92-Day Arc'));
       expect(find.byType(HabitSetupScreen), findsOneWidget);
       expect(find.text('Rolling 92-Day'), findsOneWidget);
-      expect(_startButton(tester, 'Start Winter Arc').onPressed, isNotNull);
+      // Phase 12D: setup starts nothing; Review & Start leads to Confirm.
+      expect(_startButton(tester, 'Review & Start').onPressed, isNotNull);
       await _shutDown(tester);
     });
 
@@ -157,7 +158,7 @@ void main() {
         find.text('Preseason. The season starts October 1.'),
         findsOneWidget,
       );
-      final start = _startButton(tester, 'Join Seasonal Winter Arc');
+      final start = _startButton(tester, 'Review & Start');
       expect(start.onPressed, isNull);
       expect(
         find.text('Season starts October 1. Your setup is saved until then.'),
@@ -181,7 +182,7 @@ void main() {
         find.textContaining('The season is on Day 15 of 92'),
         findsOneWidget,
       );
-      await _tap(tester, find.text('Join Seasonal Winter Arc'));
+      await startFromSetup(tester);
       expect(find.byType(TodayScreen), findsOneWidget);
       expect(find.text('Day 15 of 92'), findsOneWidget);
       expect(find.text('Day 1 of 92'), findsNothing);
@@ -228,7 +229,8 @@ void main() {
     ).winterArc.startNewArc(NewArcBaseline.fresh, kind: ArcKind.seasonalWinter);
     await tester.pumpWidget(_app(db, clock));
     await tester.pumpAndSettle();
-    expect(_startButton(tester, 'Join Seasonal Winter Arc').onPressed, isNull);
+    // Phase 12D: a saved setup opens the hub.
+    expect(_startButton(tester, 'Start Challenge').onPressed, isNull);
 
     clock.current = DateTime(2026, 10, 1, 7);
     for (final state in [
@@ -242,10 +244,7 @@ void main() {
       tester.binding.handleAppLifecycleStateChanged(state);
     }
     await tester.pumpAndSettle();
-    expect(
-      _startButton(tester, 'Join Seasonal Winter Arc').onPressed,
-      isNotNull,
-    );
+    expect(_startButton(tester, 'Start Challenge').onPressed, isNotNull);
     expect(find.textContaining('The season starts today'), findsOneWidget);
     await _shutDown(tester);
   });
@@ -298,6 +297,8 @@ void main() {
       await _setPhoneSize(tester);
       await tester.pumpWidget(_app(db, clock));
       await tester.pumpAndSettle();
+      // Phase 12D: a saved setup opens the hub; the editor is one tap on.
+      await continueEditing(tester);
       await openAddHabit(tester);
       expect(find.text('TEMPLATES'), findsOneWidget);
       expect(
@@ -325,6 +326,8 @@ void main() {
       await _setPhoneSize(tester);
       await tester.pumpWidget(_app(db, clock));
       await tester.pumpAndSettle();
+      // Phase 12D: a saved setup opens the hub; the editor is one tap on.
+      await continueEditing(tester);
       final options = find.byTooltip('Options for Sleep Before Target');
       await _tapVisible(tester, options);
       await _tap(tester, find.text('Remove'));
@@ -364,6 +367,8 @@ void main() {
       await _setPhoneSize(tester);
       await tester.pumpWidget(_app(db, clock));
       await tester.pumpAndSettle();
+      // Phase 12D: a saved setup opens the hub; the editor is one tap on.
+      await continueEditing(tester);
       await openAddHabit(tester);
       await tester.scrollUntilVisible(
         find.text('Create your own'),
@@ -426,6 +431,8 @@ void main() {
       }
       await tester.pumpWidget(_app(db, clock));
       await tester.pumpAndSettle();
+      // Phase 12D: a saved setup opens the hub; the editor is one tap on.
+      await continueEditing(tester);
       await tester.scrollUntilVisible(
         find.textContaining("You've reached 12 habits"),
         200,
@@ -574,6 +581,8 @@ void main() {
       await TestApp(setupDb, clock).winterArc.beginSetup();
       await tester.pumpWidget(_app(setupDb, clock));
       await tester.pumpAndSettle();
+      // Phase 12D: a saved setup opens the hub; the editor is one tap on.
+      await continueEditing(tester);
       expect(find.byType(HabitSetupScreen), findsOneWidget);
       await _tapVisible(tester, find.text('Add Habit'));
       expect(find.text('TEMPLATES'), findsOneWidget);

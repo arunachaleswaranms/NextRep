@@ -7,7 +7,9 @@ foundation of v1.3.0 ([docs/PHASE_12E1.md](docs/PHASE_12E1.md)). Phase
 12B adds the Weekly Arc Review ([docs/PHASE_12B.md](docs/PHASE_12B.md)).
 Phase 12C adds the Arc Consistency Calendar
 ([docs/PHASE_12C.md](docs/PHASE_12C.md)); the owner approved its wording
-at Gate C.
+at Gate C. Phase 12D adds habit ordering, saved setup and Confirm & Start
+([docs/PHASE_12D.md](docs/PHASE_12D.md)); the owner approved its wording
+at Gate D.
 
 Schema **v7** · backup format **4** (reads 1, 2, 3 and 4)
 
@@ -30,6 +32,21 @@ Schema **v7** · backup format **4** (reads 1, 2, 3 and 4)
   as a row between days; days before a late Seasonal join stay neutral.
   Works for the current Arc and for finished Arcs. Read-only: nothing is
   stored, awarded or sent, and the view isn't remembered.
+- **Habit order in setup:** put an Arc's habits in your order before it
+  starts: drag a card by its handle (or touch and hold it), use Move up /
+  Move down in its menu, or the screen reader's Move up / Move down
+  actions. The order is saved at once and is the order of Today, the
+  Journey and the Weekly Review once the Arc starts. A running Arc's order
+  stays fixed.
+- **Save for Later and the saved-setup hub:** your setup is saved as you
+  edit it; "Save for Later" confirms it and opens the hub, which is also
+  where NextRep opens while a setup exists (after a restart or a restore).
+  From it: Start Challenge, Review Setup, Continue Editing, Reminders,
+  Data & Backup, Focus Guard (Android), Arc History and About.
+- **Review Setup and Confirm & Start:** review the Arc's habits, goals,
+  Minimum Day goals, the habits that are off and your reminders, then
+  confirm on a separate screen that shows Day 1 and Day 92 (or the season
+  day you join on). A Rolling Arc's Day 1 is the day you confirm.
 
 ### Changed
 
@@ -38,6 +55,13 @@ Schema **v7** · backup format **4** (reads 1, 2, 3 and 4)
   Legend, the Weekly Review's day strip, day details and screen-reader
   announcements. Wording only: nothing is re-scored and no data changes.
 - The Journey Legend includes "Not reached" for an Arc ended early.
+- **Starting an Arc** takes Review & Start → Continue to Start → Confirm &
+  Start Challenge (or Confirm & Join Season); Habit Setup no longer starts
+  an Arc with one tap. Starting never uses a date the screen didn't show.
+- **Easier-to-read primary buttons:** filled buttons (Let's Begin, Start
+  Challenge, Confirm, Share, …) now use dark text on the blue, about
+  6.9:1 contrast instead of 2.61:1. Sizes, actions and the unavailable
+  look are unchanged.
 - **Database schema v7** (additive, one atomic step): freeze intervals
   (`arc_freezes`), the closing date of an Arc ended early
   (`winter_arc_sessions.closed_on`) and sound settings

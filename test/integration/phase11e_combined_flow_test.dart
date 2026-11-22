@@ -164,7 +164,7 @@ void main() {
     await _tap(tester, find.text("Let's Begin"));
     await _tap(tester, find.text('Rolling 92-Day Arc'));
     expect(find.text('Choose your habits'), findsOneWidget);
-    await _tap(tester, find.text('Start Winter Arc'));
+    await startFromSetup(tester);
     expect(find.text('Day 1 of 92'), findsOneWidget);
     expect(scheduler.permissionRequests, 0, reason: 'never at startup');
     expect(platform.settingsOpened, 0);
