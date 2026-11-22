@@ -101,6 +101,15 @@ jobs:
           test/app/app_routes_test.dart
           test/app/winter_theme_contrast_test.dart
 
+      - name: Phase 12E2 tests (Freeze and Resume transactions, clock guard, revisions, reminders, backup, flows, read-only, layouts)
+        run: >-
+          flutter test
+          test/data/arc_pause_test.dart
+          test/domain/arc_pause_rules_test.dart
+          test/features/arc_pause_flow_test.dart
+          test/features/arc_pause_read_only_test.dart
+          test/integration/pause_layout_test.dart
+
       - name: Focus Guard tests (settings, usage, one nudge a day, restore)
         run: >-
           flutter test
