@@ -8,6 +8,8 @@ import '../../domain/reminder/reminder_plan.dart';
 import '../../domain/winter_arc/current_arc_service.dart';
 import '../../domain/winter_arc/winter_arc_session.dart';
 import '../../features/about/about_screen.dart';
+import '../../features/arc_restart/delete_arc_screen.dart';
+import '../../features/arc_restart/restart_screen.dart';
 import '../../features/achievements/achievements_screen.dart';
 import '../../features/backup/data_backup_screen.dart';
 import '../../features/focus_guard/focus_guard_app_picker_screen.dart';
@@ -81,6 +83,19 @@ abstract final class AppRoutes {
 
   /// On-device insights across every started arc.
   static const insights = '/insights';
+
+  /// Restart with this setup (Phase 12F): the active arc ends early and a
+  /// new Rolling arc starts on Day 1. Needs an active arc.
+  static const restart = '/restart';
+
+  /// [restart] for arc [sessionId], the arc the user was looking at.
+  static String restartArc(int sessionId) => '$restart?arc=$sessionId';
+
+  /// The typed-DELETE screen of finished arc [sessionId] (spec § 9.11);
+  /// [afterRestart] when it follows a restart that chose "Delete my old
+  /// Arc…" (Back and Keep it then go to Today).
+  static String deleteArc(int sessionId, {bool afterRestart = false}) =>
+      '/arc/$sessionId/delete${afterRestart ? '?after=restart' : ''}';
 
   /// A started arc by id: its summary, read-only. The home of a completed
   /// arc.
@@ -170,7 +185,8 @@ abstract final class AppRoutes {
         under(journey) ||
         under(journal) ||
         under(history) ||
-        under(achievements);
+        under(achievements) ||
+        under(restart);
     final viewedArc = _arcIdIn(location);
     if (location.startsWith('/arc/') && viewedArc == null) {
       return home(resolution); // malformed arc id
@@ -338,7 +354,25 @@ GoRouter buildAppRouter({
               requestedWeek: AppRoutes.reviewWeekOf(state.uri),
             ),
           ),
+          GoRoute(
+            path: 'delete',
+            builder: (context, state) => DeleteArcScreen(
+              sessionId: sessionIdOf(state),
+              afterRestart: state.uri.queryParameters['after'] == 'restart',
+            ),
+          ),
         ],
+      ),
+      GoRoute(
+        path: AppRoutes.restart,
+        builder: (context, state) => RestartScreen(
+          // The arc the entry point showed; without one, the active arc
+          // (the redirect guarantees there is one when this opens).
+          sessionId:
+              int.tryParse(state.uri.queryParameters['arc'] ?? '') ??
+              resolution.value?.active?.id ??
+              -1,
+        ),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) =>
