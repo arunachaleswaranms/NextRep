@@ -436,29 +436,36 @@ final class WinterArcService {
     return started;
   }
 
-  /// Permanently deletes the completed arc [sessionId] with all of its
-  /// history: habits, progress, XP, Journey, achievements and reflections.
-  /// Other arcs and the reminder preferences are untouched.
+  /// Permanently deletes the finished arc [sessionId] (completed, or ended
+  /// early by Restart) with all of its history: habits, goal revisions,
+  /// progress, XP, Journey, achievements, reflections and pauses. Other
+  /// arcs and every app-level setting (reminders, Hydration Coach, Focus
+  /// Guard, sounds) are untouched.
   ///
-  /// Only a completed arc can be deleted. Throws [DomainRule.arcNotDeletable]
-  /// for an arc in setup or running (cancel a setup with [cancelSetup]) and
-  /// [DomainRule.sessionNotFound] if there is no such arc.
-  Future<void> deleteCompletedArc(int sessionId) => _mutations.run(() async {
+  /// Only a finished arc can be deleted, and only by its own id: the
+  /// status read here is required again inside the deletion's transaction,
+  /// so an arc that is (or became) active is never deleted. Throws
+  /// [DomainRule.arcNotDeletable] for an arc in setup or running (cancel a
+  /// setup with [cancelSetup]) and [DomainRule.sessionNotFound] if there is
+  /// no such arc; nothing is deleted then.
+  Future<void> deleteFinishedArc(int sessionId) => _mutations.run(() async {
     final session = await _sessions.sessionById(sessionId);
     if (session == null) {
       throw DomainFailure(DomainRule.sessionNotFound, 'No session $sessionId');
     }
-    if (session.status != WinterArcStatus.completed) {
+    if (!session.status.isFinished) {
       throw DomainFailure(
         DomainRule.arcNotDeletable,
         'Session $sessionId is ${session.status.name}',
       );
     }
-    await _sessions.deleteSession(
-      sessionId,
-      expected: WinterArcStatus.completed,
-    );
+    await _sessions.deleteSession(sessionId, expected: session.status);
   });
+
+  /// [deleteFinishedArc]. The name predates the `ended` status (schema v7)
+  /// and is kept for the existing callers.
+  Future<void> deleteCompletedArc(int sessionId) =>
+      deleteFinishedArc(sessionId);
 
   /// Abandons the arc being set up, deleting it and its provisional habits.
   /// Completed arcs are untouched. A running arc can't be cancelled.

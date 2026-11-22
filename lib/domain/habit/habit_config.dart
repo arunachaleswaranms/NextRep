@@ -133,6 +133,15 @@ final class HabitHistory {
     return habit.baseline;
   }
 
+  /// The latest configuration of [habit], whatever its date: its last
+  /// revision (including one still waiting to take effect), or its
+  /// baseline when it has none. What Restart copies (addendum AD11).
+  HabitConfig latestConfig(Habit habit) {
+    final revisions = _revisions[habit.id];
+    if (revisions == null || revisions.isEmpty) return habit.baseline;
+    return revisions.last.config;
+  }
+
   /// The habits enabled on [date], in display order, with the target that
   /// applies in [mode].
   List<PlannedHabit> planFor(LocalDate date, DayMode mode) => [

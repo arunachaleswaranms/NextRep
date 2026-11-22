@@ -64,7 +64,8 @@ enum DomainRule {
   /// outside the arc.
   reflectionNotAvailable,
 
-  /// Only a completed arc can be deleted; a setup or active arc can't.
+  /// Only a finished arc (completed or ended early) can be deleted; a
+  /// setup or active arc can't.
   arcNotDeletable,
 
   /// The Seasonal Winter Arc can't be set up yet (before 1 September).
@@ -134,6 +135,16 @@ enum DomainRule {
   /// the pause's scheduling day, its request, the arc's latest write or
   /// the clock guard allows (Gate E2 review R1). Nothing was changed.
   cancelPauseUnavailable,
+
+  /// Restart isn't available for this arc: it is not the active arc (it is
+  /// in setup, already finished, or no longer the unfinished arc), or a
+  /// restart would start no habit. Nothing was changed.
+  restartUnavailable,
+
+  /// Restart was confirmed for a date (or a last counted day) that is no
+  /// longer what the screen showed: midnight passed, or the arc changed
+  /// while it was open. Nothing was changed.
+  restartDateChanged,
 }
 
 /// A domain rule rejected the requested action. Nothing was persisted.

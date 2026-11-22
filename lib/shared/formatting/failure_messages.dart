@@ -43,7 +43,8 @@ String userMessageFor(AppFailure failure) => switch (failure) {
     DomainRule.reflectionReadOnly =>
       'Past reflections are kept as they were. Only today can be edited.',
     DomainRule.reflectionNotAvailable => 'Reflections open on the day itself.',
-    DomainRule.arcNotDeletable => 'Only a completed Winter Arc can be deleted.',
+    DomainRule.arcNotDeletable =>
+      'Only a finished Winter Arc can be deleted. Nothing was removed.',
     DomainRule.seasonNotOpen =>
       'The Seasonal Winter Arc opens for setup on September 1.',
     DomainRule.seasonNotStarted =>
@@ -63,7 +64,8 @@ String userMessageFor(AppFailure failure) => switch (failure) {
     DomainRule.invalidHabitOrder => "Couldn't save the new order.",
     DomainRule.startDateChanged ||
     DomainRule.pauseDateChanged ||
-    DomainRule.resumeDateChanged =>
+    DomainRule.resumeDateChanged ||
+    DomainRule.restartDateChanged =>
       'The date has changed. Check the new dates, then confirm again.',
     DomainRule.pauseUnavailable =>
       "Your Arc can't be paused today. Nothing was changed.",
@@ -73,6 +75,8 @@ String userMessageFor(AppFailure failure) => switch (failure) {
     DomainRule.pauseAlreadyStarted =>
       'Your pause has already started. Resume when you are ready.',
     DomainRule.notPaused => 'Your Arc is not paused today.',
+    DomainRule.restartUnavailable =>
+      "Your Arc can't be restarted now. Nothing was changed.",
     DomainRule.cancelPauseUnavailable =>
       "Your phone's date or time is earlier than when this pause was set, "
           "so it can't be cancelled now. Nothing was changed.",
