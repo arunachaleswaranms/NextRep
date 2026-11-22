@@ -121,6 +121,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(HabitSetupScreen), findsOneWidget);
     expect(find.text('Strength'), findsOneWidget);
+    // The cards sit in a lazily built list under the header.
+    await showIn(tester, find.text('10 glasses · Minimum 4 glasses'));
     expect(find.text('10 glasses · Minimum 4 glasses'), findsOneWidget);
     expect(find.text('3 habits selected'), findsOneWidget);
     expect(find.textContaining('days to a better you'), findsNothing);

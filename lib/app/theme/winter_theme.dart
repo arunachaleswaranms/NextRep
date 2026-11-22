@@ -56,7 +56,10 @@ ThemeData buildWinterTheme([WinterColors colors = WinterColors.night]) {
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
         backgroundColor: colors.accent,
-        foregroundColor: colors.textPrimary,
+        // Dark text on the bright accent: about 6.9:1 (light text was
+        // 2.61:1, below WCAG AA's 4.5:1). The same pairing as the Minimum
+        // Day button (`background` on `recovery`).
+        foregroundColor: colors.background,
         disabledBackgroundColor: colors.surfaceElevated,
         disabledForegroundColor: colors.textSecondary,
         minimumSize: const Size.fromHeight(56),

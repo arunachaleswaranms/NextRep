@@ -451,7 +451,8 @@ class _ArcHeader extends StatelessWidget {
         : 'Rolling 92-Day';
     final detail = switch ((session.kind, setup.startState)) {
       (ArcKind.rolling92, _) =>
-        '${WinterArcRules.lengthInDays} days from the day you press Start.',
+        'Your ${WinterArcRules.lengthInDays}-day Arc begins when you confirm '
+            'the start.',
       (_, SetupStartState.seasonNotStarted) =>
         'Preseason. The season starts October 1.',
       (_, SetupStartState.seasonEnded) => 'This season has ended.',

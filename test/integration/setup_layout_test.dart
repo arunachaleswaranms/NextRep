@@ -188,37 +188,6 @@ void _checkVisible(WidgetTester tester, Size screen) {
   }
 }
 
-/// The filled buttons of the setup screens. They use the app-wide
-/// `FilledButton` theme (text `textPrimary` on `accent`, 2.61:1 at 16 sp
-/// bold), unchanged since v1.0 and shared by every screen; Phase 12D
-/// doesn't restyle it (reported to the owner as a known limitation).
-const _sharedFilledButtons = {
-  'Start Challenge',
-  'Continue Editing',
-  'Continue to Start',
-  'Edit Setup',
-  'Review & Start',
-  'Confirm & Start Challenge',
-  'Confirm & Join Season',
-};
-
-/// Flutter's text-contrast guideline on the rendered screen, failing on
-/// every node except the shared filled-button style above.
-Future<void> _contrastExceptSharedFilledButton(WidgetTester tester) async {
-  final result = await textContrastGuideline.evaluate(tester);
-  if (result.passed) return;
-  final failures = result.reason!
-      .split('SemanticsNode#')
-      .skip(1)
-      .where(
-        (chunk) =>
-            !(chunk.contains('isButton') &&
-                _sharedFilledButtons.any((l) => chunk.contains('label: "$l"'))),
-      )
-      .toList();
-  expect(failures, isEmpty, reason: failures.join('\n'));
-}
-
 void main() {
   for (final layout in _layouts) {
     for (final scene in _Scene.values) {
@@ -313,14 +282,18 @@ void main() {
       tester.platformDispatcher.textScaleFactorTestValue = text;
       for (final scene in [
         _Scene.hub,
+        _Scene.hubEmpty, // Start Challenge unavailable
         _Scene.review12,
         _Scene.confirmRolling,
+        _Scene.confirmSeasonal,
+        _Scene.confirmPreseason, // Confirm unavailable, with the reason
         _Scene.editor12,
       ]) {
         await _open(tester, scene);
         await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
         await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
-        await _contrastExceptSharedFilledButton(tester);
+        // Rendered text contrast, every node, primary buttons included.
+        await expectLater(tester, meetsGuideline(textContrastGuideline));
         await tester.pumpWidget(const SizedBox());
         await tester.pump(const Duration(seconds: 5));
       }

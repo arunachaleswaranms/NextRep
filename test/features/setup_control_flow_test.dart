@@ -489,6 +489,7 @@ void main() {
           );
       expect(has(0, 'Move up'), isFalse);
       expect(has(0, 'Move down'), isTrue);
+      await showIn(tester, find.bySemanticsLabel(label(1)));
       expect(has(1, 'Move up'), isTrue);
       await tester.scrollUntilVisible(
         find.bySemanticsLabel(label(6)),
