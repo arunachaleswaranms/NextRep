@@ -353,7 +353,8 @@ requests; they are fixed on the same branch:
 - **Editor header (changed):** Rolling now reads "Your 92-day Arc begins
   when you confirm the start."
 - **Gate C wording kept:** "Days with nothing logged show as No progress."
-- **Gate D:** still pending owner approval.
+- **Gate D:** still pending at the time of these corrections; the owner
+  approved it afterwards (see Gate D outcome below).
 - **Reduced motion:** documented above for 12H, not resolved.
 - **Tests:** the setup layout test's exemption is gone;
   `test/app/winter_theme_contrast_test.dart` (3 tests) asserts 4.5:1 for
@@ -363,15 +364,33 @@ requests; they are fixed on the same branch:
   screen-reader actions) now scroll a card into view before checking it;
   their assertions are unchanged.
 
-## Gate D: owner wording sign-off (PENDING OWNER APPROVAL)
+## Gate D outcome
 
-**Status: PENDING OWNER APPROVAL.** Nothing below is approved until the
-owner says so. The spec is the starting copy. Reconciliation with Gate C: the spec's
+**Gate D (owner): APPROVED on 22 November 2026**, after the independent
+review corrections (head `f91643e`). Until then the wording below was a
+proposal; nothing in it was approved before this explicit sign-off. The
+owner approved:
+
+1. The Gate C-consistent Confirm wording "Days with nothing logged show
+   as No progress." (in place of the spec's "Days you don't log will count
+   as missed.").
+2. The Rolling editor header "Your 92-day Arc begins when you confirm the
+   start."
+3. All other setup, habit ordering, Save for Later, Review Setup and
+   Confirm & Start wording in the table below.
+
+The independent technical re-review of PR #27 passed, and the D1 contrast
+blocker is resolved (owner-reported). The owner will request one final
+independent verification before merging PR #27 themselves.
+
+### Approved wording
+
+The spec was the starting copy. Reconciliation with Gate C: the spec's
 Confirm text "Days you don't log will count as missed." is replaced by
 "Days with nothing logged show as No progress." so Gate C's approved
 "No progress" isn't reversed.
 
-| Where | Proposed copy |
+| Where | Approved copy |
 |---|---|
 | Editor, under the subtitle (2+ habits) | Hold and drag to put them in your order. |
 | Drag handle (accessible name) | Reorder Water |
@@ -380,7 +399,7 @@ Confirm text "Days you don't log will count as missed." is replaced by
 | After a move (announced) | Water moved to position 1 of 8 |
 | Reorder failure | Couldn't save the new order. |
 | Editor primary action | Review & Start (replaces "Start Winter Arc" / "Join Seasonal Winter Arc") |
-| Editor header, Rolling | Your 92-day Arc begins when you confirm the start. *(set by the owner in review; replaces "92 days from the day you press Start.")* |
+| Editor header, Rolling | Your 92-day Arc begins when you confirm the start. *(requested by the owner in the independent review, approved at Gate D; replaces "92 days from the day you press Start.")* |
 | Save for Later (button, three screens) | Save for Later |
 | Save confirmation | Your Arc setup is saved. / It stays here until you start it. |
 | Hub | YOUR WINTER ARC · Your Arc Setup Is Saved · Rolling 92-Day · 8 habits · 7 on |

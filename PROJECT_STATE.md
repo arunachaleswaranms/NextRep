@@ -1,6 +1,6 @@
 # PROJECT_STATE
 
-_Last updated: 2026-11-21. **Latest published release: v1.2.0** (tag
+_Last updated: 2026-11-22. **Latest published release: v1.2.0** (tag
 `v1.2.0` on `8ab0c43`, PR #20), published 18 October 2026; v1.1.0 and
 v1.0.0 before it. The v1.2 roadmap (Phases 11A–11F, PRs #15–#20), the
 publication record (PR #21), the Phase 12A plan (PR #22), the Phase 12A
@@ -8,8 +8,9 @@ Addendum (PR #23), the Phase 12E1 lifecycle foundation (PR #24), the
 Phase 12B Weekly Arc Review (PR #25) and the Phase 12C Arc Consistency
 Calendar (PR #26) are merged. `main` is `fa5ad0f`, version `1.2.0+3`.
 **v1.3.0 is in development, not released: Phase 12D (habit ordering,
-saved setup and Confirm & Start) is in review and waits for the owner's
-Gate D wording sign-off.**_
+saved setup and Confirm & Start, PR #27) passed independent re-review
+and the owner approved Gate D on 22 November 2026; it awaits a final
+independent verification and the owner's merge.**_
 
 | | |
 |---|---|
@@ -40,7 +41,7 @@ planned. TalkBack was deliberately deferred and doesn't block this model.
   record; #22 Phase 12A; #23 the Phase 12A Addendum; #24 Phase 12E1;
   #25 Phase 12B; #26 Phase 12C.
 
-## Phase 12D (v1.3.0 habit ordering, saved setup, Confirm & Start, in review)
+## Phase 12D (v1.3.0 habit ordering, saved setup, Confirm & Start, Gate D approved, not merged)
 
 Contracts, copy and evidence: [docs/PHASE_12D.md](docs/PHASE_12D.md).
 Baseline `main` `fa5ad0f` (PR #26 merged); branch
@@ -63,10 +64,16 @@ version change; no phone, no signing, no release.
   6.9:1, was 2.61:1; contrast tested with no exemptions); Rolling editor
   header "Your 92-day Arc begins when you confirm the start."; reduced-
   motion reorder animation recorded for 12H, not resolved.
-- **Gate D (owner): PENDING OWNER APPROVAL.** The wording proposal is in
-  [docs/PHASE_12D.md](docs/PHASE_12D.md#gate-d-owner-wording-sign-off-pending-owner-approval).
-- **Next:** independent review; owner Gate D; owner merge. Not merged; no
-  release.
+- **Independent technical re-review:** passed; D1 resolved
+  (owner-reported, 22 November 2026).
+- **Gate D (owner): APPROVED on 22 November 2026**, after the review
+  corrections (head `f91643e`): the Gate C-consistent "Days with nothing
+  logged show as No progress.", "Your 92-day Arc begins when you confirm
+  the start." and all other setup, ordering, Save for Later, Review Setup
+  and Confirm & Start wording. It was pending until that sign-off. See
+  [docs/PHASE_12D.md](docs/PHASE_12D.md#gate-d-outcome).
+- **Next:** one final independent verification; then the owner merges
+  PR #27. Not merged; no release.
 
 ## Phase 12C (v1.3.0 Arc Consistency Calendar, merged)
 

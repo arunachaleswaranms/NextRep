@@ -8,8 +8,8 @@ foundation of v1.3.0 ([docs/PHASE_12E1.md](docs/PHASE_12E1.md)). Phase
 Phase 12C adds the Arc Consistency Calendar
 ([docs/PHASE_12C.md](docs/PHASE_12C.md)); the owner approved its wording
 at Gate C. Phase 12D adds habit ordering, saved setup and Confirm & Start
-([docs/PHASE_12D.md](docs/PHASE_12D.md)); its wording awaits the owner's
-Gate D sign-off.
+([docs/PHASE_12D.md](docs/PHASE_12D.md)); the owner approved its wording
+at Gate D.
 
 Schema **v7** · backup format **4** (reads 1, 2, 3 and 4)
 
