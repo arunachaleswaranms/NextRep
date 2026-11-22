@@ -6,12 +6,12 @@ v1.0.0 before it. The v1.2 roadmap (Phases 11A–11F, PRs #15–#20), the
 publication record (PR #21), the Phase 12A plan (PR #22), the Phase 12A
 Addendum (PR #23), the Phase 12E1 lifecycle foundation (PR #24), the
 Phase 12B Weekly Arc Review (PR #25), the Phase 12C Arc Consistency
-Calendar (PR #26) and Phase 12D habit ordering and saved setup (PR #27)
-are merged. `main` is `dcde6b3`, version `1.2.0+3`. **v1.3.0 is in
-development, not released: Phase 12E2 (Freeze and Resume, PR #28) is
-implemented and qualified, with the Gate E2 review corrections (R1–R3)
-applied, and the owner approved Gate E2 on 22 November 2026; it awaits
-the owner's merge decision.**_
+Calendar (PR #26), Phase 12D habit ordering and saved setup (PR #27) and
+Phase 12E2 Freeze and Resume (PR #28) are merged. `main` is `b751dff`,
+version `1.2.0+3`. **v1.3.0 is in development, not released: Phase 12F
+(Restart and optional Arc deletion) is implemented and qualified on its
+branch and awaits independent review, Gate F and the owner's merge
+decision.**_
 
 | | |
 |---|---|
@@ -30,10 +30,12 @@ planned. TalkBack was deliberately deferred and doesn't block this model.
 ## Repo
 
 - Remote: https://github.com/arunachaleswaranms/NextRep (public, MIT)
-- `main`: `dcde6b3` (squash merge of PR #27, Phase 12D, 22 November 2026;
-  post-merge CI run
+- `main`: `b751dff` (squash merge of PR #28, Phase 12E2, 22 November 2026,
+  final head `bc11022`; post-merge CI run
+  [45047072621](https://github.com/arunachaleswaranms/NextRep/actions/runs/45047072621)
+  green, both jobs), on top of `dcde6b3` (PR #27, Phase 12D; CI run
   [44994020321](https://github.com/arunachaleswaranms/NextRep/actions/runs/44994020321)
-  green, both jobs), on top of `fa5ad0f` (PR #26, Phase 12C), `f10fd75` (PR #25,
+  green), `fa5ad0f` (PR #26, Phase 12C), `f10fd75` (PR #25,
   Phase 12B), `7e5ece4` (PR #24,
   Phase 12E1), `933960c` (PR #23,
   the Phase 12A Addendum), `64d77e0` (PR #22, the Phase 12A plan),
@@ -43,9 +45,42 @@ planned. TalkBack was deliberately deferred and doesn't block this model.
   green, both jobs). Tags `v1.0.0` (`b3f9c5c`), `v1.1.0` (`7e563e2`) and
   `v1.2.0` (`8ab0c43`). PRs #1–#20 are Phases 1–11F; #21 the publication
   record; #22 Phase 12A; #23 the Phase 12A Addendum; #24 Phase 12E1;
-  #25 Phase 12B; #26 Phase 12C; #27 Phase 12D.
+  #25 Phase 12B; #26 Phase 12C; #27 Phase 12D; #28 Phase 12E2.
 
-## Phase 12E2 (v1.3.0 Freeze and Resume, Gate E2 approved, not merged)
+## Phase 12F (v1.3.0 Restart and optional Arc deletion, awaiting Gate F, not merged)
+
+Contracts, wording and evidence: [docs/PHASE_12F.md](docs/PHASE_12F.md).
+Baseline `main` `b751dff` (PR #28 merged, CI 45047072621 green); branch
+`phase/12f-v1.3-restart-delete` (worktree `~/labs/NextRep-12F`). No
+schema, migration, backup format, Focus Guard native, permission,
+dependency, XP, achievement or version change; no phone, no signing, no
+release.
+
+- **Restart:** "Restart with this setup" (Habits, paused Today; Seasonal:
+  "Start a Rolling Arc with this setup"), typed RESTART (trimmed,
+  case-sensitive). One Drift transaction re-checks everything (the active
+  unfinished arc, not over today, the date and last day shown, the clock
+  guard), ends the old arc on its **last lived day** (`closed_on`),
+  removes an open freeze, and starts a Rolling arc on Day 1 today with
+  each habit's latest configuration (pending revision included); read
+  back and rolled back on any mismatch. The old arc keeps every other row.
+- **Delete:** a separate typed-DELETE screen after a restart that chose
+  "Delete my old Arc…", or from any finished arc's summary (replaces the
+  v1.2 dialog, O11). One transaction by the arc's id; never an active
+  arc; nothing stored if the user leaves.
+- **History:** "Ended early · Day N of 92" in Arc History and the Summary;
+  never completed, no Summit; reviews to `closedOn`.
+- **Qualification:** 210 new tests (2,183 Flutter, 71 JVM pass); failure
+  injection at every write; 48 generated histories against an oracle;
+  layout sweep 10 scenes × 7 layouts (two defects found and fixed);
+  mutation check 16/17 detected (1 equivalent); disposable API 36
+  emulator journey (Keep, scheduled and paused restarts, kill between
+  restart and deletion, DELETE, 2×/landscape/small screen), AVD deleted.
+- **Next:** independent review, Gate F (wording additions and review
+  questions in the doc), then the owner's merge decision. Not merged; no
+  release.
+
+## Phase 12E2 (v1.3.0 Freeze and Resume, merged)
 
 Contracts, wording and evidence: [docs/PHASE_12E2.md](docs/PHASE_12E2.md).
 Baseline `main` `dcde6b3` (PR #27 merged); branch
@@ -92,7 +127,8 @@ release.
   date ranges, and Resume on the first paused date removing the empty
   pause. It was pending until that sign-off. See
   [docs/PHASE_12E2.md](docs/PHASE_12E2.md#gate-e2-outcome).
-- **Next:** the owner merges PR #28. Not merged; no release.
+- **Merged** as PR #28 on 22 November 2026 (`b751dff`, final head
+  `bc11022`); post-merge CI run 45047072621 green. No release.
 
 ## Phase 12D (v1.3.0 habit ordering, saved setup, Confirm & Start, merged)
 

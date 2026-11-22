@@ -11,7 +11,8 @@ at Gate C. Phase 12D adds habit ordering, saved setup and Confirm & Start
 ([docs/PHASE_12D.md](docs/PHASE_12D.md)); the owner approved its wording
 at Gate D. Phase 12E2 adds Freeze and Resume
 ([docs/PHASE_12E2.md](docs/PHASE_12E2.md)); the owner approved it at
-Gate E2.
+Gate E2. Phase 12F adds Restart and the optional deletion of the old Arc
+([docs/PHASE_12F.md](docs/PHASE_12F.md)); awaiting Gate F.
 
 Schema **v7** · backup format **4** (reads 1, 2, 3 and 4)
 
@@ -57,9 +58,31 @@ Schema **v7** · backup format **4** (reads 1, 2, 3 and 4)
   the last day later by the paused days. Summary and Arc History show the
   days paused. Never offered for a Seasonal Arc or on Day 92, and refused
   while the phone's date is earlier than the Arc's history.
+- **Restart with this setup:** from the Habits screen or the paused
+  Today, start a new Rolling 92-Day Arc on Day 1 today with the same
+  habits, goals (including a change waiting for tomorrow), on/off states
+  and order. Type RESTART to confirm. The current Arc is kept in Arc
+  History as "Ended early · Day N of 92": its progress, XP, achievements,
+  reflections and goal history stay exactly as they were, it is never
+  called completed and never earns the Summit. The new Arc starts at 0 XP
+  with its own streaks and achievements. A pause that was scheduled or in
+  effect ends with the old Arc. For a Seasonal Arc the entry reads "Start
+  a Rolling Arc with this setup"; the season's dates never move. Refused,
+  with nothing changed, while the phone's date is earlier than the Arc's
+  history.
+- **Delete an old Arc (optional, typed DELETE):** after a restart you can
+  choose "Delete my old Arc…", which opens a separate screen once the new
+  Arc has started. It lists exactly what will be lost (days of progress,
+  XP, achievements, reflections, including zeros) and offers a backup
+  first; nothing is deleted unless DELETE is typed. Leaving the screen, or
+  the app closing, keeps the old Arc. The same screen now deletes any
+  finished Arc from its summary.
 
 ### Changed
 
+- **Deleting a completed Arc** now uses the typed-DELETE screen instead of
+  a confirmation dialog (owner decision O11), the same as an Arc ended
+  early.
 - **Journey wording (Gate C):** a past day with no progress reads
   "No progress" instead of "Missed" in the Journey, the Calendar, the
   Legend, the Weekly Review's day strip, day details and screen-reader
