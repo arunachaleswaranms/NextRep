@@ -1,9 +1,8 @@
 /// The completion-sound set. Persisted by [name] (schema v7, backup format
 /// 4), so never rename values.
 ///
-/// Phase 12E1 only stores and restores this setting. Nothing plays a sound
-/// yet: the player, the sound files and the settings screen belong to
-/// Phase 12G.
+/// Stored and restored since Phase 12E1; played since Phase 12G
+/// (`CompletionFeedback`, `assets/sounds/`, Sound & Feedback).
 enum SoundTheme {
   /// The default set.
   iceCrystal,
