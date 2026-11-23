@@ -102,6 +102,10 @@ class SoundPoolEngine(private val assets: AssetManager) : SoundEngine {
         return assets.openFd(key).use { pool.load(it, 1) }
     }
 
+    override fun unload(sample: Int) {
+        pool.unload(sample)
+    }
+
     override fun play(sample: Int): Int = pool.play(sample, 1f, 1f, 1, 0, 1f)
 
     override fun release() = pool.release()

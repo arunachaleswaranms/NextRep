@@ -165,7 +165,7 @@ backfill and celebrations never call the engine.
 | Count / duration reaches target | habit | W flow 1 |
 | Clock time at or before / after the goal | habit / none | W flow 1 |
 | Undo, decrement, clear time, snackbar Undo | none | W flows 2, 3 |
-| Completion restored after a reversal | habit, if the 3 s per-habit window allows | W flow 2 |
+| Completion restored after a reversal (re-checking, stepping back up, or the clock-time snackbar Undo that restores a goal-met time) | habit, if the 3 s per-habit window allows | W flows 2, 4 |
 | The completion that makes today a Perfect Day | Perfect Day only | W flow 1; emulator t8 |
 | Switching to / from Minimum Day | none | W flow 5 |
 | Completing the last habit of a Minimum Day | habit (a completed Minimum Day is not a Perfect Day) | W flows 5, 6 |
@@ -275,16 +275,16 @@ eyebrow. This changes Today's layout and is listed for Gate G.
 | Layer | File | Tests |
 |---|---|---|
 | U | `test/domain/completion_feedback_test.dart` | 23: global 500 ms and still-playing gaps, per-habit 3 s, dropped-not-queued, simultaneous requests, a 200-tap burst, Perfect Day replacement and per-Arc/date memory, throttled Perfect Day, sound off, latency, unreadable setting, failing and hanging player, warm-up, preview, wall-clock rollback and restore through the providers |
-| W | `test/features/completion_sound_flow_test.dart` | 8: every § 8.1 row through the real Today screen, commit and ledger, with haptics recorded |
+| W | `test/features/completion_sound_flow_test.dart` | 9: every § 8.1 row through the real Today screen, commit and ledger, with haptics recorded |
 | W / R | `test/features/sound_settings_test.dart` | 22: wording and defaults, choose and preview, off disables with a reason, failed write, relaunch and Restart, format-4 restore and formats 1–3 through Data & Backup, entry points in five app states, six layouts (360×800 at 1× and 2×, 320×568 at 1.5×, landscape at 1.3× and 1×, tablet), `meetsGuideline` tap target / label / contrast at 1× and 2× |
 | W | `test/features/completion_sound_regression_test.dart` | 1: the same session with sounds on, off, and a failing player stores identical rows in every table but `feedback_preferences` |
 | S | `test/app/completion_sound_boundary_test.dart` | 6: unique channel names; SoundPool, sonification, one stream, no focus or other player; no channel, permission or network; iOS ambient; only Today and the settings screen use the engine; bundled only |
 | A | `test/assets/completion_sound_assets_test.dart` | 38 (above) |
-| J | `android/app/src/test/.../sound/CompletionSoundsTest.kt` | 16: loading once, bundled paths only, play when loaded, skip before loading and never later, unknown sound, failed load retried, missing asset, silent and vibrate, every DND filter, unreadable state, policy table, playback failures, release, late callbacks, fresh engine after release, no channel collision with Focus Guard |
+| J | `android/app/src/test/.../sound/CompletionSoundsTest.kt` | 16: loading once, bundled paths only, play when loaded, skip before loading and never later, unknown sound, failed load unloaded and retried, missing asset, silent and vibrate, every DND filter, unreadable state, policy table, playback failures, release, late callbacks, fresh engine after release, no channel collision with Focus Guard |
 
 `test/app/network_boundary_test.dart` is unchanged and passes.
 
-Totals on the final local run: **2,282 Flutter tests pass** (98 new),
+Totals on the final local run: **2,283 Flutter tests pass** (99 new),
 **87 JVM tests pass** (16 new); `dart format` and `flutter analyze`
 clean. The existing layout sweeps (11E, 12E2) found the header defect
 above and pass after the fix.
@@ -346,6 +346,7 @@ The 10 ms blip at the start of most captures is Android's touch click
 | t15 | Home 20 s, resume | resume: no call; completion `PLAYED` | 390 ms |
 | t16 | TalkBack on, double-tap to complete | completion saved, `PLAYED` | **inconclusive**: the stream returned 0.5 s of near-silence in 701 packets, without TalkBack's own speech |
 | t17 | R8 release build | starts, no crash; SoundPool player created with sonification attributes | 900 ms Perfect Day sound captured |
+| t18–19 | Final release build (after the review fixes): normal, then silent | completion saved both times | 890 ms sound; then **0 packets** |
 
 ¹ Under Do Not Disturb Android reports the ringer as silent
 (`dumpsys audio`: priority → internal NORMAL, external SILENT; alarms /
@@ -362,6 +363,20 @@ and its app picker listed apps; turning on the daily reminder stored it
 and scheduled its alarm; the release APK's sounds are stored
 uncompressed. Today's header was confirmed at 360 dp, 1× and 2×, before
 and after the fix.
+
+## Independent review before the PR
+
+A fresh reviewer read the code cold (no conclusions given). Nothing
+critical or high. Outcomes:
+
+| Finding | Outcome |
+|---|---|
+| M1: the clock-time snackbar Undo after "marked not done" restores the goal-met time and plays the habit sound | **Kept, as specified:** it restores a completion (§ 8.1 "Completion restored after a reversal"); the haptic and "+XP" snackbar fire there too. Now pinned by a test; the owner may read "undo" more strictly (decision 12) |
+| L1: the 1 s "never late" drop could silence a sound on a slow device (the save queue also runs the previous action's achievement sync) | Gate G decision 8; emulator latency was 100–230 ms, OnePlus to measure in 12I |
+| L2: the Perfect Day memory is per Flutter engine; on Android an Activity finished and relaunched in a warm process starts fresh | Documented with decision 7 |
+| L3: iOS marked the session configured even if `setCategory(.ambient)` failed (the default session would stop music) | **Fixed:** nothing loads or plays unless the ambient category was set |
+| L4: a failed `SoundPool` load was never unloaded | **Fixed:** unloaded, then retried by the next prepare (JVM test) |
+| L5: a preview before loading finishes is silent but takes the 500 ms window | Accepted: the screen warms the sounds up on open |
 
 ## Unverified device behaviour (unresolved for Gate G)
 
@@ -423,14 +438,21 @@ source: `dart run tool/sounds/generate_completion_sounds.dart`.
    silent.
 7. **Perfect Day memory per process:** a Perfect Day undone and redone
    after an app restart plays the Perfect Day sound again (observed, t14);
-   within one process it plays the habit sound.
+   within one process it plays the habit sound. Strictly the memory lives
+   with the Flutter engine, so an Activity finished and reopened in a
+   still-warm process also starts fresh.
 8. **Never late:** a save slower than 1 s stays silent (a rule added to
-   honour "never play late").
+   honour "never play late"). Measured 100–230 ms on the emulator; to be
+   measured on the OnePlus in 12I, where a slow save would drop the sound.
 9. **A Perfect Day sound inside another sound's 500 ms window is dropped**
    like any other (rapid taps), not given priority.
 10. **Today's header** layout change (above).
 11. **About**: a new "SETTINGS" row "Sound & Feedback"; the hub link
     "Sound & Feedback"; the stacked preview button's visible text "Play".
+
+12. **Undo that restores a completion:** the clock-time snackbar Undo
+    after "marked not done" plays the habit sound (as a restored
+    completion). Keep, or silence every snackbar Undo?
 
 ### Checklist
 
@@ -438,7 +460,7 @@ source: `dart run tool/sounds/generate_completion_sounds.dart`.
 - [ ] Owner listened to all six sounds (not claimed by any test)
 - [ ] Names approved or changed
 - [ ] Default on / Ice Crystal confirmed
-- [ ] Decisions 4–11 answered
+- [ ] Decisions 4–12 answered
 - [ ] Unresolved items above accepted for 12G or assigned to 12H / 12I
 - [ ] CI green on the final head
 - [ ] Owner's merge decision
@@ -448,7 +470,7 @@ source: `dart run tool/sounds/generate_completion_sounds.dart`.
 ```
 dart format --output=none --set-exit-if-changed .     # 0 changed
 flutter analyze                                       # No issues found
-flutter test                                          # 2,282 passed
+flutter test                                          # 2,283 passed
 (cd android && ./gradlew :app:testDebugUnitTest)      # 87 passed
 flutter build apk --debug && flutter build apk --release
 flutter build ios --simulator --debug

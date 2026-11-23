@@ -75,9 +75,15 @@ final class CompletionSoundPlayer: NSObject, FlutterPlugin {
   /// Loads every sound not loaded yet; returns how many were loaded.
   private func prepare(_ sounds: [String: String]) -> Int {
     if !sessionConfigured {
-      // Ambient: silent when the switch is on, mixed with other audio.
-      try? AVAudioSession.sharedInstance().setCategory(.ambient, mode: .default)
-      sessionConfigured = true
+      // Ambient: silent when the switch is on, mixed with other audio. If it
+      // can't be set, nothing is loaded or played: the default session
+      // (solo ambient) would stop the user's music.
+      do {
+        try AVAudioSession.sharedInstance().setCategory(.ambient, mode: .default)
+        sessionConfigured = true
+      } catch {
+        return 0
+      }
     }
     var loaded = 0
     for (id, asset) in sounds where players[id] == nil && Self.isBundledSound(asset) {

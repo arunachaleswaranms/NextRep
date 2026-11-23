@@ -187,6 +187,29 @@ void main() {
     await shutDown(tester);
   });
 
+  testWidgets('a clock-time Undo that restores a goal-met time is a '
+      'restored completion: the habit sound, after the window', (tester) async {
+    await phoneSize(tester);
+    final app = await fourKindsArc();
+    addTearDown(app.db.close);
+    await tester.pumpWidget(
+      soundApp(app, player: player, monotonic: monotonic),
+    );
+    await tester.pumpAndSettle();
+    later();
+    await setTime(tester, 22, 15); // goal met: a sound
+    later();
+    await setTime(tester, 23, 30); // after the goal: marked not done
+    expect(player.plays, hasLength(1));
+    expect(find.text('Lights Out marked not done'), findsOneWidget);
+    later();
+    await tester.tap(find.widgetWithText(SnackBarAction, 'Undo'));
+    await tester.pumpAndSettle();
+    expect((await app.tracking.today()).completion.completed, 1);
+    expect(player.sounds, [CompletionSound.habit, CompletionSound.habit]);
+    await shutDown(tester);
+  });
+
   testWidgets('rapid taps: at most one sound per window, never queued', (
     tester,
   ) async {

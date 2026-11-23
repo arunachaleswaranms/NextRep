@@ -112,7 +112,13 @@ class CompletionSounds(
         if (ok) {
             loaded.add(sample)
         } else {
+            // Forget it (the next prepare loads it again) and free its slot.
             samples.values.remove(sample)
+            try {
+                from.unload(sample)
+            } catch (e: Exception) {
+                // Nothing more to free.
+            }
         }
     }
 
@@ -147,6 +153,9 @@ interface SoundEngine {
 
     /** Starts loading [asset]; the sample id, or 0 if it can't start. */
     fun load(asset: String): Int
+
+    /** Frees a sample whose load failed. */
+    fun unload(sample: Int)
 
     /** Plays [sample] once; the stream id, or 0 if it didn't start. */
     fun play(sample: Int): Int

@@ -77,8 +77,9 @@ backup field are reused. No phone, no signing, no release.
 - **Settings:** Sound & Feedback (`/settings/sound`) from Today, the hub,
   Arc History and About. Today's header now wraps its buttons under the
   title when they don't fit (a defect the extra button caused at 360 dp).
-- **Qualification:** 98 new Flutter tests (2,282 pass), 16 new JVM tests
-  (87 pass), 4 of 4 mutations detected; disposable API 36 emulator with
+- **Qualification:** 99 new Flutter tests (2,283 pass), 16 new JVM tests
+  (87 pass), 4 of 4 mutations detected; an independent pre-PR review
+  (two small fixes); disposable API 36 emulator with
   the device's real audio output captured over the emulator's gRPC
   `streamAudio`: audible in normal ringer mode, nothing emitted in silent,
   vibrate and all three Do Not Disturb modes, music not ducked or paused,

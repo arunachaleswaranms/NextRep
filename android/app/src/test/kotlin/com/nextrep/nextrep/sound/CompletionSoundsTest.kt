@@ -22,6 +22,7 @@ class CompletionSoundsTest {
         var listener: ((Int, Boolean) -> Unit)? = null
         val loads = mutableListOf<String>()
         val plays = mutableListOf<Int>()
+        val unloaded = mutableListOf<Int>()
         var released = 0
         var failLoadOf: String? = null
         var playReturns = 7
@@ -42,6 +43,10 @@ class CompletionSoundsTest {
             if (throwOnPlay) throw IllegalStateException("released")
             plays.add(sample)
             return playReturns
+        }
+
+        override fun unload(sample: Int) {
+            unloaded.add(sample)
         }
 
         override fun release() {
@@ -145,6 +150,7 @@ class CompletionSoundsTest {
         val engine = engines[0]
         engine.finishAll(ok = false)
         assertEquals(PlayResult.NOT_READY, sounds.play("iceCrystal.habit"))
+        assertEquals((1..6).toList(), engine.unloaded)
         assertEquals(6, sounds.prepare(catalogue))
         assertEquals(12, engine.loads.size)
     }
