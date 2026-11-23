@@ -431,11 +431,19 @@ void main() {
         DeleteArcCopy.status(rolling(status: WinterArcStatus.completed)),
         'Completed',
       );
+      // F-R1: lived challenge days, not "days of progress".
+      expect(DeleteArcCopy.progress(0, 0), '0 challenge days and 0 XP');
+      expect(DeleteArcCopy.progress(1, 15), '1 challenge day and 15 XP');
+      expect(DeleteArcCopy.progress(1, 0), '1 challenge day and 0 XP');
       expect(
         DeleteArcCopy.progress(37, 2430),
-        '37 days of progress and 2,430 XP',
+        '37 challenge days and 2,430 XP',
       );
-      expect(DeleteArcCopy.progress(1, 0), '1 day of progress and 0 XP');
+      expect(
+        DeleteArcCopy.progress(92, 1234567),
+        '92 challenge days and 1,234,567 XP',
+      );
+      expect(DeleteArcCopy.progress(2, 999), '2 challenge days and 999 XP');
       expect(DeleteArcCopy.achievements(0), '0 achievements');
       expect(DeleteArcCopy.achievements(1), '1 achievement');
       expect(DeleteArcCopy.reflections(0), '0 Journal reflections');

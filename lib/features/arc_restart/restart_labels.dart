@@ -170,9 +170,13 @@ abstract final class DeleteArcCopy {
 
   static const removes = 'This permanently removes:';
 
-  /// "37 days of progress and 2,430 XP"; zero is shown as "0".
+  /// "37 challenge days and 2,430 XP"; zero is shown as "0". [days] is
+  /// the arc's lived challenge days (`ArcSummary.daysElapsed`), counted
+  /// whether or not anything was logged on them, so the label never
+  /// implies logged progress (Gate F review F-R1).
   static String progress(int days, int xp) =>
-      '${_count(days, 'day', 'days')} of progress and ${xpAmount(xp)} XP';
+      '${_count(days, 'challenge day', 'challenge days')} and '
+      '${xpAmount(xp)} XP';
   static String achievements(int n) => _count(n, 'achievement', 'achievements');
   static String reflections(int n) =>
       _count(n, 'Journal reflection', 'Journal reflections');

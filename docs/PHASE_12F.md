@@ -187,7 +187,7 @@ All new copy lives in `lib/features/arc_restart/restart_labels.dart`.
 | Pause notes | scheduled: "The pause you scheduled is cancelled. Nothing was paused."; paused: "Your pause ends here. Paused days are never counted." |
 | Refusals / errors | "Your phone's date (17 Oct) is earlier than your latest logged day (18 Oct). You can restart from 18 Oct. Nothing was changed." (also "the day your Arc last resumed", "your Arc's first day"); "Couldn't restart. Nothing was changed." + Retry; "The date changed while this was open. These are the new details."; "This Arc can't be restarted now. Nothing was changed." |
 | Success (§ 9.10) | "Your new Arc has started" · "Day 1 of 92 · Fri 16 Oct 2026" · "Your previous Arc is in Arc History:" · "Ended early · Day 4 of 92 · 60 XP" (emulator) · "Go to Today" · "View previous Arc ›" |
-| Delete (§ 9.11) | after a restart "Delete your previous Arc?" + "Your new Arc has started and is safe. This step is separate and optional."; from a summary "Delete this Arc?"; "Rolling 92-Day · 13 Nov – 13 Nov 2026" · "Ended early · Day 1 of 92" (or "Completed") · "This permanently removes:" • "1 day of progress and 15 XP" • "1 achievement" • "0 Journal reflections" (emulator) • "its Journey, weekly reviews and goals" · "Insights will no longer include it." · "Other Arcs and your settings are kept." · "This cannot be undone without a backup." · "Export a backup first" · "Type DELETE to confirm" · "Delete previous Arc" / "Delete this Arc" · "Keep it"; "Couldn't delete. Nothing was removed." + Retry; snack "Winter Arc deleted." |
+| Delete (§ 9.11) | after a restart "Delete your previous Arc?" + "Your new Arc has started and is safe. This step is separate and optional."; from a summary "Delete this Arc?"; "Rolling 92-Day · 13 Nov – 13 Nov 2026" · "Ended early · Day 1 of 92" (or "Completed") · "This permanently removes:" • "1 challenge day and 15 XP" (F-R1; the emulator run showed the earlier "1 day of progress and 15 XP") • "1 achievement" • "0 Journal reflections" (emulator) • "its Journey, weekly reviews and goals" · "Insights will no longer include it." · "Other Arcs and your settings are kept." · "This cannot be undone without a backup." · "Export a backup first" · "Type DELETE to confirm" · "Delete previous Arc" / "Delete this Arc" · "Keep it"; "Couldn't delete. Nothing was removed." + Retry; snack "Winter Arc deleted." |
 | History / Summary | Arc History card: chip "ENDED EARLY" and "Ended early · Day 10 of 92"; Summary: "WINTER ARC ENDED EARLY" and "Ended early · Day 10 of 92" (instead of "92 days"); Delete Arc in the ⋮ of every finished arc |
 
 Typed words: the field is trimmed, then compared case-sensitively
@@ -237,7 +237,7 @@ or the spec text was adapted):
 | `test/data/arc_restart_test.dart` | 37 | R (real in-memory Drift, real services, injected clock) | every row of § 6.7's examples; F2-1, F2-2, F2-3, F2-4/5, F2-6 (with and without activity), F2-7 (open pause, first paused date, after closed pauses), F2-8 (Day 91, Day 92 logged / not logged; never completed, no Summit on later dates, lifecycle and achievement backfill run), F2-9 (season, late join, join day), F2-10; reflection or Minimum Day alone count as activity; the new arc: same ids, titles, types, units, icons, order, on/off, custom habits, latest goals, no revision, fresh Day 1, 0 XP, level 1, no unlock; achievements earned again only by the new arc; the new arc pauses, resumes, completes; refusals with every table identical (T1, T10, F2-14: completed and over-today; setup, ended, unknown, stale id; two concurrent restarts start one arc; all-off configuration); **F2-13 / T5**: SQL-trigger failure on the freeze delete, the session update, the session insert, the first and the last habit insert, plus two read-back mismatches: every table identical, then a retry works once; Journey/streaks of the ended arc; tracking/reflection/edit writes to the ended arc refused; § 12.5 XP split and identities for both arcs on every date d−2…d140 (`other = 0`, ended `today = 0`); Insights; reminders planned from the new Day 1; **T11 / F2-11**: five chained restarts (F2-1, F2-2+F2-6, F2-7, F2-10, F2-8) each exported and restored row for row, `closedOn` never after the export; process death over a file database |
 | `test/data/arc_restart_delete_test.dart` | 57 | R | **T7**: deletion removes exactly the ended arc (freezes included), every other row identical; a completed arc the same; **D5**: active, setup, unknown arcs refused (service and repository, the service before reaching the repository); **T8**: a failure at each of 7 cascade tables leaves both arcs identical, retry deletes; Insights, History and a backup after deletion; no deletion ever happens later; **Weekly Review R12**: weeks to `closedOn` complete, later weeks not reached, identical for every later date, the new arc has its own Week 1; **48 generated histories** (Rolling and Seasonal joins, starts around year boundaries and 29 Feb 2028, partial days, goal edits, pauses and resumes, date rollbacks with the restart refused and nothing written, a pause scheduled just before restarting) restarted at a random point and checked against an independent brute-force oracle over the raw freeze rows, the full-snapshot diff and a backup round trip; plus a coverage check that every one of 11 cases occurred |
 | `test/domain/arc_restart_rules_test.dart` | 18 | U | the last-lived-day table on synthetic arcs (open, scheduled and closed pauses, Seasonal); `decide`'s refusals in order; the plan; `baselineFrom` (latest revision whatever its date, order, ids); preview flags; typed words (10 inputs + DELETE); wording helpers |
-| `test/features/arc_restart_flow_test.dart` | 17 | W (whole app, real router and Drift) | T1: every typed word, keyboard Done, Cancel and Back write nothing, text discarded; Keep: success screen, View previous Arc (Summary "ENDED EARLY"), Back to Today Day 1, History; reminders re-planned; Delete it…: commit first, DELETE screen counts, wrong words, export first and back, Keep it, Back; T6/T7 deletion; T8 failure + Retry; process death between restart and deletion; storage failure + Retry; double tap = one arc; midnight while open; Day 92 + midnight completion closes to the summary; clock behind; Seasonal wording; paused Today; scheduled pause; O11 completed-arc deletion; active-arc delete link; zero counts; the router rules |
+| `test/features/arc_restart_flow_test.dart` | 18 | W (whole app, real router and Drift) | T1: every typed word, keyboard Done, Cancel and Back write nothing, text discarded; Keep: success screen, View previous Arc (Summary "ENDED EARLY"), Back to Today Day 1, History; reminders re-planned; Delete it…: commit first, DELETE screen counts, wrong words, export first and back, Keep it, Back; T6/T7 deletion; T8 failure + Retry; process death between restart and deletion; storage failure + Retry; double tap = one arc; midnight while open; Day 92 + midnight completion closes to the summary; clock behind; Seasonal wording; paused Today; scheduled pause; O11 completed-arc deletion; active-arc delete link; zero counts; F-R1: challenge days with nothing logged are still counted ("3 challenge days"); the router rules |
 | `test/features/arc_restart_read_only_test.dart` | 1 | W | the ended arc's Summary, Journey, Journal, Achievements, all 13 Weekly Reviews and History on 4 dates (closing date to 400 days later): every row of the old arc identical |
 | `test/integration/restart_layout_test.dart` | 80 | W | 10 scenes × 7 layouts (360 × 800 at 1× and 2×, 320 × 568 at 1.5×, both landscapes, tablet, 360 × 640 at 1.3×): no exception, overflow, clipped line or sideways scroll; every button and radio tile ≥ 48 dp; the field visible after typing; headings never truncated; Flutter tap-target, label and contrast guidelines at 1× and 2× on every scene; semantics (field labels, disabled-button reasons, "Your old Arc" group, losses as separate nodes with numbers) |
 | `test/features/phase5_flow_test.dart` | 2 updated | W | the v1.2 completed-arc delete tests now go through the typed-DELETE screen (owner decision O11); their expectations otherwise unchanged |
@@ -303,7 +303,7 @@ row dump of every table on the device before and after each step.
 | Reminders | daily + reflection enabled through the UI (notification permission granted): one per date from 13 Nov |
 | 6. Scheduled pause → Restart | Pause from tomorrow (14 Nov): Habits → Restart shows "Your current Arc ends at Day 1 of 92" and "The pause you scheduled is cancelled. Nothing was paused."; Cancel → identical |
 | 6. Paused → Restart | Clock Mon 16 Nov: paused Today with "Restart with this setup"; 0 reminders pending while paused; the screen shows "Your pause ends here. Paused days are never counted."; keyboard opens in capitals with the field above it (screenshot); RESTART + keyboard Done with "Delete my old Arc…". Diff: the **open freeze row deleted**, arc 2 `ended`, `closed_on = 2026-11-13` (last lived day before the pause), arc 3 active from 16 Nov |
-| 8. Kill between restart and deletion | On the delete screen (counts "1 day of progress and 15 XP", "1 achievement", "0 Journal reflections"): `am kill` + `force-stop`, relaunch → Today "Day 1 of 92", no delete screen, **database identical**, reminders re-planned for the new arc (0 → 27 pending) |
+| 8. Kill between restart and deletion | On the delete screen (counts, in the wording before F-R1, "1 day of progress and 15 XP", "1 achievement", "0 Journal reflections"): `am kill` + `force-stop`, relaunch → Today "Day 1 of 92", no delete screen, **database identical**, reminders re-planned for the new arc (0 → 27 pending) |
 | 7. DELETE flow | History → the ended arc → Arc options → Delete Arc: "Delete this Arc?"; `delete`, `DELET`, `RESTART` keep the button disabled; Keep it → summary, **identical**; then DELETE → back to History. Diff: exactly arc 2's session, habits, progress, XP and unlock removed; arc 1 (ended) and arc 3 (active) and every setting identical |
 | 9. Reminders and Focus Guard | reminders re-planned after each restart (counts above); `reminder_preferences`, `focus_guard_preferences`, `focus_guard_selected_apps` and `feedback_preferences` identical in every diff (Focus Guard was not enabled: Usage Access not granted on this AVD) |
 | 10. Layouts | 2× text (scrolls, nothing cut), landscape at 2× (width-limited column), 360 × 640 dp at 2× (screenshots); **0 Flutter errors** in logcat |
@@ -325,6 +325,41 @@ dependency or reflection change; CI builds it and the audit passes).
 | Network | no new request; `network_boundary_test` passes |
 | Dependencies | none added |
 
+## Independent review correction F-R1
+
+**Finding.** The delete screen listed the arc's losses as "37 days of
+progress and 2,430 XP". The number is `ArcSummary.daysElapsed`
+(`history.elapsedDates.length`): every lived challenge day, including days
+on which nothing was logged. "Days of progress" implied days with logged
+activity, which the number does not measure.
+
+**Correction.** `DeleteArcCopy.progress` now reads "N challenge days and
+X XP", with the singular kept and XP still thousands-separated:
+
+| Before | After |
+|---|---|
+| "0 days of progress and 0 XP" | "0 challenge days and 0 XP" |
+| "1 day of progress and 15 XP" | "1 challenge day and 15 XP" |
+| "37 days of progress and 2,430 XP" | "37 challenge days and 2,430 XP" |
+
+Only the label changed. `summary.daysElapsed`, how challenge days are
+counted, XP, progress and streak calculations, the deletion transaction
+and which rows it removes are unchanged; no query or count was added.
+
+**Spec.** The § 9.11 wireframe in
+[ARC_CONTROL_SPEC.md](ARC_CONTROL_SPEC.md) showed the old phrase; that one
+line now reads "37 challenge days and 2,430 XP". Nothing else in the spec
+changed.
+
+**Tests.** `arc_restart_rules_test` (0, 1 and 37 days; 15, 999, 2,430 and
+1,234,567 XP); the DELETE screen in `arc_restart_flow_test` (10 days,
+Day 1 with nothing logged, and a new case: Day 1 logged, Days 2–3 lived
+with nothing logged, restart on Day 4 → "3 challenge days", no "of
+progress" anywhere), `restart_layout_test` (semantics label, all layouts)
+and `phase5_flow_test` (completed arc: "92 challenge days and 135 XP").
+The existing typed-DELETE, Cancel/Back/Keep and exact-deletion tests ran
+unchanged.
+
 ## Known limitations and deferred items
 
 - TalkBack was not run (deferred, as for every v1.3 phase); semantics are
@@ -336,9 +371,12 @@ dependency or reflection change; CI builds it and the audit passes).
 - Restart is not offered from Today's ⋮ menu: the spec's entry points are
   the Habits screen (reachable in the running and scheduled-pause states)
   and the paused Today.
-- "Days of progress" on the delete screen is the arc's elapsed (lived)
+- The delete screen's "N challenge days" is the arc's elapsed (lived)
   days, as on its summary: a completed arc with sparse activity still
-  shows 92 days.
+  shows 92 challenge days (see F-R1).
+- The emulator qualification above predates F-R1; the corrected label is
+  verified by widget tests only (a string change, no layout or logic
+  change; the layout matrix re-ran with the new text).
 - No sound (12G); no 12H accessibility hardening beyond this phase's
   widget checks; no physical-device or signed-upgrade check (12H/12I).
 - The app is English-only.
@@ -350,8 +388,10 @@ dependency or reflection change; CI builds it and the audit passes).
    Arc"); the typed word stays RESTART. Keep both?
 3. "Your 7 habits" includes habits that are switched off (they are copied
    off). Count only the habits that are on instead?
-4. The delete screen's "N days of progress" counts the arc's lived days
-   (as its summary does), not days with logged activity. Acceptable?
+4. The delete screen's day count is the arc's lived challenge days (as
+   its summary counts them), not days with logged activity. After review
+   finding F-R1 it reads "37 challenge days and 2,430 XP" rather than
+   "37 days of progress …". Accept the corrected wording?
 5. A second Restart tap after the commit (or a stale screen) is refused as
    "can't be restarted now" rather than treated as already done. Fine?
 6. Restart's success screen and the delete screen use thousands
@@ -363,6 +403,6 @@ dependency or reflection change; CI builds it and the audit passes).
 |---|---|
 | `dart format --output=none --set-exit-if-changed .` | clean |
 | `flutter analyze` | no issues |
-| `flutter test` (all) | **2,183 passed, 0 failed** (`main`'s 1,973 plus 210 new) |
+| `flutter test` (all) | **2,184 passed, 0 failed** (`main`'s 1,973 plus 211 new, including the F-R1 case) |
 | Native JVM (`:app:testDebugUnitTest`) | 71 / 71 |
 | Android debug and release builds | both built; release permission audit passed |

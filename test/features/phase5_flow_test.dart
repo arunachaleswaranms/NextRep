@@ -331,7 +331,7 @@ void main() {
     await _tap(tester, find.text('Delete Arc'));
     expect(find.text('Delete this Arc?'), findsOneWidget);
     expect(find.text('Rolling 92-Day · 1 Jul – 30 Sep 2026'), findsOneWidget);
-    expect(find.text('92 days of progress and 135 XP'), findsOneWidget);
+    expect(find.text('92 challenge days and 135 XP'), findsOneWidget);
     expect(
       find.text('This cannot be undone without a backup.'),
       findsOneWidget,

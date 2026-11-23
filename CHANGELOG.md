@@ -72,7 +72,7 @@ Schema **v7** · backup format **4** (reads 1, 2, 3 and 4)
   history.
 - **Delete an old Arc (optional, typed DELETE):** after a restart you can
   choose "Delete my old Arc…", which opens a separate screen once the new
-  Arc has started. It lists exactly what will be lost (days of progress,
+  Arc has started. It lists exactly what will be lost (challenge days,
   XP, achievements, reflections, including zeros) and offers a backup
   first; nothing is deleted unless DELETE is typed. Leaving the screen, or
   the app closing, keeps the old Arc. The same screen now deletes any

@@ -419,7 +419,7 @@ void main() {
       findsWidgets,
     );
     expect(
-      find.bySemanticsLabel(RegExp(r'^3 days of progress and [\d,]+ XP$')),
+      find.bySemanticsLabel(RegExp(r'^3 challenge days and [\d,]+ XP$')),
       findsOneWidget,
     );
     expect(

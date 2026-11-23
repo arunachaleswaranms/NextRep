@@ -317,7 +317,7 @@ void main() {
     expect(find.text('Rolling 92-Day · 7 Oct – 16 Oct 2026'), findsOneWidget);
     expect(find.text('Ended early · Day 10 of 92'), findsOneWidget);
     expect(
-      find.text('10 days of progress and ${xpAmount(card.summary.totalXp)} XP'),
+      find.text('10 challenge days and ${xpAmount(card.summary.totalXp)} XP'),
       findsOneWidget,
     );
     expect(
@@ -768,8 +768,40 @@ void main() {
       _app(app, boot: AppRoutes.deleteArc(arc.id, afterRestart: true)),
     );
     await tester.pumpAndSettle();
-    expect(find.text('1 day of progress and 0 XP'), findsOneWidget);
+    expect(find.text('1 challenge day and 0 XP'), findsOneWidget);
     expect(find.text('0 achievements'), findsOneWidget);
     expect(find.text('0 Journal reflections'), findsOneWidget);
+  });
+
+  testWidgets('F-R1: a challenge day with nothing logged still counts as a '
+      'challenge day', (tester) async {
+    await _tall(tester);
+    final app = TestApp(memoryDatabase(), FakeClock(DateTime(2026, 10, 7)));
+    addTearDown(app.db.close);
+    final arc = await startRolling(app, day1);
+    await liveDay(app, day1);
+    // Days 2 and 3 are lived with no habit activity logged; restarting
+    // on Day 4 closes the arc on Day 3.
+    at(app, day1.addDays(3));
+    await restartNow(app, arc.id);
+    final logged = {
+      for (final r in (await snapshotAll(
+        app.db,
+      ))['daily_habit_progress_entries']!)
+        if (r['session_id'] == arc.id) r['date'],
+    };
+    expect(logged, {day1.toString()}, reason: 'only Day 1 has activity');
+    final card = await app.history.card(arc.id);
+    expect(card.summary.daysElapsed, 3);
+    await tester.pumpWidget(
+      _app(app, boot: AppRoutes.deleteArc(arc.id, afterRestart: true)),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Ended early · Day 3 of 92'), findsOneWidget);
+    expect(
+      find.text('3 challenge days and ${xpAmount(card.summary.totalXp)} XP'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('of progress'), findsNothing);
   });
 }
