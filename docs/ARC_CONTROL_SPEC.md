@@ -956,7 +956,7 @@ today on Day 1."
 │ Ended early · Day 37 of 92               │
 │                                          │
 │ This permanently removes:                │
-│ • 37 days of progress and 2,430 XP       │
+│ • 37 challenge days and 2,430 XP         │
 │ • 9 achievements                         │
 │ • 21 Journal reflections                 │
 │ • its Journey, weekly reviews and goals  │

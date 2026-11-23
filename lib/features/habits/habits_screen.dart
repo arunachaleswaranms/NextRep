@@ -20,6 +20,8 @@ import '../../shared/widgets/winter_card.dart';
 import '../arc_pause/pause_actions.dart';
 import '../arc_pause/pause_labels.dart';
 import '../arc_pause/pause_sheet.dart';
+import '../arc_restart/restart_actions.dart';
+import '../arc_restart/restart_labels.dart';
 import 'habits_controller.dart';
 import 'widgets/habit_edit_sheet.dart';
 
@@ -202,6 +204,20 @@ class HabitsScreen extends ConsumerWidget {
               onPressed: () => _openPause(context, ref, sessionId),
               icon: const Icon(Icons.ac_unit_rounded),
               label: const Text(PauseCopy.menuItem),
+            ),
+          ),
+        ],
+        // Restart with this setup (spec § 9.9): the active arc, running,
+        // scheduled to pause or paused. Seasonal: "Start a Rolling Arc".
+        if (ref.watch(restartEntryProvider).value case final session?
+            when session.id == value.sessionId) ...[
+          const SizedBox(height: WinterSpacing.xs),
+          Center(
+            child: TextButton.icon(
+              style: TextButton.styleFrom(minimumSize: const Size(48, 48)),
+              onPressed: () => context.push(AppRoutes.restartArc(session.id)),
+              icon: const Icon(Icons.restart_alt_rounded),
+              label: Text(RestartCopy.entry(session)),
             ),
           ),
         ],

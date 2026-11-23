@@ -110,6 +110,16 @@ jobs:
           test/features/arc_pause_read_only_test.dart
           test/integration/pause_layout_test.dart
 
+      - name: Phase 12F tests (Restart and Delete transactions, last lived day, baseline, rollback, generated histories, backup, flows, read-only, layouts)
+        run: >-
+          flutter test
+          test/data/arc_restart_test.dart
+          test/data/arc_restart_delete_test.dart
+          test/domain/arc_restart_rules_test.dart
+          test/features/arc_restart_flow_test.dart
+          test/features/arc_restart_read_only_test.dart
+          test/integration/restart_layout_test.dart
+
       - name: Focus Guard tests (settings, usage, one nudge a day, restore)
         run: >-
           flutter test

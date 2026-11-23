@@ -22,11 +22,18 @@ class PausedArcCard extends StatelessWidget {
     required this.position,
     required this.today,
     required this.onResume,
+    this.onRestart,
+    this.restartLabel,
   });
 
   final ArcPaused position;
   final LocalDate today;
   final VoidCallback onResume;
+
+  /// "Restart with this setup ›" (spec § 9.7), offered while the pause is
+  /// open; null hides it.
+  final VoidCallback? onRestart;
+  final String? restartLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +48,7 @@ class PausedArcCard extends StatelessWidget {
       _Link(PausedCopy.journal, () => context.go(AppRoutes.journal)),
       _Link(PausedCopy.history, () => context.go(AppRoutes.history)),
     ];
+    final restart = onRestart;
     return WinterCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -107,6 +115,11 @@ class PausedArcCard extends StatelessWidget {
             )
           else
             Wrap(spacing: WinterSpacing.sm, children: links),
+          if (resumesOn == null && restart != null && restartLabel != null)
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: _Link(restartLabel!, restart),
+            ),
         ],
       ),
     );

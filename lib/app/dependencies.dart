@@ -41,6 +41,7 @@ import '../domain/update/release_feed.dart';
 import '../domain/winter_arc/arc_clock_guard.dart';
 import '../domain/winter_arc/arc_lifecycle_service.dart';
 import '../domain/winter_arc/arc_pause_service.dart';
+import '../domain/winter_arc/arc_restart_service.dart';
 import '../domain/winter_arc/winter_arc_repository.dart';
 import '../domain/winter_arc/winter_arc_service.dart';
 import 'app_info.dart';
@@ -194,6 +195,16 @@ final arcActivityRepositoryProvider = Provider<ArcActivityRepository>(
 final arcPauseServiceProvider = Provider<ArcPauseService>(
   (ref) => ArcPauseService(
     sessions: ref.watch(winterArcRepositoryProvider),
+    activity: ref.watch(arcActivityRepositoryProvider),
+    clock: ref.watch(clockProvider),
+  ),
+);
+
+/// Restart (Phase 12F).
+final arcRestartServiceProvider = Provider<ArcRestartService>(
+  (ref) => ArcRestartService(
+    sessions: ref.watch(winterArcRepositoryProvider),
+    habits: ref.watch(habitRepositoryProvider),
     activity: ref.watch(arcActivityRepositoryProvider),
     clock: ref.watch(clockProvider),
   ),

@@ -5,12 +5,10 @@ import 'package:go_router/go_router.dart';
 import '../../app/arc_status.dart';
 import '../../app/router/app_router.dart';
 import '../../app/theme/winter_tokens.dart';
-import '../../core/errors/action_result.dart';
 import '../../core/errors/app_failure.dart';
 import '../../domain/winter_arc/arc_pause.dart';
 import '../../domain/winter_arc/winter_arc_session.dart';
 import '../../shared/formatting/arc_labels.dart';
-import '../../shared/formatting/failure_messages.dart';
 import '../../shared/widgets/failure_view.dart';
 import '../../shared/widgets/habit_icon.dart';
 import '../../shared/widgets/loading_view.dart';
@@ -19,7 +17,7 @@ import '../../shared/winter_scene/scene_progress.dart';
 import '../../shared/winter_scene/winter_scene.dart';
 import '../about/about_entry.dart';
 import '../arc_pause/pause_labels.dart';
-import 'arc_removal.dart';
+import '../arc_restart/restart_labels.dart';
 import 'summary_controller.dart';
 
 /// End-of-Arc summary of arc [sessionId]: the summit, warm and fully
@@ -31,32 +29,10 @@ class SummaryScreen extends ConsumerWidget {
 
   final int sessionId;
 
-  Future<void> _delete(
-    BuildContext context,
-    WidgetRef ref,
-    SummaryView view,
-  ) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => _DeleteArcDialog(view: view),
-    );
-    if (confirmed != true || !context.mounted) return;
-    final result = await ref
-        .read(arcRemovalProvider)
-        .deleteCompletedArc(view.session.id);
-    if (!context.mounted) return;
-    switch (result) {
-      case ActionSuccess(:final value):
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(const SnackBar(content: Text('Winter Arc deleted.')));
-        context.go(value);
-      case ActionFailure(:final failure):
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(SnackBar(content: Text(userMessageFor(failure))));
-    }
-  }
+  /// Delete Arc: the separate typed-DELETE screen (spec § 9.11, owner
+  /// decision O11), for any finished arc. Nothing is deleted here.
+  void _delete(BuildContext context, SummaryView view) =>
+      context.push(AppRoutes.deleteArc(view.session.id));
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -75,8 +51,8 @@ class SummaryScreen extends ConsumerWidget {
             context,
             value,
             isHome: isHome,
-            onDelete: value.session.status == WinterArcStatus.completed
-                ? () => _delete(context, ref, value)
+            onDelete: value.session.status.isFinished
+                ? () => _delete(context, value)
                 : null,
           ),
           AsyncError(:final error, :final stackTrace) => SafeArea(
@@ -213,12 +189,17 @@ class SummaryScreen extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: WinterSpacing.xs),
-                    Text(
-                      view.session.isSeasonal
-                          ? '${summary.totalDays}-day season'
-                          : '${summary.totalDays} days',
-                      style: text.displaySmall,
-                    ),
+                    // An ended arc reads "Ended early · Day 37 of 92",
+                    // never its full length (spec § 6.5).
+                    if (endedEarlyLabel(view.session) case final ended?)
+                      Text(ended, style: text.headlineSmall)
+                    else
+                      Text(
+                        view.session.isSeasonal
+                            ? '${summary.totalDays}-day season'
+                            : '${summary.totalDays} days',
+                        style: text.displaySmall,
+                      ),
                     Text(dates, style: text.bodyMedium),
                     // Total paused days (spec § 5.2 F11): the record is
                     // honest about the calendar the 92 days took.
@@ -405,67 +386,6 @@ class SummaryScreen extends ConsumerWidget {
               ),
             ),
           ),
-        ),
-      ],
-    );
-  }
-}
-
-/// "Delete this Winter Arc?": what will be lost, in numbers, and a
-/// destructive confirm button. Cancel is the safe default.
-class _DeleteArcDialog extends StatelessWidget {
-  const _DeleteArcDialog({required this.view});
-
-  final SummaryView view;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.winter;
-    final text = Theme.of(context).textTheme;
-    final summary = view.summary;
-    final perfect = summary.perfectDays == 1
-        ? '1 Perfect Day'
-        : '${summary.perfectDays} Perfect Days';
-    return AlertDialog(
-      icon: Icon(Icons.delete_forever_rounded, color: colors.danger),
-      title: const Text('Delete this Winter Arc?'),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              arcDateRange(view.session, today: view.today),
-              style: text.titleMedium,
-            ),
-            Text('${summary.totalXp} XP', style: text.bodyLarge),
-            Text(perfect, style: text.bodyLarge),
-            const SizedBox(height: WinterSpacing.md),
-            const Text(
-              'This permanently removes its habits, progress, XP, Journey, '
-              'achievements and reflections.',
-            ),
-            const SizedBox(height: WinterSpacing.sm),
-            Text(
-              'This cannot be undone unless you have a backup.',
-              style: text.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context, false),
-          child: const Text('Cancel'),
-        ),
-        FilledButton.icon(
-          style: FilledButton.styleFrom(
-            backgroundColor: colors.danger,
-            foregroundColor: colors.textPrimary,
-          ),
-          onPressed: () => Navigator.pop(context, true),
-          icon: const Icon(Icons.delete_forever_rounded),
-          label: const Text('Delete Arc'),
         ),
       ],
     );

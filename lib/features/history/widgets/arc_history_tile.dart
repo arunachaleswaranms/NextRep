@@ -11,6 +11,7 @@ import '../../../domain/winter_arc/winter_arc_session.dart';
 import '../../../shared/formatting/arc_labels.dart';
 import '../../../shared/widgets/winter_card.dart';
 import '../../arc_pause/pause_labels.dart';
+import '../../arc_restart/restart_labels.dart';
 import '../arc_history_controller.dart';
 
 /// One arc in Arc History: dates, status and results. Its numbers load
@@ -32,8 +33,7 @@ class ArcHistoryTile extends ConsumerWidget {
     ref.watch(dayChangedProvider);
     final today = ref.watch(clockProvider).today();
     final range = arcDateRange(session, today: today);
-    // Never "completed" for an arc ended early (schema v7; only a restored
-    // format-4 backup holds one until Restart, Phase 12F).
+    // Never "completed" for an arc ended early by Restart (schema v7).
     final status = switch (session.status) {
       WinterArcStatus.active => 'ACTIVE',
       WinterArcStatus.ended => 'ENDED EARLY',
@@ -45,9 +45,11 @@ class ArcHistoryTile extends ConsumerWidget {
         ? 'Joined Day ${session.joinDayNumber}'
         : null;
     final paused = pausedTotalLabel(session.pausedDaysThrough(today));
+    // "Ended early · Day 37 of 92" (spec § 6.5).
+    final ended = endedEarlyLabel(session);
     return Semantics(
       button: true,
-      label: _label(kind, range, status, joined, paused, stats),
+      label: _label(kind, range, ended ?? status, joined, paused, stats),
       onTap: onTap,
       excludeSemantics: true,
       child: WinterCard(
@@ -72,6 +74,11 @@ class ArcHistoryTile extends ConsumerWidget {
             ),
             const SizedBox(height: WinterSpacing.xs),
             Text(range, style: text.titleLarge),
+            if (ended != null)
+              Text(
+                ended,
+                style: text.bodyMedium?.copyWith(color: colors.textPrimary),
+              ),
             if (joined != null)
               Text(
                 joined,

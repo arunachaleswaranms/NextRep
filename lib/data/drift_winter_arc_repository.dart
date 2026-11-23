@@ -5,6 +5,7 @@ import '../core/errors/app_failure.dart';
 import '../core/time/local_date.dart';
 import '../domain/habit/habit.dart';
 import '../domain/winter_arc/arc_pause.dart';
+import '../domain/winter_arc/arc_restart.dart';
 import '../domain/winter_arc/winter_arc_repository.dart';
 import '../domain/winter_arc/winter_arc_session.dart';
 import 'drift_arc_activity_repository.dart';
@@ -201,6 +202,130 @@ final class DriftWinterArcRepository implements WinterArcRepository {
     }),
   );
 
+  @override
+  Future<RestartOutcome> restart(
+    int sessionId,
+    RestartPlan Function(RestartFacts facts) decide,
+  ) => guardPersistence(
+    'restart session $sessionId',
+    () => _db.transaction(() async {
+      final before = await _byId(sessionId);
+      if (before == null) {
+        throw DomainFailure(
+          DomainRule.sessionNotFound,
+          'No session $sessionId',
+        );
+      }
+      final plan = decide(
+        RestartFacts(
+          session: before,
+          currentId: (await _newest(statuses: _unfinished))?.id,
+          habits: await loadHabitHistory(_db, sessionId),
+          lastActivityDate: await queryLastActivityDate(_db, sessionId),
+        ),
+      );
+
+      // 1. The old arc: its open freeze, if any, then status and closed_on.
+      if (plan.removedFreeze case final frozenFrom?) {
+        final deleted =
+            await (_db.delete(_db.arcFreezes)..where(
+                  (f) =>
+                      f.sessionId.equals(sessionId) &
+                      f.frozenFrom.equalsValue(frozenFrom) &
+                      f.resumedOn.isNull(),
+                ))
+                .go();
+        _expectOne(deleted, 'open freeze');
+      }
+      final ended =
+          await (_db.update(_db.winterArcSessions)..where(
+                (s) =>
+                    s.id.equals(sessionId) &
+                    s.status.equalsValue(WinterArcStatus.active),
+              ))
+              .write(
+                WinterArcSessionsCompanion(
+                  status: const Value(WinterArcStatus.ended),
+                  closedOn: Value(plan.ended.closedOn),
+                ),
+              );
+      _expectOne(ended, 'active session');
+
+      // 2. The new arc, now that the unfinished slot is free.
+      final row = await _db
+          .into(_db.winterArcSessions)
+          .insertReturning(
+            WinterArcSessionsCompanion.insert(
+              arcKind: const Value(ArcKind.rolling92),
+              startDate: plan.today,
+              endDate: WinterArcRules.endDateFor(plan.today),
+              status: WinterArcStatus.active,
+              createdAt: plan.now,
+              startedAt: Value(plan.now),
+              participationStartDate: Value(plan.today),
+            ),
+          );
+      await _db.batch((batch) {
+        batch.insertAll(_db.habits, [
+          for (final habit in plan.habits) habitToCompanion(row.id, habit),
+        ]);
+      });
+
+      // 3. Read back: exactly the plan, or roll everything back.
+      final oldAfter = (await _byId(sessionId))!;
+      final newAfter = (await _byId(row.id))!;
+      final unfinished = await (_db.select(
+        _db.winterArcSessions,
+      )..where((s) => s.status.isIn(_unfinished.map((v) => v.name)))).get();
+      final problem =
+          WinterArcRules.problemWith(oldAfter) ??
+          WinterArcRules.problemWith(newAfter) ??
+          (_sameDates(oldAfter, plan.ended)
+              ? null
+              : 'the ended arc differs from the plan') ??
+          (_sameDates(newAfter, plan.startedAs(row.id))
+              ? null
+              : 'the new arc differs from the plan') ??
+          (unfinished.length == 1 && unfinished.single.id == row.id
+              ? null
+              : 'the new arc is not the only unfinished arc') ??
+          (_sameHabits(
+                (await loadHabitHistory(_db, row.id)).habits,
+                plan.habits,
+              )
+              ? null
+              : 'the new habits differ from the plan');
+      if (problem != null) {
+        throw DomainFailure(DomainRule.invalidArc, problem);
+      }
+      return RestartOutcome(ended: oldAfter, started: newAfter);
+    }),
+  );
+
+  /// Whether [a] and [b] hold the same habits in the same order, field by
+  /// field (instants at the stored precision).
+  static bool _sameHabits(List<Habit> a, List<Habit> b) {
+    if (a.length != b.length) return false;
+    final bySort = [...b]..sort((x, y) => x.sortOrder.compareTo(y.sortOrder));
+    for (var i = 0; i < a.length; i++) {
+      final x = a[i];
+      final y = bySort[i];
+      if (x.id != y.id ||
+          x.title != y.title ||
+          x.type != y.type ||
+          x.target != y.target ||
+          x.minimumTarget != y.minimumTarget ||
+          x.unit != y.unit ||
+          x.iconKey != y.iconKey ||
+          x.enabled != y.enabled ||
+          x.sortOrder != y.sortOrder ||
+          !_sameInstant(x.createdAt, y.createdAt)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   static void _expectOne(int rows, String what) {
     if (rows != 1) throw StateError('Expected one $what, changed $rows');
   }
@@ -247,7 +372,8 @@ final class DriftWinterArcRepository implements WinterArcRepository {
           if (row == null) {
             throw DomainFailure(DomainRule.sessionNotFound, 'No session $id');
           }
-          if (row.status != expected) {
+          // A running arc is never deleted whole, whatever was asked.
+          if (row.status != expected || expected == WinterArcStatus.active) {
             throw DomainFailure(
               expected == WinterArcStatus.setup
                   ? DomainRule.sessionNotInSetup

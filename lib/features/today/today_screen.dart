@@ -15,6 +15,7 @@ import '../../domain/progress/day_summary.dart';
 import '../../domain/progress/habit_progress_rules.dart';
 import '../../domain/progress/progress_repository.dart';
 import '../../domain/winter_arc/arc_pause.dart';
+import '../../domain/winter_arc/arc_restart.dart';
 import '../../domain/winter_arc/winter_arc_session.dart';
 import '../../domain/xp/level_rules.dart';
 import '../../shared/feedback/haptics.dart';
@@ -28,6 +29,7 @@ import '../arc_pause/pause_labels.dart';
 import '../arc_pause/pause_sheet.dart';
 import '../arc_pause/paused_arc_card.dart';
 import '../arc_pause/resume_sheet.dart';
+import '../arc_restart/restart_labels.dart';
 import '../celebration/celebration_queue.dart';
 import '../focus_guard/focus_guard_card.dart';
 import '../share/share_choice_sheet.dart';
@@ -482,6 +484,13 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
             position: paused,
             today: summary.date,
             onResume: () => _openResume(summary),
+            // Restart from the paused screen (spec § 9.7); the Restart
+            // screen re-checks everything, including the clock guard.
+            onRestart:
+                ArcRestartRules.blockerOn(summary.session, summary.date) == null
+                ? () => context.push(AppRoutes.restartArc(summary.session.id))
+                : null,
+            restartLabel: RestartCopy.entry(summary.session),
           ),
           const Padding(
             padding: EdgeInsets.only(top: WinterSpacing.md),

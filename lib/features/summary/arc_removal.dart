@@ -12,7 +12,7 @@ import '../celebration/celebration_queue.dart';
 
 final arcRemovalProvider = Provider<ArcRemoval>(ArcRemoval.new);
 
-/// Deleting a completed arc and cancelling a setup, for the UI. Each
+/// Deleting a finished arc and cancelling a setup, for the UI. Each
 /// returns where the app should go next, resolved from storage after the
 /// deletion, so the router never keeps pointing at a deleted arc.
 final class ArcRemoval {
@@ -20,14 +20,15 @@ final class ArcRemoval {
 
   final Ref _ref;
 
-  /// Deletes the completed arc [sessionId]. The value is the location to
-  /// go to: Arc History while an arc runs, otherwise the app's home (the
-  /// latest remaining completed arc, or onboarding when none is left).
-  Future<ActionResult<String>> deleteCompletedArc(int sessionId) async {
+  /// Deletes the finished (completed or ended) arc [sessionId] and
+  /// nothing else. The value is the location to go to: Arc History while an
+  /// arc runs, otherwise the app's home (the latest remaining finished arc,
+  /// or onboarding when none is left).
+  Future<ActionResult<String>> deleteFinishedArc(int sessionId) async {
     final service = _ref.read(winterArcServiceProvider);
     final deleted = await runAction(
       'delete_arc',
-      () => service.deleteCompletedArc(sessionId),
+      () => service.deleteFinishedArc(sessionId),
     );
     return switch (deleted) {
       ActionFailure(:final failure) => ActionFailure(failure),

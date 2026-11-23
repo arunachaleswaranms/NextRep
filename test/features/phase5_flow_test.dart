@@ -325,22 +325,24 @@ void main() {
     await _tap(tester, find.text('COMPLETED'));
     expect(find.byType(SummaryScreen), findsOneWidget);
 
+    // Phase 12F (owner decision O11): the typed-DELETE screen replaces
+    // the v1.2 confirmation dialog for completed arcs too.
     await _tap(tester, find.byTooltip('Arc options'));
     await _tap(tester, find.text('Delete Arc'));
-    expect(find.text('Delete this Winter Arc?'), findsOneWidget);
-    expect(find.text('1 Jul – 30 Sep 2026'), findsWidgets);
-    expect(find.text('135 XP'), findsOneWidget);
-    expect(find.text('1 Perfect Day'), findsOneWidget);
+    expect(find.text('Delete this Arc?'), findsOneWidget);
+    expect(find.text('Rolling 92-Day · 1 Jul – 30 Sep 2026'), findsOneWidget);
+    expect(find.text('92 challenge days and 135 XP'), findsOneWidget);
     expect(
-      find.text('This cannot be undone unless you have a backup.'),
+      find.text('This cannot be undone without a backup.'),
       findsOneWidget,
     );
-    await _tap(tester, _button('Cancel'));
+    await _tapEnsured(tester, _button('Keep it'));
     expect(await seeded.sessions.sessionById(1), isNotNull);
 
     await _tap(tester, find.byTooltip('Arc options'));
     await _tap(tester, find.text('Delete Arc'));
-    await _tap(tester, _button('Delete Arc'));
+    await _typeDelete(tester);
+    await _tapEnsured(tester, _button('Delete this Arc'));
     expect(await seeded.sessions.sessionById(1), isNull);
     expect(find.byType(ArcHistoryScreen), findsOneWidget);
     expect(find.text('COMPLETED'), findsNothing);
@@ -363,7 +365,8 @@ void main() {
     expect(find.byType(SummaryScreen), findsOneWidget);
     await _tap(tester, find.byTooltip('Arc options'));
     await _tap(tester, find.text('Delete Arc'));
-    await _tap(tester, _button('Delete Arc'));
+    await _typeDelete(tester);
+    await _tapEnsured(tester, _button('Delete this Arc'));
     expect(find.byType(OnboardingScreen), findsOneWidget);
     expect(await seeded.sessions.listSessions(), isEmpty);
     await _shutDown(tester);
@@ -525,4 +528,21 @@ void main() {
     expect(tester.takeException(), isNull);
     await _shutDown(tester);
   });
+}
+
+/// Types DELETE into the typed-DELETE screen's field (Phase 12F).
+Future<void> _typeDelete(WidgetTester tester) async {
+  final field = find.byKey(const ValueKey('delete-word'));
+  await tester.ensureVisible(field);
+  await tester.pumpAndSettle();
+  await tester.enterText(field, 'DELETE');
+  await tester.pumpAndSettle();
+}
+
+/// Scrolls [finder] into view, then taps it (the typed-DELETE screen
+/// scrolls on a phone).
+Future<void> _tapEnsured(WidgetTester tester, Finder finder) async {
+  await tester.ensureVisible(finder);
+  await tester.pumpAndSettle();
+  await _tap(tester, finder);
 }

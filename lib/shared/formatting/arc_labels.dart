@@ -9,8 +9,8 @@ import '../../domain/winter_arc/winter_arc_session.dart';
 ///
 /// A paused date (Freeze, Phase 12E2) reads "Paused after Day N of 92"
 /// where a day title is shown (Journey); Today shows its own paused card.
-/// A date after an ended arc's last day keeps a fallback until Phase 12F
-/// designs it.
+/// A date after an ended arc's last day reads "Ended early · Day N of 92"
+/// (spec § 6.5).
 String dayTitle(ArcDayPosition position) => switch (position) {
   ArcInProgress(:final dayNumber, :final totalDays) =>
     'Day $dayNumber of $totalDays',

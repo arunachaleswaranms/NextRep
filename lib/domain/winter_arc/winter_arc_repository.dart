@@ -1,6 +1,7 @@
 import '../../core/time/local_date.dart';
 import '../habit/habit.dart';
 import 'arc_pause.dart';
+import 'arc_restart.dart';
 import 'winter_arc_session.dart';
 
 /// Persistence boundary for Winter Arc sessions.
@@ -82,16 +83,43 @@ abstract interface class WinterArcRepository {
     decide,
   );
 
+  /// Restart (Phase 12F, ARC_CONTROL_SPEC § 6.2), in **one transaction**:
+  ///
+  /// 1. session [sessionId] is read with its freeze intervals, together with
+  ///    the id of the unfinished arc, its habits and goal revisions and its
+  ///    last activity date (`ArcActivityRepository.lastActivityDate`), all
+  ///    inside the transaction;
+  /// 2. [decide] returns the [RestartPlan], or throws (typically a
+  ///    `DomainFailure`) to refuse, and then nothing is written;
+  /// 3. the plan is applied: the open freeze (if any) is deleted, the old
+  ///    session's `status` and `closed_on` are written, and the new active
+  ///    session and its habits are inserted. No other row of any table is
+  ///    written: no activity row, goal revision or closed freeze of the old
+  ///    arc, and nothing app-level;
+  /// 4. both sessions and the new habits are read back; they must equal the
+  ///    plan, keep every arc invariant (`WinterArcRules.problemWith`), and
+  ///    the new arc must be the only unfinished one, otherwise the whole
+  ///    transaction is rolled back (`DomainRule.invalidArc`).
+  ///
+  /// Throws `DomainRule.sessionNotFound` for an unknown id, and
+  /// `PersistenceFailure` on storage errors; either way nothing changed.
+  Future<RestartOutcome> restart(
+    int sessionId,
+    RestartPlan Function(RestartFacts facts) decide,
+  );
+
   /// Permanently deletes session [id] and everything it owns (habits,
   /// revisions, progress, day modes, XP, achievement unlocks, reflections,
   /// freeze intervals),
   /// in one transaction, provided its status is [expected]. App-level data
   /// (reminder preferences) is never touched.
   ///
-  /// The status is checked inside the transaction. Throws, deleting
-  /// nothing, `DomainRule.sessionNotFound` if there is no such session,
-  /// `DomainRule.arcNotDeletable` if a completed arc was expected and
-  /// `DomainRule.sessionNotInSetup` if a setup arc was expected but the
-  /// status differs.
+  /// The status is checked inside the transaction, so only an arc that is
+  /// still exactly [expected] is deleted (an active arc is never deleted
+  /// by a request for a finished one). Throws, deleting nothing,
+  /// `DomainRule.sessionNotFound` if there is no such session,
+  /// `DomainRule.arcNotDeletable` if a finished (completed or ended) arc
+  /// was expected and `DomainRule.sessionNotInSetup` if a setup arc was
+  /// expected but the status differs.
   Future<void> deleteSession(int id, {required WinterArcStatus expected});
 }

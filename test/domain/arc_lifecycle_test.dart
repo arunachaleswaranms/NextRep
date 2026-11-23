@@ -9,6 +9,7 @@ import 'package:nextrep/domain/progress/arc_summary.dart';
 import 'package:nextrep/domain/progress/habit_progress_rules.dart';
 import 'package:nextrep/domain/winter_arc/arc_lifecycle_service.dart';
 import 'package:nextrep/domain/winter_arc/arc_pause.dart';
+import 'package:nextrep/domain/winter_arc/arc_restart.dart';
 import 'package:nextrep/domain/winter_arc/winter_arc_repository.dart';
 import 'package:nextrep/domain/winter_arc/winter_arc_session.dart';
 
@@ -229,6 +230,15 @@ final class _CountingSessions implements WinterArcRepository {
   ) {
     updates++;
     return _inner.changeFreezes(sessionId, decide);
+  }
+
+  @override
+  Future<RestartOutcome> restart(
+    int sessionId,
+    RestartPlan Function(RestartFacts facts) decide,
+  ) {
+    updates++;
+    return _inner.restart(sessionId, decide);
   }
 
   @override
