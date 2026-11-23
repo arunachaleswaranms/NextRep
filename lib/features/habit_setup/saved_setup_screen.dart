@@ -181,6 +181,11 @@ class _Hub extends ConsumerWidget {
               route: AppRoutes.reminders,
             ),
             _Link(
+              icon: Icons.volume_up_outlined,
+              label: 'Sound & Feedback',
+              route: AppRoutes.soundSettings,
+            ),
+            _Link(
               icon: Icons.save_alt_rounded,
               label: 'Data & Backup',
               route: AppRoutes.dataBackup,
