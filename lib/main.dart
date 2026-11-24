@@ -12,6 +12,7 @@ import 'core/errors/error_reporter.dart';
 import 'data/android_focus_guard.dart';
 import 'data/github_release_feed.dart';
 import 'data/local_notification_scheduler.dart';
+import 'data/native_sound_player.dart';
 import 'domain/focus_guard/focus_guard_service.dart';
 import 'domain/reminder/reminder_scheduler.dart';
 import 'shared/widgets/release_error_panel.dart';
@@ -79,6 +80,10 @@ Future<void> main() async {
         reminderSchedulerProvider.overrideWithValue(scheduler),
         reminderLaunchPayloadProvider.overrideWithValue(launchPayload),
         reminderTapsProvider.overrideWithValue(taps.stream),
+        // Completion sounds: bundled files, played natively (Android
+        // SoundPool, iOS AVAudioPlayer). Elsewhere nothing plays.
+        if (android || defaultTargetPlatform == TargetPlatform.iOS)
+          soundPlayerProvider.overrideWithValue(const NativeSoundPlayer()),
         if (android) ...[
           focusGuardPlatformProvider.overrideWithValue(
             const AndroidFocusGuardPlatform(),

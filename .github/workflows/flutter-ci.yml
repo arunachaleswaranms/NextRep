@@ -120,6 +120,30 @@ jobs:
           test/features/arc_restart_read_only_test.dart
           test/integration/restart_layout_test.dart
 
+      - name: Phase 12G tests (completion sounds - throttle, saved-completion triggers, Perfect Day, settings, restore, boundaries, data unchanged, layouts, asset properties, stale requests dropped)
+        run: >-
+          flutter test
+          test/domain/completion_feedback_test.dart
+          test/features/completion_sound_flow_test.dart
+          test/features/completion_sound_stale_test.dart
+          test/features/completion_sound_regression_test.dart
+          test/features/sound_settings_test.dart
+          test/app/completion_sound_boundary_test.dart
+          test/assets/completion_sound_assets_test.dart
+
+      # The six bundled sounds are exactly what their committed generator
+      # produces (headers byte for byte, samples within 1 LSB).
+      - name: Completion sounds reproduce from their source
+        run: dart run tool/sounds/generate_completion_sounds.dart --check
+
+      # For the owner's Gate G listening review: the six original files.
+      - name: Upload completion sounds for listening
+        uses: actions/upload-artifact@v4
+        with:
+          name: nextrep-completion-sounds
+          path: assets/sounds/*.wav
+          if-no-files-found: error
+
       - name: Focus Guard tests (settings, usage, one nudge a day, restore)
         run: >-
           flutter test
@@ -181,9 +205,10 @@ jobs:
       - name: Build release APK
         run: flutter build apk --release
 
-      # Focus Guard's native logic on the JVM: the UsageStats event
-      # calculation, the background check, and its SQL against a real
-      # SQLite with Drift's schema (claims, concurrency, restore).
+      # Native logic on the JVM: Focus Guard's UsageStats event calculation,
+      # background check and SQL against a real SQLite with Drift's schema
+      # (claims, concurrency, restore); the completion-sound player's
+      # loading, playing, silencing and release (Phase 12G).
       - name: Native Android tests
         working-directory: android
         run: ./gradlew :app:testDebugUnitTest --console=plain
@@ -263,3 +288,16 @@ jobs:
               exit 1
             fi
           done
+
+      # SoundPool opens each completion sound with AssetManager.openFd, which
+      # only works on entries stored uncompressed. A compressed one would be
+      # silently skipped on every phone.
+      - name: Completion sounds bundled uncompressed
+        run: |
+          APK=build/app/outputs/flutter-apk/app-release.apk
+          unzip -v "$APK" | grep 'assets/flutter_assets/assets/sounds/' | tee sounds.txt
+          test "$(grep -c '\.wav$' sounds.txt)" -eq 6
+          if grep '\.wav$' sounds.txt | grep -vq ' Stored '; then
+            echo "::error::A completion sound is compressed in the release APK"
+            exit 1
+          fi

@@ -12,7 +12,9 @@ at Gate C. Phase 12D adds habit ordering, saved setup and Confirm & Start
 at Gate D. Phase 12E2 adds Freeze and Resume
 ([docs/PHASE_12E2.md](docs/PHASE_12E2.md)); the owner approved it at
 Gate E2. Phase 12F adds Restart and the optional deletion of the old Arc
-([docs/PHASE_12F.md](docs/PHASE_12F.md)); awaiting Gate F.
+([docs/PHASE_12F.md](docs/PHASE_12F.md)). Phase 12G adds completion
+sounds ([docs/PHASE_12G.md](docs/PHASE_12G.md)); awaiting Gate G, where
+the owner listens to the three sound sets.
 
 Schema **v7** · backup format **4** (reads 1, 2, 3 and 4)
 
@@ -77,8 +79,29 @@ Schema **v7** · backup format **4** (reads 1, 2, 3 and 4)
   first; nothing is deleted unless DELETE is typed. Leaving the screen, or
   the app closing, keeps the old Arc. The same screen now deletes any
   finished Arc from its summary.
+- **Completion sounds:** a short, original sound when a saved habit
+  action completes a habit (a binary habit marked done, a count or
+  duration reaching its target, a bedtime logged at or before its goal),
+  and a longer Perfect Day sound instead of it for the completion that
+  makes today perfect. Nothing plays for steps below a target, undo,
+  Minimum Day, level-ups, achievements, opening the app, midnight or a
+  restore. At most one sound every half second and one per habit every 3
+  seconds; extra ones are dropped, never queued. Sounds follow the
+  phone's sound settings: silent on silent, vibrate and Do Not Disturb,
+  and music keeps playing. Three sets (Ice Crystal, the default; Summit
+  Spark; Warm Ember), bundled in the app and generated for NextRep from
+  source in `tool/sounds/`. Haptics are unchanged.
+- **Sound & Feedback** settings: completion sounds on or off (on by
+  default) and the set, each with a Play preview. Reachable from Today
+  (beside Reminders), the saved-setup hub, Arc History and About, in
+  every state. App-level: kept across restarts and Restart; a format-4
+  backup restores it, an older backup keeps this device's setting.
 
 ### Changed
+
+- **Today's header:** when "WINTER ARC" and its buttons don't fit on one
+  line (narrow phones, larger text), the buttons move to a row beneath it
+  instead of squeezing the title.
 
 - **Deleting a completed Arc** now uses the typed-DELETE screen instead of
   a confirmation dialog (owner decision O11), the same as an Arc ended

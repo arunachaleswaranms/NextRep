@@ -8,6 +8,7 @@ import '../data/backup_files.dart';
 import '../data/drift_achievement_repository.dart';
 import '../data/drift_arc_activity_repository.dart';
 import '../data/drift_backup_store.dart';
+import '../data/drift_feedback_preferences_repository.dart';
 import '../data/drift_focus_guard_settings_repository.dart';
 import '../data/drift_habit_repository.dart';
 import '../data/drift_progress_repository.dart';
@@ -21,6 +22,9 @@ import '../domain/achievement/achievement_repository.dart';
 import '../domain/achievement/achievement_service.dart';
 import '../domain/backup/backup_service.dart';
 import '../domain/backup/backup_store.dart';
+import '../domain/feedback/completion_feedback.dart';
+import '../domain/feedback/completion_sound.dart';
+import '../domain/feedback/feedback_preferences.dart';
 import '../domain/focus_guard/focus_guard_background.dart';
 import '../domain/focus_guard/focus_guard_platform.dart';
 import '../domain/focus_guard/focus_guard_service.dart';
@@ -291,4 +295,37 @@ final releaseFeedProvider = Provider<ReleaseFeed?>((ref) => null);
 /// with a fake.
 final externalLinksProvider = Provider<ExternalLinks>(
   (ref) => const SystemExternalLinks(),
+);
+
+/// The app-level Sound & Feedback settings (`feedback_preferences`).
+final feedbackPreferencesRepositoryProvider =
+    Provider<FeedbackPreferencesRepository>(
+      (ref) => DriftFeedbackPreferencesRepository(_database(ref)),
+    );
+
+/// The native completion-sound player. `main.dart` overrides it on Android
+/// and iOS; elsewhere, and in tests unless they supply a fake, nothing
+/// plays.
+final soundPlayerProvider = Provider<SoundPlayer>(
+  (ref) => const SilentSoundPlayer(),
+);
+
+/// The throttle's clock: monotonic, never the wall clock. Tests override
+/// it.
+final monotonicClockProvider = Provider<MonotonicClock>(
+  (ref) => processElapsed,
+);
+
+/// Completion sounds (Phase 12G). One per app process: it deliberately
+/// doesn't follow the app epoch, so a restore can't reset the throttle or
+/// replay a Perfect Day sound. It reads the setting from storage on every
+/// request, so a restored or changed setting applies at once.
+final completionFeedbackProvider = Provider<CompletionFeedback>(
+  (ref) => CompletionFeedback(
+    preferences: DriftFeedbackPreferencesRepository(
+      ref.watch(appDatabaseProvider),
+    ),
+    player: ref.watch(soundPlayerProvider),
+    elapsed: ref.watch(monotonicClockProvider),
+  ),
 );

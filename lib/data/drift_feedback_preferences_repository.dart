@@ -8,8 +8,8 @@ import 'persistence_guard.dart';
 /// the defaults ([FeedbackPreferences.defaults]); reading never inserts
 /// one.
 ///
-/// Phase 12E1 only provides the storage. No screen reads or changes it and
-/// nothing plays a sound (Phase 12G).
+/// Read by Sound & Feedback and, on every completion, by the sound engine
+/// (Phase 12G); written only by Sound & Feedback and by a format-4 restore.
 final class DriftFeedbackPreferencesRepository
     implements FeedbackPreferencesRepository {
   const DriftFeedbackPreferencesRepository(this._db);

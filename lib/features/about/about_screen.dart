@@ -93,6 +93,16 @@ class AboutScreen extends ConsumerWidget {
                 ),
               const _SectionLabel('PRIVACY'),
               _PrivacyCard(updatesOffered: updatesOffered),
+              const _SectionLabel('SETTINGS'),
+              WinterCard(
+                padding: const EdgeInsets.symmetric(vertical: WinterSpacing.xs),
+                child: ListTile(
+                  onTap: () => context.push(AppRoutes.soundSettings),
+                  leading: const Icon(Icons.volume_up_outlined),
+                  title: const Text('Sound & Feedback'),
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                ),
+              ),
               const _SectionLabel('OFFICIAL SOURCE'),
               WinterCard(
                 child: Column(

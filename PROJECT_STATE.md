@@ -1,16 +1,17 @@
 # PROJECT_STATE
 
-_Last updated: 2026-11-22. **Latest published release: v1.2.0** (tag
+_Last updated: 2026-11-24. **Latest published release: v1.2.0** (tag
 `v1.2.0` on `8ab0c43`, PR #20), published 18 October 2026; v1.1.0 and
 v1.0.0 before it. The v1.2 roadmap (Phases 11A–11F, PRs #15–#20), the
 publication record (PR #21), the Phase 12A plan (PR #22), the Phase 12A
 Addendum (PR #23), the Phase 12E1 lifecycle foundation (PR #24), the
 Phase 12B Weekly Arc Review (PR #25), the Phase 12C Arc Consistency
-Calendar (PR #26), Phase 12D habit ordering and saved setup (PR #27) and
-Phase 12E2 Freeze and Resume (PR #28) are merged. `main` is `b751dff`,
-version `1.2.0+3`. **v1.3.0 is in development, not released: Phase 12F
-(Restart and optional Arc deletion) is implemented and qualified on its
-branch and awaits independent review, Gate F and the owner's merge
+Calendar (PR #26), Phase 12D habit ordering and saved setup (PR #27),
+Phase 12E2 Freeze and Resume (PR #28) and Phase 12F Restart and optional
+Arc deletion (PR #29) are merged. `main` is `a9e5607`, version `1.2.0+3`.
+**v1.3.0 is in development, not released. Active phase: 12G (completion
+sounds), implemented and qualified on its branch; it awaits independent
+review, the owner's Gate G listening review and the owner's merge
 decision.**_
 
 | | |
@@ -30,8 +31,10 @@ planned. TalkBack was deliberately deferred and doesn't block this model.
 ## Repo
 
 - Remote: https://github.com/arunachaleswaranms/NextRep (public, MIT)
-- `main`: `b751dff` (squash merge of PR #28, Phase 12E2, 22 November 2026,
-  final head `bc11022`; post-merge CI run
+- `main`: `a9e5607` (squash merge of PR #29, Phase 12F, 23 November 2026,
+  final head `c76dc7b`; post-merge CI run
+  [45109820746](https://github.com/arunachaleswaranms/NextRep/actions/runs/45109820746)
+  green, both jobs), on top of `b751dff` (PR #28, Phase 12E2; CI run
   [45047072621](https://github.com/arunachaleswaranms/NextRep/actions/runs/45047072621)
   green, both jobs), on top of `dcde6b3` (PR #27, Phase 12D; CI run
   [44994020321](https://github.com/arunachaleswaranms/NextRep/actions/runs/44994020321)
@@ -45,9 +48,62 @@ planned. TalkBack was deliberately deferred and doesn't block this model.
   green, both jobs). Tags `v1.0.0` (`b3f9c5c`), `v1.1.0` (`7e563e2`) and
   `v1.2.0` (`8ab0c43`). PRs #1–#20 are Phases 1–11F; #21 the publication
   record; #22 Phase 12A; #23 the Phase 12A Addendum; #24 Phase 12E1;
-  #25 Phase 12B; #26 Phase 12C; #27 Phase 12D; #28 Phase 12E2.
+  #25 Phase 12B; #26 Phase 12C; #27 Phase 12D; #28 Phase 12E2; #29
+  Phase 12F.
 
-## Phase 12F (v1.3.0 Restart and optional Arc deletion, awaiting Gate F, not merged)
+## Phase 12G (v1.3.0 completion sounds, active, awaiting Gate G, not merged)
+
+Contracts, sound sources, qualification evidence and the Gate G checklist:
+[docs/PHASE_12G.md](docs/PHASE_12G.md). Baseline `main` `a9e5607` (PR #29
+merged, CI 45109820746 green); branch `phase/12g-v1.3-completion-sounds`
+(worktree `~/labs/NextRep-12G`). No schema, migration, backup format,
+permission, dependency, notification channel, XP, streak, achievement or
+version change; the existing `feedback_preferences` row and format-4
+backup field are reused. No phone, no signing, no release.
+
+- **Sounds:** six original files (three sets × habit / Perfect Day),
+  16-bit mono WAV, 125,064 bytes in total, synthesised by
+  `tool/sounds/generate_completion_sounds.dart` (Dart SDK only; CI checks
+  they reproduce). Artistic acceptance pending the owner's listening.
+- **Engine:** `CompletionFeedback` plays only on a saved incomplete →
+  complete transition from `TodayScreen._perform` (the commit's ledger);
+  Perfect Day sound instead of the habit sound; one sound per 500 ms (and
+  never over one still playing), one per habit per 3 s, dropped not
+  queued; monotonic clock; never awaited by the action; haptics unchanged.
+- **Native:** Android `SoundPool` (sonification attributes, one stream,
+  no audio focus, explicit silence on silent / vibrate / any Do Not
+  Disturb) on its own channel `com.nextrep.nextrep/completion_sound`; iOS
+  `AVAudioPlayer`, ambient session (build and launch smoke only).
+- **Settings:** Sound & Feedback (`/settings/sound`) from Today, the hub,
+  Arc History and About. Today's header now wraps its buttons under the
+  title when they don't fit (a defect the extra button caused at 360 dp).
+- **Qualification:** 99 new Flutter tests (2,283 pass), 16 new JVM tests
+  (87 pass), 4 of 4 mutations detected; an independent pre-PR review
+  (two small fixes); disposable API 36 emulator with
+  the device's real audio output captured over the emulator's gRPC
+  `streamAudio`: audible in normal ringer mode, nothing emitted in silent,
+  vibrate and all three Do Not Disturb modes, music not ducked or paused,
+  rapid taps one sound, Perfect Day one sound, R8 release build plays.
+  TalkBack audibility, headphones, iOS playback and OxygenOS unresolved.
+- **Review correction G-R1 (stale playback):** a sound waiting for its
+  setting read could still play after the user left Today (another tab,
+  a pushed page), the Arc was restarted or ended, a restore replaced the
+  app epoch, or the app went to the background; likewise a preview after
+  leaving Sound & Feedback. Each request now carries its screen's
+  `SoundOrigin`, cancelled (for good) when the router's top page or tickers
+  leave that screen, the app leaves `resumed`, the epoch or (Today) the
+  Arc changes, or the screen is disposed; the engine checks it after the
+  read and immediately before playback. A cancelled request takes no
+  throttle window and marks no Perfect Day. 28 new tests (2,311 Flutter
+  pass), 10 of 10 guard mutations detected, an independent cold review,
+  and a disposable-emulator check (completion or choice followed at once
+  by navigation or Home: saved, no sound; controls sound). Native players,
+  sounds and stored data unchanged.
+- **Next:** independent verification of the correction, Gate G (listening,
+  names, default on, the decisions in the doc), then the owner's merge
+  decision.
+
+## Phase 12F (v1.3.0 Restart and optional Arc deletion, merged)
 
 Contracts, wording and evidence: [docs/PHASE_12F.md](docs/PHASE_12F.md).
 Baseline `main` `b751dff` (PR #28 merged, CI 45047072621 green); branch
@@ -76,9 +132,8 @@ release.
   mutation check 16/17 detected (1 equivalent); disposable API 36
   emulator journey (Keep, scheduled and paused restarts, kill between
   restart and deletion, DELETE, 2×/landscape/small screen), AVD deleted.
-- **Next:** independent review, Gate F (wording additions and review
-  questions in the doc), then the owner's merge decision. Not merged; no
-  release.
+- **Merged** as PR #29 (`a9e5607`, 23 November 2026; final head
+  `c76dc7b`); post-merge CI run 45109820746 green, both jobs.
 
 ## Phase 12E2 (v1.3.0 Freeze and Resume, merged)
 

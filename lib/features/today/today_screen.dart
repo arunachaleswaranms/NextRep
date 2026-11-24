@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/arc_refresh.dart';
+import '../../app/dependencies.dart';
 import '../../app/router/app_router.dart';
 import '../../app/theme/winter_tokens.dart';
 import '../../core/errors/action_result.dart';
@@ -34,6 +35,8 @@ import '../celebration/celebration_queue.dart';
 import '../focus_guard/focus_guard_card.dart';
 import '../share/share_choice_sheet.dart';
 import '../share/share_preview_screen.dart';
+import '../sound/sound_origin_scope.dart';
+import '../sound/sound_settings_screen.dart';
 import 'today_controller.dart';
 import 'widgets/habit_progress_tile.dart';
 import 'widgets/minimum_day.dart';
@@ -47,7 +50,8 @@ class TodayScreen extends ConsumerStatefulWidget {
   ConsumerState<TodayScreen> createState() => _TodayScreenState();
 }
 
-class _TodayScreenState extends ConsumerState<TodayScreen> {
+class _TodayScreenState extends ConsumerState<TodayScreen>
+    with SoundOriginScope {
   late final AppLifecycleListener _lifecycle;
   bool _returningToFull = false;
   bool _cancellingPause = false;
@@ -55,11 +59,24 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
   TodayController get _controller => ref.read(todayControllerProvider.notifier);
 
   @override
+  String get soundLocation => AppRoutes.today;
+
+  @override
   void initState() {
     super.initState();
     // Re-read on resume so a day rollover (or the end of the arc) while
     // backgrounded is picked up.
     _lifecycle = AppLifecycleListener(onResume: () => _controller.refresh());
+    // Loads the completion sounds (if on) so the first one plays at once.
+    unawaited(ref.read(completionFeedbackProvider).warmUp());
+    // A completion's sound belongs to the Arc it was made in: a Restart, or
+    // the Arc ending, drops any that hasn't started.
+    ref.listenManual(
+      todayControllerProvider.select(
+        (today) => (today.value?.session.id, today.value?.session.status),
+      ),
+      (_, _) => renewSoundOrigin(),
+    );
   }
 
   @override
@@ -73,6 +90,12 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     HabitAction action, {
     NightTime? time,
   }) async {
+    final feedback = ref.read(completionFeedbackProvider);
+    final requestedAt = feedback.now();
+    final sessionId = ref.read(todayControllerProvider).value?.session.id;
+    // Today as the user sees it now: if they leave, or the Arc or app
+    // changes, before the sound starts, it never plays (G-R1).
+    final origin = soundOrigin;
     final result = await _controller.perform(habit.id, action, time: time);
     if (!mounted) return;
 
@@ -84,6 +107,20 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
         _celebrate(value);
         if (ledger.habitAwardFor(habit.id) case final award?) {
           if (!ledger.perfectDayGranted) unawaited(Haptics.habitCompleted());
+          // The completion sound (spec § 8.1): only for a saved transition
+          // to complete, never awaited, and independent of the haptic.
+          if (value.value.becameCompleted && sessionId != null) {
+            unawaited(
+              feedback.habitCompleted(
+                sessionId: sessionId,
+                date: value.settlement.date,
+                habitId: habit.id,
+                perfectDay: ledger.perfectDayGranted,
+                requestedAt: requestedAt,
+                origin: origin,
+              ),
+            );
+          }
           _showSnack(
             '${habit.title} complete · +${award.amount} XP',
             undo: () => _undo(habit, value.value),
@@ -298,7 +335,6 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
         when summary.session.status == WinterArcStatus.active) {
       return _pausedContent(context, summary, paused);
     }
-    final colors = context.winter;
     final text = Theme.of(context).textTheme;
     final completion = summary.completion;
     final pauseOffered =
@@ -316,18 +352,8 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              const SizedBox(width: WinterSpacing.xs),
-              Expanded(
-                child: Text(
-                  'WINTER ARC',
-                  style: text.labelLarge?.copyWith(
-                    color: colors.accentSecondary,
-                    letterSpacing: 3,
-                  ),
-                ),
-              ),
+          _TodayHeader(
+            actions: [
               IconButton(
                 tooltip: 'Share progress',
                 onPressed: () => _share(summary),
@@ -338,6 +364,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                 onPressed: () => context.push(AppRoutes.reminders),
                 icon: const Icon(Icons.notifications_none_rounded),
               ),
+              const SoundSettingsButton(),
               const TrophyButton(),
               if (pauseOffered)
                 PopupMenuButton<void>(
@@ -447,8 +474,6 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     DaySummary summary,
     ArcPaused paused,
   ) {
-    final colors = context.winter;
-    final text = Theme.of(context).textTheme;
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(
         WinterSpacing.md,
@@ -459,23 +484,14 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              const SizedBox(width: WinterSpacing.xs),
-              Expanded(
-                child: Text(
-                  'WINTER ARC',
-                  style: text.labelLarge?.copyWith(
-                    color: colors.accentSecondary,
-                    letterSpacing: 3,
-                  ),
-                ),
-              ),
+          _TodayHeader(
+            actions: [
               IconButton(
                 tooltip: 'Reminders',
                 onPressed: () => context.push(AppRoutes.reminders),
                 icon: const Icon(Icons.notifications_none_rounded),
               ),
+              const SoundSettingsButton(),
               const TrophyButton(),
             ],
           ),
@@ -498,6 +514,39 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Today's header: the "WINTER ARC" eyebrow and its actions. On one line
+/// when they fit; otherwise the actions move under the eyebrow (wrapping
+/// rather than overflowing), so the eyebrow never breaks inside a word on a
+/// narrow phone or with large text.
+class _TodayHeader extends StatelessWidget {
+  const _TodayHeader({required this.actions});
+
+  final List<Widget> actions;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.winter;
+    final text = Theme.of(context).textTheme;
+    return OverflowBar(
+      alignment: MainAxisAlignment.spaceBetween,
+      overflowAlignment: OverflowBarAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsetsDirectional.only(start: WinterSpacing.xs),
+          child: Text(
+            'WINTER ARC',
+            style: text.labelLarge?.copyWith(
+              color: colors.accentSecondary,
+              letterSpacing: 3,
+            ),
+          ),
+        ),
+        Wrap(crossAxisAlignment: WrapCrossAlignment.center, children: actions),
+      ],
     );
   }
 }

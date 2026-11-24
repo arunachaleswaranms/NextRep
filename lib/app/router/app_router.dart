@@ -29,6 +29,7 @@ import '../../features/reminders/reminder_settings_screen.dart';
 import '../../features/review/weekly_review_screen.dart';
 import '../../features/shell/active_shell.dart';
 import '../../features/shell/unknown_page_screen.dart';
+import '../../features/sound/sound_settings_screen.dart';
 import '../../features/summary/summary_screen.dart';
 import '../../features/today/today_screen.dart';
 import '../app_restart.dart';
@@ -76,6 +77,10 @@ abstract final class AppRoutes {
   /// state, and its app picker.
   static const focusGuard = '/settings/focus-guard';
   static const focusGuardApps = '/settings/focus-guard/apps';
+
+  /// Sound & Feedback (Phase 12G): completion sounds on or off and which
+  /// set. App-level, reachable in every state; opening it writes nothing.
+  static const soundSettings = '/settings/sound';
 
   /// About NextRep, with the manual update check. Reachable in every state;
   /// opening it contacts nothing.
@@ -304,6 +309,10 @@ GoRouter buildAppRouter({
       GoRoute(
         path: AppRoutes.reminders,
         builder: (context, state) => const ReminderSettingsScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.soundSettings,
+        builder: (context, state) => const SoundSettingsScreen(),
       ),
       GoRoute(
         path: AppRoutes.dataBackup,

@@ -12,6 +12,7 @@ import '../../shared/widgets/loading_view.dart';
 import '../../shared/widgets/winter_background.dart';
 import '../about/about_entry.dart';
 import '../focus_guard/focus_guard_entry.dart';
+import '../sound/sound_settings_screen.dart';
 import 'arc_history_controller.dart';
 import 'widgets/arc_history_tile.dart';
 
@@ -46,6 +47,7 @@ class ArcHistoryScreen extends ConsumerWidget {
               backgroundColor: Colors.transparent,
               actions: const [
                 FocusGuardButton(),
+                SoundSettingsButton(),
                 _DataBackupButton(),
                 AboutButton(),
               ],
@@ -89,6 +91,7 @@ class ArcHistoryScreen extends ConsumerWidget {
                             ),
                           ),
                           const FocusGuardButton(),
+                          const SoundSettingsButton(),
                           const _DataBackupButton(),
                           const AboutButton(),
                         ],
