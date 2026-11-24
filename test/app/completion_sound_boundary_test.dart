@@ -137,6 +137,16 @@ void main() {
     expect(_filesMatching(dart, 'completionFeedbackProvider).preview('), {
       'lib/features/sound/sound_settings_screen.dart',
     });
+    // G-R1: every request carries its screen's origin, and only the
+    // eligibility scope creates an active one, so no screen can sound
+    // without being the one shown. Both sounding screens use the scope.
+    expect(_filesMatching(dart, RegExp(r'(=>?|\(|,)\s*SoundOrigin\(\)')), {
+      'lib/features/sound/sound_origin_scope.dart',
+    });
+    expect(_filesMatching(dart, 'with SoundOriginScope'), {
+      'lib/features/today/today_screen.dart',
+      'lib/features/sound/sound_settings_screen.dart',
+    });
     expect(
       _filesMatching(dart, 'overrideWithValue(const NativeSoundPlayer())'),
       {'lib/main.dart'},

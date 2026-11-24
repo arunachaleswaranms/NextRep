@@ -10,10 +10,12 @@ import '../../app/theme/winter_tokens.dart';
 import '../../core/errors/action_result.dart';
 import '../../core/errors/app_failure.dart';
 import '../../domain/feedback/feedback_preferences.dart';
+import '../../domain/feedback/sound_origin.dart';
 import '../../shared/widgets/failure_view.dart';
 import '../../shared/widgets/loading_view.dart';
 import '../../shared/widgets/winter_background.dart';
 import '../../shared/widgets/winter_card.dart';
+import 'sound_origin_scope.dart';
 import 'sound_settings_controller.dart';
 
 /// The wording of Sound & Feedback (ARC_CONTROL_SPEC § 8.4, § 9.12). The
@@ -66,7 +68,11 @@ class SoundSettingsScreen extends ConsumerStatefulWidget {
       _SoundSettingsScreenState();
 }
 
-class _SoundSettingsScreenState extends ConsumerState<SoundSettingsScreen> {
+class _SoundSettingsScreenState extends ConsumerState<SoundSettingsScreen>
+    with SoundOriginScope {
+  @override
+  String get soundLocation => AppRoutes.soundSettings;
+
   @override
   void initState() {
     super.initState();
@@ -90,6 +96,8 @@ class _SoundSettingsScreenState extends ConsumerState<SoundSettingsScreen> {
   }
 
   Future<void> _setEnabled(bool on) async {
+    // Turning sounds off also drops a preview still waiting to start.
+    if (!on) renewSoundOrigin();
     final saved = await _save(
       (p) => FeedbackPreferences(soundsEnabled: on, soundTheme: p.soundTheme),
     );
@@ -98,19 +106,24 @@ class _SoundSettingsScreenState extends ConsumerState<SoundSettingsScreen> {
     }
   }
 
-  /// Selecting a set stores it, then plays it once.
+  /// Selecting a set stores it, then plays it once, unless the user has
+  /// left this screen by the time it is stored.
   Future<void> _choose(SoundTheme theme) async {
+    final origin = soundOrigin;
     final saved = await _save(
       (p) => FeedbackPreferences(
         soundsEnabled: p.soundsEnabled,
         soundTheme: theme,
       ),
     );
-    if (saved) _preview(theme);
+    if (saved) _preview(theme, origin);
   }
 
-  void _preview(SoundTheme theme) =>
-      unawaited(ref.read(completionFeedbackProvider).preview(theme));
+  /// Plays [theme] once, if this screen (as it was when the user asked,
+  /// [origin]) is still the one shown when the sound would start.
+  void _preview(SoundTheme theme, SoundOrigin origin) => unawaited(
+    ref.read(completionFeedbackProvider).preview(theme, origin: origin),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -202,7 +215,7 @@ class _SoundSettingsScreenState extends ConsumerState<SoundSettingsScreen> {
                           _ThemeRow(
                             theme: theme,
                             enabled: on,
-                            onPreview: () => _preview(theme),
+                            onPreview: () => _preview(theme, soundOrigin),
                           ),
                       ],
                     ),

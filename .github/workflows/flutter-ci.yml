@@ -120,11 +120,12 @@ jobs:
           test/features/arc_restart_read_only_test.dart
           test/integration/restart_layout_test.dart
 
-      - name: Phase 12G tests (completion sounds - throttle, saved-completion triggers, Perfect Day, settings, restore, boundaries, data unchanged, layouts, asset properties)
+      - name: Phase 12G tests (completion sounds - throttle, saved-completion triggers, Perfect Day, settings, restore, boundaries, data unchanged, layouts, asset properties, stale requests dropped)
         run: >-
           flutter test
           test/domain/completion_feedback_test.dart
           test/features/completion_sound_flow_test.dart
+          test/features/completion_sound_stale_test.dart
           test/features/completion_sound_regression_test.dart
           test/features/sound_settings_test.dart
           test/app/completion_sound_boundary_test.dart

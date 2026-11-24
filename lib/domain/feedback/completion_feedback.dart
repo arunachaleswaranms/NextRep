@@ -6,6 +6,7 @@ import '../../core/errors/error_reporter.dart';
 import '../../core/time/local_date.dart';
 import 'completion_sound.dart';
 import 'feedback_preferences.dart';
+import 'sound_origin.dart';
 
 /// Time since an arbitrary fixed point that only moves forward: never the
 /// wall clock, so changing the phone's date or time can't reopen a
@@ -41,7 +42,12 @@ enum SoundOutcome {
   late,
 
   /// The setting couldn't be read. Nothing plays; the action is unaffected.
-  unavailable;
+  unavailable,
+
+  /// The request's [SoundOrigin] was cancelled before it could start (the
+  /// user left the screen, the app went to the background, the Arc or app
+  /// epoch changed). Dropped for good; it took no throttle window.
+  cancelled;
 
   bool get played => this == playedHabit || this == playedPerfectDay;
 }
@@ -62,6 +68,12 @@ enum SoundOutcome {
 /// A throttled sound is dropped. Nothing is queued or retried, so nothing
 /// plays late. Throttle times come from a [MonotonicClock], so a wall-clock
 /// change can't bypass it.
+///
+/// Every request carries the [SoundOrigin] of the screen that made it. A
+/// request whose origin is cancelled while it waits for the setting is
+/// dropped as [SoundOutcome.cancelled] before it touches the throttle or the
+/// Perfect Day memory, so it neither uses a window nor marks a day as
+/// sounded.
 final class CompletionFeedback {
   CompletionFeedback({
     required this._preferences,
@@ -110,13 +122,18 @@ final class CompletionFeedback {
   /// Plays the Perfect Day sound instead of the habit sound the first time
   /// a date of an Arc becomes perfect; afterwards (a Perfect Day undone and
   /// redone) the habit sound, like any restored completion.
+  ///
+  /// Nothing plays unless [origin] is still active once the setting has
+  /// been read.
   Future<SoundOutcome> habitCompleted({
     required int sessionId,
     required LocalDate date,
     required String habitId,
     required bool perfectDay,
     required Duration requestedAt,
+    required SoundOrigin origin,
   }) async {
+    if (!origin.isActive) return SoundOutcome.cancelled;
     final FeedbackPreferences preferences;
     try {
       preferences = await _preferences.load();
@@ -125,7 +142,9 @@ final class CompletionFeedback {
       return SoundOutcome.unavailable;
     }
     // From here to the end runs without yielding, so two completions can't
-    // both pass the throttle.
+    // both pass the throttle, and an origin still active here is still
+    // active when the sound starts.
+    if (!origin.isActive) return SoundOutcome.cancelled;
     if (!preferences.soundsEnabled) return SoundOutcome.disabled;
     final now = _elapsed();
     if (now - requestedAt > maxLatency) return SoundOutcome.late;
@@ -139,6 +158,8 @@ final class CompletionFeedback {
     if (last != null && now - last < habitGap) {
       return SoundOutcome.throttledForHabit;
     }
+    // The last check before playback (see [_start]).
+    if (!origin.isActive) return SoundOutcome.cancelled;
     if (!_start(preferences.soundTheme, sound, now)) {
       return SoundOutcome.throttledGlobally;
     }
@@ -152,8 +173,13 @@ final class CompletionFeedback {
   }
 
   /// The settings screen's preview: [theme]'s habit sound, if sounds are
-  /// on and nothing is playing. Never throws.
-  Future<SoundOutcome> preview(SoundTheme theme) async {
+  /// on, nothing is playing and [origin] (the settings screen that asked)
+  /// is still active once the setting has been read. Never throws.
+  Future<SoundOutcome> preview(
+    SoundTheme theme, {
+    required SoundOrigin origin,
+  }) async {
+    if (!origin.isActive) return SoundOutcome.cancelled;
     final FeedbackPreferences preferences;
     try {
       preferences = await _preferences.load();
@@ -161,10 +187,13 @@ final class CompletionFeedback {
       _report(error, stackTrace);
       return SoundOutcome.unavailable;
     }
+    if (!origin.isActive) return SoundOutcome.cancelled;
     if (!preferences.soundsEnabled) return SoundOutcome.disabled;
     // A preview is the first sound a user may hear: make sure it's loaded.
     // Not awaited: if loading isn't finished, this preview stays silent.
     unawaited(_guard(_player.prepare));
+    // The last check before playback (see [_start]).
+    if (!origin.isActive) return SoundOutcome.cancelled;
     return _start(theme, CompletionSound.habit, _elapsed())
         ? SoundOutcome.playedHabit
         : SoundOutcome.throttledGlobally;
@@ -172,6 +201,11 @@ final class CompletionFeedback {
 
   /// Starts [sound] unless another is playing or started within
   /// [globalGap]. The player isn't awaited: its result changes nothing.
+  ///
+  /// Callers check the request's [SoundOrigin] immediately before calling
+  /// it. They already checked it after their last `await` and haven't
+  /// yielded since, so the second check changes nothing today; it is there
+  /// so that a later edit adding an `await` can't let a stale request play.
   bool _start(SoundTheme theme, CompletionSound sound, Duration now) {
     final quiet = _quietUntil;
     if (quiet != null && now < quiet) return false;

@@ -1,6 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/widgets.dart';
+import 'package:nextrep/app/dependencies.dart';
 import 'package:nextrep/core/database/app_database.dart';
 import 'package:nextrep/data/drift_feedback_preferences_repository.dart';
+import 'package:nextrep/domain/feedback/completion_feedback.dart';
 import 'package:nextrep/domain/feedback/feedback_preferences.dart';
 
 import '../support/fakes.dart';
@@ -10,8 +13,9 @@ import '../support/ui.dart';
 
 /// Sound feedback is feedback only (spec § 8.5; prompt § 10): the same
 /// Today session leaves exactly the same stored data (progress, XP, Perfect
-/// Day, streaks, achievements, modes, Arc) whether sounds are on, off, or
-/// the player fails on every call.
+/// Day, streaks, achievements, modes, Arc) whether sounds are on, off, the
+/// player fails or hangs on every call, or every sound is still waiting for
+/// its setting when Today goes away and is dropped (G-R1).
 Future<Map<String, List<Map<String, Object?>>>> _everyTableBut(
   AppDatabase db,
   String excluded,
@@ -37,7 +41,7 @@ Future<Map<String, List<Map<String, Object?>>>> _everyTableBut(
   };
 }
 
-enum _Run { soundsOn, soundsOff, playerFails }
+enum _Run { soundsOn, soundsOff, playerFails, playerHangs, cancelled }
 
 void main() {
   Future<Map<String, List<Map<String, Object?>>>> session(
@@ -62,16 +66,38 @@ void main() {
     }
     final player = FakeSoundPlayer()
       ..failPlay = run == _Run.playerFails
-      ..failPrepare = run == _Run.playerFails;
+      ..failPrepare = run == _Run.playerFails
+      ..hang = run == _Run.playerHangs;
     final monotonic = FakeMonotonic();
+    // Cancelled: every setting read waits until Today is gone.
+    final held = HeldFeedbackPreferences(
+      DriftFeedbackPreferencesRepository(app.db),
+    )..holding = run == _Run.cancelled;
     await tester.pumpWidget(
-      soundApp(app, player: player, monotonic: monotonic),
+      soundApp(
+        app,
+        player: player,
+        monotonic: monotonic,
+        extra: [
+          completionFeedbackProvider.overrideWithValue(
+            CompletionFeedback(
+              preferences: held,
+              player: player,
+              elapsed: monotonic.call,
+            ),
+          ),
+        ],
+      ),
     );
     await tester.pumpAndSettle();
 
     Future<void> tap(String tooltip, [int times = 1]) async {
       for (var i = 0; i < times; i++) {
-        monotonic.advance(const Duration(seconds: 4));
+        // Cancelled: the clock stands still, so every held request is
+        // dropped by its cancelled origin, not by the 1 s latency rule.
+        if (run != _Run.cancelled) {
+          monotonic.advance(const Duration(seconds: 4));
+        }
         await tapTooltip(tester, tooltip);
       }
     }
@@ -91,23 +117,38 @@ void main() {
     expect(today.completion.completed, 4);
     expect(today.perfectDays.streak.current, 1);
     expect(tester.takeException(), isNull);
-    if (run == _Run.soundsOff) {
+    if (run == _Run.soundsOff || run == _Run.cancelled) {
       expect(player.plays, isEmpty);
     } else {
       expect(player.plays, isNotEmpty);
     }
+    if (run == _Run.cancelled) {
+      expect(held.waitingLoads, greaterThan(4));
+      // Today goes; only then does the setting arrive: nothing plays.
+      await tester.pumpWidget(const SizedBox());
+      held.release();
+      await tester.pump();
+      expect(held.returned, greaterThan(4));
+      expect(player.plays, isEmpty);
+    }
     await shutDown(tester);
+    // A hung player's call never returns; let its timer go.
+    if (run == _Run.playerHangs) await tester.pump(const Duration(days: 2));
     return _everyTableBut(app.db, 'feedback_preferences');
   }
 
-  testWidgets('sounds on, sounds off and a failing player store exactly the '
-      'same data', (tester) async {
+  testWidgets('sounds on, sounds off, a failing or hung player and '
+      'dropped (cancelled) sounds store exactly the same data', (tester) async {
     final on = await session(tester, _Run.soundsOn);
     final off = await session(tester, _Run.soundsOff);
     final failing = await session(tester, _Run.playerFails);
+    final hung = await session(tester, _Run.playerHangs);
+    final cancelled = await session(tester, _Run.cancelled);
     expect(on['xp_transactions'], isNotEmpty);
     expect(on['achievement_unlocks'], isNotEmpty);
     expect(off, on);
     expect(failing, on);
+    expect(hung, on);
+    expect(cancelled, on);
   });
 }

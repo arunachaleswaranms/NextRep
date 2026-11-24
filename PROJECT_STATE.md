@@ -1,6 +1,6 @@
 # PROJECT_STATE
 
-_Last updated: 2026-11-23. **Latest published release: v1.2.0** (tag
+_Last updated: 2026-11-24. **Latest published release: v1.2.0** (tag
 `v1.2.0` on `8ab0c43`, PR #20), published 18 October 2026; v1.1.0 and
 v1.0.0 before it. The v1.2 roadmap (Phases 11A–11F, PRs #15–#20), the
 publication record (PR #21), the Phase 12A plan (PR #22), the Phase 12A
@@ -85,8 +85,23 @@ backup field are reused. No phone, no signing, no release.
   vibrate and all three Do Not Disturb modes, music not ducked or paused,
   rapid taps one sound, Perfect Day one sound, R8 release build plays.
   TalkBack audibility, headphones, iOS playback and OxygenOS unresolved.
-- **Next:** independent review, Gate G (listening, names, default on, the
-  decisions in the doc), then the owner's merge decision.
+- **Review correction G-R1 (stale playback):** a sound waiting for its
+  setting read could still play after the user left Today (another tab,
+  a pushed page), the Arc was restarted or ended, a restore replaced the
+  app epoch, or the app went to the background; likewise a preview after
+  leaving Sound & Feedback. Each request now carries its screen's
+  `SoundOrigin`, cancelled (for good) when the router's top page or tickers
+  leave that screen, the app leaves `resumed`, the epoch or (Today) the
+  Arc changes, or the screen is disposed; the engine checks it after the
+  read and immediately before playback. A cancelled request takes no
+  throttle window and marks no Perfect Day. 28 new tests (2,311 Flutter
+  pass), 10 of 10 guard mutations detected, an independent cold review,
+  and a disposable-emulator check (completion or choice followed at once
+  by navigation or Home: saved, no sound; controls sound). Native players,
+  sounds and stored data unchanged.
+- **Next:** independent verification of the correction, Gate G (listening,
+  names, default on, the decisions in the doc), then the owner's merge
+  decision.
 
 ## Phase 12F (v1.3.0 Restart and optional Arc deletion, merged)
 

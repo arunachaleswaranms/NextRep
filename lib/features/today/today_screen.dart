@@ -35,6 +35,7 @@ import '../celebration/celebration_queue.dart';
 import '../focus_guard/focus_guard_card.dart';
 import '../share/share_choice_sheet.dart';
 import '../share/share_preview_screen.dart';
+import '../sound/sound_origin_scope.dart';
 import '../sound/sound_settings_screen.dart';
 import 'today_controller.dart';
 import 'widgets/habit_progress_tile.dart';
@@ -49,12 +50,16 @@ class TodayScreen extends ConsumerStatefulWidget {
   ConsumerState<TodayScreen> createState() => _TodayScreenState();
 }
 
-class _TodayScreenState extends ConsumerState<TodayScreen> {
+class _TodayScreenState extends ConsumerState<TodayScreen>
+    with SoundOriginScope {
   late final AppLifecycleListener _lifecycle;
   bool _returningToFull = false;
   bool _cancellingPause = false;
 
   TodayController get _controller => ref.read(todayControllerProvider.notifier);
+
+  @override
+  String get soundLocation => AppRoutes.today;
 
   @override
   void initState() {
@@ -64,6 +69,14 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     _lifecycle = AppLifecycleListener(onResume: () => _controller.refresh());
     // Loads the completion sounds (if on) so the first one plays at once.
     unawaited(ref.read(completionFeedbackProvider).warmUp());
+    // A completion's sound belongs to the Arc it was made in: a Restart, or
+    // the Arc ending, drops any that hasn't started.
+    ref.listenManual(
+      todayControllerProvider.select(
+        (today) => (today.value?.session.id, today.value?.session.status),
+      ),
+      (_, _) => renewSoundOrigin(),
+    );
   }
 
   @override
@@ -80,6 +93,9 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     final feedback = ref.read(completionFeedbackProvider);
     final requestedAt = feedback.now();
     final sessionId = ref.read(todayControllerProvider).value?.session.id;
+    // Today as the user sees it now: if they leave, or the Arc or app
+    // changes, before the sound starts, it never plays (G-R1).
+    final origin = soundOrigin;
     final result = await _controller.perform(habit.id, action, time: time);
     if (!mounted) return;
 
@@ -101,6 +117,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                 habitId: habit.id,
                 perfectDay: ledger.perfectDayGranted,
                 requestedAt: requestedAt,
+                origin: origin,
               ),
             );
           }

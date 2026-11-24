@@ -130,6 +130,7 @@ NativeSoundPlayer ── MethodChannel com.nextrep.nextrep/completion_sound
 | `lib/domain/feedback/completion_sound.dart` | **New.** `CompletionSound` (habit / Perfect Day; asset paths, lengths, channel ids); the `SoundPlayer` interface; `SilentSoundPlayer` |
 | `lib/domain/feedback/completion_feedback.dart` | **New.** `CompletionFeedback`: the trigger decision and throttle; `SoundOutcome`; `MonotonicClock` (`processElapsed`, a process stopwatch) |
 | `lib/data/native_sound_player.dart` | **New.** `NativeSoundPlayer` over the channel (`prepare`, `play`) |
+| `lib/domain/feedback/sound_origin.dart`, `lib/features/sound/sound_origin_scope.dart` | **New (G-R1).** `SoundOrigin`, the cancellable handle every request carries; `SoundOriginScope`, the mixin that keeps Today's and Sound & Feedback's origin active only while the screen is shown |
 | `lib/app/dependencies.dart`, `lib/main.dart` | `feedbackPreferencesRepositoryProvider`, `soundPlayerProvider` (silent unless `main.dart` overrides it on Android and iOS), `monotonicClockProvider`, `completionFeedbackProvider` |
 | `lib/features/today/today_screen.dart` | The trigger in `_perform`; sounds warmed up on open; the entry point; `_TodayHeader` (below) |
 | `lib/features/sound/` | **New.** `SoundSettingsScreen`, `SoundSettingsController`, `SoundCopy`, `SoundSettingsButton` |
@@ -274,18 +275,19 @@ eyebrow. This changes Today's layout and is listed for Gate G.
 
 | Layer | File | Tests |
 |---|---|---|
-| U | `test/domain/completion_feedback_test.dart` | 23: global 500 ms and still-playing gaps, per-habit 3 s, dropped-not-queued, simultaneous requests, a 200-tap burst, Perfect Day replacement and per-Arc/date memory, throttled Perfect Day, sound off, latency, unreadable setting, failing and hanging player, warm-up, preview, wall-clock rollback and restore through the providers |
+| U | `test/domain/completion_feedback_test.dart` | 33 (10 from G-R1): global 500 ms and still-playing gaps, per-habit 3 s, dropped-not-queued, simultaneous requests, a 200-tap burst, Perfect Day replacement and per-Arc/date memory, throttled Perfect Day, sound off, latency, unreadable setting, failing and hanging player, warm-up, preview, wall-clock rollback and restore through the providers |
 | W | `test/features/completion_sound_flow_test.dart` | 9: every § 8.1 row through the real Today screen, commit and ledger, with haptics recorded |
+| W | `test/features/completion_sound_stale_test.dart` | 18 (G-R1): stale completions and previews dropped (see the G-R1 section) |
 | W / R | `test/features/sound_settings_test.dart` | 22: wording and defaults, choose and preview, off disables with a reason, failed write, relaunch and Restart, format-4 restore and formats 1–3 through Data & Backup, entry points in five app states, six layouts (360×800 at 1× and 2×, 320×568 at 1.5×, landscape at 1.3× and 1×, tablet), `meetsGuideline` tap target / label / contrast at 1× and 2× |
-| W | `test/features/completion_sound_regression_test.dart` | 1: the same session with sounds on, off, and a failing player stores identical rows in every table but `feedback_preferences` |
+| W | `test/features/completion_sound_regression_test.dart` | 1: the same session with sounds on, off, a failing player, a hung player and every sound cancelled (G-R1) stores identical rows in every table but `feedback_preferences` |
 | S | `test/app/completion_sound_boundary_test.dart` | 6: unique channel names; SoundPool, sonification, one stream, no focus or other player; no channel, permission or network; iOS ambient; only Today and the settings screen use the engine; bundled only |
 | A | `test/assets/completion_sound_assets_test.dart` | 38 (above) |
 | J | `android/app/src/test/.../sound/CompletionSoundsTest.kt` | 16: loading once, bundled paths only, play when loaded, skip before loading and never later, unknown sound, failed load unloaded and retried, missing asset, silent and vibrate, every DND filter, unreadable state, policy table, playback failures, release, late callbacks, fresh engine after release, no channel collision with Focus Guard |
 
 `test/app/network_boundary_test.dart` is unchanged and passes.
 
-Totals on the final local run: **2,283 Flutter tests pass** (99 new),
-**87 JVM tests pass** (16 new); `dart format` and `flutter analyze`
+Totals on the final local run: **2,311 Flutter tests pass** (127 new,
+28 of them from correction G-R1), **87 JVM tests pass** (16 new); `dart format` and `flutter analyze`
 clean. The existing layout sweeps (11E, 12E2) found the header defect
 above and pass after the fix.
 
@@ -377,6 +379,205 @@ critical or high. Outcomes:
 | L3: iOS marked the session configured even if `setCategory(.ambient)` failed (the default session would stop music) | **Fixed:** nothing loads or plays unless the ambient category was set |
 | L4: a failed `SoundPool` load was never unloaded | **Fixed:** unloaded, then retried by the next prepare (JVM test) |
 | L5: a preview before loading finishes is silent but takes the 500 ms window | Accepted: the screen warms the sounds up on open |
+
+## Independent review correction G-R1: stale asynchronous playback
+
+Found by the independent review of PR #30 (head `2963e51`). Corrected on
+the same branch; the native players, the six sounds and their generator,
+and everything stored are unchanged.
+
+### The race
+
+`CompletionFeedback.habitCompleted()` (and `preview()`) read
+`feedback_preferences` with an `await` before deciding to play. A
+completion could commit, and its sound then wait on that read while:
+
+- the user left Today (a pushed page such as Reminders or Sound &
+  Feedback, or another tab);
+- the Arc was restarted or ended;
+- a restore replaced the app epoch and rebuilt every screen;
+- the app went to the background, or Today was disposed.
+
+When the read returned, the old request was still allowed to play. The
+same held for a preview whose user had already left Sound & Feedback,
+including the preview that follows a set being stored (`_choose` awaits
+the save, then previews). Root cause: the engine's only conditions were
+the setting, the latency limit and the throttles; nothing tied a request
+to the screen, Arc and app state it came from.
+
+### Why `mounted` was not enough
+
+Today lives in a `StatefulShellRoute.indexedStack` branch: it stays
+mounted (offstage, tickers off) while Journey, Journal or History is
+shown, and every page pushed on the root navigator (Reminders, Sound &
+Feedback, About, Restart, …) covers it without disposing it. Sound &
+Feedback likewise stays mounted under a page pushed over it. `mounted`
+is true in all of these, so `if (!mounted) return` in `_perform` and
+`_save` let the stale request through.
+
+### Design
+
+One small pure handle plus one UI mixin; no navigation or Riverpod
+dependency in the engine, no new provider, table, column, migration or
+dependency.
+
+```
+SoundOrigin (lib/domain/feedback/sound_origin.dart)
+  isActive; cancel()  ─ permanent, idempotent; never re-activated
+
+SoundOriginScope mixin (lib/features/sound/sound_origin_scope.dart)
+  on TodayScreen (soundLocation /today) and SoundSettingsScreen
+  (/settings/sound). Holds the origin of the current *visible window*:
+    eligible = mounted
+             ∧ router's top page is at soundLocation
+                 (currentConfiguration.lastOrNull.matchedLocation: a
+                  pushed page or the shown tab; .uri stays the base
+                  location under a push, so it is not used)
+             ∧ TickerMode enabled (indexed-stack tab shown, not under an
+                  opaque page)
+             ∧ AppLifecycleState.resumed
+    not eligible → origin.cancel()
+    eligible again → a NEW origin (old requests stay cancelled)
+  renewSoundOrigin(): cancel now; new origin if still eligible
+
+Request:  origin = soundOrigin     ─ captured when the user acts,
+          … await save …              before any await
+          engine.habitCompleted(…, origin) / engine.preview(theme, origin)
+
+CompletionFeedback:
+  origin cancelled → SoundOutcome.cancelled (no read)
+  await read setting                      ─ the only async boundary
+  origin cancelled → SoundOutcome.cancelled
+  off / late / Perfect Day choice / per-habit throttle (no state change)
+  origin cancelled → SoundOutcome.cancelled   ─ immediately before _start
+  _start (global throttle; commits; native play, not awaited)
+```
+
+From the check after the read to `_start` the engine does not yield, so
+the origin cannot change between the last check and the native call; the
+check immediately before `_start` keeps that true if an `await` is ever
+added. The native players are asked to play only after all three checks;
+there is no delayed native queue.
+
+Origins are per screen, so cancelling a pending preview never cancels a
+completion request, and the reverse.
+
+### Invalidation points
+
+| Event | Mechanism | Today | Sound & Feedback |
+|---|---|---|---|
+| Another tab shown (Today stays mounted) | router top page ≠ `/today`; `TickerMode` off | ✓ | n/a |
+| A page pushed over the screen / the screen popped | router top page changes (synchronously, on the delegate's notification) | ✓ | ✓ |
+| Arc Restart (new session id) or the Arc ending (status) | `todayControllerProvider` select `(session.id, session.status)` → `renewSoundOrigin` | ✓ | n/a |
+| App epoch replaced (restore, re-initialisation) | `appEpochProvider` listener → `renewSoundOrigin`, before the rebuild's frame | ✓ | ✓ |
+| App leaves `resumed` (inactive, hidden, paused) | `AppLifecycleListener.onStateChange` | ✓ | ✓ |
+| Screen disposed | `dispose()` cancels | ✓ | ✓ |
+| Sounds switched off | `renewSoundOrigin` before the save | n/a | ✓ |
+
+Returning to the same route or Arc makes a new origin; the cancelled one
+stays cancelled, so nothing is replayed or retried.
+
+### Throttle and Perfect Day state
+
+A cancelled request returns before `_start`, so it takes **no** global
+window, writes **no** per-habit time and marks **no** Perfect Day as
+sounded: the next eligible completion (even of the same habit, at once)
+is judged as if the cancelled one never happened. A sound that had
+already started is not stopped. The monotonic clock, the 1 s latency
+drop, the 500 ms / 3 s throttles, no-overlap and the per-Arc/date Perfect
+Day memory are unchanged.
+
+### Tests added
+
+| File | New | What |
+|---|---|---|
+| `test/domain/completion_feedback_test.dart` | 10 | Pure engine with every read held on a `Completer` (`HeldFeedbackPreferences`): live origin plays once; cancelled mid-read dropped and never replayed (idempotent cancel); a cancelled origin reads nothing; cancelled in the very microtask the setting returns (last boundary) for completions and previews; no throttle window or Perfect Day memory taken; 8 simultaneous pending requests (one cancelled): exactly one plays, the first live one; sounds off during the read; a failing read after waiting; the 1 s latency rule still applies; a cancelled preview takes nothing from the next |
+| `test/features/completion_sound_stale_test.dart` | 18 (new file) | Real app, router and Drift: (1) stays on Today → one sound; (2) Reminders pushed → none, none on return, save stands; (2b) the setting returns after the push but **before the next frame** (Today's tickers still on, so only the location guard applies) → none; (3b) a page pushed outside the router, as Share preview is (location still `/today`, so only the ticker guard applies) → none, the next completion after closing it sounds; (3) Journey tab with Today still mounted (asserted) → none; (4, 9, 10) away and back → none, the next completion sounds at once; (5, 9) Arc Restart with Today still at `/today` → none, the new Arc sounds; (6) Arc ends → none; (7, 9) epoch moved and the setting returned **before any frame** (old Today asserted mounted) → none; (8) backgrounded → none even after resuming; (8) disposed → none; (20) hung and failing player, completions stored. Previews: (11) shown → plays; (12, 13, 15) left and reopened → none, a new preview plays; backgrounded → none; (14) a set chosen, another page pushed over the still-mounted screen before the save finishes → stored, never previewed, not on return either, then left by Back → none; (16) switched off during the read → none (the stored setting); (16b) the same with a read that still says "on" → none (only the switch's cancellation applies) |
+| `test/features/completion_sound_regression_test.dart` | runs | The same session now also with a hung player and with every sound held until Today is gone (cancelled; the monotonic clock stands still in that run so every request is dropped by cancellation, not by the latency rule): every table but `feedback_preferences` identical to sounds-on, sounds-off and failing-player |
+| `test/app/completion_sound_boundary_test.dart` | assertions | Only the scope creates an active `SoundOrigin`; both sounding screens use the scope |
+
+No test sleeps in real time; every race is ordered by `Completer`s.
+
+**Mutation check (G-R1):** ten mutations, each run against the engine
+and stale-request tests, each detected:
+
+| Mutation | Detected by |
+|---|---|
+| Engine ignores the origin | 6 engine and 13 widget tests |
+| Engine checks the origin only before the read | 5 engine and 11 widget tests |
+| Scope ignores the router location | 2b |
+| Scope ignores `TickerMode` | 3b |
+| Scope ignores both (`mounted`-only behaviour) | 2, 3, 4, 14 |
+| Scope ignores the app lifecycle | 8 (completion), backgrounded preview |
+| No epoch listener | 7 (epoch moved, old Today still mounted) |
+| No Arc-identity listener on Today | 5 |
+| `dispose` doesn't cancel | 8 (disposed) |
+| Turning sounds off doesn't cancel pending previews | 16b |
+
+The location and ticker guards overlap: each alone covers the ordinary
+cases, so each has a test of its own (2b, 3b) where the other can't help.
+
+An independent cold review of the correction (code only, no conclusions
+given) found no correctness defect. Its lower-confidence notes led to
+16b, the still clock in the cancelled regression run, and the residual
+limitations below.
+
+### Emulator check
+
+Disposable AVD `NextRep12G_GR1` (API 36 `google_apis` arm64, Pixel 7,
+fresh, nothing else installed), the debug build of this correction,
+deleted afterwards. Evidence is the debug build's
+`NextRepSound: play <id>: <result>` log line (the engine handed the sound
+to the native player) beside the app's state; the audio output itself was
+not recorded again, since the players and files are unchanged. Two taps in
+one `adb shell` command arrive a few tens of milliseconds apart.
+
+| Trial | Measured |
+|---|---|
+| A. Complete Workout, stay on Today | `play iceCrystal.habit: PLAYED` (the scope is eligible on a device) |
+| B. Complete Water Intake and tap the Journey tab in the same command | saved (2 of 4); **no play logged** |
+| C. Control: complete Learning and tap a non-navigating spot in the same command | `PLAYED` |
+| D1. Preview, then Back in the same command | `PLAYED`: the read finished before Back was handled, so the sound started while the screen was eligible and is not stopped (by design) |
+| D2. Control: preview, then a non-navigating tap | `PLAYED` |
+| D3. Choose Summit Spark, then Back in the same command | stored (`feedback_preferences` row `summitSpark` read from the device's database); **no preview logged** |
+| E. Complete the last habit (a Perfect Day), then Home in the same command | saved (4 of 4, Perfect streak 1); **no play logged**, none after returning to the app |
+
+B, D3 and E show stale requests dropped on a device; C and D2 show the
+same timing without leaving still sounds. Whether B and E were dropped by
+the cancelled origin rather than another rule is inferred (no throttle or
+latency applied: the previous sound was seconds earlier and the action
+took well under a second), not logged. Exact race ordering is covered by
+the widget tests, not by this check.
+
+### Residual limitations
+
+- The guard covers requests that have not started. A sound already handed
+  to the native player plays out (≤ 900 ms); stopping it is out of scope.
+- "Eligible" is the screen's own route at the top, tickers on and the app
+  resumed. A dialog or bottom sheet over Today (pause / resume sheets, the
+  celebration overlay) does not count as leaving; a completion cannot be
+  made from under one.
+- `inactive` counts as leaving: on Android a visible window that loses
+  focus (notification shade, a system dialog, the other side of split
+  screen) drops a sound still waiting for its setting. Deliberate (strict
+  "foreground"); a pending sound waits only milliseconds.
+- A page pushed outside the router (Share preview, a plain
+  `Navigator.push`) is detected by the ticker guard only once its forward
+  transition completes, so for about 300 ms Today, still partly visible,
+  stays eligible. Share starts from a bottom sheet, so a completion sound
+  pending in that window is very unlikely. The router's own pages are
+  detected at once (their location changes synchronously, and in this app
+  they have no transition).
+- Race ordering is proved by widget tests with fakes; the emulator check
+  above shows the behaviour on a device but cannot order a race exactly.
+
+### Unchanged
+
+Sound assets (SHA-256 below unchanged), their generator, the Android and
+iOS players, the channel, `feedback_preferences` persistence, backup and
+restore, reminders, Focus Guard, every habit, XP, streak, Perfect Day,
+Minimum Day, Restart and Freeze rule. No migration, dependency or
+permission.
 
 ## Unverified device behaviour (unresolved for Gate G)
 
@@ -470,7 +671,7 @@ source: `dart run tool/sounds/generate_completion_sounds.dart`.
 ```
 dart format --output=none --set-exit-if-changed .     # 0 changed
 flutter analyze                                       # No issues found
-flutter test                                          # 2,283 passed
+flutter test                                          # 2,311 passed
 (cd android && ./gradlew :app:testDebugUnitTest)      # 87 passed
 flutter build apk --debug && flutter build apk --release
 flutter build ios --simulator --debug
