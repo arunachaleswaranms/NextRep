@@ -6,9 +6,12 @@ import 'package:nextrep/app/dependencies.dart';
 import 'package:nextrep/app/router/app_router.dart';
 import 'package:nextrep/core/time/local_date.dart';
 import 'package:nextrep/domain/focus_guard/focus_guard_platform.dart';
+import 'package:nextrep/domain/habit/habit.dart';
 import 'package:nextrep/domain/habit/habit_edit.dart';
+import 'package:nextrep/domain/habit/setup_habit_rules.dart';
 import 'package:nextrep/domain/reflection/daily_reflection.dart';
 import 'package:nextrep/domain/reminder/reminder_plan.dart';
+import 'package:nextrep/domain/winter_arc/arc_restart.dart';
 import 'package:nextrep/domain/winter_arc/current_arc_service.dart';
 import 'package:nextrep/domain/winter_arc/winter_arc_session.dart';
 import 'package:nextrep/features/arc_pause/pause_labels.dart';
@@ -166,7 +169,7 @@ void main() {
     expect(
       find.text(
         'A new Rolling 92-Day Arc starts today on Day 1 with your 7 '
-        'habits, goals and order.',
+        'habits (4 on), goals and order.',
       ),
       findsOneWidget,
     );
@@ -598,7 +601,7 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.text('It uses your 7 habits, goals and order.'),
+      find.text('It uses your 7 habits (4 on), goals and order.'),
       findsOneWidget,
     );
     expect(find.textContaining('restart the season'), findsNothing);
@@ -803,5 +806,157 @@ void main() {
       findsOneWidget,
     );
     expect(find.textContaining('of progress'), findsNothing);
+  });
+
+  // Gate H copy C-2: the intro counts every habit and, when some are off,
+  // how many are on, from each habit's latest configuration: what the
+  // Restart transaction copies (`ArcRestartRules.baselineFrom`), not what
+  // Today shows.
+  group('C-2: the intro\'s habit count', () {
+    testWidgets('every habit on: "7 habits", without "(7 on)"', (tester) async {
+      await _tall(tester);
+      final app = TestApp(memoryDatabase(), FakeClock(DateTime(2026, 10, 7)));
+      addTearDown(app.db.close);
+      at(app, day1);
+      await app.winterArc.beginSetup();
+      for (final id in ['english', 'sleep_before', 'meditation']) {
+        await app.winterArc.setHabitEnabled(id, enabled: true);
+      }
+      await app.winterArc.startWinterArc();
+      // Days 1 and 2 lived with nothing logged (the test helpers can't
+      // log the clock-time habit); Restart is offered on Day 3.
+      at(app, d(3));
+      await tester.pumpWidget(_app(app));
+      await tester.pumpAndSettle();
+      await _openRestartFromHabits(tester);
+      expect(
+        find.text(
+          'A new Rolling 92-Day Arc starts today on Day 1 with your 7 '
+          'habits, goals and order.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.textContaining(' on)'), findsNothing);
+    });
+
+    testWidgets('twelve habits, custom ones and dated on / off changes: the '
+        'intro counts the latest configuration, which the new arc gets; '
+        'nothing else changes', (tester) async {
+      await _tall(tester);
+      final app = TestApp(memoryDatabase(), FakeClock(DateTime(2026, 10, 7)));
+      addTearDown(app.db.close);
+      at(app, day1);
+      await app.winterArc.beginSetup(); // 7 habits, 4 on
+      for (final id in ['journal', 'hair_care', 'skin_care']) {
+        await app.winterArc.addTemplateHabit(id);
+      }
+      final stretch = await app.winterArc.addCustomHabit(
+        const HabitDraft(
+          title: 'Stretch',
+          type: HabitType.duration,
+          target: 20,
+          minimumTarget: 5,
+          unit: 'min',
+          iconKey: 'meditation',
+        ),
+      );
+      await app.winterArc.addCustomHabit(
+        const HabitDraft(
+          title: 'Call a friend',
+          type: HabitType.binary,
+          target: 1,
+          minimumTarget: 1,
+          iconKey: 'star',
+        ),
+      );
+      final arc = await app.winterArc.startWinterArc();
+      await liveDays(app, d(1), d(3));
+      at(app, d(4));
+      await tester.pumpWidget(_app(app));
+      await tester.pumpAndSettle();
+
+      // The maximum, 12 habits, 9 on (the owner's example).
+      await _openRestartFromHabits(tester);
+      expect(
+        find.text(
+          'A new Rolling 92-Day Arc starts today on Day 1 with your 12 '
+          'habits (9 on), goals and order.',
+        ),
+        findsOneWidget,
+      );
+      await _tapVisible(tester, find.text(RestartCopy.cancel));
+      expect(find.byType(HabitsScreen), findsOneWidget);
+
+      // Today's on / off changes are revisions effective tomorrow: Water
+      // and the custom Stretch off, English on.
+      for (final (id, on) in [
+        ('water', false),
+        (stretch.id, false),
+        ('english', true),
+      ]) {
+        await app.tracking.editHabit(
+          habitId: id,
+          edit: HabitEdit(enabled: on),
+          date: d(4),
+        );
+      }
+      final history = await app.habits.historyForSession(arc.id);
+      expect(
+        history.habits.where((h) => history.configOn(h, d(4)).enabled),
+        hasLength(9),
+        reason: 'Today keeps the 9 it started with',
+      );
+      expect(
+        history.habits.where((h) => h.baseline.enabled),
+        hasLength(9),
+        reason: 'the baseline flags are unchanged',
+      );
+      final preview = await restartServiceOf(app).preview(arc.id);
+      expect(preview.habitsOn, 8);
+      expect(
+        [for (final h in preview.habits) (h.id, h.enabled)],
+        [
+          for (final h in ArcRestartRules.baselineFrom(
+            history,
+            createdAt: app.clock.now(),
+          ))
+            (h.id, h.enabled),
+        ],
+        reason: 'the preview counts what the transaction copies',
+      );
+
+      await _openRestartFromHabits(tester);
+      expect(
+        find.text(
+          'A new Rolling 92-Day Arc starts today on Day 1 with your 12 '
+          'habits (8 on), goals and order.',
+        ),
+        findsOneWidget,
+      );
+      final before = await snapshotAll(app.db);
+      await _type(tester, _word, 'RESTART');
+      await _tapVisible(tester, _confirm);
+      expect(find.text(RestartCopy.started), findsWidgets);
+
+      final started = (await app.sessions.currentSession())!;
+      expectOnlyRestart(
+        before,
+        await snapshotAll(app.db),
+        oldId: arc.id,
+        newId: started.id,
+        closedOn: preview.closedOn!,
+        newHabits: 12,
+      );
+      final fresh = await app.habits.historyForSession(started.id);
+      expect(fresh.habits.where((h) => h.enabled), hasLength(8));
+      expect(fresh.habit('water')!.enabled, isFalse);
+      expect(fresh.habit(stretch.id)!.enabled, isFalse);
+      expect(fresh.habit('english')!.enabled, isTrue);
+      expect(
+        fresh.habits.map((h) => h.id),
+        history.habits.map((h) => h.id),
+        reason: 'same habits, same order',
+      );
+    });
   });
 }

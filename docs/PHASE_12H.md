@@ -375,8 +375,8 @@ is gated.** These are emulator figures, not a phone (U-8).
 
 | # | Defect | Severity | Fix | Regression tests | Status |
 |---|---|---|---|---|---|
-| D-1 | Cancel Setup (hub, editor) and Replace Data (restore) danger buttons: light text on `danger`, 2.71 : 1 | accessibility (text contrast, WCAG 1.4.3) | dark text (`background`), 6.68 : 1, as on the Delete Arc screen | `phase12h_layout_test` contrast guideline on both dialogs, 1× and 2× (failed before the fix) | **FIXED AND RETESTED** |
-| D-2 | Restart offered on the date an Arc was resumed, before anything was logged that day, then refused by its transaction ("Couldn't restart. Nothing was changed."): the last lived day fell before the pause just closed, and an ended Arc may not hold a pause after `closed_on` | functional (restart blocked on every resume day until something is logged) | the resume date counts as lived on its own date, like Day 1 — the same `closed_on` a restart the next morning gives; the pause is kept; no stored row changes | `phase12h_restart_resume_day_test`: the device case (every row as specified, backup round trip, reconciliation), unchanged neighbours, and a 54-case grid "whenever Restart is offered, the transaction accepts it" (2 of 3 tests failed before the fix with the device's error) | **FIXED AND RETESTED** (unit, Drift, emulator); owner decision H-1 |
+| D-1 | Cancel Setup (hub, editor) and Replace Data (restore) danger buttons: light text on `danger`, 2.71 : 1 | accessibility (text contrast, WCAG 1.4.3) | dark text (`background`), 6.68 : 1, as on the Delete Arc screen | `phase12h_layout_test` contrast guideline on both dialogs, 1× and 2× (failed before the fix) | **FIXED AND RETESTED**; owner decision H-2 **APPROVED** |
+| D-2 | Restart offered on the date an Arc was resumed, before anything was logged that day, then refused by its transaction ("Couldn't restart. Nothing was changed."): the last lived day fell before the pause just closed, and an ended Arc may not hold a pause after `closed_on` | functional (restart blocked on every resume day until something is logged) | the resume date counts as lived on its own date, like Day 1 — the same `closed_on` a restart the next morning gives; the pause is kept; no stored row changes | `phase12h_restart_resume_day_test`: the device case (every row as specified, backup round trip, reconciliation), unchanged neighbours, and a 54-case grid "whenever Restart is offered, the transaction accepts it" (2 of 3 tests failed before the fix with the device's error) | **FIXED AND RETESTED** (unit, Drift, emulator); owner decision H-1 **APPROVED** |
 
 ## 13. Known unresolved limitations
 
@@ -384,7 +384,7 @@ is gated.** These are emulator figures, not a phone (U-8).
 |---|---|---|---|
 | U-1 | TalkBack speech continuity while a completion sound plays: emitted together on the emulator; whether an utterance is shortened can't be told from the output energy | **DEFERRED WITH REASON** (needs a person listening on a phone) | 12I physical OnePlus, if authorised |
 | U-2 | TalkBack linear (swipe) reading order and double-tap activation on a device: the emulator's injected gestures were not recognised; focus targets and labels verified by explore-by-touch, order by widget tests | **DEFERRED WITH REASON** (tooling) | 12I physical device |
-| U-3 | Reorder list's built-in 250 ms gap / settle animations under reduced motion (12D) | **DEFERRED WITH REASON**: owner decision H-3 | v1.4 if a custom list is wanted |
+| U-3 | Reorder list's built-in 250 ms gap / settle animations under reduced motion (12D) | **DEFERRED WITH REASON**: owner decision H-3 **APPROVED** (kept for v1.3) | a later release, if a custom list is wanted |
 | U-4 | Headphones / Bluetooth, OxygenOS sound behaviour, the 1 s "never late" rule on a slow phone, real-speaker loudness (12G) | **DEFERRED** (no device in 12H) | 12I |
 | U-5 | iOS sound playback and silent switch (12G); iOS VoiceOver | **DEFERRED** (no iOS release planned) | — |
 | U-6 | G-R1 residual (non-router page transition, ≤ ~300 ms) | accepted in 12G; unchanged | — |
@@ -404,29 +404,35 @@ Arc", "Sound & Feedback", "Confirm & Start", "Perfect Day", "Minimum Day"
 and "challenge days" are used the same way everywhere they appear;
 singular / plural forms are handled ("1 day" / "6 days", "1 Journal
 reflection"); XP uses grouping separators ("2,430 XP"); paused-date ranges
-follow the approved forms. **No approved wording was changed in 12H.**
+follow the approved forms. No approved wording was changed before Gate H; the owner's two copy
+choices (C-1, C-2) are implemented in § 20.
 
-**Gate H copy and tone decision table** (proposals only; nothing below is
-implemented unless the owner chooses it):
+**Gate H copy and tone decision table** (owner decisions, 24 November
+2026):
 
-| # | Where | Today | Proposal | Rationale | Recommendation |
+| # | Where | Before | Proposal | Rationale | Owner decision |
 |---|---|---|---|---|---|
-| C-1 | Saved-setup hub, bottom button | "Cancel setup" | "Cancel Setup" | its siblings (Start Challenge, Review Setup, Continue Editing) and the dialog's own button ("Cancel Setup") are Title Case | change (copy only) |
-| C-2 | Restart intro | "…on Day 1 with your 7 habits, goals and order." (counts habits that are switched off; Today showed 4) | "…with your 7 habits (4 on), goals and order." | matches the hub's "12 habits · 9 on"; avoids reading as 7 active habits | change, or keep |
-| C-3 | Arc History card, screen-reader label | "…, ended early · day 13 of 92. Paused 2 days. …" (lower case mid-sentence) | keep | read as one sentence; the visible card says "Ended early · Day 13 of 92" | keep |
-| C-4 | Today habit card, screen-reader label | starts with the progress value ("0, Workout, 0, 30 min, …", Flutter's merged progress indicator) | out of 12H scope (v1.0 behaviour, not a v1.3 string) | noted for a later accessibility pass | defer |
-| C-5 | Weekly Review per-habit counts | "1 of 1 days" possible in a one-day week | keep (Gate B approved; idiomatic) | — | keep |
+| C-1 | Saved-setup hub, bottom button | "Cancel setup" | "Cancel Setup" | its siblings (Start Challenge, Review Setup, Continue Editing) and the dialog's own button ("Cancel Setup") are Title Case | **CHANGED** to "Cancel Setup" (§ 20) |
+| C-2 | Restart intro | "…on Day 1 with your 7 habits, goals and order." (counts habits that are switched off; Today showed 4) | "…with your 7 habits (4 on), goals and order." | matches the hub's "12 habits · 9 on"; avoids reading as 7 active habits | **CHANGED**: enabled-count clarification implemented (§ 20) |
+| C-3 | Arc History card, screen-reader label | "…, ended early · day 13 of 92. Paused 2 days. …" (lower case mid-sentence) | keep | read as one sentence; the visible card says "Ended early · Day 13 of 92" | **KEPT** unchanged |
+| C-4 | Today habit card, screen-reader label | starts with the progress value ("0, Workout, 0, 30 min, …", Flutter's merged progress indicator) | out of 12H scope (v1.0 behaviour, not a v1.3 string) | noted for a later accessibility pass | **DEFERRED**: the existing v1.0 screen-reader wording stays |
+| C-5 | Weekly Review per-habit counts | "1 of 1 days" possible in a one-day week | keep (Gate B approved; idiomatic) | — | **KEPT** unchanged |
 
-**Gate H decisions** (behaviour and visuals):
+**Gate H decisions** (behaviour and visuals), approved by the owner on
+24 November 2026:
 
-| # | Decision | Recommendation |
-|---|---|---|
-| H-1 | Accept D-2's rule clarification: a restart on the date an Arc was resumed (with nothing logged yet) ends it on that date, like Day 1. Alternatives: keep refusing on the resume date (Restart offered then failing — not recommended), or end it before the pause and delete the pause row (rewrites history — not recommended) | accept |
-| H-2 | Accept D-1's visual change: dark text on the red Cancel Setup and Replace Data buttons (as Delete Arc) | accept |
-| H-3 | The reorder list's short drag animations under reduced motion: keep (user-started drag; Move up / Move down is the non-drag path) or ask for a custom reorderable list in a later release | keep for v1.3 |
-| H-4 | CI: the "Format, analyze and test" job's timeout raised from 20 to 30 minutes (it took 19 minutes at 12G; 12H adds its suites). No step removed or weakened | accept |
-| H-5 | The copy proposals C-1 and C-2 | owner's choice |
-| H-6 | The unresolved device items U-1, U-2, U-4 assigned to 12I | accept |
+| # | Decision | Recommendation | Owner decision |
+|---|---|---|---|
+| H-1 | Accept D-2's rule clarification: a restart on the date an Arc was resumed (with nothing logged yet) ends it on that date, like Day 1. Alternatives: keep refusing on the resume date (Restart offered then failing — not recommended), or end it before the pause and delete the pause row (rewrites history — not recommended) | accept | **APPROVED**: the resume date counts as lived, even with nothing logged |
+| H-2 | Accept D-1's visual change: dark text on the red Cancel Setup and Replace Data buttons (as Delete Arc) | accept | **APPROVED** |
+| H-3 | The reorder list's short drag animations under reduced motion: keep (user-started drag; Move up / Move down is the non-drag path) or ask for a custom reorderable list in a later release | keep for v1.3 | **APPROVED**: existing behaviour retained for v1.3; a custom reduced-motion list deferred |
+| H-4 | CI: the "Format, analyze and test" job's timeout raised from 20 to 30 minutes (it took 19 minutes at 12G; 12H adds its suites). No step removed or weakened | accept | **APPROVED** |
+| H-5 | The copy proposals C-1 and C-2 | owner's choice | **APPROVED**: C-1 and C-2 implemented (§ 20) |
+| H-6 | The unresolved device items U-1, U-2, U-4 assigned to 12I | accept | **APPROVED**: the documented TalkBack, headphones, OxygenOS and physical-device deferrals to 12I accepted |
+
+The owner also accepted the unchanged limitations of § 13. These
+decisions authorise the copy corrections and this record only: not a
+merge, release, signing, production-device test or tag.
 
 ## 15. Gate H checklist
 
@@ -449,9 +455,11 @@ implemented unless the owner chooses it):
 - [x] Performance recorded (informational)
 - [x] D-1, D-2 fixed with regression tests (mutation-checked)
 - [x] Full suite, JVM tests, builds, audits (§§ 17–18)
-- [ ] Independent technical review of the PR
-- [ ] Owner decisions H-1 … H-6 and the copy table
-- [ ] Owner Gate H sign-off
+- [x] Owner decisions H-1 … H-6 and the copy table (24 November 2026,
+      all approved; § 14)
+- [x] C-1 and C-2 implemented and tested; CI on the corrected head
+      (§ 20; run recorded in PR #31)
+- [ ] Independent verification of the corrected head
 - [ ] Owner's merge decision
 
 ## 16. Phase 12I handoff requirements
@@ -474,9 +482,15 @@ implemented unless the owner chooses it):
    headphones, the 1 s "never late" latency (U-4), and, if wanted, profile
    timings on the phone (U-8).
 5. Recheck D-1 and D-2 on the signed candidate (Cancel Setup / Replace
-   Data text; a restart on a resume day).
+   Data text; a restart on a resume day), and the Gate H copy C-1 / C-2
+   (the hub's "Cancel Setup"; Restart's "7 habits (4 on)").
 6. Keep: package, signer, schema v7, format 4, no new permission or
    dependency, no network but the manual update check.
+7. Still open, and visible here until 12I closes them: U-1 TalkBack
+   speech continuity with a completion sound, U-2 TalkBack swipe order and
+   double-tap on a device, U-4 headphones / Bluetooth, OxygenOS sound
+   behaviour and the 1 s "never late" rule on a phone, U-8 profile
+   timings on a phone (§ 13).
 
 ## Pre-PR independent review
 
@@ -519,6 +533,18 @@ signed with the debug key (a compile and audit artifact only).
 | `flutter drive --profile` performance run | passed (§ 11) |
 | iOS: `flutter build ios --simulator --debug`; `integration_test/phase11e_ios_smoke_test.dart` on the iPhone 17 simulator (iOS 27) | simulator build succeeded; smoke **passed** (1 / 1) |
 
+After the Gate H corrections (§ 20), on the corrected tree:
+
+| Check | Result |
+|---|---|
+| `dart format --output=none --set-exit-if-changed .` | 420 files, 0 changed |
+| `flutter analyze` | no issues |
+| `flutter test` | **2,445 passed**, 0 failed, 0 skipped = 2,436 + **9 new** |
+| Native JVM (`:app:testDebugUnitTest`) | **87 passed**, 0 failed (unchanged) |
+| `flutter build apk --debug` / `--release` | both built |
+| CI's release permission audit and "sounds bundled uncompressed", replayed on the release APK | passed: the same 7 permissions; six sounds `Stored` |
+| `dart run tool/sounds/generate_completion_sounds.dart --check` | 6 files, 125,064 bytes, reproduce |
+
 ## 18. Permission, dependency and network audit
 
 - **Permissions:** CI's own release audit script, replayed locally on the
@@ -537,8 +563,8 @@ signed with the debug key (a compile and audit artifact only).
   and `completion_sound_boundary_test.dart` unchanged and passing; the new
   tests use no network.
 - **Code changes in `lib/`:** two files for D-1 (button colours), one for
-  D-2 (`ArcRestartRules.lastLivedDay`). No schema, format, validator,
-  migration or native change.
+  D-2 (`ArcRestartRules.lastLivedDay`), five for the Gate H copy C-1 / C-2
+  (§ 20). No schema, format, validator, migration or native change.
 
 ## 19. CI
 
@@ -551,6 +577,117 @@ changes. The exact-head CI run is recorded in the PR.
 `integration_test/phase12h_performance_test.dart` and the new
 `test_driver/integration_test.dart` are for on-device runs only (CI never
 runs `integration_test/`).
+
+## 20. Gate H corrections (C-1, C-2)
+
+The owner approved H-1 … H-6 on **24 November 2026** (§ 14), choosing
+both copy proposals. They are implemented on the existing branch and PR
+#31; nothing else changed.
+
+### C-1: the saved-setup hub's bottom button
+
+| | Wording |
+|---|---|
+| Before | "Cancel setup" |
+| After | **"Cancel Setup"** |
+
+`SetupLabels.hubCancelSetup` (new) is used only by the hub
+(`saved_setup_screen.dart`); the button still calls the same
+`confirmCancelSetup` dialog, with D-1's dark text on its red "Cancel
+Setup" button unchanged. Its screen-reader label is the visible text
+("Cancel Setup", button). **Not changed:** Habit Setup's own link under
+Save for Later still uses `SetupLabels.cancelSetup` = "Cancel setup", as
+the approval named only the hub; explanatory sentences and documentation
+keep their lower case. The editor link is left for the owner as an
+observation (it has the same Title Case siblings), not a change.
+
+### C-2: Restart's habit count
+
+| Case | Before | After |
+|---|---|---|
+| 7 habits, 4 on (the default setup) | "A new Rolling 92-Day Arc starts today on Day 1 with your 7 habits, goals and order." | "A new Rolling 92-Day Arc starts today on Day 1 with your **7 habits (4 on)**, goals and order." |
+| 12 habits, 9 on | "…with your 12 habits, goals and order." | "…with your **12 habits (9 on)**, goals and order." |
+| every habit on (7 of 7) | "…with your 7 habits, goals and order." | unchanged |
+| 1 habit, on | "…with your 1 habit, goals and order." | unchanged |
+| Seasonal, 7 habits, 4 on | "It uses your 7 habits, goals and order." | "It uses your **7 habits (4 on)**, goals and order." |
+
+The rest of the Restart screen (dates, "ends at Day N", the old-Arc
+choice, the typed RESTART and the separate typed DELETE) is unchanged,
+and the screen-reader label is the visible text.
+
+**How the numbers are derived.** The total is the Arc's habit list; "on"
+is `RestartPreview.habitsOn`, counted over `RestartPreview.habits`, which
+`ArcRestartService.preview` builds with `ArcRestartRules.baselineFrom`:
+each habit at its **latest configuration** (its last revision, including
+one still waiting for tomorrow, else its baseline). The Restart
+transaction (`ArcRestartRules.decide`) copies exactly that list into the
+new Arc, so the intro states what the new Arc will start with. It is
+deliberately not what Today shows (today's configuration keeps a habit
+switched off today until tomorrow), not the completed count, and not the
+baseline `enabled` flags (which a later revision overrides). An Arc with
+every habit off is still refused by the existing rule
+(`RestartBlocker.noHabitsOn`); the wording never enables Restart.
+
+**Files changed:** `lib/features/habit_setup/setup_labels.dart`,
+`lib/features/habit_setup/saved_setup_screen.dart` (C-1);
+`lib/domain/winter_arc/arc_restart.dart` (`habitsOn`),
+`lib/features/arc_restart/restart_labels.dart`,
+`lib/features/arc_restart/restart_screen.dart` (C-2). Tests:
+`test/features/setup_control_flow_test.dart`,
+`test/features/phase5_flow_test.dart`,
+`test/integration/setup_layout_test.dart`,
+`test/integration/phase12h_layout_test.dart` (C-1);
+`test/domain/arc_restart_rules_test.dart`,
+`test/features/arc_restart_flow_test.dart`,
+`test/integration/restart_layout_test.dart` (C-2). Docs: this file,
+[ARC_CONTROL_SPEC.md § 9.9](ARC_CONTROL_SPEC.md#99-restart-confirmation)
+(the wording; H-1 marked approved in § 6.2),
+[PHASE_12A_ADDENDUM.md](PHASE_12A_ADDENDUM.md) AD11 (H-1 approved),
+`PROJECT_STATE.md`.
+
+**Tests.**
+
+- C-1: the hub shows "Cancel Setup" (and no "Cancel setup"); its
+  semantics are a labelled, enabled button with a tap action; tapping it
+  opens the existing dialog; Keep Setup leaves the whole database
+  identical (full snapshot); confirming deletes only the draft and lands
+  on onboarding, or on the completed Arc's summary when one exists
+  (Phase 5 flow). The editor's "Cancel setup" tests are unchanged.
+- C-2 wording: exact strings for 7 / 4, 12 / 9, 12 / 1, 2 / 1, 7 / 7,
+  1 / 1 and the Seasonal line.
+- C-2 through the app: the default setup ("7 habits (4 on)"), Seasonal
+  ("It uses your 7 habits (4 on)…"), every habit on ("7 habits", no
+  "(… on)"), and the maximum **12 habits with two custom habits**: "12
+  habits (9 on)"; then dated revisions today (Water and a custom habit
+  off, English on, all effective tomorrow) while Today still has 9 on and
+  the baseline flags still say 9: reopened, the intro says "12 habits (8
+  on)"; the preview's list equals `baselineFrom`'s; after RESTART the new
+  Arc has 12 habits, 8 on, the same ids and order, and
+  `expectOnlyRestart` confirms that every other table (progress, day
+  modes, XP, unlocks, reflections, revisions, settings) is row-for-row
+  unchanged.
+- Layout and accessibility: the 12F Restart sweep now asserts the new
+  wording on its Rolling and Seasonal scenes and adds a 12-habit scene
+  (the longest form, "12 habits (11 on)", with two long custom names) on
+  all seven layouts (360 × 800 at 1× and 2×, 320 × 568 at 1.5×, two
+  landscapes, tablet, 360 × 640 at 1.3×): no overflow, clipped line or
+  sideways scroll, every button ≥ 48 dp; and the tap-target, labelled
+  tap-target and text-contrast guidelines at 1× and 2×. The hub's
+  "Cancel Setup" is covered by the 12D setup sweep and the 12H sweep (its
+  dialog, including D-1's contrast). The square test font is wider than
+  the device's, so the emulator was not re-run for these strings.
+- Mutation check: counting every habit as on fails 32 tests of the C-2
+  files; restoring "Cancel setup" on the hub fails 31 tests of the C-1
+  files.
+- D-1 and D-2 regression tests unchanged.
+
+**Results:** see § 17 ("After the Gate H corrections"): 2,445 Flutter
+tests pass (9 new), 87 JVM, builds and audits as before. The exact-head
+CI run of the corrected head is recorded in PR #31.
+
+**Still required:** independent verification of the corrected head and
+the owner's explicit merge decision. PR #31 stays open; no merge, tag,
+signing, release, phone or Phase 12I work.
 
 ## Evidence location
 

@@ -3,6 +3,8 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nextrep/app/router/app_router.dart';
 import 'package:nextrep/core/time/local_date.dart';
+import 'package:nextrep/domain/habit/habit.dart';
+import 'package:nextrep/domain/habit/setup_habit_rules.dart';
 import 'package:nextrep/features/arc_restart/restart_labels.dart';
 
 import '../support/arcs.dart';
@@ -40,6 +42,7 @@ const _layouts = <_Layout>[
 enum _Scene {
   restartRolling,
   restartSeasonal,
+  restartTwelveHabits,
   restartDay92,
   restartRefused,
   restartFailed,
@@ -104,6 +107,37 @@ Future<void> _open(WidgetTester tester, _Scene scene) async {
       final arc = await startRolling(app, _day1);
       at(app, _d(92));
       route = AppRoutes.restartArc(arc.id);
+    case _Scene.restartTwelveHabits:
+      // Gate H copy C-2's longest form: the maximum 12 habits, 11 on,
+      // with two long custom names.
+      at(app, _day1);
+      await app.winterArc.beginSetup();
+      for (final id in ['journal', 'hair_care', 'skin_care']) {
+        await app.winterArc.addTemplateHabit(id);
+      }
+      for (final title in [
+        'Evening mobility and breathing routine',
+        'Morning sunlight walk before breakfast',
+      ]) {
+        await app.winterArc.addCustomHabit(
+          HabitDraft(
+            title: title,
+            type: HabitType.count,
+            iconKey: 'star',
+            target: 12,
+            minimumTarget: 6,
+            unit: 'repetitions',
+          ),
+        );
+      }
+      // The test helpers can't log the clock-time habit: it stays off.
+      for (final id in ['english', 'meditation']) {
+        await app.winterArc.setHabitEnabled(id, enabled: true);
+      }
+      final arc = await app.winterArc.startWinterArc();
+      await liveDays(app, _d(1), _d(9));
+      at(app, _d(10));
+      route = AppRoutes.restartArc(arc.id);
     case _Scene.restartRefused:
       final arc = await startRolling(app, _day1);
       await liveDay(app, _d(26));
@@ -135,6 +169,13 @@ Future<void> _open(WidgetTester tester, _Scene scene) async {
   switch (scene) {
     case _Scene.restartRolling:
       expect(find.text(RestartCopy.scheduledPauseRemoved), findsOneWidget);
+      expect(
+        find.text(
+          'A new Rolling 92-Day Arc starts today on Day 1 with your 7 '
+          'habits (4 on), goals and order.',
+        ),
+        findsOneWidget,
+      );
       await _type(tester, _restartWord, RestartCopy.word);
       expect(find.text('Restart Arc'), findsOneWidget);
     case _Scene.restartSeasonal:
@@ -144,6 +185,19 @@ Future<void> _open(WidgetTester tester, _Scene scene) async {
         find.textContaining('You will leave the Seasonal Winter Arc'),
         findsOneWidget,
       );
+      expect(
+        find.text('It uses your 7 habits (4 on), goals and order.'),
+        findsOneWidget,
+      );
+    case _Scene.restartTwelveHabits:
+      expect(
+        find.text(
+          'A new Rolling 92-Day Arc starts today on Day 1 with your 12 '
+          'habits (11 on), goals and order.',
+        ),
+        findsOneWidget,
+      );
+      await _type(tester, _restartWord, RestartCopy.word);
     case _Scene.restartDay92:
       expect(find.text(RestartCopy.lastDay), findsOneWidget);
     case _Scene.restartRefused:

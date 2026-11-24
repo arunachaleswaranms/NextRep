@@ -386,7 +386,7 @@ void main() {
     // Phase 12D: a saved setup opens the hub, which cancels with the
     // editor's own dialog and deletion.
     expect(find.byType(SavedSetupScreen), findsOneWidget);
-    await _tapVisible(tester, find.text('Cancel setup'));
+    await _tapVisible(tester, find.widgetWithText(TextButton, 'Cancel Setup'));
     expect(find.text('Cancel this setup?'), findsOneWidget);
     expect(
       find.text('Your previous completed Arcs will remain safe.'),
@@ -395,8 +395,8 @@ void main() {
     await _tap(tester, _button('Keep Setup'));
     expect(find.byType(SavedSetupScreen), findsOneWidget);
 
-    await _tapVisible(tester, find.text('Cancel setup'));
-    await _tap(tester, _button('Cancel Setup'));
+    await _tapVisible(tester, find.widgetWithText(TextButton, 'Cancel Setup'));
+    await _tap(tester, find.widgetWithText(FilledButton, 'Cancel Setup'));
     await clearCelebrations(tester);
     expect(find.byType(SummaryScreen), findsOneWidget);
     await tester.scrollUntilVisible(

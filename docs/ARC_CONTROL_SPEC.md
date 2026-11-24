@@ -344,7 +344,7 @@ celebrations are cleared, the app goes to Today.
 | Case | `closed_on` |
 |---|---|
 | `T` is a challenge date and an activity row is dated `T` | `T` |
-| `T` is the date the Arc was resumed on (Phase 12H correction D-2; owner decision H-1 at Gate H) | `T` |
+| `T` is the date the Arc was resumed on (Phase 12H correction D-2; approved by the owner at Gate H, H-1, 24 November 2026) | `T` |
 | a challenge date exists before `T` | the last one |
 | neither (Day 1, nothing logged yet) | the participation start (= `T`) |
 
@@ -354,7 +354,7 @@ What does and doesn't count as lived:
 |---|---|
 | A past challenge date, with or without progress | Yes |
 | Today, with any activity row | Yes |
-| Today, with nothing logged | No (except Day 1, so an ended Arc has at least one day, and a resume date: ending before the pause just closed would leave a pause after `closed_on`, which no ended Arc may hold — Phase 12H D-2, pending owner decision H-1) |
+| Today, with nothing logged | No (except Day 1, so an ended Arc has at least one day, and a resume date: ending before the pause just closed would leave a pause after `closed_on`, which no ended Arc may hold — Phase 12H D-2, approved at Gate H, H-1) |
 | A date that only has a goal revision waiting on it | No |
 | A paused date | No |
 | A future date | No |
@@ -877,8 +877,8 @@ of the Arc).
 │ ←  Restart with this setup               │
 │                                          │
 │ A new Rolling 92-Day Arc starts today on │
-│ Day 1 with your 7 habits, goals and      │
-│ order.                                   │
+│ Day 1 with your 7 habits (4 on), goals   │
+│ and order.                               │
 │                                          │
 │ Your current Arc ends at Day 37 of 92.   │
 │ It will not be marked as completed.      │
@@ -900,6 +900,14 @@ of the Arc).
 Seasonal wording: title "Start a Rolling Arc with this setup"; "You will
 leave the Seasonal Winter Arc on Day 44. A new Rolling 92-Day Arc starts
 today on Day 1."
+
+Habit count (Gate H copy C-2, approved 24 November 2026): "7 habits"
+counts every habit of the Arc; when some are off, "(4 on)" follows with
+how many the new Arc starts switched on, from each habit's latest
+configuration (what § 6.3 copies, including a change still waiting for
+tomorrow). With every habit on the line stays "7 habits" ("1 habit" for
+one). The Seasonal second line is "It uses your 7 habits (4 on), goals and
+order."
 
 | | |
 |---|---|

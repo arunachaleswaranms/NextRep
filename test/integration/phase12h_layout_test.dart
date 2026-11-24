@@ -175,7 +175,7 @@ Future<void> _open(WidgetTester tester, _Scene scene) async {
       await tester.pumpAndSettle();
       expect(find.text('Move up'), findsOneWidget);
     case _Scene.hubCancelDialog:
-      final button = find.widgetWithText(TextButton, 'Cancel setup');
+      final button = find.widgetWithText(TextButton, 'Cancel Setup');
       await tester.scrollUntilVisible(
         button,
         150,

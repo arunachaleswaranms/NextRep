@@ -455,7 +455,44 @@ void main() {
         RestartCopy.previous(37, 92, 2430),
         'Ended early · Day 37 of 92 · 2,430 XP',
       );
-      expect(RestartCopy.intro(1), contains('your 1 habit,'));
+      // Gate H copy C-2: "(N on)" when some habits are off.
+      const rolling92 = 'A new Rolling 92-Day Arc starts today on Day 1 with';
+      expect(
+        RestartCopy.intro(7, on: 4),
+        '$rolling92 your 7 habits (4 on), goals and order.',
+      );
+      expect(
+        RestartCopy.intro(12, on: 9),
+        '$rolling92 your 12 habits (9 on), goals and order.',
+      );
+      expect(
+        RestartCopy.intro(12, on: 1),
+        '$rolling92 your 12 habits (1 on), goals and order.',
+      );
+      expect(
+        RestartCopy.intro(2, on: 1),
+        '$rolling92 your 2 habits (1 on), goals and order.',
+      );
+      expect(
+        RestartCopy.intro(7, on: 7),
+        '$rolling92 your 7 habits, goals and order.',
+      );
+      expect(
+        RestartCopy.intro(1, on: 1),
+        '$rolling92 your 1 habit, goals and order.',
+      );
+      expect(
+        RestartCopy.seasonalHabits(7, on: 4),
+        'It uses your 7 habits (4 on), goals and order.',
+      );
+      expect(
+        RestartCopy.seasonalHabits(12, on: 12),
+        'It uses your 12 habits, goals and order.',
+      );
+      expect(
+        RestartCopy.seasonalHabits(1, on: 1),
+        'It uses your 1 habit, goals and order.',
+      );
       expect(
         RestartCopy.entry(seasonal()),
         'Start a Rolling Arc with this setup',

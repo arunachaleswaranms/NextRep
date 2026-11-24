@@ -325,8 +325,15 @@ final class RestartPreview {
   /// The clock guard on [today] (AD19).
   final ClockGuardVerdict guard;
 
-  /// The new arc's habits, in display order.
+  /// The new arc's habits, in display order: each at its latest
+  /// configuration ([ArcRestartRules.baselineFrom], what the transaction
+  /// copies).
   final List<Habit> habits;
+
+  /// How many of [habits] the new arc starts with switched on: each
+  /// habit's latest configuration, including a change still waiting for
+  /// tomorrow, not what Today shows (Gate H copy C-2).
+  int get habitsOn => habits.where((h) => h.enabled).length;
 
   /// The latest activity date of [session], as read for this preview.
   final LocalDate? lastActivityDate;

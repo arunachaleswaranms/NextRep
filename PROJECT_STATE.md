@@ -12,8 +12,11 @@ Arc deletion (PR #29) and Phase 12G completion sounds (PR #30) are
 merged. `main` is `20712d2`, version `1.2.0+3`. **v1.3.0 is in
 development, not released. Active phase: 12H (integration,
 accessibility, migration and regression hardening) on
-`phase/12h-v1.3-integration-hardening`; it awaits independent review,
-the owner's Gate H sign-off and the owner's merge decision.**_
+`phase/12h-v1.3-integration-hardening` (PR #31, open, not merged). The
+owner approved Gate H decisions H-1 … H-6 on 24 November 2026; the
+approved copy corrections C-1 and C-2 are on the PR. It awaits
+independent verification of the corrected head and the owner's merge
+decision.**_
 
 | | |
 |---|---|
@@ -54,7 +57,7 @@ planned. TalkBack was deliberately deferred and doesn't block this model.
   #25 Phase 12B; #26 Phase 12C; #27 Phase 12D; #28 Phase 12E2; #29
   Phase 12F; #30 Phase 12G.
 
-## Phase 12H (v1.3.0 integration, accessibility, migration and regression, active, awaiting Gate H, not merged)
+## Phase 12H (v1.3.0 integration, accessibility, migration and regression, active; Gate H decisions approved; PR #31 open, not merged)
 
 Matrix, evidence, decisions and the 12I handoff:
 [docs/PHASE_12H.md](docs/PHASE_12H.md). Baseline `main` `20712d2` (PR #30
@@ -88,8 +91,22 @@ no phone, no signing, no release.
 - **Results:** 2,436 Flutter tests pass (2,311 + 125 new), 87 JVM; 7 of 7
   mutations detected; release audit = the same 7 permissions; profile
   timings recorded (not gated). CI timeout 20 → 30 min.
-- **Next:** independent review, owner Gate H (decisions H-1 … H-6 and the
-  copy table), the owner's merge decision. Then Phase 12I.
+- **Gate H (24 November 2026):** the owner approved H-1 (a restart on a
+  resume date counts that date as lived), H-2 (D-1's dark text), H-3
+  (reorder drag animations kept for v1.3), H-4 (30-minute CI timeout),
+  H-5 (copy C-1 and C-2) and H-6 (TalkBack, headphones, OxygenOS and
+  physical-device items deferred to 12I), and accepted the unchanged
+  limitations. Copy: C-1 the hub's button now "Cancel Setup"; C-2
+  Restart says "7 habits (4 on)" from each habit's latest configuration
+  (what Restart copies); C-3 and C-5 kept; C-4 deferred. 2,445 Flutter
+  tests pass (9 new), 87 JVM. See
+  [docs/PHASE_12H.md § 20](docs/PHASE_12H.md#20-gate-h-corrections-c-1-c-2).
+- **Still open for 12I:** U-1 TalkBack speech with a completion sound,
+  U-2 TalkBack swipe order on a device, U-4 headphones / OxygenOS / the
+  1 s rule on a phone, U-8 phone timings.
+- **Next:** independent verification of the corrected head and the
+  owner's explicit merge decision (PR #31 stays open). Phase 12I has not
+  begun.
 
 ## Phase 12G (v1.3.0 completion sounds, merged)
 

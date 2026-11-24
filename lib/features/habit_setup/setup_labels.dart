@@ -45,7 +45,13 @@ abstract final class SetupLabels {
   static const continueEditing = 'Continue Editing';
   static const continueToStart = 'Continue to Start';
   static const editSetup = 'Edit Setup';
+
+  /// Habit Setup's link under Save for Later.
   static const cancelSetup = 'Cancel setup';
+
+  /// The hub's bottom button, in Title Case like its siblings and the
+  /// dialog's own "Cancel Setup" (Gate H copy C-1).
+  static const hubCancelSetup = 'Cancel Setup';
 
   // The hub.
   static const hubEyebrow = 'YOUR WINTER ARC';

@@ -20,6 +20,11 @@ String xpAmount(int xp) => NumberFormat.decimalPattern('en').format(xp);
 /// "1 habit", "7 habits".
 String _count(int n, String one, String many) => '$n ${n == 1 ? one : many}';
 
+/// "7 habits (4 on)" when some of the [total] habits are off; "7 habits"
+/// or "1 habit" when all [on] (Gate H copy C-2).
+String _habits(int total, int on) =>
+    '${_count(total, 'habit', 'habits')}${on < total ? ' ($on on)' : ''}';
+
 abstract final class RestartCopy {
   static const word = 'RESTART';
 
@@ -34,11 +39,13 @@ abstract final class RestartCopy {
   /// The screen's title: the entry point's words.
   static String title(WinterArcSession session) => entry(session);
 
-  /// "A new Rolling 92-Day Arc starts today on Day 1 with your 7 habits,
-  /// goals and order."
-  static String intro(int habits) =>
+  /// "A new Rolling 92-Day Arc starts today on Day 1 with your 7 habits
+  /// (4 on), goals and order." [habits] counts every habit; [on] those
+  /// switched on (`RestartPreview.habitsOn`). "(4 on)" is left out when
+  /// every habit is on.
+  static String intro(int habits, {required int on}) =>
       'A new Rolling 92-Day Arc starts today on Day 1 with your '
-      '${_count(habits, 'habit', 'habits')}, goals and order.';
+      '${_habits(habits, on)}, goals and order.';
 
   /// Seasonal (§ 9.9): "You will leave the Seasonal Winter Arc on Day 44.
   /// A new Rolling 92-Day Arc starts today on Day 1."
@@ -48,8 +55,8 @@ abstract final class RestartCopy {
 
   /// Seasonal, the reused setup (addition: the seasonal intro has no
   /// habit line of its own).
-  static String seasonalHabits(int habits) =>
-      'It uses your ${_count(habits, 'habit', 'habits')}, goals and order.';
+  static String seasonalHabits(int habits, {required int on}) =>
+      'It uses your ${_habits(habits, on)}, goals and order.';
 
   /// "Day 1: today, Fri 13 Nov · Day 92: Thu 11 Feb 2027" (addition: the
   /// dates of the new Arc, as on Confirm & Start).
