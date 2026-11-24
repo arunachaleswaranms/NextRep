@@ -372,6 +372,7 @@ Then `closed_on` is the first of these that applies:
 | Case | `closed_on` |
 |---|---|
 | `T` is a challenge date and an activity row is dated `T` | `T` |
+| `T` is the date the Arc was resumed on (added in Phase 12H, D-2; owner decision H-1) | `T` |
 | a challenge date exists before `T` | the last one |
 | neither (Day 1, nothing logged yet) | the participation start (= `T`) |
 

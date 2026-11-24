@@ -344,6 +344,7 @@ celebrations are cleared, the app goes to Today.
 | Case | `closed_on` |
 |---|---|
 | `T` is a challenge date and an activity row is dated `T` | `T` |
+| `T` is the date the Arc was resumed on (Phase 12H correction D-2; owner decision H-1 at Gate H) | `T` |
 | a challenge date exists before `T` | the last one |
 | neither (Day 1, nothing logged yet) | the participation start (= `T`) |
 
@@ -353,7 +354,7 @@ What does and doesn't count as lived:
 |---|---|
 | A past challenge date, with or without progress | Yes |
 | Today, with any activity row | Yes |
-| Today, with nothing logged | No (except Day 1, so an ended Arc has at least one day) |
+| Today, with nothing logged | No (except Day 1, so an ended Arc has at least one day, and a resume date: ending before the pause just closed would leave a pause after `closed_on`, which no ended Arc may hold — Phase 12H D-2, pending owner decision H-1) |
 | A date that only has a goal revision waiting on it | No |
 | A paused date | No |
 | A future date | No |
