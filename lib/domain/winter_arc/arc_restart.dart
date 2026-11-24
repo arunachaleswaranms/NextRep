@@ -130,10 +130,20 @@ abstract final class ArcRestartRules {
   /// (spec § 6.2, addendum AD11): the first of
   ///
   /// 1. [today], when it is a challenge date and has activity
-  ///    ([lastActivityDate] is today);
+  ///    ([lastActivityDate] is today), or when it is the date the arc was
+  ///    resumed on (Phase 12H correction, below);
   /// 2. the last challenge date before [today];
   /// 3. the participation start (a Day-1 restart with nothing logged: an
   ///    ended arc always has one counted day).
+  ///
+  /// **The resume date.** Like Day 1, a resume date starts a run of
+  /// challenge days after a pause. Ending the arc on the day before that
+  /// pause would leave the pause after `closed_on`, which no ended arc may
+  /// hold (`ArcFreezeRules`, the format-4 backup rules), so the restart was
+  /// refused on the resume date until something was logged (found in Phase
+  /// 12H on the emulator). The resume date counts as lived on its own date
+  /// instead: the same `closed_on` a restart the next morning gives, the
+  /// pause kept as stored.
   ///
   /// A goal revision is never activity, so a date with only a waiting
   /// revision is never lived. The result is always a challenge date and
@@ -145,7 +155,9 @@ abstract final class ArcRestartRules {
     required LocalDate today,
     required LocalDate? lastActivityDate,
   }) {
-    if (session.isParticipatingOn(today) && lastActivityDate == today) {
+    if (session.isParticipatingOn(today) &&
+        (lastActivityDate == today ||
+            session.freezes.any((f) => f.resumedOn == today))) {
       return today;
     }
     final before = session.participatingDatesThrough(today.addDays(-1));

@@ -129,7 +129,10 @@ void main() {
       expect(lived(both, d(20), d(11)), d(11));
       expect(both.dayNumberOf(d(11)), 7);
       expect(lived(both, d(9)), d(8), reason: 'first day after a pause');
-      expect(lived(both, d(8)), d(3), reason: 'never the paused d(4)–d(7)');
+      // d(8) is the resume date: lived on its own date (Phase 12H
+      // correction; ending on d(3) left the pause after closed_on, which
+      // the transaction refused). Still never the paused d(4)–d(7).
+      expect(lived(both, d(8)), d(8), reason: 'never the paused d(4)–d(7)');
     });
 
     test('Seasonal and a late join', () {
