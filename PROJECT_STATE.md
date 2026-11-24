@@ -54,6 +54,43 @@ planned. TalkBack was deliberately deferred and doesn't block this model.
   #25 Phase 12B; #26 Phase 12C; #27 Phase 12D; #28 Phase 12E2; #29
   Phase 12F; #30 Phase 12G.
 
+## Phase 12H (v1.3.0 integration, accessibility, migration and regression, active, awaiting Gate H, not merged)
+
+Matrix, evidence, decisions and the 12I handoff:
+[docs/PHASE_12H.md](docs/PHASE_12H.md). Baseline `main` `20712d2` (PR #30
+merged, CI 45388828817 green); branch
+`phase/12h-v1.3-integration-hardening` (worktree `~/labs/NextRep-12H`). No
+new feature, schema, backup format, permission, dependency, network or
+version change (one Restart rule clarified by defect D-2, decision H-1);
+no phone, no signing, no release.
+
+- **Together:** the seven v1.3 features in one flow on a real SQLite file
+  with process reconstruction (saved setup → reorder → reopen → start →
+  log → review / calendar → Freeze scheduled → paused → Resume → a second
+  pause → Restart → ended history → typed deletion), plus Seasonal late
+  join and Week 13 / Day 92 / a 400-day pause.
+- **Same numbers everywhere:** a checker comparing Today, Journey,
+  Calendar, all 13 reviews, Summary / History, Insights and the raw XP
+  ledger with the spec's identities, read-only; the spec's §§ 12.5.1 /
+  12.5.2 examples reproduced exactly on real Drift; 16 generated histories.
+- **Migration:** whole chains v1 → v7 and v3 → v7, every pre-existing row
+  and value compared; v6 → v7 kept. **Backups:** genuine format 1, 2 and
+  (new, written by v1.2.0's own code) 3; two complex format-4 round trips
+  with every table compared; v1.2.0's own reader refuses format 4.
+- **Accessibility:** a 75-test sweep of the remaining v1.3 surfaces (7
+  layouts, guidelines, reduced motion on 11 screens), destructive
+  consequences announced before confirmation, midnight with 7 more screens
+  open. Emulator TalkBack by explore-by-touch on every v1.3 surface; a
+  completion sound emitted with TalkBack on; speech continuity and swipe
+  order unresolved (12I).
+- **Defects fixed:** D-1 Cancel Setup / Replace Data text 2.7:1 → 6.7:1;
+  D-2 Restart refused on a resume day (now ends on that day, like Day 1).
+- **Results:** 2,436 Flutter tests pass (2,311 + 125 new), 87 JVM; 7 of 7
+  mutations detected; release audit = the same 7 permissions; profile
+  timings recorded (not gated). CI timeout 20 → 30 min.
+- **Next:** independent review, owner Gate H (decisions H-1 … H-6 and the
+  copy table), the owner's merge decision. Then Phase 12I.
+
 ## Phase 12G (v1.3.0 completion sounds, merged)
 
 Contracts, sound sources, qualification evidence and the Gate G checklist:

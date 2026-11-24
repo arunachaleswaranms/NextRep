@@ -1,8 +1,9 @@
 # NextRep Privacy
 
-_Last updated: 16 October 2026. Applies to NextRep 1.2.0, which adds
-Hydration Coach, Focus Guard and a manual update check, and to the earlier
-1.0.0 and 1.1.0 (Winter Arc)._
+_Last updated: 24 November 2026 (the completion sounds and stored settings
+of NextRep 1.3, in development and not yet released). Applies to NextRep
+1.2.0, which adds Hydration Coach, Focus Guard and a manual update check,
+and to the earlier 1.0.0 and 1.1.0 (Winter Arc)._
 
 NextRep is a local-first app that works offline. Everything you put into it
 stays on your device, in the app's own storage, unless you choose to move
@@ -38,11 +39,12 @@ your device:
 | Data | Examples |
 |---|---|
 | Habits and their history | names, goals, daily progress, Minimum Days, goal changes by date |
-| Arcs | Rolling or Seasonal, start, end and join dates, status |
+| Arcs | Rolling or Seasonal, start, end and join dates, status; from 1.3 (in development) also the dates of any pause and the last day of an Arc ended early by Restart |
 | XP and achievements | the XP ledger and the date each achievement was unlocked |
 | Journal reflections | mood, "one win", "one thing to improve", per day |
 | Reminder settings | whether each reminder is on, its time, and Hydration Coach's active hours and style |
 | Focus Guard settings (Android, optional) | whether it is on, the apps you chose (their package names, e.g. `com.example.app`), your daily budget, and the date of the last reminder it sent |
+| Sound settings (from 1.3, in development) | whether completion sounds are on and which of the three sets you chose |
 
 Streaks, levels, Perfect Days, the Journey, summaries and Insights are
 worked out on the device from that data. They are not stored separately and
@@ -255,6 +257,24 @@ can turn them off in system settings.
   can silence it separately.
 - If you turn notifications off in system settings, NextRep keeps your
   reminder setting, tells you notifications are off and doesn't ask again.
+
+## Completion sounds (from 1.3, in development)
+
+NextRep 1.3 (not yet released) can play a short sound when you complete a
+habit. The sounds are **bundled in the app**: six small audio files made
+for NextRep from source code in this repository
+(`tool/sounds/generate_completion_sounds.dart`). Nothing is downloaded,
+streamed or uploaded, and nothing about the sounds leaves your device.
+
+- Only your on / off choice and the chosen set are stored, in the same
+  local database, and included in backups you export (format 4).
+- Playing a sound needs no permission. NextRep doesn't record audio, use
+  the microphone, request audio focus or pause your music, and it follows
+  your phone's silent, vibrate and Do Not Disturb settings.
+- No new permission, network request, analytics or telemetry comes with
+  the sounds or with any other 1.3 feature (Weekly Review, Calendar, habit
+  order, saved setup, Pause and Resume, Restart and deletion): they all
+  work on data already on your device.
 
 ## Permissions (Android release build)
 

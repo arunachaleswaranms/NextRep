@@ -65,6 +65,14 @@ analytics and no cloud sync. Everything stays on your phone.
 - A winter scene that respects reduced motion, large-text support and
   screen-reader labels.
 
+**In development for v1.3.0 (not released):** a Weekly Arc Review, an Arc
+Consistency Calendar, habit order and a saved setup with Confirm & Start,
+Pause and Resume for Rolling Arcs, Restart with the same setup (and an
+optional, separately confirmed deletion of the old Arc), and short,
+bundled completion sounds. All offline; no new permission. See
+[CHANGELOG.md](CHANGELOG.md) "Unreleased" and
+[docs/V1_3_ROADMAP.md](docs/V1_3_ROADMAP.md).
+
 ## Download
 
 Android APKs are published on the
@@ -280,7 +288,12 @@ flutter analyze
 flutter test                     # unit + data + migration + widget tests
 flutter test test/data/migration_test.dart test/data/migration_v3_test.dart \
   test/data/migration_v4_test.dart test/data/migration_v5_test.dart \
-  test/data/migration_v6_test.dart                                   # → v6
+  test/data/migration_v6_test.dart test/data/migration_v7_test.dart \
+  test/data/migration_chain_test.dart                                # → v7
+flutter test test/integration/phase12h_combined_flow_test.dart \
+  test/integration/phase12h_metric_reconciliation_test.dart \
+  test/integration/phase12h_backup_test.dart \
+  test/integration/phase12h_layout_test.dart                         # v1.3 together
 flutter test test/domain/backup_format_test.dart test/domain/backup_v2_test.dart \
   test/data/backup_restore_test.dart test/data/backup_v2_restore_test.dart \
   test/data/phase10c_backup_test.dart \
@@ -292,6 +305,8 @@ flutter test test/app/day_change_test.dart test/domain/date_edges_test.dart \
   test/features/phase7_accessibility_test.dart                          # Phase 7
 flutter test --coverage
 flutter test integration_test -d <device-id> --no-uninstall   # on-device flows
+flutter drive --profile --driver=test_driver/integration_test.dart \
+  --target=integration_test/phase12h_performance_test.dart -d <device-id>  # timings (disposable device only)
 flutter build apk --debug
 flutter build apk --release      # debug-signed unless android/key.properties exists
 flutter build appbundle --release
@@ -315,14 +330,21 @@ e.g. `JAVA_HOME=$(/usr/libexec/java_home -v 21) flutter build apk --debug`.
 every pull request and push to `main`:
 
 - format check and analyze
-- migration tests (v1 → v6), backup format tests (formats 1, 2 and 3) and
-  Focus Guard tests, and manual update check tests
+- migration tests (v1 → v7), backup format tests (writes 4; reads 1, 2, 3
+  and 4), Focus Guard tests and manual update check tests
+- the v1.3 suites of Phases 12B–12G (Weekly Review, Calendar, setup, Pause
+  and Resume, Restart and deletion, completion sounds, with a check that
+  the bundled sounds reproduce from source) and Phase 12H's integration
+  suites (the features together, cross-screen reconciliation, the
+  migration chain, backups, layouts and accessibility)
 - the release qualification tests, then all tests
 - Android debug and release builds. The CI release APK is debug-signed (CI
   holds no signing secrets). It is a compile and permission check only and
   is never distributed. Official APKs are built and signed on the
   maintainer's machine ([docs/ANDROID_SIGNING.md](docs/ANDROID_SIGNING.md)).
-- native Android (JVM) tests of Focus Guard's background check
+- native Android (JVM) tests of Focus Guard's background check and the
+  completion-sound player, and a check that the sounds are stored
+  uncompressed in the release APK
 - a release permission audit: the APK must request exactly the expected
   permissions (`INTERNET` for the manual update check, notifications,
   vibrate, boot, Usage Access for Focus Guard, WorkManager's wake lock, an

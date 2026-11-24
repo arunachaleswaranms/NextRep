@@ -13,8 +13,11 @@ at Gate D. Phase 12E2 adds Freeze and Resume
 ([docs/PHASE_12E2.md](docs/PHASE_12E2.md)); the owner approved it at
 Gate E2. Phase 12F adds Restart and the optional deletion of the old Arc
 ([docs/PHASE_12F.md](docs/PHASE_12F.md)). Phase 12G adds completion
-sounds ([docs/PHASE_12G.md](docs/PHASE_12G.md)); awaiting Gate G, where
-the owner listens to the three sound sets.
+sounds ([docs/PHASE_12G.md](docs/PHASE_12G.md)); the owner approved the
+three sound sets, their names and the default at Gate G. Phase 12H
+qualifies all of it together (integration, accessibility, migration,
+backups and the v1.2 regression) and fixes the defects it found
+([docs/PHASE_12H.md](docs/PHASE_12H.md)); awaiting Gate H.
 
 Schema **v7** · backup format **4** (reads 1, 2, 3 and 4)
 
@@ -129,6 +132,17 @@ Schema **v7** · backup format **4** (reads 1, 2, 3 and 4)
 - Focus Guard's background check reads schema v7.
 - Internal: challenge days are mapped to dates through one freeze-aware
   mapping; an `ended` Arc is never treated as completed (no Summit).
+
+### Fixed (Phase 12H)
+
+- **Restart on the day you resume:** "Restart with this setup" on the
+  day a paused Arc was resumed, before anything was logged that day, said
+  "Couldn't restart. Nothing was changed." It now restarts; the old Arc
+  ends on that day (the same as restarting the next morning) and keeps
+  its pause in Arc History.
+- **Readable destructive buttons:** the red "Cancel Setup" and "Replace
+  Data" buttons now use dark text (about 6.7:1 contrast instead of 2.7:1),
+  like "Delete Arc".
 
 ## 1.2.0 — 2026
 
