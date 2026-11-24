@@ -33,7 +33,9 @@ Future<void> confirmCancelSetup(BuildContext context, WidgetRef ref) async {
         FilledButton(
           style: FilledButton.styleFrom(
             backgroundColor: context.winter.danger,
-            foregroundColor: context.winter.textPrimary,
+            // Dark text on the danger colour (about 6.7:1, as on the
+            // Delete Arc screen); light text was 2.7:1 (Phase 12H).
+            foregroundColor: context.winter.background,
           ),
           onPressed: () => Navigator.pop(context, true),
           child: const Text('Cancel Setup'),
