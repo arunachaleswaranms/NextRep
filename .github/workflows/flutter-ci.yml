@@ -20,7 +20,9 @@ jobs:
   quality:
     name: Format, analyze and test
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # 30, not 20: by Phase 12G this job took 19 of its 20 minutes; Phase 12H
+    # adds its integration suites (once below, again in "All tests").
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
@@ -130,6 +132,18 @@ jobs:
           test/features/sound_settings_test.dart
           test/app/completion_sound_boundary_test.dart
           test/assets/completion_sound_assets_test.dart
+
+      - name: Phase 12H tests (v1.3 features together, cross-screen reconciliation, migration chain, complex backups and genuine legacy files, layouts and guidelines, reduced motion, midnight, destructive announcements, restart on a resume day)
+        run: >-
+          flutter test
+          test/integration/phase12h_combined_flow_test.dart
+          test/integration/phase12h_metric_reconciliation_test.dart
+          test/integration/phase12h_backup_test.dart
+          test/integration/phase12h_layout_test.dart
+          test/data/migration_chain_test.dart
+          test/data/phase12h_restart_resume_day_test.dart
+          test/features/phase12h_midnight_test.dart
+          test/features/phase12h_destructive_semantics_test.dart
 
       # The six bundled sounds are exactly what their committed generator
       # produces (headers byte for byte, samples within 1 LSB).
