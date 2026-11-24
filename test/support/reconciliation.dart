@@ -342,12 +342,31 @@ Future<ArcFigures> _reconcile(
     fs,
     reason: '$why: calendar full days = Σ F(w)',
   );
+  // `isToday` marks the current date whatever its state (a pre-join
+  // season day included), except on an ended Arc; only an open day can
+  // be in the `today` state.
   final todayCells = journey.days.where((d) => d.isToday).toList();
+  for (final cell in todayCells) {
+    expect(cell.date, t, reason: '$why: isToday is the current date');
+  }
   if (openToday) {
     expect(todayCells, hasLength(1), reason: '$why: one today on the path');
-    expect(todayCells.single.date, t, reason: why);
   } else {
-    expect(todayCells, isEmpty, reason: '$why: no open today');
+    for (final cell in todayCells) {
+      expect(
+        cell.state,
+        JourneyDayState.notJoined,
+        reason: '$why: no open day; only a pre-join date is marked',
+      );
+    }
+    expect(
+      journey.days.where((d) => d.state == JourneyDayState.today),
+      isEmpty,
+      reason: '$why: no day in the today state without an open day',
+    );
+  }
+  if (ended) {
+    expect(todayCells, isEmpty, reason: '$why: an ended Arc has no today');
   }
   if (ended) {
     for (final day in journey.days) {
