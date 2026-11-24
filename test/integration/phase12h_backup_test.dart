@@ -278,6 +278,32 @@ void main() {
         );
         expect(restored.remindersCleared, isTrue);
         final restoredRows = await snapshotAll(target.db);
+        // The restore rules themselves, on the restored side (the
+        // comparison below normalises them on both sides).
+        final sourcePrefs = sourceRows['reminder_preferences']!.single;
+        expect(
+          (
+            sourcePrefs['daily_enabled'],
+            sourcePrefs['reflection_enabled'],
+            sourcePrefs['hydration_enabled'],
+          ),
+          (1, 1, 1),
+          reason: 'the source had every reminder on',
+        );
+        final prefs = restoredRows['reminder_preferences']!.single;
+        expect(
+          (
+            prefs['daily_enabled'],
+            prefs['reflection_enabled'],
+            prefs['hydration_enabled'],
+          ),
+          (0, 0, 0),
+          reason: 'a restore turns every reminder and Hydration Coach off',
+        );
+        for (final key in sourcePrefs.keys) {
+          if (key.endsWith('_enabled') || key == 'updated_at') continue;
+          expect(prefs[key], sourcePrefs[key], reason: 'reminder $key kept');
+        }
         final offset =
             (restoredRows['winter_arc_sessions']!.first['id']! as int) -
             (sourceRows['winter_arc_sessions']!.first['id']! as int);

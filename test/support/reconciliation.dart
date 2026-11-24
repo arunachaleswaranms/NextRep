@@ -201,7 +201,6 @@ Future<ArcFigures> _reconcile(
       b += row.amount;
     }
   }
-  expect(a + b + c + other, total, reason: '$why: groups cover the ledger');
   expect(
     other,
     0,

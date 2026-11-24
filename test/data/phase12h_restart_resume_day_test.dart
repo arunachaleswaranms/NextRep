@@ -90,7 +90,7 @@ void main() {
   });
 
   test('whenever the Restart screen offers a restart, the transaction '
-      'accepts it (pause after Days 1, 5, 30; 1–4 paused dates; restart '
+      'accepts it (pause after Days 1, 5, 30; 1, 2 or 4 paused dates; restart '
       '0–2 days after the resume, logged or not)', () async {
     var cases = 0;
     for (final lived in [1, 5, 30]) {
