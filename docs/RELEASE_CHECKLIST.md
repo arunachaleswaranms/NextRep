@@ -13,6 +13,78 @@
 > with both assets attached, or the in-app check reports it as not ready
 > ([DIRECT_DISTRIBUTION.md](DIRECT_DISTRIBUTION.md#checking-for-updates-from-the-app)).
 
+## Direct distribution: v1.3.0 (Phase 12I)
+
+A fresh record for v1.3.0, started in Phase 12I on 2026-11-25. Nothing is
+carried over from v1.2.0 or from an earlier v1.3 phase. Tick an item only
+with evidence in [PHASE_12I.md](PHASE_12I.md) for **this** release's
+source.
+
+Source and identity
+
+- [x] `pubspec.yaml` `1.3.0+4`; `appVersion` `1.3.0`; planned tag `v1.3.0` (not created)
+- [x] `applicationId` `com.nextrep.nextrep`, minSdk 24, targetSdk 36; no temporary suffix in the source
+- [x] Schema **v7**, backup write **4** / read 1, 2, 3, 4; 32 achievements; no new permission or dependency; `AndroidManifest.xml` and `pubspec.lock` unchanged from `main`
+- [x] `android/key.properties` in the signing checkout points at the permanent key (git-ignored, mode 600, values never read or printed); the key was not rotated
+
+Automated (candidate source `9ce26ee`)
+
+- [x] `dart format --output=none --set-exit-if-changed .` (421 files, 0 changed), `flutter analyze` (no issues)
+- [x] `flutter test` 2,460 / 2,460 and `./gradlew :app:testDebugUnitTest` 87 / 87
+- [x] Focused suites: migrations v1 → v7, backups 1–4, Weekly Review, Calendar, 12D, 12E2, 12F, 12G (incl. G-R1), 12H, Focus Guard, update check and network boundary, release qualification incl. `phase12i_release_test`
+- [x] Completion sounds reproduce from source (6 files, 125,064 bytes)
+- [x] `flutter build apk --debug`, `flutter build apk --release` in a worktree without the key (debug-signed, never distributed)
+- [x] `flutter build ios --simulator`, `flutter build ios --release --no-codesign` (1.3.0 / 4), iOS About and v1.2 smokes on the simulator
+- [ ] Historical iOS integration smokes of phases 3–6: stale, fail identically on the baseline `138fc6f` (deferred; not a blocker)
+
+Signed candidate
+
+- [x] Owner permission to detach the signing checkout; `flutter clean`, then `tool/release/prepare_android_release.sh` on `9ce26ee`; checkout restored to its branch afterwards
+- [x] One signer `65:B7:0C:D0:…:F0:BA` (not `CN=Android Debug`), v2 scheme, `com.nextrep.nextrep` 1.3.0 (4), staged APK and `.sha256`
+- [x] Independent audit against the published v1.2.0 APK: permissions identical (7), components identical (19), Focus Guard provider not exported, R8 constructors kept, six sounds stored uncompressed, not debuggable
+- [x] Byte-identical across two clean builds of `9ce26ee`: 68,142,073 bytes, `a706759703f8894c2ef33772bb7d48a04e23fb0685b0e0639ffce8997754ec7f`
+- [x] Size and SHA-256 in [releases/v1.3.0.md](releases/v1.3.0.md)
+- [ ] Rebuilt on the PR's final head (docs-only after `9ce26ee`) and on merged `main`: byte-identical (Gate P step)
+
+Emulator (disposable AVDs, synthetic data)
+
+- [x] Published v1.2.0 (checksum, signer, 1.2.0 (3)) with data made by v1.2.0's own services and UI → genuine format-3 export → `adb install -r` of the signed candidate: Success, same signer, `firstInstallTime` unchanged
+- [x] Real v6 → v7: every v6 row of 11 tables identical (1,187), only `closed_on` added (null), new tables empty, integrity and foreign keys clean
+- [x] Sounds default on / Ice Crystal; reminders, Hydration Coach and Focus Guard kept (not a restore)
+- [x] Focus Guard: a natural JobScheduler run after the upgrade, `:focus_guard` reads schema 7, one nudge; reboot and force-stop recovery
+- [x] Format-3 restore after the upgrade: Arc data identical, reminders / Hydration / Focus Guard off, no XP, achievement or sound; device sound setting kept; new exports format 4
+- [x] v1.2.0 refuses a genuine format-4 file and changes nothing (database byte-identical)
+- [x] Minified smoke of the signed candidate: fresh install, setup ordering, saved setup, Confirm & Start, Today, Minimum and Perfect Day, Weekly Review, Calendar, Journey, Journal, Insights, Pause / Cancel / paused / Resume, Restart, ended history, typed DELETE, Sound & Feedback, reminders, Hydration, Focus Guard, Data & Backup, background, process death
+- [x] D-1 (6.68 : 1 dark text on Replace Data and Cancel Setup), D-2 (restart on the resume day keeps the pause), C-1 ("Cancel Setup"), C-2 ("8 habits (7 on)")
+- [x] Sounds: one playback per completion, Perfect Day once, preview, none when off, on silent, on Do Not Disturb or on restore; no audio focus
+- [x] Per-UID network: zero bytes until **Check for updates** is tapped; one request; "newer than the latest published v1.2.0"
+
+Physical Android (OnePlus): **Gate I, pending**: asked on 25 Nov 2026, the owner chose "not now"
+
+- [ ] Device identity, installed official v1.2.0 (3) byte-identical to the published asset, its signer, first-install time
+- [ ] Pre-upgrade backup exported in v1.2.0 (format 3), verified, kept on the phone and off-device
+- [ ] `adb install -r` of the signed candidate (no `-d`, no uninstall, no data clear): Success, same signer, `firstInstallTime` unchanged
+- [ ] Real v6 → v7 migration: the same user data as the pre-upgrade backup
+- [ ] Physical smoke of every v1.3 feature
+- [ ] Sounds on ringer, silent, vibrate, Do Not Disturb, with music, with headphones / Bluetooth; the 1 s rule (U-4)
+- [ ] TalkBack swipe order, double-tap, speech continuity during a sound, confirmed by a person listening (U-1, U-2)
+- [ ] Optional phone timings (U-8)
+
+Documents and review
+
+- [x] Release notes [releases/v1.3.0.md](releases/v1.3.0.md) (status: release candidate, not published)
+- [x] README, CHANGELOG, PRIVACY, DIRECT_DISTRIBUTION, PROJECT_STATE updated; [PHASE_12I.md](PHASE_12I.md)
+- [x] Secret audit: no keystore, `key.properties`, password, token, APK, `.sha256`, personal backup, database or device dump tracked ([PHASE_12I.md § S](PHASE_12I.md#s-secret-artifact-and-data-audit))
+- [ ] CI green on the final PR head (see the PR)
+- [ ] Owner: independent review, Gate I decision, then merge
+
+Publication: separate owner authorization (Gate P), **not started**
+
+- [ ] On merged `main`: `flutter clean` + release script; SHA-256 byte-identical to `a7067597…54ec7f`
+- [ ] Tag `v1.3.0` (annotated) on the merge commit; draft with exactly `NextRep-v1.3.0-android.apk` and `.sha256`, downloaded and compared, then published as a full release
+- [ ] `releases/latest` API (unauthenticated): `tag_name` v1.3.0, both assets; public download byte-identical, SHA-256 and signer match
+- [ ] On an upgraded phone: About → Check for updates → "Latest published: v1.3.0"
+
 ## Direct distribution: v1.2.0 (Phase 11F)
 
 A fresh record for v1.2.0, started in Phase 11F on 2026-10-16. Nothing is

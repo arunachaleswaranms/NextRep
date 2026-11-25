@@ -70,8 +70,16 @@ signed with the NextRep release key, so a tampered APK can't replace your
 install or read its data.
 
 Because every release uses the same key, a newer official APK installs
-over the old one and keeps your data (for example v1.2.0 over v1.1.0). You
-don't need to uninstall. Exporting a backup first is still a good habit.
+over the old one and keeps your data (for example v1.2.0 over v1.1.0, or
+v1.3.0 over v1.2.0). You don't need to uninstall. Exporting a backup first
+is still a good habit.
+
+An update keeps your data even when it upgrades the app's database (v1.3.0
+moves from schema v6 to v7 on first launch, adding to it and changing
+nothing already stored). Going back to an older version isn't supported:
+Android refuses a lower version over a newer one, and an older version
+can't read a newer backup (v1.2.0 refuses a v1.3.0 format-4 backup without
+changing anything).
 
 If Android ever says an update conflicts with the installed app or that the
 package is invalid, **don't uninstall to force it.** That means the APK

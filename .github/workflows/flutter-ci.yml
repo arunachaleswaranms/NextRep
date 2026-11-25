@@ -177,9 +177,11 @@ jobs:
           test/app/network_boundary_test.dart
           test/app/app_routes_test.dart
 
-      - name: Release qualification tests (lifecycle, accessibility, dates)
+      - name: Release qualification tests (release identity 1.3.0+4, lifecycle, accessibility, dates)
         run: >-
           flutter test
+          test/app/phase12i_release_test.dart
+          test/app/phase11f_release_test.dart
           test/app/day_change_test.dart
           test/domain/date_edges_test.dart
           test/features/phase7_lifecycle_test.dart

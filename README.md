@@ -4,8 +4,10 @@
 for your daily habits.**
 
 > **Status: v1.2.0 is the latest published release** (18 October 2026;
-> [release notes](docs/releases/v1.2.0.md)). Android APKs are published on
-> the
+> [release notes](docs/releases/v1.2.0.md)). **v1.3.0 is in release
+> qualification and not yet published** (draft notes:
+> [docs/releases/v1.3.0.md](docs/releases/v1.3.0.md)). Android APKs are
+> published on the
 > [GitHub Releases](https://github.com/arunachaleswaranms/NextRep/releases)
 > page, which always lists the current release.
 
@@ -65,13 +67,25 @@ analytics and no cloud sync. Everything stays on your phone.
 - A winter scene that respects reduced motion, large-text support and
   screen-reader labels.
 
-**In development for v1.3.0 (not released):** a Weekly Arc Review, an Arc
-Consistency Calendar, habit order and a saved setup with Confirm & Start,
-Pause and Resume for Rolling Arcs, Restart with the same setup (and an
-optional, separately confirmed deletion of the old Arc), and short,
-bundled completion sounds. All offline; no new permission. See
-[CHANGELOG.md](CHANGELOG.md) "Unreleased" and
-[docs/V1_3_ROADMAP.md](docs/V1_3_ROADMAP.md).
+**Coming in v1.3.0 (in release qualification, not yet published):**
+
+- **Weekly Arc Review**: each Arc week's completion, consistency, XP,
+  Perfect and Minimum Days, highlights and a short summary. Read-only.
+- **Arc Consistency Calendar**: the 92 days as 13 week blocks, beside the
+  Journey's path. Read-only.
+- **Habit order, saved setup and Confirm & Start**: order your habits
+  before an Arc starts, keep a setup for later, and confirm Day 1 on a
+  screen that shows it.
+- **Pause and Resume** (Rolling Arcs): pause from tomorrow; paused days are
+  never missed days; your last day moves later.
+- **Restart** with the same setup after typing RESTART; the old Arc stays
+  in Arc History as "Ended early", and deleting it is a separate, optional,
+  typed DELETE.
+- **Completion sounds**: three bundled sets, on by default, quiet on
+  silent, vibrate and Do Not Disturb, in **Sound & Feedback**.
+
+All offline, with no new permission. Details: [CHANGELOG.md](CHANGELOG.md)
+and the [v1.3.0 release notes](docs/releases/v1.3.0.md).
 
 ## Download
 
@@ -125,7 +139,12 @@ anything. With v1.1.0 and earlier, check the Releases page.
 
 Your data stays because every official release is signed with the same
 key, and Android only accepts an update signed with it. Before a major
-upgrade, export a backup anyway (below).
+upgrade, export a backup anyway (below). An update that upgrades the
+database (v1.3.0 moves from schema v6 to v7) only adds to it.
+
+Going back to an older version isn't supported, and an older version can't
+restore a newer backup: v1.2.0 refuses a v1.3.0 backup (format 4) and
+changes nothing.
 
 If Android refuses the update or reports a signing or package conflict,
 stop. Don't uninstall to force it. Get the APK again from the Releases page
@@ -146,6 +165,10 @@ device):
   and asks before replacing the data on this device. Reminders, Hydration
   Coach and Focus Guard come back turned off, with their settings kept.
   Turn them on again if you want them.
+- Backup formats: v1.0.0 and v1.1.0 write formats 1 and 2, v1.2.0 writes
+  format 3, and v1.3.0 writes format 4 (adding pauses, Arcs ended early and
+  sound settings). Each version restores its own format and every older
+  one; none restores a newer one.
 
 **Backups are not encrypted by NextRep.** Anyone who can open the file can
 read your reflections. Keep it somewhere you trust. The file includes a
@@ -375,7 +398,13 @@ implementation and qualification records:
 [10C](docs/PHASE_10C.md), [10D](docs/PHASE_10D.md),
 [11A](docs/PHASE_11A.md), [11B](docs/PHASE_11B.md),
 [11C](docs/PHASE_11C.md), [11D](docs/PHASE_11D.md),
-[11E](docs/PHASE_11E.md), [11F](docs/PHASE_11F.md).
+[11E](docs/PHASE_11E.md), [11F](docs/PHASE_11F.md),
+[12A](docs/PHASE_12A.md), [12A Addendum](docs/PHASE_12A_ADDENDUM.md),
+[12E1](docs/PHASE_12E1.md), [12B](docs/PHASE_12B.md),
+[12C](docs/PHASE_12C.md), [12D](docs/PHASE_12D.md),
+[12E2](docs/PHASE_12E2.md), [12F](docs/PHASE_12F.md),
+[12G](docs/PHASE_12G.md), [12H](docs/PHASE_12H.md),
+[12I](docs/PHASE_12I.md).
 Current status: [PROJECT_STATE.md](PROJECT_STATE.md).
 
 Release documents:

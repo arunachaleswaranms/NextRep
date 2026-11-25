@@ -1,6 +1,6 @@
 # PROJECT_STATE
 
-_Last updated: 2026-11-24. **Latest published release: v1.2.0** (tag
+_Last updated: 2026-11-25. **Latest published release: v1.2.0** (tag
 `v1.2.0` on `8ab0c43`, PR #20), published 18 October 2026; v1.1.0 and
 v1.0.0 before it. The v1.2 roadmap (Phases 11A–11F, PRs #15–#20), the
 publication record (PR #21), the Phase 12A plan (PR #22), the Phase 12A
@@ -8,15 +8,13 @@ Addendum (PR #23), the Phase 12E1 lifecycle foundation (PR #24), the
 Phase 12B Weekly Arc Review (PR #25), the Phase 12C Arc Consistency
 Calendar (PR #26), Phase 12D habit ordering and saved setup (PR #27),
 Phase 12E2 Freeze and Resume (PR #28), Phase 12F Restart and optional
-Arc deletion (PR #29) and Phase 12G completion sounds (PR #30) are
-merged. `main` is `20712d2`, version `1.2.0+3`. **v1.3.0 is in
-development, not released. Active phase: 12H (integration,
-accessibility, migration and regression hardening) on
-`phase/12h-v1.3-integration-hardening` (PR #31, open, not merged). The
-owner approved Gate H decisions H-1 … H-6 on 24 November 2026; the
-approved copy corrections C-1 and C-2 are on the PR. It awaits
-independent verification of the corrected head and the owner's merge
-decision.**_
+Arc deletion (PR #29), Phase 12G completion sounds (PR #30) and Phase
+12H integration hardening (PR #31) are merged. `main` is `138fc6f`,
+version `1.2.0+3`. **v1.3.0 is not published. Active phase: 12I (v1.3.0
+release qualification) on `phase/12i-v1.3-release-qualification`, which
+bumps the version to `1.3.0+4`. Gate I (the owner's authorization of the
+physical OnePlus upgrade) is pending; publication needs a separate Gate P
+authorization.**_
 
 | | |
 |---|---|
@@ -35,10 +33,13 @@ planned. TalkBack was deliberately deferred and doesn't block this model.
 ## Repo
 
 - Remote: https://github.com/arunachaleswaranms/NextRep (public, MIT)
-- `main`: `20712d2` (squash merge of PR #30, Phase 12G, 24 November 2026,
-  final head `a1147a4`; post-merge CI run
+- `main`: `138fc6f` (squash merge of PR #31, Phase 12H, 25 November 2026,
+  final head `6760290`; post-merge CI run
+  [45535474488](https://github.com/arunachaleswaranms/NextRep/actions/runs/45535474488)
+  green, both jobs), on top of `20712d2` (PR #30, Phase 12G, 24 November
+  2026, final head `a1147a4`; post-merge CI run
   [45388828817](https://github.com/arunachaleswaranms/NextRep/actions/runs/45388828817)
-  green, both jobs), on top of `a9e5607` (PR #29, Phase 12F; CI run
+  green, both jobs), `a9e5607` (PR #29, Phase 12F; CI run
   [45109820746](https://github.com/arunachaleswaranms/NextRep/actions/runs/45109820746)
   green, both jobs), `b751dff` (PR #28, Phase 12E2; CI run
   [45047072621](https://github.com/arunachaleswaranms/NextRep/actions/runs/45047072621)
@@ -55,9 +56,45 @@ planned. TalkBack was deliberately deferred and doesn't block this model.
   `v1.2.0` (`8ab0c43`). PRs #1–#20 are Phases 1–11F; #21 the publication
   record; #22 Phase 12A; #23 the Phase 12A Addendum; #24 Phase 12E1;
   #25 Phase 12B; #26 Phase 12C; #27 Phase 12D; #28 Phase 12E2; #29
-  Phase 12F; #30 Phase 12G.
+  Phase 12F; #30 Phase 12G; #31 Phase 12H.
 
-## Phase 12H (v1.3.0 integration, accessibility, migration and regression, active; Gate H decisions approved; PR #31 open, not merged)
+## Phase 12I (v1.3.0 release qualification, active; Gate I physical pending; PR open, not merged)
+
+Matrix, evidence, the Gate I request and the publication boundary:
+[docs/PHASE_12I.md](docs/PHASE_12I.md). Baseline `main` `138fc6f` (PR #31
+merged 25 Nov 2026, CI 45535474488 green, both jobs); branch
+`phase/12i-v1.3-release-qualification` (worktree `~/labs/NextRep-12I`).
+Only the version changes in app code; no feature, schema, format,
+permission, dependency or signing change.
+
+- **Version:** `1.3.0+4` (`984d086`); release-identity tests
+  `phase12i_release_test.dart` (17) and the 11F file retargeted at the
+  published v1.2.0 (`9ce26ee`, the **signed candidate source**).
+- **Automated:** format clean, analyze clean, **2,460 / 2,460** Flutter
+  tests, **87 / 87** JVM; debug and release builds; iOS simulator and
+  no-codesign builds (1.3.0 / 4); iOS About and v1.2 smokes pass; four
+  stale historical smokes (phases 3–6) fail identically on the baseline
+  (deferred).
+- **Signed candidate** (owner-authorized detach of the signing checkout,
+  restored afterwards): one signer `65b70cd0…f0ba`, 1.3.0 (4), the same 7
+  permissions and 19 components as v1.2.0, Focus Guard provider not
+  exported, R8 constructors kept, six sounds stored. **68,142,073 bytes,
+  SHA-256 `a706759703f8894c2ef33772bb7d48a04e23fb0685b0e0639ffce8997754ec7f`,
+  byte-identical across two clean builds.** Private; not uploaded.
+- **Signed upgrade rehearsal** (disposable AVD, synthetic data): published
+  v1.2.0 → `adb install -r` → real v6 → v7, **all 1,187 v6 rows
+  identical**, `firstInstallTime` and signer unchanged; reminders,
+  Hydration and Focus Guard kept; a natural Focus Guard run on schema 7.
+  Format-3 restore after it: Arc data identical, opt-ins off, no XP or
+  sound. v1.2.0 refuses a genuine format-4 file unchanged.
+- **Regression:** the full v1.3 feature set on the signed candidate; D-1,
+  D-2, C-1, C-2 rechecked; sounds silent on silent and DND; zero network
+  until the update check ("newer than the latest published v1.2.0").
+- **Gate I:** the physical OnePlus upgrade is **not authorized**: asked
+  on 25 Nov 2026, the owner chose "not now". U-1, U-2, U-4, U-8 open. Request: [docs/PHASE_12I.md § R](docs/PHASE_12I.md#r-gate-i-physical-device-authorization-request).
+- **Gate P:** not authorized; no tag, release or upload.
+
+## Phase 12H (v1.3.0 integration, accessibility, migration and regression, merged)
 
 Matrix, evidence, decisions and the 12I handoff:
 [docs/PHASE_12H.md](docs/PHASE_12H.md). Baseline `main` `20712d2` (PR #30
@@ -104,9 +141,13 @@ no phone, no signing, no release.
 - **Still open for 12I:** U-1 TalkBack speech with a completion sound,
   U-2 TalkBack swipe order on a device, U-4 headphones / OxygenOS / the
   1 s rule on a phone, U-8 phone timings.
-- **Next:** independent verification of the corrected head and the
-  owner's explicit merge decision (PR #31 stays open). Phase 12I has not
-  begun.
+- **Merged:** PR #31 squash-merged on 25 November 2026 as `138fc6f`
+  (final head `67602902055001193d8b4547739665aaa2b05182`); post-merge CI
+  run [45535474488](https://github.com/arunachaleswaranms/NextRep/actions/runs/45535474488)
+  green, both jobs ("Format, analyze and test"; "Android builds and
+  permission audit"). Gate H approved, H-1 … H-6 including the copy
+  corrections C-1 and C-2. Final head: 2,445 Flutter tests, 87 JVM tests.
+  U-1, U-2, U-4 and U-8 handed to 12I.
 
 ## Phase 12G (v1.3.0 completion sounds, merged)
 
@@ -785,11 +826,11 @@ Evidence and rules: [docs/PHASE_10A.md](docs/PHASE_10A.md).
 
 | | |
 |---|---|
-| Version | Published: `1.2.0+3` (versionName 1.2.0, versionCode 3), 1.1.0 (2) and 1.0.0 (1) |
+| Version | Published: `1.2.0+3` (versionName 1.2.0, versionCode 3), 1.1.0 (2) and 1.0.0 (1). Release candidate (not published): `1.3.0+4` |
 | Tag | `v1.0.0` on `b3f9c5c`; `v1.1.0` on `7e563e2`; `v1.2.0` on `8ab0c43` (annotated, "NextRep v1.2.0") |
 | Android `applicationId` | `com.nextrep.nextrep` (kept for update continuity) |
-| Database schema | **v5** in v1.1.0; **v6** since Phase 11B, first released with v1.2.0 |
-| Backup | export `formatVersion` **2** in v1.1.0; from Phase 11B (v1.2.0): writes **3**, reads 1, 2 and 3 |
+| Database schema | **v5** in v1.1.0; **v6** since Phase 11B, first released with v1.2.0; **v7** since Phase 12E1, in the v1.3.0 candidate |
+| Backup | export `formatVersion` **2** in v1.1.0; from Phase 11B (v1.2.0): writes **3**, reads 1, 2 and 3; from Phase 12E1 (v1.3.0 candidate): writes **4**, reads 1–4 |
 | License | MIT, © 2026 Arunachaleswaran M S |
 | Signing certificate | `CN=Arunachaleswaran M S, OU=NextRep`, RSA 4096, valid 2026-10-08 to 2056-09-30 |
 | Certificate SHA-256 | `65:B7:0C:D0:96:D1:BB:F2:C0:F5:0E:E0:2F:4B:55:97:46:25:CC:4C:DB:EA:D7:39:22:5F:06:75:AF:C8:F0:BA` |
@@ -801,6 +842,8 @@ Evidence and rules: [docs/PHASE_10A.md](docs/PHASE_10A.md).
 | Release permissions (v1.2.0) | v1.1.0's plus `PACKAGE_USAGE_STATS`, `WAKE_LOCK` (11C) and `INTERNET` (11D, manual update check only): exactly 7, audited on the signed and on the published APK |
 | v1.2.0 APK | `NextRep-v1.2.0-android.apk`, 66,360,265 bytes, minSdk 24, targetSdk 36; qualified from `bc4009f`, rebuilt byte-identical from `main` `8ab0c43` (docs-only difference) |
 | v1.2.0 APK SHA-256 | `e384762832a8c3fa697e84fc4951c9adfd48fa65c7bce52e66723b4883bde3e2`; **published** 2026-10-18 with its `.sha256`, public download verified |
+| v1.3.0 candidate | `NextRep-v1.3.0-android.apk`, 68,142,073 bytes, minSdk 24, targetSdk 36, the same 7 permissions; qualified from `9ce26ee` (Phase 12I); **not published** |
+| v1.3.0 candidate SHA-256 | `a706759703f8894c2ef33772bb7d48a04e23fb0685b0e0639ffce8997754ec7f` (byte-identical across two clean builds, fixed environment) |
 
 The keystore and `android/key.properties` live only on the owner's machine
 and are git-ignored. Key rules:
@@ -809,16 +852,16 @@ and are git-ignored. Key rules:
 
 ## Results
 
-| Gate | v1.2.0 (Phase 11F) | Phase 11D | Phase 11C | Phase 11B | Phase 11A | v1.1.0 (Phase 10D) | Phase 10C | Phase 10B | Phase 10A | v1.0.0 |
-|---|---|---|---|---|---|---|---|---|---|---|
-| format / analyze | clean / no issues | clean / no issues | clean / no issues | clean / no issues | clean / no issues | clean / no issues | clean / no issues | clean / no issues | clean / no issues | clean / no issues |
-| `flutter test` | **1265 / 1265** (+ 67 native JVM) | **1144 / 1144** (+ 67 native JVM) | **976 / 976** (+ 67 native JVM) | 902 / 902 | **800 / 800** | **769 / 769** | 766 / 766 | 693 / 693 | 635 / 635 | 605 / 605 |
-| Migrations / backup | 52 / 90 (v6; 1+2+3) | 52 / 90 (v6; 1+2+3) | 52 / 90 (v6; 1+2+3) | 52 / 90 (v6; 1+2+3) | 39 / 76 | 39 / 76 | 39 / 76 | 39 / 71 | 39 / 71 | 39 / 70 |
-| APK debug | PASS | PASS | PASS | PASS | PASS | PASS | PASS | PASS | PASS | PASS |
-| APK release | **PASS, release key, reproducible** (7 permissions) | PASS, 11C's + `INTERNET` | PASS, v1.1.0 + `PACKAGE_USAGE_STATS`, `WAKE_LOCK` | PASS, permissions = v1.1.0 | PASS, permissions = v1.1.0 | **PASS, release key, reproducible** | PASS (local) | PASS (local) | not built | PASS |
-| iOS simulator / no-codesign build | PASS / PASS (+ 4 simulator smokes) | PASS / PASS (+ simulator run) | PASS / PASS | PASS / PASS | PASS / PASS | PASS / PASS | PASS (local) | PASS (local) | not run | PASS |
-| Signed update continuity (physical, `adb install -r`, same key) | **PASS** v1.1.0 → v1.2.0, data kept; emulator rehearsal PASS | n/a (11F) | n/a (11F) | n/a | n/a | **PASS** v1.0.0 → v1.1.0, data kept | n/a | n/a | n/a | **PASS**, data kept |
-| Physical smoke | **PASS** (incl. Hydration Coach, Focus Guard, notifications, update check) | deferred (not connected) | deferred (not connected) | not run | feasibility only (probe package) | **PASS** (incl. share sheet) | n/a | n/a | n/a | **PASS** |
+| Gate | v1.3.0 candidate (Phase 12I) | v1.2.0 (Phase 11F) | Phase 11D | Phase 11C | Phase 11B | Phase 11A | v1.1.0 (Phase 10D) | Phase 10C | Phase 10B | Phase 10A | v1.0.0 |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| format / analyze | clean / no issues | clean / no issues | clean / no issues | clean / no issues | clean / no issues | clean / no issues | clean / no issues | clean / no issues | clean / no issues | clean / no issues | clean / no issues |
+| `flutter test` | **2460 / 2460** (+ 87 native JVM) | **1265 / 1265** (+ 67 native JVM) | **1144 / 1144** (+ 67 native JVM) | **976 / 976** (+ 67 native JVM) | 902 / 902 | **800 / 800** | **769 / 769** | 766 / 766 | 693 / 693 | 635 / 635 | 605 / 605 |
+| Migrations / backup | 79 / 132 (v7; 1+2+3+4) | 52 / 90 (v6; 1+2+3) | 52 / 90 (v6; 1+2+3) | 52 / 90 (v6; 1+2+3) | 52 / 90 (v6; 1+2+3) | 39 / 76 | 39 / 76 | 39 / 76 | 39 / 71 | 39 / 71 | 39 / 70 |
+| APK debug | PASS | PASS | PASS | PASS | PASS | PASS | PASS | PASS | PASS | PASS | PASS |
+| APK release | **PASS, release key, reproducible** (7 permissions, = v1.2.0) | **PASS, release key, reproducible** (7 permissions) | PASS, 11C's + `INTERNET` | PASS, v1.1.0 + `PACKAGE_USAGE_STATS`, `WAKE_LOCK` | PASS, permissions = v1.1.0 | PASS, permissions = v1.1.0 | **PASS, release key, reproducible** | PASS (local) | PASS (local) | not built | PASS |
+| iOS simulator / no-codesign build | PASS / PASS (+ About and v1.2 smokes; 4 stale historical smokes deferred) | PASS / PASS (+ 4 simulator smokes) | PASS / PASS (+ simulator run) | PASS / PASS | PASS / PASS | PASS / PASS | PASS / PASS | PASS (local) | PASS (local) | not run | PASS |
+| Signed update continuity (physical, `adb install -r`, same key) | emulator rehearsal **PASS** v1.2.0 → v1.3.0 (v6 → v7, every row kept); **physical pending Gate I** | **PASS** v1.1.0 → v1.2.0, data kept; emulator rehearsal PASS | n/a (11F) | n/a (11F) | n/a | n/a | **PASS** v1.0.0 → v1.1.0, data kept | n/a | n/a | n/a | **PASS**, data kept |
+| Physical smoke | **pending Gate I** | **PASS** (incl. Hydration Coach, Focus Guard, notifications, update check) | deferred (not connected) | deferred (not connected) | not run | feasibility only (probe package) | **PASS** (incl. share sheet) | n/a | n/a | n/a | **PASS** |
 
 Coverage of handwritten lib: 93.8% at v1.1.0 (93.3% at v1.0.0).
 Earlier results: integration 7 / 7 on emulator-5554 and on the iPhone 17
@@ -874,4 +917,10 @@ disclosed in [PRIVACY.md](PRIVACY.md).
    ([docs/V1_3_ROADMAP.md](docs/V1_3_ROADMAP.md#approval-gates)): decide
    O1–O16
    ([docs/PHASE_12A_ADDENDUM.md](docs/PHASE_12A_ADDENDUM.md#m-owner-decisions-gate-a2)),
-   merge. No implementation phase starts before that.
+   merge. No implementation phase starts before that. (Done: Gate A2
+   approved; Phases 12E1–12H merged as PRs #24–#31.)
+5. Phase 12I: independent review of the PR; **Gate I**, the explicit
+   decision on the physical OnePlus signed upgrade
+   ([docs/PHASE_12I.md § R](docs/PHASE_12I.md#r-gate-i-physical-device-authorization-request));
+   merge; then a **separate Gate P** authorization before any tag or
+   release.
