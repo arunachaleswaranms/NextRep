@@ -59,7 +59,7 @@ Emulator (disposable AVDs, synthetic data)
 - [x] Sounds: one playback per completion, Perfect Day once, preview, none when off, on silent, on Do Not Disturb or on restore; no audio focus
 - [x] Per-UID network: zero bytes until **Check for updates** is tapped; one request; "newer than the latest published v1.2.0"
 
-Physical Android (OnePlus): **Gate I, pending the owner's explicit authorization**
+Physical Android (OnePlus): **Gate I, pending**: asked on 25 Nov 2026, the owner chose "not now"
 
 - [ ] Device identity, installed official v1.2.0 (3) byte-identical to the published asset, its signer, first-install time
 - [ ] Pre-upgrade backup exported in v1.2.0 (format 3), verified, kept on the phone and off-device

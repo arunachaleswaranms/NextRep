@@ -15,7 +15,7 @@ version (`1.3.0+4`).
 | Gate | What | Status |
 |---|---|---|
 | I (emulator and desktop) | Source, automated suite, signed candidate, reproducibility, signed upgrade rehearsal, backups, Focus Guard, functional regression | **done here** (§§ C–P) |
-| I (physical) | Owner-authorized signed in-place upgrade on the owner's OnePlus; U-1, U-2, U-4, U-8 | **PENDING: not authorized in this task**. Request: [§ R](#r-gate-i-physical-device-authorization-request) |
+| I (physical) | Owner-authorized signed in-place upgrade on the owner's OnePlus; U-1, U-2, U-4, U-8 | **PENDING**: the owner was asked on 25 Nov 2026 and chose "not now". Request: [§ R](#r-gate-i-physical-device-authorization-request) |
 | Review and merge | Independent review of the Phase 12I PR; owner merge | not started |
 | P | Rebuild of merged `main`, byte identity, tag, draft, publication | **not authorized; not started** ([§ T](#t-publication-boundary-gate-p)) |
 
@@ -512,10 +512,12 @@ Evidence is Android's own playback record (`dumpsys audio`: NextRep's
 
 ## R. Gate I: physical-device authorization request
 
-**Status: PENDING.** The owner has not authorized a Phase 12I physical
-upgrade. Nothing was installed on, removed from or changed on any
-physical device. The request below is for the owner to accept, change or
-decline.
+**Status: PENDING.** The request below was put to the owner on 25
+November 2026, after the emulator qualification and with PR #32 open. The
+owner's decision: **"Not now: keep Gate I pending."** Nothing was
+installed on, removed from or changed on any physical device; the phone
+was not connected (`adb devices` and `adb mdns services` empty). The
+request stands for a later decision; it authorizes nothing by itself.
 
 | | |
 |---|---|

@@ -90,8 +90,8 @@ permission, dependency or signing change.
 - **Regression:** the full v1.3 feature set on the signed candidate; D-1,
   D-2, C-1, C-2 rechecked; sounds silent on silent and DND; zero network
   until the update check ("newer than the latest published v1.2.0").
-- **Gate I:** the physical OnePlus upgrade is **not authorized** in this
-  task; U-1, U-2, U-4, U-8 open. Request: [docs/PHASE_12I.md § R](docs/PHASE_12I.md#r-gate-i-physical-device-authorization-request).
+- **Gate I:** the physical OnePlus upgrade is **not authorized**: asked
+  on 25 Nov 2026, the owner chose "not now". U-1, U-2, U-4, U-8 open. Request: [docs/PHASE_12I.md § R](docs/PHASE_12I.md#r-gate-i-physical-device-authorization-request).
 - **Gate P:** not authorized; no tag, release or upload.
 
 ## Phase 12H (v1.3.0 integration, accessibility, migration and regression, merged)
