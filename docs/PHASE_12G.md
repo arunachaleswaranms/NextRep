@@ -677,3 +677,25 @@ flutter build apk --debug && flutter build apk --release
 flutter build ios --simulator --debug
 dart run tool/sounds/generate_completion_sounds.dart --check
 ```
+
+## Gate G outcome
+
+Recorded in Phase 12H (`docs/PHASE_12H.md`) from the owner's Phase 12H
+brief; nothing in this phase's qualification above was re-run or
+re-claimed.
+
+- **Gate G (owner): APPROVED on 24 November 2026.**
+- All six original completion sounds approved after listening.
+- Names approved: **Ice Crystal**, **Summit Spark**, **Warm Ember**.
+- Completion sounds **on by default**, **Ice Crystal** selected.
+- The remaining Gate G implementation decisions (4–12 above) approved as
+  implemented.
+- The documented device-qualification deferrals accepted: TalkBack
+  audibility and speech continuity, headphones / Bluetooth, OxygenOS,
+  iOS playback (carried to Phase 12H / 12I).
+- Review correction G-R1 resolved; its residual limitations stand as
+  documented above.
+- Merged as PR #30: final head `a1147a4032fd409e7b88ca812c38ea33430103f3`,
+  squash merge `20712d21c1ec02bf3eba18222f3eeeafe7182a0d`; post-merge CI
+  run 45388828817 passed both jobs. No release was created from Phase
+  12G.

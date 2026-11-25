@@ -319,6 +319,7 @@ class _RestartScreenState extends ConsumerState<RestartScreen> {
       ];
     }
     final habits = preview.habits.length;
+    final on = preview.habitsOn;
     final open = session.hasOpenFreeze ? session.freezes.last : null;
     return [
       if (_dateChanged) ...[
@@ -331,9 +332,9 @@ class _RestartScreenState extends ConsumerState<RestartScreen> {
       if (session.isSeasonal) ...[
         Text(RestartCopy.seasonalIntro(closedDay), style: text.bodyLarge),
         const SizedBox(height: WinterSpacing.xs),
-        Text(RestartCopy.seasonalHabits(habits), style: text.bodyLarge),
+        Text(RestartCopy.seasonalHabits(habits, on: on), style: text.bodyLarge),
       ] else
-        Text(RestartCopy.intro(habits), style: text.bodyLarge),
+        Text(RestartCopy.intro(habits, on: on), style: text.bodyLarge),
       const SizedBox(height: WinterSpacing.xs),
       Text(
         RestartCopy.dates(preview.today, preview.newLastDay),

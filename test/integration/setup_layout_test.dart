@@ -263,7 +263,7 @@ void main() {
           case _Scene.confirmPreseason:
             expect(find.text(SetupLabels.seasonNotStarted), findsOneWidget);
           case _Scene.hub || _Scene.hubLateSeason || _Scene.hubEmpty:
-            expect(find.text('Cancel setup'), findsOneWidget);
+            expect(find.text('Cancel Setup'), findsOneWidget);
         }
         await tester.pumpWidget(const SizedBox());
         await tester.pump(const Duration(seconds: 5));

@@ -784,18 +784,37 @@ void main() {
       await _shutDown(tester);
     });
 
-    testWidgets('Cancel setup: the same dialog; Keep Setup keeps it, Cancel '
+    testWidgets('Cancel Setup: the same dialog; Keep Setup keeps it, Cancel '
         'Setup deletes only the draft', (tester) async {
       app = make(DateTime(2026, 11, 2, 9));
       _phone(tester);
       await app.winterArc.beginSetup();
       await _launch(tester, app);
-      await tapShown(tester, find.text('Cancel setup'));
+      // Gate H copy C-1: Title Case, like Start Challenge, Review Setup,
+      // Continue Editing and the dialog's own button.
+      final hubCancel = find.widgetWithText(TextButton, 'Cancel Setup');
+      await showIn(tester, hubCancel);
+      expect(hubCancel, findsOneWidget);
+      expect(find.text('Cancel setup'), findsNothing);
+      final semantics = tester.ensureSemantics();
+      expect(
+        tester.getSemantics(hubCancel),
+        isSemantics(
+          label: 'Cancel Setup',
+          isButton: true,
+          hasTapAction: true,
+          isEnabled: true,
+        ),
+      );
+      semantics.dispose();
+      final before = await snapshotAll(app.db);
+      await tapShown(tester, hubCancel);
       expect(find.text('Cancel this setup?'), findsOneWidget);
       await tapShown(tester, find.text('Keep Setup'));
       expect(find.byType(SavedSetupScreen), findsOneWidget);
       await _stillSetup(app);
-      await tapShown(tester, find.text('Cancel setup'));
+      expect(await snapshotAll(app.db), before, reason: 'Keep Setup');
+      await tapShown(tester, hubCancel);
       await tapShown(tester, find.widgetWithText(FilledButton, 'Cancel Setup'));
       expect(find.byType(OnboardingScreen), findsOneWidget);
       expect(await app.sessions.listSessions(), isEmpty);

@@ -25,7 +25,7 @@ import 'widgets/start_button.dart';
 ///
 /// Reads only. Start Challenge opens Review Setup (it never starts the
 /// arc itself), Review Setup opens the same review, Continue Editing opens
-/// Habit Setup over the hub. Cancel setup is the editor's own dialog and
+/// Habit Setup over the hub. Cancel Setup is the editor's own dialog and
 /// deletion. System back leaves the app.
 class SavedSetupScreen extends ConsumerStatefulWidget {
   const SavedSetupScreen({super.key});
@@ -214,7 +214,7 @@ class _Hub extends ConsumerWidget {
               child: TextButton(
                 onPressed: () => confirmCancelSetup(context, ref),
                 style: TextButton.styleFrom(minimumSize: const Size(48, 48)),
-                child: const Text(SetupLabels.cancelSetup),
+                child: const Text(SetupLabels.hubCancelSetup),
               ),
             ),
           ],

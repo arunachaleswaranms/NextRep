@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:nextrep/app/app.dart';
 import 'package:nextrep/app/dependencies.dart';
 import 'package:nextrep/app/router/app_router.dart';
@@ -23,6 +24,7 @@ Widget reviewApp(
   ProgressRepository? progress,
   WinterArcRepository? sessions,
   AchievementRepository? achievements,
+  List<Override> overrides = const [],
 }) => ProviderScope(
   overrides: [
     appDatabaseProvider.overrideWithValue(db),
@@ -49,6 +51,7 @@ Widget reviewApp(
       winterArcRepositoryProvider.overrideWithValue(sessions),
     if (achievements != null)
       achievementRepositoryProvider.overrideWithValue(achievements),
+    ...overrides,
   ],
   retry: (_, _) => null,
   child: const NextRepApp(),

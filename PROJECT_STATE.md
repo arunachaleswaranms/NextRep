@@ -7,11 +7,15 @@ publication record (PR #21), the Phase 12A plan (PR #22), the Phase 12A
 Addendum (PR #23), the Phase 12E1 lifecycle foundation (PR #24), the
 Phase 12B Weekly Arc Review (PR #25), the Phase 12C Arc Consistency
 Calendar (PR #26), Phase 12D habit ordering and saved setup (PR #27),
-Phase 12E2 Freeze and Resume (PR #28) and Phase 12F Restart and optional
-Arc deletion (PR #29) are merged. `main` is `a9e5607`, version `1.2.0+3`.
-**v1.3.0 is in development, not released. Active phase: 12G (completion
-sounds), implemented and qualified on its branch; it awaits independent
-review, the owner's Gate G listening review and the owner's merge
+Phase 12E2 Freeze and Resume (PR #28), Phase 12F Restart and optional
+Arc deletion (PR #29) and Phase 12G completion sounds (PR #30) are
+merged. `main` is `20712d2`, version `1.2.0+3`. **v1.3.0 is in
+development, not released. Active phase: 12H (integration,
+accessibility, migration and regression hardening) on
+`phase/12h-v1.3-integration-hardening` (PR #31, open, not merged). The
+owner approved Gate H decisions H-1 … H-6 on 24 November 2026; the
+approved copy corrections C-1 and C-2 are on the PR. It awaits
+independent verification of the corrected head and the owner's merge
 decision.**_
 
 | | |
@@ -31,10 +35,12 @@ planned. TalkBack was deliberately deferred and doesn't block this model.
 ## Repo
 
 - Remote: https://github.com/arunachaleswaranms/NextRep (public, MIT)
-- `main`: `a9e5607` (squash merge of PR #29, Phase 12F, 23 November 2026,
-  final head `c76dc7b`; post-merge CI run
+- `main`: `20712d2` (squash merge of PR #30, Phase 12G, 24 November 2026,
+  final head `a1147a4`; post-merge CI run
+  [45388828817](https://github.com/arunachaleswaranms/NextRep/actions/runs/45388828817)
+  green, both jobs), on top of `a9e5607` (PR #29, Phase 12F; CI run
   [45109820746](https://github.com/arunachaleswaranms/NextRep/actions/runs/45109820746)
-  green, both jobs), on top of `b751dff` (PR #28, Phase 12E2; CI run
+  green, both jobs), `b751dff` (PR #28, Phase 12E2; CI run
   [45047072621](https://github.com/arunachaleswaranms/NextRep/actions/runs/45047072621)
   green, both jobs), on top of `dcde6b3` (PR #27, Phase 12D; CI run
   [44994020321](https://github.com/arunachaleswaranms/NextRep/actions/runs/44994020321)
@@ -49,9 +55,60 @@ planned. TalkBack was deliberately deferred and doesn't block this model.
   `v1.2.0` (`8ab0c43`). PRs #1–#20 are Phases 1–11F; #21 the publication
   record; #22 Phase 12A; #23 the Phase 12A Addendum; #24 Phase 12E1;
   #25 Phase 12B; #26 Phase 12C; #27 Phase 12D; #28 Phase 12E2; #29
-  Phase 12F.
+  Phase 12F; #30 Phase 12G.
 
-## Phase 12G (v1.3.0 completion sounds, active, awaiting Gate G, not merged)
+## Phase 12H (v1.3.0 integration, accessibility, migration and regression, active; Gate H decisions approved; PR #31 open, not merged)
+
+Matrix, evidence, decisions and the 12I handoff:
+[docs/PHASE_12H.md](docs/PHASE_12H.md). Baseline `main` `20712d2` (PR #30
+merged, CI 45388828817 green); branch
+`phase/12h-v1.3-integration-hardening` (worktree `~/labs/NextRep-12H`). No
+new feature, schema, backup format, permission, dependency, network or
+version change (one Restart rule clarified by defect D-2, decision H-1);
+no phone, no signing, no release.
+
+- **Together:** the seven v1.3 features in one flow on a real SQLite file
+  with process reconstruction (saved setup → reorder → reopen → start →
+  log → review / calendar → Freeze scheduled → paused → Resume → a second
+  pause → Restart → ended history → typed deletion), plus Seasonal late
+  join and Week 13 / Day 92 / a 400-day pause.
+- **Same numbers everywhere:** a checker comparing Today, Journey,
+  Calendar, all 13 reviews, Summary / History, Insights and the raw XP
+  ledger with the spec's identities, read-only; the spec's §§ 12.5.1 /
+  12.5.2 examples reproduced exactly on real Drift; 16 generated histories.
+- **Migration:** whole chains v1 → v7 and v3 → v7, every pre-existing row
+  and value compared; v6 → v7 kept. **Backups:** genuine format 1, 2 and
+  (new, written by v1.2.0's own code) 3; two complex format-4 round trips
+  with every table compared; v1.2.0's own reader refuses format 4.
+- **Accessibility:** a 75-test sweep of the remaining v1.3 surfaces (7
+  layouts, guidelines, reduced motion on 11 screens), destructive
+  consequences announced before confirmation, midnight with 7 more screens
+  open. Emulator TalkBack by explore-by-touch on every v1.3 surface; a
+  completion sound emitted with TalkBack on; speech continuity and swipe
+  order unresolved (12I).
+- **Defects fixed:** D-1 Cancel Setup / Replace Data text 2.7:1 → 6.7:1;
+  D-2 Restart refused on a resume day (now ends on that day, like Day 1).
+- **Results:** 2,436 Flutter tests pass (2,311 + 125 new), 87 JVM; 7 of 7
+  mutations detected; release audit = the same 7 permissions; profile
+  timings recorded (not gated). CI timeout 20 → 30 min.
+- **Gate H (24 November 2026):** the owner approved H-1 (a restart on a
+  resume date counts that date as lived), H-2 (D-1's dark text), H-3
+  (reorder drag animations kept for v1.3), H-4 (30-minute CI timeout),
+  H-5 (copy C-1 and C-2) and H-6 (TalkBack, headphones, OxygenOS and
+  physical-device items deferred to 12I), and accepted the unchanged
+  limitations. Copy: C-1 the hub's button now "Cancel Setup"; C-2
+  Restart says "7 habits (4 on)" from each habit's latest configuration
+  (what Restart copies); C-3 and C-5 kept; C-4 deferred. 2,445 Flutter
+  tests pass (9 new), 87 JVM. See
+  [docs/PHASE_12H.md § 20](docs/PHASE_12H.md#20-gate-h-corrections-c-1-c-2).
+- **Still open for 12I:** U-1 TalkBack speech with a completion sound,
+  U-2 TalkBack swipe order on a device, U-4 headphones / OxygenOS / the
+  1 s rule on a phone, U-8 phone timings.
+- **Next:** independent verification of the corrected head and the
+  owner's explicit merge decision (PR #31 stays open). Phase 12I has not
+  begun.
+
+## Phase 12G (v1.3.0 completion sounds, merged)
 
 Contracts, sound sources, qualification evidence and the Gate G checklist:
 [docs/PHASE_12G.md](docs/PHASE_12G.md). Baseline `main` `a9e5607` (PR #29
@@ -99,9 +156,17 @@ backup field are reused. No phone, no signing, no release.
   and a disposable-emulator check (completion or choice followed at once
   by navigation or Home: saved, no sound; controls sound). Native players,
   sounds and stored data unchanged.
-- **Next:** independent verification of the correction, Gate G (listening,
-  names, default on, the decisions in the doc), then the owner's merge
-  decision.
+- **Gate G (owner): APPROVED on 24 November 2026** (recorded in Phase
+  12H from the owner's brief): all six original sounds after listening;
+  the names Ice Crystal, Summit Spark and Warm Ember; sounds on by
+  default with Ice Crystal selected; the remaining Gate G implementation
+  decisions of [docs/PHASE_12G.md](docs/PHASE_12G.md#gate-g-outcome); the
+  documented device-qualification deferrals (TalkBack audibility,
+  headphones, OxygenOS, iOS playback) carried to 12H / 12I. G-R1
+  resolved.
+- **Merged** as PR #30 (`20712d2`, 24 November 2026; final head
+  `a1147a4`); post-merge CI run 45388828817 green, both jobs. No release
+  was created.
 
 ## Phase 12F (v1.3.0 Restart and optional Arc deletion, merged)
 
