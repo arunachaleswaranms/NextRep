@@ -1,23 +1,14 @@
 # Changelog
 
-## Unreleased (v1.3.0 in development)
+## 1.3.0 — release candidate (not yet published)
 
-Not released; the version stays 1.2.0+3. Phase 12E1 laid the lifecycle
-foundation of v1.3.0 ([docs/PHASE_12E1.md](docs/PHASE_12E1.md)). Phase
-12B adds the Weekly Arc Review ([docs/PHASE_12B.md](docs/PHASE_12B.md)).
-Phase 12C adds the Arc Consistency Calendar
-([docs/PHASE_12C.md](docs/PHASE_12C.md)); the owner approved its wording
-at Gate C. Phase 12D adds habit ordering, saved setup and Confirm & Start
-([docs/PHASE_12D.md](docs/PHASE_12D.md)); the owner approved its wording
-at Gate D. Phase 12E2 adds Freeze and Resume
-([docs/PHASE_12E2.md](docs/PHASE_12E2.md)); the owner approved it at
-Gate E2. Phase 12F adds Restart and the optional deletion of the old Arc
-([docs/PHASE_12F.md](docs/PHASE_12F.md)). Phase 12G adds completion
-sounds ([docs/PHASE_12G.md](docs/PHASE_12G.md)); the owner approved the
-three sound sets, their names and the default at Gate G. Phase 12H
-qualifies all of it together (integration, accessibility, migration,
-backups and the v1.2 regression) and fixes the defects it found
-([docs/PHASE_12H.md](docs/PHASE_12H.md)); awaiting Gate H.
+Installs over 1.2.0 and keeps your data: the database moves from schema v6
+to v7 on first launch, only adding to it. Release notes:
+[docs/releases/v1.3.0.md](docs/releases/v1.3.0.md). Built in Phases 12E1
+(#24), 12B (#25), 12C (#26), 12D (#27), 12E2 (#28), 12F (#29) and 12G
+(#30), integration-qualified in Phase 12H (#31,
+[docs/PHASE_12H.md](docs/PHASE_12H.md)) and release-qualified in Phase 12I
+([docs/PHASE_12I.md](docs/PHASE_12I.md)). Version `1.3.0+4`.
 
 Schema **v7** · backup format **4** (reads 1, 2, 3 and 4)
 
@@ -143,6 +134,18 @@ Schema **v7** · backup format **4** (reads 1, 2, 3 and 4)
 - **Readable destructive buttons:** the red "Cancel Setup" and "Replace
   Data" buttons now use dark text (about 6.7:1 contrast instead of 2.7:1),
   like "Delete Arc".
+
+### Privacy / compatibility
+
+- No new Android permission (the same seven as 1.2.0), dependency or
+  network request; the manual update check is still the only request, and
+  only when tapped. Completion sounds are bundled; only the on/off choice
+  and set are stored. No analytics, account, backend or cloud sync.
+- Same application id (`com.nextrep.nextrep`) and signing certificate as
+  1.0.0, 1.1.0 and 1.2.0, so it updates in place.
+- Backups from 1.0.0, 1.1.0 and 1.2.0 (formats 1, 2 and 3) restore into
+  1.3.0. A 1.3.0 backup (format 4) can't be restored into 1.2.0 or
+  earlier, which refuse it unchanged.
 
 ## 1.2.0 — 2026
 

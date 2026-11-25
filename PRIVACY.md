@@ -1,9 +1,11 @@
 # NextRep Privacy
 
-_Last updated: 24 November 2026 (the completion sounds and stored settings
-of NextRep 1.3, in development and not yet released). Applies to NextRep
-1.2.0, which adds Hydration Coach, Focus Guard and a manual update check,
-and to the earlier 1.0.0 and 1.1.0 (Winter Arc)._
+_Last updated: 25 November 2026 (NextRep 1.3.0, in release qualification
+and not yet published: pauses, Arcs ended early and completion-sound
+settings, with no new permission or network request). Applies to NextRep
+1.3.0 once it is published; to 1.2.0, which adds Hydration Coach, Focus
+Guard and a manual update check; and to the earlier 1.0.0 and 1.1.0
+(Winter Arc)._
 
 NextRep is a local-first app that works offline. Everything you put into it
 stays on your device, in the app's own storage, unless you choose to move
@@ -25,7 +27,8 @@ In short:
 **Which version has what.** NextRep 1.0.0 and 1.1.0 have no network
 access at all: their Android APKs don't request the `INTERNET` permission.
 NextRep 1.2.0 requests `INTERNET` for the manual update check, and for
-nothing else.
+nothing else. NextRep 1.3.0 requests exactly the same permissions as 1.2.0
+and adds no network request.
 
 This page describes what the app actually does, as built. It applies to
 the official Android APKs published on this repository's GitHub Releases
@@ -39,12 +42,12 @@ your device:
 | Data | Examples |
 |---|---|
 | Habits and their history | names, goals, daily progress, Minimum Days, goal changes by date |
-| Arcs | Rolling or Seasonal, start, end and join dates, status; from 1.3 (in development) also the dates of any pause and the last day of an Arc ended early by Restart |
+| Arcs | Rolling or Seasonal, start, end and join dates, status; from 1.3.0 also the dates of any pause and the last day of an Arc ended early by Restart |
 | XP and achievements | the XP ledger and the date each achievement was unlocked |
 | Journal reflections | mood, "one win", "one thing to improve", per day |
 | Reminder settings | whether each reminder is on, its time, and Hydration Coach's active hours and style |
 | Focus Guard settings (Android, optional) | whether it is on, the apps you chose (their package names, e.g. `com.example.app`), your daily budget, and the date of the last reminder it sent |
-| Sound settings (from 1.3, in development) | whether completion sounds are on and which of the three sets you chose |
+| Sound settings (from 1.3.0) | whether completion sounds are on and which of the three sets you chose |
 
 Streaks, levels, Perfect Days, the Journey, summaries and Insights are
 worked out on the device from that data. They are not stored separately and
@@ -258,9 +261,9 @@ can turn them off in system settings.
 - If you turn notifications off in system settings, NextRep keeps your
   reminder setting, tells you notifications are off and doesn't ask again.
 
-## Completion sounds (from 1.3, in development)
+## Completion sounds (from 1.3.0)
 
-NextRep 1.3 (not yet released) can play a short sound when you complete a
+NextRep 1.3.0 can play a short sound when you complete a
 habit. The sounds are **bundled in the app**: six small audio files made
 for NextRep from source code in this repository
 (`tool/sounds/generate_completion_sounds.dart`). Nothing is downloaded,
@@ -301,9 +304,13 @@ a reminder on.
 
 ## Deleting your data
 
-- **Delete Arc** (on a completed arc's summary) deletes that arc and
-  everything in it.
-- **Cancel setup** deletes an arc that hasn't started yet.
+- **Delete Arc** (on a finished arc's summary) deletes that arc and
+  everything in it. From 1.3.0 it opens a screen that lists what will be
+  lost, and nothing is deleted unless you type DELETE. The same screen is
+  offered, optionally, after a Restart for the Arc that ended early.
+- **Restart** (from 1.3.0) never deletes anything by itself: the old Arc is
+  kept in Arc History as "Ended early".
+- **Cancel Setup** deletes an arc that hasn't started yet.
 - Uninstalling the app deletes all its data from the device. Backups you
   exported, and your phone's own system backups, are not affected.
 
