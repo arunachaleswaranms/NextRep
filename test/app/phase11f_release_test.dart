@@ -11,7 +11,6 @@ import 'package:nextrep/data/github_release_feed.dart';
 import 'package:nextrep/data/platform_app_info.dart';
 import 'package:nextrep/domain/backup/backup_codec.dart';
 import 'package:nextrep/domain/backup/backup_document.dart';
-import 'package:nextrep/domain/backup/backup_service.dart';
 import 'package:nextrep/domain/backup/backup_validator.dart';
 import 'package:nextrep/domain/update/github_release.dart';
 import 'package:nextrep/domain/update/release_version.dart';
@@ -26,6 +25,13 @@ import '../support/updates.dart';
 /// against GitHub before and after v1.2.0 is published. GitHub is always
 /// [FakeGitHubClient]; no test reaches the network, and no release here is
 /// real.
+///
+/// Phase 12I (v1.3.0) moved the source on to `1.3.0+4`. The checks that
+/// pinned *this source* to 1.2.0 (pubspec, `appVersion`, the version a
+/// fresh export records) moved, with the same strictness and the new
+/// values, to `phase12i_release_test.dart`. What stays here is the
+/// published v1.2.0 install (1.2.0, build 3): its version comparisons, its
+/// update-check answers and its About screen, which v1.2.0 users still run.
 
 const _release = ReleaseVersion(1, 2, 0);
 const _check = 'Check for updates';
@@ -48,11 +54,10 @@ Widget _about({
   child: MaterialApp(theme: buildWinterTheme(), home: const AboutScreen()),
 );
 
-/// This build as Android reports it: pubspec.yaml's name and code.
-FakeInstalledAppSource _thisBuild() {
-  final (name, build) = pubspecVersion();
-  return FakeInstalledAppSource(version: name, buildNumber: build);
-}
+/// The published v1.2.0 APK as Android reports it (versionName 1.2.0,
+/// versionCode 3).
+FakeInstalledAppSource _v120() =>
+    FakeInstalledAppSource(version: '1.2.0', buildNumber: '3');
 
 Future<UpdateCheckResult> _checkAgainst(Map<String, Object?> latest) =>
     UpdateChecker(
@@ -64,13 +69,9 @@ Future<UpdateCheckResult> _checkAgainst(Map<String, Object?> latest) =>
 
 void main() {
   group('release identity', () {
-    test('pubspec.yaml is 1.2.0+3: versionName 1.2.0, versionCode 3', () {
-      expect(pubspecVersion(), ('1.2.0', '3'));
-    });
-
-    test('appVersion is 1.2.0', () {
-      expect(appVersion, '1.2.0');
-      expect(ReleaseVersion.tryParse(appVersion), _release);
+    test('this source is past v1.2.0 (its identity: phase12i)', () {
+      expect(ReleaseVersion.tryParse(appVersion)! > _release, isTrue);
+      expect(pubspecVersion(), isNot(('1.2.0', '3')));
     });
 
     test('Android takes versionName and versionCode from pubspec.yaml', () {
@@ -121,7 +122,7 @@ void main() {
         buildSignature: '',
       );
       final app = await const PlatformInstalledAppSource().read();
-      expect((app.version, app.buildNumber), pubspecVersion());
+      expect((app.version, app.buildNumber), ('1.2.0', '3'));
       expect(app.releaseVersion, _release);
     });
   });
@@ -193,7 +194,7 @@ void main() {
     });
   });
 
-  group('About on this build', () {
+  group('About on the published v1.2.0', () {
     Future<void> setPhone(WidgetTester tester) async {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 3;
@@ -224,7 +225,7 @@ void main() {
         () async => githubResponse(200, json: releaseJson(tag: 'v1.1.0')),
       );
       await setPhone(tester);
-      await tester.pumpWidget(_about(github: github, installed: _thisBuild()));
+      await tester.pumpWidget(_about(github: github, installed: _v120()));
       await tester.pumpAndSettle();
       expect(find.text('Version 1.2.0'), findsOneWidget);
       expect(find.text('Build 3'), findsOneWidget);
@@ -249,7 +250,7 @@ void main() {
         () async => githubResponse(200, json: releaseJson(tag: 'v1.2.0')),
       );
       await setPhone(tester);
-      await tester.pumpWidget(_about(github: github, installed: _thisBuild()));
+      await tester.pumpWidget(_about(github: github, installed: _v120()));
       await tester.pumpAndSettle();
       await tapCheck(tester);
       expect(github.requests, hasLength(1));
@@ -263,7 +264,7 @@ void main() {
         () async => githubResponse(200, json: releaseJson(tag: 'v1.3.0')),
       );
       await setPhone(tester);
-      await tester.pumpWidget(_about(github: github, installed: _thisBuild()));
+      await tester.pumpWidget(_about(github: github, installed: _v120()));
       await tester.pumpAndSettle();
       await tapCheck(tester);
       expect(find.text('NextRep v1.3.0 is available.'), findsOneWidget);
@@ -275,31 +276,8 @@ void main() {
     });
   });
 
-  group('backups from this build', () {
-    test('record appVersion 1.2.0 in format 4, and restore here', () async {
-      final db = memoryDatabase();
-      addTearDown(db.close);
-      final clock = FakeClock(DateTime(2026, 10, 16, 9));
-      final app = TestApp(db, clock);
-      await app.winterArc.beginSetup();
-      await app.winterArc.startWinterArc();
-      // Wired as in dependencies.dart, with the real appVersion.
-      final backup = BackupService(
-        store: app.backupStore,
-        scheduler: app.scheduler,
-        clock: clock,
-        appVersion: appVersion,
-      );
-      final export = await backup.export();
-      final root = jsonDecode(utf8.decode(export.bytes)) as Map;
-      expect(root['appVersion'], '1.2.0');
-      expect(root['formatVersion'], 4);
-      expect(root['product'], 'NextRep');
-      final document = BackupCodec.decode(export.bytes);
-      expect(document.appVersion, '1.2.0');
-      expect(BackupValidator.validate(document).summary.arcCount, 1);
-    });
-
+  group('backups', () {
+    // A fresh export's appVersion / format for this source: phase12i.
     test('v1.0 and v1.1 era files (formats 1 and 2) still validate; their '
         'appVersion is information only', () {
       for (final name in ['phase5_backup_v1', 'v1_1_backup_v2']) {

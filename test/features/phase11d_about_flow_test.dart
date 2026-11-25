@@ -504,7 +504,7 @@ void main() {
       await _shutDown(tester);
     });
 
-    testWidgets('this build: Version 1.2.0, Build 3', (tester) async {
+    testWidgets('this build: Version 1.3.0, Build 4', (tester) async {
       // What Android reports for this source: pubspec.yaml's version name
       // and build number (versionName / versionCode).
       final (name, build) = pubspecVersion();
@@ -516,8 +516,8 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.text('Version 1.2.0'), findsOneWidget);
-      expect(find.text('Build 3'), findsOneWidget);
+      expect(find.text('Version 1.3.0'), findsOneWidget);
+      expect(find.text('Build 4'), findsOneWidget);
       await _shutDown(tester);
     });
 
